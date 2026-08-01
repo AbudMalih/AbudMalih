@@ -8,11 +8,14 @@ import LocationsSection from '@/components/sections/LocationsSection'
 import CareerTeaserSection from '@/components/sections/CareerTeaserSection'
 import CompanyStorySection from '@/components/sections/CompanyStorySection'
 import FinalCTASection from '@/components/sections/FinalCTASection'
+import { getHeroMedia } from '@/lib/assets'
 
 export default function Home() {
+  const heroMedia = getHeroMedia()
+
   return (
     <>
-      <HeroSection />
+      <HeroSection media={heroMedia} />
       <StatisticsSection />
       <ServicesSection />
       <OperationsSection />

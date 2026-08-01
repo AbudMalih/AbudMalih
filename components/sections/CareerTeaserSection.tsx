@@ -58,7 +58,7 @@ export default function CareerTeaserSection() {
               Offene Stellen entdecken <ArrowRight size={20} />
             </Link>
             <Link
-              href="/karriere#form"
+              href="/bewerbung"
               className="px-8 py-4 border-2 border-deep-graphite text-deep-graphite font-bold rounded-sm hover:bg-deep-graphite hover:text-off-white transition-colors"
             >
               Direkt bewerben

@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { jobs, jobCategories, locations } from '@/lib/data'
 import { Search, MapPin, Briefcase } from 'lucide-react'
 
-export default function JobsPage() {
+function JobsPageContent() {
+  const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('')
-  const [selectedLocation, setSelectedLocation] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '')
+  const [selectedLocation, setSelectedLocation] = useState(searchParams.get('location') || '')
 
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
@@ -160,5 +162,13 @@ export default function JobsPage() {
         </div>
       </section>
     </div>
+  )
+}
+
+export default function JobsPage() {
+  return (
+    <Suspense fallback={<div className="bg-off-white min-h-screen" />}>
+      <JobsPageContent />
+    </Suspense>
   )
 }

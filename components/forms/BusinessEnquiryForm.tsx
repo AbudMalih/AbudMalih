@@ -1,12 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Upload, X } from 'lucide-react'
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 export default function BusinessEnquiryForm() {
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
+  const [files, setFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     companyName: '',
     website: '',
@@ -60,14 +67,71 @@ export default function BusinessEnquiryForm() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setServerError(null)
+    const selected = Array.from(e.target.files || [])
+    for (const f of selected) {
+      if (f.size > MAX_FILE_SIZE) {
+        setServerError(`Die Datei „${f.name}“ ist größer als 10 MB.`)
+        return
+      }
+    }
+    setFiles(prev => [...prev, ...selected].slice(0, 5))
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (step < totalSteps) {
       setStep(step + 1)
-    } else {
-      // Submit form
-      console.log('Submitting:', formData)
+      return
+    }
+
+    setServerError(null)
+    setSubmitting(true)
+
+    try {
+      const body = new FormData()
+      body.set('companyName', formData.companyName)
+      body.set('website', formData.website)
+      body.set('industry', formData.industry)
+      body.set('contact', formData.contact)
+      body.set('position', formData.position)
+      body.set('email', formData.email)
+      body.set('phone', formData.phone)
+      body.set('services', formData.services.join(', '))
+      body.set('projectLocation', formData.projectLocation)
+      body.set('sites', formData.sites)
+      body.set('volume', formData.volume)
+      body.set('routes', formData.routes)
+      body.set('vehicles', formData.vehicles)
+      body.set('startDate', formData.startDate)
+      body.set('needsPersonnel', formData.needsPersonnel)
+      body.set('needsDispatch', formData.needsDispatch)
+      body.set('needsADR', formData.needsADR)
+      body.set('challenges', formData.challenges)
+      body.set('description', formData.description)
+      body.set('privacy', String(formData.privacy))
+      files.forEach(f => body.append('documents', f))
+
+      const res = await fetch('/api/business-inquiry', { method: 'POST', body })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setServerError(data.error || 'Die Anfrage konnte nicht übermittelt werden.')
+        return
+      }
+
+      setReference(data.reference)
       setSubmitted(true)
+    } catch {
+      setServerError('Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -94,10 +158,10 @@ export default function BusinessEnquiryForm() {
         </p>
         <div className="bg-light-grey rounded-sm p-6 text-left mb-8">
           <p className="text-sm font-medium text-deep-graphite mb-2">
-            Referenznummer: JL-{Date.now().toString().slice(-8)}
+            Referenznummer: {reference}
           </p>
           <p className="text-sm text-mid-grey">
-            Sie erhalten in Kürze eine Bestätigung per E-Mail an {formData.email}
+            Unser Team meldet sich persönlich bei Ihnen unter {formData.email}
           </p>
         </div>
         <button
@@ -145,6 +209,16 @@ export default function BusinessEnquiryForm() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Honeypot – hidden from real users, catches bots */}
+        <input
+          type="text"
+          name="company_website_hp"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+          onChange={() => {}}
+        />
         {/* Step 1: Company */}
         {step === 1 && (
           <motion.div
@@ -387,7 +461,7 @@ export default function BusinessEnquiryForm() {
           </motion.div>
         )}
 
-        {/* Step 5: Consent */}
+        {/* Step 5: Documents & Consent */}
         {step === totalSteps && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -395,7 +469,47 @@ export default function BusinessEnquiryForm() {
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <h3 className="text-2xl font-bold text-deep-graphite mb-8">Bestätigung</h3>
+            <h3 className="text-2xl font-bold text-deep-graphite mb-8">Dokumente & Bestätigung</h3>
+
+            {/* Documents */}
+            <div>
+              <span className="block text-sm font-medium text-deep-graphite mb-2">
+                Projektunterlagen (optional)
+              </span>
+              <p className="text-xs text-mid-grey mb-3">
+                Ausschreibung, Leistungsbeschreibung, Tourendaten, Forecast. PDF, DOCX, XLSX oder CSV, max. 10 MB pro Datei, max. 5 Dateien.
+              </p>
+              <label className="flex items-center justify-center gap-2 border-2 border-dashed border-light-grey rounded-sm p-6 cursor-pointer hover:border-jarbou-red transition-colors">
+                <Upload size={20} className="text-jarbou-red" />
+                <span className="text-mid-grey font-medium">Dateien auswählen</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.docx,.xlsx,.csv"
+                  onChange={handleFileChange}
+                  className="sr-only"
+                />
+              </label>
+              {files.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {files.map((f, i) => (
+                    <li key={`${f.name}-${i}`} className="flex items-center justify-between bg-light-grey rounded-sm px-4 py-2 text-sm">
+                      <span className="truncate text-deep-graphite">{f.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        aria-label={`${f.name} entfernen`}
+                        className="text-mid-grey hover:text-jarbou-red transition-colors flex-shrink-0 ml-3"
+                      >
+                        <X size={16} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -412,6 +526,13 @@ export default function BusinessEnquiryForm() {
           </motion.div>
         )}
 
+        {/* Server error */}
+        {serverError && (
+          <div role="alert" className="border border-jarbou-red bg-red-50 text-jarbou-red rounded-sm px-4 py-3 text-sm font-medium">
+            {serverError}
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex gap-4 pt-8">
           {step > 1 && (
@@ -425,9 +546,10 @@ export default function BusinessEnquiryForm() {
           )}
           <button
             type="submit"
-            className="px-6 py-3 bg-jarbou-red text-white font-bold rounded-sm hover:bg-red-700 transition-colors flex-1 md:flex-none ml-auto"
+            disabled={submitting}
+            className="px-6 py-3 bg-jarbou-red text-white font-bold rounded-sm hover:bg-red-700 transition-colors flex-1 md:flex-none ml-auto disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {step === totalSteps ? 'Anfrage sicher übermitteln' : 'Weiter'}
+            {submitting ? 'Wird übermittelt…' : step === totalSteps ? 'Anfrage sicher übermitteln' : 'Weiter'}
           </button>
         </div>
       </form>

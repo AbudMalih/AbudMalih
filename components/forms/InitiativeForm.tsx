@@ -3,17 +3,12 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { jobs, locations } from '@/lib/data'
+import { jobCategories, locations, contactInfo } from '@/lib/data'
 import { CheckCircle2, Upload, X } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
-const ACCEPTED_TYPES = '.pdf,.doc,.docx,.jpg,.jpeg,.png'
 
-export default function ApplicationForm() {
-  const searchParams = useSearchParams()
-  const jobId = searchParams.get('job')
-
+export default function InitiativeForm() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -22,31 +17,25 @@ export default function ApplicationForm() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
+    preferredRole: '',
+    location: '',
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    city: '',
-    jobId: jobId || '',
-    location: '',
-    startDate: '',
     drivingLicense: '',
+    startDate: '',
     experience: '',
+    message: '',
     privacy: false,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
     if (type === 'checkbox') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: (e.target as HTMLInputElement).checked,
-      }))
+      setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }))
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-      }))
+      setFormData(prev => ({ ...prev, [name]: value }))
     }
   }
 
@@ -73,20 +62,18 @@ export default function ApplicationForm() {
     setSubmitting(true)
 
     try {
-      const job = jobs.find(j => j.id === formData.jobId)
       const body = new FormData()
-      body.set('type', 'job')
-      body.set('jobId', formData.jobId)
-      body.set('jobTitle', job?.title || '')
+      body.set('type', 'initiative')
+      body.set('preferredRole', formData.preferredRole)
+      body.set('location', locations.find(l => l.id === formData.location)?.city || formData.location)
       body.set('firstName', formData.firstName)
       body.set('lastName', formData.lastName)
       body.set('email', formData.email)
       body.set('phone', formData.phone)
-      body.set('city', formData.city)
-      body.set('location', locations.find(l => l.id === formData.location)?.city || formData.location)
-      body.set('startDate', formData.startDate)
       body.set('drivingLicense', formData.drivingLicense)
+      body.set('startDate', formData.startDate)
       body.set('experience', formData.experience)
+      body.set('message', formData.message)
       body.set('privacy', String(formData.privacy))
       files.forEach(f => body.append('documents', f))
 
@@ -101,7 +88,7 @@ export default function ApplicationForm() {
       setReference(data.reference)
       setSubmitted(true)
     } catch {
-      setServerError('Netzwerkfehler. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.')
+      setServerError('Netzwerkfehler. Bitte prüfe deine Verbindung und versuche es erneut.')
     } finally {
       setSubmitting(false)
     }
@@ -117,24 +104,24 @@ export default function ApplicationForm() {
       >
         <CheckCircle2 className="w-16 h-16 text-jarbou-red mx-auto mb-6" />
         <h2 className="text-3xl font-bold text-deep-graphite mb-4">
-          Deine Bewerbung ist unterwegs.
+          Deine Initiativbewerbung ist unterwegs.
         </h2>
         <p className="text-mid-grey mb-8">
-          Vielen Dank, dass du dich bei Jarbou Logistik beworben hast. Unser Recruiting-Team prüft deine Angaben und meldet sich bei dir.
+          Wir prüfen, welche Position und welcher Standort zu dir passen könnten, und melden uns bei dir.
         </p>
         <div className="bg-light-grey rounded-sm p-6 text-left mb-8">
           <p className="text-sm font-medium text-deep-graphite mb-2">
             Referenznummer: {reference}
           </p>
           <p className="text-sm text-mid-grey">
-            Kontakt bei Rückfragen: karriere@jarbou-logistik.com
+            Kontakt bei Rückfragen: {contactInfo.careerEmail}
           </p>
         </div>
         <Link
           href="/jobs"
           className="inline-block px-6 py-3 bg-jarbou-red text-white font-bold rounded-sm hover:bg-red-700 transition-colors"
         >
-          Weitere Stellen ansehen
+          Offene Stellen ansehen
         </Link>
       </motion.div>
     )
@@ -147,7 +134,6 @@ export default function ApplicationForm() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
       className="bg-white border border-light-grey rounded-sm p-8 md:p-12 space-y-6"
-      noValidate={false}
     >
       {/* Honeypot – hidden from real users, catches bots */}
       <input
@@ -160,36 +146,49 @@ export default function ApplicationForm() {
         onChange={() => {}}
       />
 
-      {/* Job Selection */}
-      <div>
-        <label htmlFor="app-job" className="block text-sm font-medium text-deep-graphite mb-2">
-          Gewünschte Stelle *
-        </label>
-        <select
-          id="app-job"
-          name="jobId"
-          required
-          value={formData.jobId}
-          onChange={handleChange}
-          className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
-        >
-          <option value="">Bitte wählen...</option>
-          {jobs.filter(j => j.status === 'open').map(job => (
-            <option key={job.id} value={job.id}>
-              {job.title} - {locations.find(l => l.id === job.location)?.city}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Personal Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="app-firstname" className="block text-sm font-medium text-deep-graphite mb-2">
+          <label htmlFor="ini-role" className="block text-sm font-medium text-deep-graphite mb-2">
+            Gewünschte Rolle *
+          </label>
+          <select
+            id="ini-role"
+            name="preferredRole"
+            required
+            value={formData.preferredRole}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
+          >
+            <option value="">Bitte wählen...</option>
+            {jobCategories.map(cat => (
+              <option key={cat.id} value={cat.label}>{cat.label}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="ini-location" className="block text-sm font-medium text-deep-graphite mb-2">
+            Bevorzugter Standort *
+          </label>
+          <select
+            id="ini-location"
+            name="location"
+            required
+            value={formData.location}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
+          >
+            <option value="">Bitte wählen...</option>
+            {locations.filter(l => l.active).map(loc => (
+              <option key={loc.id} value={loc.id}>{loc.city}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="ini-firstname" className="block text-sm font-medium text-deep-graphite mb-2">
             Vorname *
           </label>
           <input
-            id="app-firstname"
+            id="ini-firstname"
             type="text"
             name="firstName"
             required
@@ -200,11 +199,11 @@ export default function ApplicationForm() {
           />
         </div>
         <div>
-          <label htmlFor="app-lastname" className="block text-sm font-medium text-deep-graphite mb-2">
+          <label htmlFor="ini-lastname" className="block text-sm font-medium text-deep-graphite mb-2">
             Nachname *
           </label>
           <input
-            id="app-lastname"
+            id="ini-lastname"
             type="text"
             name="lastName"
             required
@@ -215,11 +214,11 @@ export default function ApplicationForm() {
           />
         </div>
         <div>
-          <label htmlFor="app-email" className="block text-sm font-medium text-deep-graphite mb-2">
+          <label htmlFor="ini-email" className="block text-sm font-medium text-deep-graphite mb-2">
             E-Mail *
           </label>
           <input
-            id="app-email"
+            id="ini-email"
             type="email"
             name="email"
             required
@@ -230,11 +229,11 @@ export default function ApplicationForm() {
           />
         </div>
         <div>
-          <label htmlFor="app-phone" className="block text-sm font-medium text-deep-graphite mb-2">
+          <label htmlFor="ini-phone" className="block text-sm font-medium text-deep-graphite mb-2">
             Telefon *
           </label>
           <input
-            id="app-phone"
+            id="ini-phone"
             type="tel"
             name="phone"
             required
@@ -244,34 +243,30 @@ export default function ApplicationForm() {
             className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
           />
         </div>
-      </div>
-
-      {/* Location & Start */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="app-location" className="block text-sm font-medium text-deep-graphite mb-2">
-            Bevorzugter Standort *
+          <label htmlFor="ini-license" className="block text-sm font-medium text-deep-graphite mb-2">
+            Führerschein
           </label>
           <select
-            id="app-location"
-            name="location"
-            required
-            value={formData.location}
+            id="ini-license"
+            name="drivingLicense"
+            value={formData.drivingLicense}
             onChange={handleChange}
             className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
           >
             <option value="">Bitte wählen...</option>
-            {locations.filter(l => l.active && l.recruiting).map(loc => (
-              <option key={loc.id} value={loc.id}>{loc.city}</option>
-            ))}
+            <option value="keine">Keinen</option>
+            <option value="b">Klasse B</option>
+            <option value="c">Klasse C</option>
+            <option value="c1">Klasse C1</option>
           </select>
         </div>
         <div>
-          <label htmlFor="app-start" className="block text-sm font-medium text-deep-graphite mb-2">
-            Frühestmöglicher Start
+          <label htmlFor="ini-start" className="block text-sm font-medium text-deep-graphite mb-2">
+            Verfügbar ab
           </label>
           <input
-            id="app-start"
+            id="ini-start"
             type="date"
             name="startDate"
             value={formData.startDate}
@@ -281,33 +276,12 @@ export default function ApplicationForm() {
         </div>
       </div>
 
-      {/* Qualifications */}
       <div>
-        <label htmlFor="app-license" className="block text-sm font-medium text-deep-graphite mb-2">
-          Führerschein
-        </label>
-        <select
-          id="app-license"
-          name="drivingLicense"
-          value={formData.drivingLicense}
-          onChange={handleChange}
-          className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
-        >
-          <option value="">Bitte wählen...</option>
-          <option value="keine">Keinen</option>
-          <option value="b">Klasse B</option>
-          <option value="c">Klasse C</option>
-          <option value="c1">Klasse C1</option>
-        </select>
-      </div>
-
-      {/* Experience */}
-      <div>
-        <label htmlFor="app-exp" className="block text-sm font-medium text-deep-graphite mb-2">
-          Kurze Beschreibung deiner Erfahrung
+        <label htmlFor="ini-exp" className="block text-sm font-medium text-deep-graphite mb-2">
+          Deine Erfahrung
         </label>
         <textarea
-          id="app-exp"
+          id="ini-exp"
           name="experience"
           value={formData.experience}
           onChange={handleChange}
@@ -316,13 +290,27 @@ export default function ApplicationForm() {
         ></textarea>
       </div>
 
+      <div>
+        <label htmlFor="ini-msg" className="block text-sm font-medium text-deep-graphite mb-2">
+          Kurze Nachricht
+        </label>
+        <textarea
+          id="ini-msg"
+          name="message"
+          value={formData.message}
+          onChange={handleChange}
+          placeholder="Wo möchtest du Jarbou verstärken?"
+          className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none h-24"
+        ></textarea>
+      </div>
+
       {/* Documents */}
       <div>
         <span className="block text-sm font-medium text-deep-graphite mb-2">
-          Dokumente (Lebenslauf, Führerschein, Zertifikate – optional)
+          Lebenslauf & Dokumente (optional)
         </span>
         <p className="text-xs text-mid-grey mb-3">
-          Kein Lebenslauf zur Hand? Bewirb dich trotzdem. PDF, DOC, DOCX, JPG oder PNG, max. 10 MB pro Datei, max. 5 Dateien. Auf dem Smartphone kannst du Dokumente direkt fotografieren.
+          PDF, DOC, DOCX, JPG oder PNG, max. 10 MB pro Datei, max. 5 Dateien.
         </p>
         <label className="flex items-center justify-center gap-2 border-2 border-dashed border-light-grey rounded-sm p-6 cursor-pointer hover:border-jarbou-red transition-colors">
           <Upload size={20} className="text-jarbou-red" />
@@ -331,7 +319,7 @@ export default function ApplicationForm() {
             ref={fileInputRef}
             type="file"
             multiple
-            accept={ACCEPTED_TYPES}
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
             onChange={handleFileChange}
             className="sr-only"
           />
@@ -355,7 +343,6 @@ export default function ApplicationForm() {
         )}
       </div>
 
-      {/* Privacy Consent */}
       <label className="flex items-start gap-3 cursor-pointer">
         <input
           type="checkbox"
@@ -370,20 +357,18 @@ export default function ApplicationForm() {
         </span>
       </label>
 
-      {/* Error */}
       {serverError && (
         <div role="alert" className="border border-jarbou-red bg-red-50 text-jarbou-red rounded-sm px-4 py-3 text-sm font-medium">
           {serverError}
         </div>
       )}
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={submitting}
         className="w-full px-6 py-4 bg-jarbou-red text-white font-bold rounded-sm hover:bg-red-700 transition-colors text-lg disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {submitting ? 'Wird übermittelt…' : 'Bewerbung absenden'}
+        {submitting ? 'Wird übermittelt…' : 'Initiativbewerbung absenden'}
       </button>
     </motion.form>
   )

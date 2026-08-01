@@ -1,18 +1,29 @@
-export default function Logo() {
+interface LogoProps {
+  /** Set from the server when /public/logo.svg (or logo.png) exists. */
+  officialSrc?: string | null
+}
+
+/**
+ * Renders the official Jarbou Logistik logo when the asset exists in /public
+ * (auto-detected server-side, see lib/assets.ts). Until the official file is
+ * provided, a clearly-structured wordmark fallback is shown so a broken-image
+ * icon can never appear. The official logo is never redrawn, cropped or
+ * recolored — it is rendered as delivered, height-constrained only.
+ */
+export default function Logo({ officialSrc }: LogoProps) {
+  if (officialSrc) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={officialSrc}
+        alt="Jarbou Logistik GmbH"
+        className="h-10 md:h-12 w-auto"
+      />
+    )
+  }
+
   return (
     <div className="flex items-center gap-3">
-      {/*
-        PLACEHOLDER: Replace with official Jarbou Logistik logo
-        Expected: Logo file at /public/logo.svg or /public/logo.png
-        The logo should display:
-        - Two red diagonal slashes (#F20D18)
-        - "JARBOU" text
-        - "LOGISTIK GMBH" underneath
-
-        The placeholder below uses SVG to show where the logo will be.
-        Once the official logo asset is available, replace this component
-        with an Image component pointing to the actual logo file.
-      */}
       <svg
         width="40"
         height="40"
@@ -20,8 +31,8 @@ export default function Logo() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="flex-shrink-0"
+        aria-hidden="true"
       >
-        {/* Placeholder: Two red slashes */}
         <line x1="12" y1="10" x2="22" y2="30" stroke="#F20D18" strokeWidth="3" strokeLinecap="round" />
         <line x1="22" y1="10" x2="32" y2="30" stroke="#F20D18" strokeWidth="3" strokeLinecap="round" />
       </svg>

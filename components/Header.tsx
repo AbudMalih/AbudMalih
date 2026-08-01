@@ -5,7 +5,11 @@ import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
 import Logo from './Logo'
 
-export default function Header() {
+interface HeaderProps {
+  logoSrc?: string | null
+}
+
+export default function Header({ logoSrc }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -39,8 +43,8 @@ export default function Header() {
       <div className="section-container">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0">
-            <Logo />
+          <Link href="/" className="flex-shrink-0" aria-label="Jarbou Logistik – Startseite">
+            <Logo officialSrc={logoSrc} />
           </Link>
 
           {/* Desktop Navigation */}

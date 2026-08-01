@@ -4,7 +4,18 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 
-export default function HeroSection() {
+interface HeroMedia {
+  type: 'video' | 'image'
+  src: string
+  poster?: string
+}
+
+interface HeroSectionProps {
+  /** Detected server-side from /public (hero.mp4 / hero.jpg …). */
+  media?: HeroMedia | null
+}
+
+export default function HeroSection({ media }: HeroSectionProps) {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -27,15 +38,40 @@ export default function HeroSection() {
 
   return (
     <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-deep-graphite">
-      {/* Background placeholder - Replace with hero image/video */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: 'linear-gradient(135deg, rgba(15, 13, 16, 0.6) 0%, rgba(21, 24, 29, 0.8) 100%)',
-          backgroundColor: '#0B0D10',
-        }}
-      >
-        {/* Placeholder for hero image/video */}
+      {/* Hero media: official asset when present, cinematic gradient fallback otherwise */}
+      <div className="absolute inset-0 overflow-hidden bg-deep-graphite">
+        {media?.type === 'video' && (
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src={media.src}
+            poster={media.poster}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden="true"
+          />
+        )}
+        {media?.type === 'image' && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className="absolute inset-0 w-full h-full object-cover"
+            src={media.src}
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
+          />
+        )}
+        {!media && (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'linear-gradient(135deg, rgba(15, 13, 16, 0.6) 0%, rgba(21, 24, 29, 0.8) 100%)',
+            }}
+          ></div>
+        )}
+        {/* Dark overlay for text readability over any media */}
+        <div className="absolute inset-0 bg-deep-graphite/60"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-deep-graphite/30 to-deep-graphite"></div>
       </div>
 

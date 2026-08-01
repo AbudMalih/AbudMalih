@@ -389,7 +389,7 @@ export const contactInfo = {
   city: '99095 Erfurt',
   country: 'Deutschland',
   phone: '+49 170 7272725',
-  email: 'kontakt@jarbou-logistik.de',
-  careerEmail: 'karriere@jarbou-logistik.de',
-  website: 'www.jarbou-logistik.de',
+  email: 'kontakt@jarbou-logistik.com',
+  careerEmail: 'karriere@jarbou-logistik.com',
+  website: 'www.jarbou-logistik.com',
 }

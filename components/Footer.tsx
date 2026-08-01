@@ -1,8 +1,13 @@
 import Link from 'next/link'
 import { contactInfo } from '@/lib/data'
 import { Mail, Phone, MapPin } from 'lucide-react'
+import Logo from './Logo'
 
-export default function Footer() {
+interface FooterProps {
+  logoSrc?: string | null
+}
+
+export default function Footer({ logoSrc }: FooterProps) {
   const currentYear = new Date().getFullYear()
 
   return (
@@ -11,7 +16,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           {/* Company Info */}
           <div>
-            <h3 className="text-lg font-bold mb-4">Jarbou Logistik</h3>
+            <div className="mb-6">
+              <Logo officialSrc={logoSrc} />
+            </div>
+            <h3 className="sr-only">Jarbou Logistik</h3>
             <p className="text-sm text-mid-grey mb-4">
               Zuverlässige Logistiklösungen für Unternehmen in Deutschland.
             </p>
@@ -45,7 +53,7 @@ export default function Footer() {
               <li><Link href="/leistungen#paketzustellung" className="hover:text-jarbou-red transition-colors">Paketzustellung</Link></li>
               <li><Link href="/leistungen#abholtouren" className="hover:text-jarbou-red transition-colors">Abholtouren</Link></li>
               <li><Link href="/leistungen#disposition" className="hover:text-jarbou-red transition-colors">Eigene Disposition</Link></li>
-              <li><Link href="/leistungen#qualitaet" className="hover:text-jarbou-red transition-colors">Qualitätsreporting</Link></li>
+              <li><Link href="/leistungen#qualitaetsreporting" className="hover:text-jarbou-red transition-colors">Qualitätsreporting</Link></li>
               <li><Link href="/fuer-unternehmen" className="hover:text-jarbou-red transition-colors">Für Unternehmen</Link></li>
             </ul>
           </div>

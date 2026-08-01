@@ -92,17 +92,21 @@ Alle Inhalte werden zentral in `lib/data.ts` verwaltet:
 
 `lib/data.ts` → `locations`. Felder: `active` (öffentlich sichtbar), `recruiting` (Recruiting-Badge), `roles` (gesuchte Positionen).
 
-## WICHTIG: Fehlende Assets
+## Assets: Automatische Erkennung
 
-Die folgenden Assets fehlen und müssen ergänzt werden:
+Die Website erkennt offizielle Assets **automatisch** (siehe `lib/assets.ts`). Legen Sie die Dateien einfach in `/public` ab und bauen Sie neu — kein Code-Change nötig:
 
-| Asset | Pfad | Beschreibung |
+| Asset | Pfad | Verhalten |
 |---|---|---|
-| **Offizielles Logo** | `/public/logo.svg` | Das offizielle Jarbou-Logo. Aktuell zeigt `components/Logo.tsx` einen Platzhalter (zwei rote Slashes als SVG). Ersetzen Sie die Komponente durch ein `<Image>` mit dem offiziellen Logo. |
-| Hero-Bild/Video | `/public/hero.jpg` | Authentische Logistik-Aufnahme (keine generische Autobahn!) |
+| **Offizielles Logo** | `/public/logo.svg` (oder `logo.png`) | Wird automatisch in Header und Footer gerendert (Original-Proportionen, nur höhenbeschränkt). Bis dahin: strukturierter Wortmarken-Fallback — niemals ein Broken-Image-Icon. |
+| **Hero-Video** | `/public/hero.mp4` oder `hero.webm` | Automatisch als stummes Cinematic-Loop-Video mit Poster. |
+| **Hero-Poster** | `/public/hero-poster.jpg` | Poster-Bild für das Hero-Video. |
+| **Hero-Bild** | `/public/hero.avif` / `hero.webp` / `hero.jpg` | Automatisch als Hero-Hintergrund mit dunklem Overlay (Video hat Vorrang). |
 | OG-Image | `/public/og-image.jpg` | 1200×630 für Social Sharing |
 | Favicon | `/public/favicon.ico` | Aus dem Logo abgeleitet |
 | Flotten-/Team-Fotos | `/public/images/` | Echte Fotos von Fahrzeugen, Team, Dispatch |
+
+**Status:** Diese Dateien sind noch nicht im Repository vorhanden und müssen bereitgestellt werden.
 
 ## Launch-Checkliste (Freigabe erforderlich)
 
@@ -128,16 +132,30 @@ Vor dem Livegang müssen folgende Inhalte geprüft und freigegeben werden:
 - Datenschutzerklärung: DSGVO-konforme Prüfung durch Fachanwalt
 - Cookie-Consent: Rechtliche Prüfung des Consent-Modells
 
-## Formulare
+## Formulare & Backend
 
-Die Formulare (B2B-Anfrage, Bewerbung) sind aktuell Frontend-only (console.log). Für den Produktivbetrieb:
+Alle drei Formulare (Bewerbung, Initiativbewerbung, B2B-Anfrage) sind an produktionsreife API-Routen angebunden:
 
-1. API-Route erstellen (`app/api/...`)
-2. E-Mail-Versand konfigurieren (z. B. Resend, SendGrid)
-3. Empfänger-Adressen als Umgebungsvariablen
-4. Server-seitige Validierung ergänzen
-5. Rate Limiting und Spam-Schutz (z. B. hCaptcha)
-6. DSGVO-konforme Speicherung mit Consent-Log
+| Formular | API-Route | Empfänger |
+|---|---|---|
+| Bewerbung | `POST /api/apply` (type=job) | `CAREER_EMAIL` (Standard: karriere@jarbou-logistik.com) |
+| Initiativbewerbung | `POST /api/apply` (type=initiative) | `CAREER_EMAIL` |
+| B2B-Anfrage | `POST /api/business-inquiry` | `BUSINESS_INQUIRY_EMAIL` (**Pflicht in Produktion**) |
+
+### Setup
+
+1. `.env.example` nach `.env.local` kopieren
+2. `BUSINESS_INQUIRY_EMAIL` und SMTP-Zugangsdaten eintragen (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`)
+3. Ohne SMTP-Konfiguration werden Übermittlungen **im Entwicklungsmodus** in die Server-Konsole geloggt; **in Produktion** schlagen sie mit klarer Fehlermeldung fehl (keine stillen Datenverluste)
+
+### Eingebaute Sicherheit
+
+- **Server-seitige Validierung** aller Felder mit Zod (zusätzlich zur Client-Validierung)
+- **Upload-Validierung**: Dateityp (Endung + MIME), max. 10 MB pro Datei, max. 5 Dateien; Dateinamen werden bereinigt; Dateien werden nie auf Platte geschrieben, sondern direkt als E-Mail-Anhang weitergeleitet
+- **Rate Limiting**: 5 Anfragen pro 15 Minuten pro IP (In-Memory; für horizontale Skalierung `lib/rate-limit.ts` auf Redis umstellen)
+- **Honeypot-Feld** gegen Spam-Bots
+- **Consent-Log**: Zeitstempel der Datenschutz-Einwilligung wird in jeder Übermittlung dokumentiert
+- Keine Formularinhalte in Analytics
 
 ## Zukünftige CMS-Integration
 

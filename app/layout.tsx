@@ -4,6 +4,7 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
+import { hasOfficialLogo, officialLogoSrc } from '@/lib/assets'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'de_DE',
-    url: 'https://jarbou-logistik.de',
+    url: 'https://www.jarbou-logistik.com',
     title: 'Jarbou Logistik – Zuverlässige Logistiklösungen',
     description: 'Logistikpartner für Unternehmen und Arbeitgeber in Deutschland',
     images: [
@@ -31,8 +32,8 @@ export const metadata: Metadata = {
   robots: 'index, follow',
   alternates: {
     languages: {
-      de: 'https://jarbou-logistik.de',
-      en: 'https://jarbou-logistik.de/en',
+      de: 'https://www.jarbou-logistik.com',
+      en: 'https://www.jarbou-logistik.com/en',
     },
   },
 }
@@ -42,6 +43,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const logoSrc = hasOfficialLogo() ? officialLogoSrc() : null
+
   return (
     <html lang="de">
       <head>
@@ -71,11 +74,11 @@ export default function RootLayout({
             }),
           }}
         />
-        <Header />
+        <Header logoSrc={logoSrc} />
         <main>
           {children}
         </main>
-        <Footer />
+        <Footer logoSrc={logoSrc} />
         <CookieConsent />
       </body>
     </html>
