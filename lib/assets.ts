@@ -33,6 +33,17 @@ export function officialLogoSrc(): string {
   return exists('logo.svg') ? '/logo.svg' : '/logo.png'
 }
 
+/**
+ * Logo variant for dark surfaces (header/footer). Prefers logo-white.svg,
+ * falls back to the standard logo.
+ */
+export function officialLogoDarkSurfaceSrc(): string | null {
+  if (exists('logo-white.svg')) return '/logo-white.svg'
+  if (exists('logo-white.png')) return '/logo-white.png'
+  if (hasOfficialLogo()) return officialLogoSrc()
+  return null
+}
+
 export interface HeroMedia {
   type: 'video' | 'image'
   src: string

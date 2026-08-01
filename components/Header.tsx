@@ -37,7 +37,7 @@ export default function Header({ logoSrc }: HeaderProps) {
       className={`sticky top-0 z-40 transition-all duration-300 ${
         isScrolled
           ? 'bg-deep-graphite/95 backdrop-blur-md shadow-lg'
-          : 'bg-transparent'
+          : 'bg-deep-graphite'
       }`}
     >
       <div className="section-container">

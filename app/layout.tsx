@@ -4,7 +4,7 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import CookieConsent from '@/components/CookieConsent'
-import { hasOfficialLogo, officialLogoSrc } from '@/lib/assets'
+import { officialLogoDarkSurfaceSrc } from '@/lib/assets'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     description: 'Logistikpartner für Unternehmen und Arbeitgeber in Deutschland',
     images: [
       {
-        url: '/og-image.jpg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'Jarbou Logistik',
@@ -43,7 +43,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const logoSrc = hasOfficialLogo() ? officialLogoSrc() : null
+  // Header and footer sit on dark surfaces → prefer the white-text variant
+  const logoSrc = officialLogoDarkSurfaceSrc()
 
   return (
     <html lang="de">
@@ -51,7 +52,6 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#F20D18" />
-        <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={inter.className}>
         <script
