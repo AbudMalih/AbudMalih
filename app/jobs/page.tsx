@@ -4,8 +4,8 @@ import { useState, useMemo, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { jobs, jobCategories, locations } from '@/lib/data'
-import { Search, MapPin, Briefcase } from 'lucide-react'
+import { publishedJobs, jobCategories, locations } from '@/lib/data'
+import { Search, MapPin, Briefcase, ArrowRight } from 'lucide-react'
 
 function JobsPageContent() {
   const searchParams = useSearchParams()
@@ -14,14 +14,17 @@ function JobsPageContent() {
   const [selectedLocation, setSelectedLocation] = useState(searchParams.get('location') || '')
 
   const filteredJobs = useMemo(() => {
-    return jobs.filter(job => {
+    return publishedJobs.filter(job => {
+      const locationCity = job.location ? locations.find(l => l.id === job.location)?.city : undefined
       const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           locations.find(l => l.id === job.location)?.city.toLowerCase().includes(searchTerm.toLowerCase())
+                           (locationCity?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
       const matchesCategory = !selectedCategory || job.category === selectedCategory
       const matchesLocation = !selectedLocation || job.location === selectedLocation
-      return job.status === 'open' && matchesSearch && matchesCategory && matchesLocation
+      return matchesSearch && matchesCategory && matchesLocation
     })
   }, [searchTerm, selectedCategory, selectedLocation])
+
+  const noJobsPublished = publishedJobs.length === 0
 
   return (
     <div>
@@ -43,7 +46,8 @@ function JobsPageContent() {
         </div>
       </section>
 
-      {/* Search & Filters */}
+      {/* Search & Filters – only shown when vacancies are published */}
+      {!noJobsPublished && (
       <section className="bg-off-white py-12 md:py-16 sticky top-20 z-30 border-b border-light-grey">
         <div className="section-container">
           <div className="space-y-6">
@@ -86,11 +90,37 @@ function JobsPageContent() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Jobs List */}
       <section className="py-20 md:py-32 bg-white">
         <div className="section-container max-w-4xl">
-          {filteredJobs.length > 0 ? (
+          {noJobsPublished ? (
+            /* Polished empty state: no confirmed active vacancies */
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center py-16 md:py-24"
+            >
+              <div className="flex justify-center gap-1.5 mb-8" aria-hidden="true">
+                <div className="w-1.5 h-12 bg-jarbou-red" style={{ transform: 'skewX(-20deg)' }}></div>
+                <div className="w-1.5 h-12 bg-jarbou-red" style={{ transform: 'skewX(-20deg)' }}></div>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-deep-graphite mb-4 max-w-xl mx-auto">
+                Derzeit sind keine Stellen öffentlich ausgeschrieben.
+              </h2>
+              <p className="text-lg text-mid-grey mb-10 max-w-xl mx-auto">
+                Du kannst uns trotzdem gerne eine Initiativbewerbung senden.
+              </p>
+              <Link
+                href="/initiativbewerbung"
+                className="inline-flex items-center gap-2 px-10 py-4 bg-jarbou-red text-white font-bold rounded-sm hover:bg-red-700 transition-colors text-lg"
+              >
+                Initiativ bewerben <ArrowRight size={20} />
+              </Link>
+            </motion.div>
+          ) : filteredJobs.length > 0 ? (
             <div className="space-y-6">
               {filteredJobs.map((job, index) => {
                 const location = locations.find(l => l.id === job.location)
@@ -111,12 +141,14 @@ function JobsPageContent() {
                         <div className="flex flex-wrap gap-3 text-sm text-mid-grey">
                           <div className="flex items-center gap-1">
                             <MapPin size={16} />
-                            {location?.city}
+                            {location?.city ?? 'Standort auf Anfrage'}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Briefcase size={16} />
-                            {job.type} • {job.schedule}
-                          </div>
+                          {(job.type || job.schedule) && (
+                            <div className="flex items-center gap-1">
+                              <Briefcase size={16} />
+                              {[job.type, job.schedule].filter(Boolean).join(' • ')}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <span className="text-xs font-bold text-jarbou-red bg-red-100 px-3 py-1 rounded-full flex-shrink-0">
@@ -128,7 +160,7 @@ function JobsPageContent() {
 
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-mid-grey">
-                        Veröffentlicht: {new Date(job.published).toLocaleDateString('de-DE')}
+                        {job.published ? `Veröffentlicht: ${new Date(job.published).toLocaleDateString('de-DE')}` : ''}
                       </p>
                       <Link
                         href={`/jobs/${job.id}`}

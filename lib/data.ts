@@ -75,8 +75,8 @@ export const locations = [
     lat: 50.9789,
     lng: 11.0234,
     active: true,
-    recruiting: true,
-    roles: ['Fahrer', 'Disponent', 'Teamleiter'],
+    recruiting: false,  // erst nach Freigabe aktivieren
+    roles: [],  // gesuchte Positionen erst nach Freigabe eintragen
     category: 'Hauptstandort',
   },
   {
@@ -88,8 +88,8 @@ export const locations = [
     lat: 52.5200,
     lng: 13.4050,
     active: true,
-    recruiting: true,
-    roles: ['Fahrer', 'Disponent'],
+    recruiting: false,  // erst nach Freigabe aktivieren
+    roles: [],  // gesuchte Positionen erst nach Freigabe eintragen
     category: 'Operativ',
   },
   {
@@ -101,8 +101,8 @@ export const locations = [
     lat: 53.5511,
     lng: 9.9937,
     active: true,
-    recruiting: true,
-    roles: ['Fahrer'],
+    recruiting: false,  // erst nach Freigabe aktivieren
+    roles: [],  // gesuchte Positionen erst nach Freigabe eintragen
     category: 'Operativ',
   },
   {
@@ -114,8 +114,8 @@ export const locations = [
     lat: 48.1351,
     lng: 11.5820,
     active: true,
-    recruiting: false,
-    roles: ['Fahrer'],
+    recruiting: false,  // erst nach Freigabe aktivieren
+    roles: [],  // gesuchte Positionen erst nach Freigabe eintragen
     category: 'Operativ',
   },
   {
@@ -127,8 +127,8 @@ export const locations = [
     lat: 50.9365,
     lng: 6.9589,
     active: true,
-    recruiting: true,
-    roles: ['Fahrer', 'Teamleiter'],
+    recruiting: false,  // erst nach Freigabe aktivieren
+    roles: [],  // gesuchte Positionen erst nach Freigabe eintragen
     category: 'Operativ',
   },
   {
@@ -140,8 +140,8 @@ export const locations = [
     lat: 50.1109,
     lng: 8.6821,
     active: true,
-    recruiting: true,
-    roles: ['Fahrer', 'Disponent'],
+    recruiting: false,  // erst nach Freigabe aktivieren
+    roles: [],  // gesuchte Positionen erst nach Freigabe eintragen
     category: 'Operativ',
   },
   {
@@ -153,8 +153,8 @@ export const locations = [
     lat: 51.3397,
     lng: 12.3731,
     active: true,
-    recruiting: false,
-    roles: ['Fahrer'],
+    recruiting: false,  // erst nach Freigabe aktivieren
+    roles: [],  // gesuchte Positionen erst nach Freigabe eintragen
     category: 'Operativ',
   },
 ]
@@ -169,114 +169,206 @@ export const jobCategories = [
   { id: 'other', label: 'Weitere Positionen', icon: 'Briefcase' },
 ]
 
-// Sample Jobs - These are demo jobs with clear labels
-export const jobs = [
+// ============================================================
+// Jobs – CMS-ready data model with publication workflow
+// ============================================================
+//
+// STATUS-WORKFLOW:
+//   draft  → Rollenvorlage / in Vorbereitung, NIE öffentlich sichtbar
+//   active → veröffentlicht, aber NUR wenn zusätzlich confirmed: true
+//   paused → vorübergehend offline (bleibt im System)
+//   closed → geschlossen (kein JobPosting-Schema, nicht öffentlich)
+//
+// Öffentlich erscheint eine Stelle ausschließlich, wenn
+// status === 'active' UND confirmed === true (siehe publishedJobs).
+//
+// FREIGABEREGEL: salary, location, schedule, clientName und benefits
+// bleiben null, bis die Werte von der Geschäftsführung freigegeben
+// wurden. Die Felder existieren im Modell und werden automatisch
+// angezeigt, sobald sie gefüllt sind.
+
+export type JobStatus = 'draft' | 'active' | 'paused' | 'closed'
+
+export interface Job {
+  id: string
+  title: string
+  category: string
+  status: JobStatus
+  /** Öffentliche Sichtbarkeit erfordert status 'active' UND confirmed true */
+  confirmed: boolean
+  /** Kennzeichnung für unbestätigte Rollen (nur intern/Admin) */
+  internalLabel?: string
+  description: string
+  responsibilities: string[]
+  requirements: string[]
+  /** Optionaler Hinweis, z. B. zu Erfahrungsanforderungen */
+  experienceNote?: string
+  // --- Felder, die erst nach Freigabe gefüllt werden ---
+  location: string | null      // Standort-ID aus `locations`
+  type: string | null          // z. B. 'Festanstellung'
+  schedule: string | null      // z. B. 'Vollzeit'
+  startDate: string | null
+  salary: string | null
+  clientName: string | null
+  benefits: string[] | null
+  drivingLicense: boolean
+  published: string | null     // Veröffentlichungsdatum (bei Aktivierung setzen)
+  expiryDate: string | null    // optionales Ablaufdatum für JobPosting-Schema
+}
+
+export const jobs: Job[] = [
   {
-    id: 'job-driver-erfurt-001',
-    title: 'Fahrer / Kurier (m/w/d) - Erfurt',
+    id: 'rolle-fahrer-kurier',
+    title: 'Fahrer / Kurier (m/w/d)',
     category: 'driver',
-    location: 'erfurt',
-    type: 'Festanstellung',
-    schedule: 'Vollzeit',
-    startDate: '2026-09-01',
-    published: '2026-08-01',
-    description: 'Wir suchen zuverlässige Fahrer und Kuriere für unser Erfurter Netzwerk. Sie arbeiten mit modernen Fahrzeugen, fahren festgelegte Routen und liefern täglich Qualität.',
+    status: 'draft',
+    confirmed: false,
+    internalLabel: 'Beispielposition – derzeit nicht veröffentlicht',
+    description:
+      'Als Fahrer / Kurier bist du das Gesicht von Jarbou auf der Straße. Du stellst Sendungen zuverlässig zu, holst sie ab und sorgst dafür, dass jede Tour sauber dokumentiert ist.',
     responsibilities: [
-      'Regelmäßige Paketzustellungen und -abholungen',
-      'Vollständige Sendungsdokumentation und Scanning',
-      'Einhaltung von Zeitfenstern und Qualitätsstandards',
-      'Tägliche Fahrzeuguberprüfung und Wartung',
-      'Zusammenarbeit mit dem Dispatch-Team',
+      'Zustellung und Abholung von Paketsendungen',
+      'Scannen der Sendungen und vollständige Dokumentation',
+      'Fahrzeug- und Tourencheck vor Fahrtantritt',
+      'Einhaltung der Zustellzeitfenster',
+      'Bearbeitung von Retouren',
+      'Rückmeldung an die Disposition',
     ],
     requirements: [
-      'Führerschein Klasse B oder C erforderlich',
-      'Erfahrung in Kurier- oder Paketdiensten von Vorteil',
-      'Zuverlässigkeit und Belastbarkeit',
-      'Gute Deutschkenntnisse',
-      'Bereitschaft zu Wochenendtouren',
+      'Gültiger Führerschein',
+      'Arbeitserlaubnis in Deutschland',
+      'Zuverlässigkeit und Pünktlichkeit',
+      'Sichere Fahrweise',
+      'Bereitschaft zur Schichtarbeit',
+      'Grundlegende Deutschkenntnisse für die Kommunikation',
     ],
-    benefits: [
-      'Unbefristete Anstellung',
-      'Moderner Fuhrpark',
-      'Strukturierte Einarbeitung',
-      'Persönliche Ansprechpartner',
-      'Entwicklungsmöglichkeiten',
-    ],
+    experienceNote:
+      'Erfahrung in der Paketzustellung ist willkommen, aber nicht immer erforderlich.',
+    location: null,
+    type: null,
+    schedule: null,
+    startDate: null,
     salary: null,
+    clientName: null,
+    benefits: null,
     drivingLicense: true,
-    status: 'open',
+    published: null,
+    expiryDate: null,
   },
   {
-    id: 'job-dispatch-erfurt-001',
-    title: 'Disponent (m/w/d) - Erfurt',
+    id: 'rolle-disponent-logistik',
+    title: 'Disponent Logistik (m/w/d)',
     category: 'dispatch',
-    location: 'erfurt',
-    type: 'Festanstellung',
-    schedule: 'Vollzeit',
-    startDate: '2026-09-01',
-    published: '2026-08-01',
-    description: 'Als Disponent koordinieren Sie unsere Touren und Flotte. Sie planen Routen, optimieren Abläufe und arbeiten eng mit unseren Fahrerteams zusammen.',
+    status: 'draft',
+    confirmed: false,
+    internalLabel: 'Beispielposition – derzeit nicht veröffentlicht',
+    description:
+      'Als Disponent steuerst du unsere Touren und hältst den operativen Betrieb am Laufen. Du planst Routen, koordinierst Fahrerteams und löst Probleme, bevor sie zu Verzögerungen werden.',
     responsibilities: [
-      'Tägliche Tourenplanung und -optimierung',
-      'Koordination mit Fahrerteams',
-      'Monitoring von Lieferterminen und Zeitfenstern',
-      'Qualitätskontrolle und Reporting',
-      'Enge Zusammenarbeit mit Kundensupport',
+      'Tourenplanung und Routenoptimierung',
+      'Koordination der Fahrerinnen und Fahrer',
+      'Kontrolle der Scanning-Qualität',
+      'Operative Problemlösung im Tagesgeschäft',
+      'Tägliches Reporting',
+      'Kommunikation mit dem Standortteam',
     ],
     requirements: [
-      'Erfahrung in Tourenplanung oder Logistik',
-      'Sichere Beherrschung von Dispositionssoftware',
-      'Organisationstalent und Belastbarkeit',
+      'Erfahrung in Logistik oder Disposition',
       'Gute Deutschkenntnisse',
-      'Problemlösungsfähigkeit',
+      'Sicherer Umgang mit dem Computer',
+      'Organisationsfähigkeit',
+      'Belastbarkeit',
+      'Bereitschaft zu operativen Schichten',
     ],
-    benefits: [
-      'Unbefristete Anstellung',
-      'Modernes Büro-Setup',
-      'Strukturierte Einarbeitung',
-      'Entwicklungsperspektiven zur Standortleitung',
-      'Flexible Arbeitszeiten wo möglich',
-    ],
+    location: null,
+    type: null,
+    schedule: null,
+    startDate: null,
     salary: null,
+    clientName: null,
+    benefits: null,
     drivingLicense: false,
-    status: 'open',
+    published: null,
+    expiryDate: null,
   },
   {
-    id: 'job-teamlead-berlin-001',
-    title: 'Teamleiter (m/w/d) - Berlin',
+    id: 'rolle-teamleiter-standortleiter',
+    title: 'Teamleiter / Standortleiter Logistik (m/w/d)',
     category: 'team-lead',
-    location: 'berlin',
-    type: 'Festanstellung',
-    schedule: 'Vollzeit',
-    startDate: '2026-10-01',
-    published: '2026-08-01',
-    description: 'Führen Sie ein Team von Fahrern und unterstützen Sie bei der täglichen Abwicklung. Sie sind Ansprechpartner für Fahrer, Kunden und das Management.',
+    status: 'draft',
+    confirmed: false,
+    internalLabel: 'Beispielposition – derzeit nicht veröffentlicht',
+    description:
+      'Als Team- oder Standortleiter trägst du Verantwortung für den täglichen Betrieb, dein Fahrerteam und die Qualität am Standort. Du organisierst, entscheidest und packst selbst mit an.',
     responsibilities: [
-      'Führung und Entwicklung des Fahrerteams',
-      'Qualitätskontrolle und Compliance',
-      'Kundenbetreuung und Problemlösung',
-      'Personalplanung und Reporting',
-      'Einhaltung von Sicherheits- und Qualitätsstandards',
+      'Organisation des täglichen operativen Betriebs',
+      'Verantwortung für die Fahrerinnen und Fahrer',
+      'Unterstützung im Recruiting',
+      'Qualitätskontrolle',
+      'Problemlösung im Tagesgeschäft',
+      'KPI-Monitoring',
+      'Meetings und Abstimmung mit operativen Partnern',
     ],
     requirements: [
-      'Mehrjährige Erfahrung in Teamleitung oder Logistik',
-      'Führungserfahrung erforderlich',
-      'Sichere Deutschkenntnisse',
-      'Bereitschaft zu flexiblen Arbeitszeiten',
-      'Unternehmerisches Denken',
+      'Führungserfahrung',
+      'Logistik-Know-how',
+      'Sichere Kommunikation auf Deutsch',
+      'Zuverlässigkeit',
+      'Organisationsstärke',
+      'Qualitätsfokus',
+      'Hands-on-Mentalität',
     ],
-    benefits: [
-      'Unbefristete Anstellung',
-      'Attraktive Vergütung',
-      'Strukturierte Einarbeitung',
-      'Aufstiegsmöglichkeiten zur Standortleitung',
-      'Moderne Ausstattung und Tools',
-    ],
+    location: null,
+    type: null,
+    schedule: null,
+    startDate: null,
     salary: null,
+    clientName: null,
+    benefits: null,
     drivingLicense: false,
-    status: 'open',
+    published: null,
+    expiryDate: null,
+  },
+  {
+    id: 'rolle-qualitaet-reporting',
+    title: 'Mitarbeiter Qualität & Reporting (m/w/d)',
+    category: 'quality',
+    status: 'draft',
+    confirmed: false,
+    internalLabel: 'Beispielposition – derzeit nicht veröffentlicht',
+    description:
+      'In Qualität & Reporting machst du Leistung sichtbar. Du überwachst Abhol- und Zustellqualität, prüfst Scans und Zeitfenster und lieferst die Berichte, mit denen wir täglich besser werden.',
+    responsibilities: [
+      'Monitoring der Abhol- und Zustellqualität',
+      'Prüfung von Scans und Zeitfenstern',
+      'Erstellung täglicher Reports',
+      'Analyse von Touren',
+      'Mitarbeit an der Verbesserung der operativen Leistung',
+    ],
+    requirements: [
+      'Hohe Detailgenauigkeit',
+      'Sicherer Umgang mit Daten und Tabellen',
+      'Deutschkenntnisse für die Kommunikation',
+      'Zuverlässigkeit',
+      'Analytisches Denken',
+    ],
+    location: null,
+    type: null,
+    schedule: null,
+    startDate: null,
+    salary: null,
+    clientName: null,
+    benefits: null,
+    drivingLicense: false,
+    published: null,
+    expiryDate: null,
   },
 ]
+
+/** Öffentlich sichtbare Stellen: nur aktiv UND bestätigt. */
+export const publishedJobs: Job[] = jobs.filter(
+  j => j.status === 'active' && j.confirmed
+)
 
 // FAQs
 export const faqs = [
@@ -381,6 +473,14 @@ export const companyTimeline = [
     description: 'Weiterführung der Digitalisierung. AI-gestützte Analyse und Optimierung. Stärkere Kundenorientierung.',
   },
 ]
+
+// Hero media positioning (see README: "Hero ersetzen").
+// CSS object-position values, separately for mobile and desktop.
+// Examples: 'center center', 'center top', '30% center', 'left bottom'
+export const heroMediaConfig = {
+  mobilePosition: 'center center',
+  desktopPosition: 'center center',
+}
 
 // Contact Information
 export const contactInfo = {

@@ -84,9 +84,28 @@ Alle Inhalte werden zentral in `lib/data.ts` verwaltet:
 
 `lib/data.ts` → `companyStats` bearbeiten.
 
-### Jobs hinzufügen/entfernen
+### Jobs verwalten (Status-Workflow)
 
-`lib/data.ts` → `jobs` Array bearbeiten. Setzen Sie `status: 'closed'`, um eine Stelle zu deaktivieren.
+Alle Stellen leben in `lib/data.ts` → `jobs`. Die vier enthaltenen Einträge sind **wiederverwendbare Rollenvorlagen** (Fahrer/Kurier, Disponent, Teamleiter/Standortleiter, Qualität & Reporting) mit `internalLabel: 'Beispielposition – derzeit nicht veröffentlicht'` — **keine echten Vakanzen**.
+
+Jede Stelle hat zwei Sichtbarkeits-Felder:
+
+| Feld | Werte | Bedeutung |
+|---|---|---|
+| `status` | `draft` / `active` / `paused` / `closed` | Workflow-Status |
+| `confirmed` | `true` / `false` | Freigabe durch die Geschäftsführung |
+
+**Öffentlich erscheint eine Stelle nur bei `status: 'active'` UND `confirmed: true`** (gefiltert über `publishedJobs`). Das gilt für die Stellenliste, die Detailseite, das Bewerbungsformular, die Sitemap und das JobPosting-Schema — Entwürfe erzeugen niemals Strukturdaten.
+
+**Eine Stelle veröffentlichen:**
+1. Vorlage kopieren, `id` und Inhalte anpassen
+2. Freigegebene Werte eintragen: `location`, `type`, `schedule`, `startDate`, ggf. `salary`, `benefits`, `clientName` (bleiben sonst `null` und werden automatisch ausgeblendet)
+3. `published` auf das heutige Datum setzen, optional `expiryDate`
+4. `status: 'active'` und `confirmed: true` setzen
+
+**Wichtig:** Gehälter, exakte Standorte, Arbeitszeiten, Kundennamen und Benefits erst eintragen, wenn sie freigegeben wurden. Ohne veröffentlichte Stellen zeigt die Jobs-Seite automatisch einen gepflegten Leerzustand mit „Initiativ bewerben“-Button.
+
+Dasselbe Freigabeprinzip gilt für `locations`: `recruiting` und `roles` erst nach Bestätigung füllen.
 
 ### Standorte aktualisieren
 
@@ -99,14 +118,34 @@ Die Website erkennt offizielle Assets **automatisch** (siehe `lib/assets.ts`). L
 | Asset | Pfad | Verhalten |
 |---|---|---|
 | **Offizielles Logo** | `/public/logo.svg` (oder `logo.png`) | Wird automatisch in Header und Footer gerendert (Original-Proportionen, nur höhenbeschränkt). Bis dahin: strukturierter Wortmarken-Fallback — niemals ein Broken-Image-Icon. |
-| **Hero-Video** | `/public/hero.mp4` oder `hero.webm` | Automatisch als stummes Cinematic-Loop-Video mit Poster. |
-| **Hero-Poster** | `/public/hero-poster.jpg` | Poster-Bild für das Hero-Video. |
-| **Hero-Bild** | `/public/hero.avif` / `hero.webp` / `hero.jpg` | Automatisch als Hero-Hintergrund mit dunklem Overlay (Video hat Vorrang). |
+| **Hero-Video** | `/public/jarbou-hero.mp4` (auch `hero.mp4`/`.webm`) | Automatisch als stummes Cinematic-Loop-Video mit Poster. |
+| **Hero-Poster** | `/public/jarbou-hero-poster.jpg` | Poster-Bild für das Hero-Video. |
+| **Hero-Bild** | `/public/jarbou-hero.jpg` (auch `.avif`/`.webp`, oder `hero.*`) | Automatisch als Hero-Hintergrund mit dunklem Overlay (Video hat Vorrang vor Bild). |
 | OG-Image | `/public/og-image.jpg` | 1200×630 für Social Sharing |
 | Favicon | `/public/favicon.ico` | Aus dem Logo abgeleitet |
 | Flotten-/Team-Fotos | `/public/images/` | Echte Fotos von Fahrzeugen, Team, Dispatch |
 
-**Status:** Diese Dateien sind noch nicht im Repository vorhanden und müssen bereitgestellt werden.
+**Status:** Logo, Favicon und OG-Image sind vorhanden. Hero-Medien und Foto-Material müssen noch bereitgestellt werden — bis dahin zeigt der Hero bewusst den dunklen Gradient-Fallback (kein generisches Autobahn-, Schiffs- oder Flugzeugbild).
+
+### Hero ersetzen — Schritt für Schritt
+
+1. **Bild:** Datei als `/public/jarbou-hero.jpg` ablegen (empfohlen: ≥ 2000 px Breite, komprimiert, authentische Jarbou-Aufnahme). Alternativ `.webp`/`.avif`.
+2. **Oder Video:** Datei als `/public/jarbou-hero.mp4` ablegen (10–15 s Loop, stumm, web-komprimiert, ideal ≤ 8 MB) plus Poster-Bild als `/public/jarbou-hero-poster.jpg`.
+3. Neu bauen (`npm run build`) — der Hero verwendet das Medium automatisch, inklusive dunklem Overlay für Textlesbarkeit. **Kein Code-Change, kein Redesign nötig.** Liegt ein Video UND ein Bild vor, gewinnt das Video.
+4. Datei löschen → der Gradient-Fallback kehrt automatisch zurück.
+
+**Bildausschnitt für Desktop und Mobile steuern:**
+
+In `lib/data.ts` → `heroMediaConfig` lassen sich die CSS-`object-position`-Werte getrennt für Mobil und Desktop setzen — z. B. um auf dem Smartphone ein Fahrzeug im Bildzentrum zu halten:
+
+```ts
+export const heroMediaConfig = {
+  mobilePosition: '30% center',   // Handy: Fokus weiter links
+  desktopPosition: 'center center',
+}
+```
+
+Gültige Werte: `center`, `top`, `bottom`, `left`, `right`, Prozentwerte (`'30% 40%'`) und Kombinationen (`'center top'`). Mobil greift bis 767 px Breite, Desktop ab 768 px.
 
 ## Launch-Checkliste (Freigabe erforderlich)
 

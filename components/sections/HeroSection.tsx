@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
+import { heroMediaConfig } from '@/lib/data'
 
 interface HeroMedia {
   type: 'video' | 'image'
@@ -37,12 +38,18 @@ export default function HeroSection({ media }: HeroSectionProps) {
   }
 
   return (
-    <section className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-deep-graphite">
+    <section
+      className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-deep-graphite"
+      style={{
+        '--hero-pos-mobile': heroMediaConfig.mobilePosition,
+        '--hero-pos-desktop': heroMediaConfig.desktopPosition,
+      } as React.CSSProperties}
+    >
       {/* Hero media: official asset when present, cinematic gradient fallback otherwise */}
       <div className="absolute inset-0 overflow-hidden bg-deep-graphite">
         {media?.type === 'video' && (
           <video
-            className="absolute inset-0 w-full h-full object-cover"
+            className="hero-media absolute inset-0 w-full h-full object-cover"
             src={media.src}
             poster={media.poster}
             autoPlay
@@ -55,7 +62,7 @@ export default function HeroSection({ media }: HeroSectionProps) {
         {media?.type === 'image' && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            className="absolute inset-0 w-full h-full object-cover"
+            className="hero-media absolute inset-0 w-full h-full object-cover"
             src={media.src}
             alt=""
             aria-hidden="true"

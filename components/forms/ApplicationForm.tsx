@@ -3,8 +3,8 @@
 import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { jobs, locations } from '@/lib/data'
-import { CheckCircle2, Upload, X } from 'lucide-react'
+import { publishedJobs, locations } from '@/lib/data'
+import { CheckCircle2, Upload, X, ArrowRight } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -73,7 +73,7 @@ export default function ApplicationForm() {
     setSubmitting(true)
 
     try {
-      const job = jobs.find(j => j.id === formData.jobId)
+      const job = publishedJobs.find(j => j.id === formData.jobId)
       const body = new FormData()
       body.set('type', 'job')
       body.set('jobId', formData.jobId)
@@ -105,6 +105,35 @@ export default function ApplicationForm() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // No confirmed active vacancies → guide applicants to the initiative route
+  if (publishedJobs.length === 0 && !submitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="bg-white border border-light-grey rounded-sm p-10 md:p-14 text-center"
+      >
+        <div className="flex justify-center gap-1.5 mb-8" aria-hidden="true">
+          <div className="w-1.5 h-12 bg-jarbou-red" style={{ transform: 'skewX(-20deg)' }}></div>
+          <div className="w-1.5 h-12 bg-jarbou-red" style={{ transform: 'skewX(-20deg)' }}></div>
+        </div>
+        <h2 className="text-2xl font-bold text-deep-graphite mb-4">
+          Derzeit sind keine Stellen öffentlich ausgeschrieben.
+        </h2>
+        <p className="text-mid-grey mb-8">
+          Du kannst uns trotzdem gerne eine Initiativbewerbung senden – wir prüfen, welche Position und welcher Standort zu dir passen könnten.
+        </p>
+        <Link
+          href="/initiativbewerbung"
+          className="inline-flex items-center gap-2 px-10 py-4 bg-jarbou-red text-white font-bold rounded-sm hover:bg-red-700 transition-colors text-lg"
+        >
+          Initiativ bewerben <ArrowRight size={20} />
+        </Link>
+      </motion.div>
+    )
   }
 
   if (submitted) {
@@ -174,9 +203,9 @@ export default function ApplicationForm() {
           className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
         >
           <option value="">Bitte wählen...</option>
-          {jobs.filter(j => j.status === 'open').map(job => (
+          {publishedJobs.map(job => (
             <option key={job.id} value={job.id}>
-              {job.title} - {locations.find(l => l.id === job.location)?.city}
+              {job.title}{job.location ? ` - ${locations.find(l => l.id === job.location)?.city}` : ''}
             </option>
           ))}
         </select>
@@ -261,7 +290,7 @@ export default function ApplicationForm() {
             className="w-full px-4 py-3 border border-light-grey rounded-sm focus:border-jarbou-red focus:outline-none"
           >
             <option value="">Bitte wählen...</option>
-            {locations.filter(l => l.active && l.recruiting).map(loc => (
+            {locations.filter(l => l.active).map(loc => (
               <option key={loc.id} value={loc.id}>{loc.city}</option>
             ))}
           </select>

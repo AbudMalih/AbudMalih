@@ -51,16 +51,24 @@ export interface HeroMedia {
 }
 
 export function getHeroMedia(): HeroMedia | null {
-  for (const file of ['hero.mp4', 'hero.webm']) {
+  const videoCandidates = ['jarbou-hero.mp4', 'jarbou-hero.webm', 'hero.mp4', 'hero.webm']
+  const posterCandidates = ['jarbou-hero-poster.jpg', 'hero-poster.jpg']
+  const imageCandidates = [
+    'jarbou-hero.avif', 'jarbou-hero.webp', 'jarbou-hero.jpg', 'jarbou-hero.jpeg', 'jarbou-hero.png',
+    'hero.avif', 'hero.webp', 'hero.jpg', 'hero.jpeg', 'hero.png',
+  ]
+
+  for (const file of videoCandidates) {
     if (exists(file)) {
+      const poster = posterCandidates.find(p => exists(p))
       return {
         type: 'video',
         src: `/${file}`,
-        poster: exists('hero-poster.jpg') ? '/hero-poster.jpg' : undefined,
+        poster: poster ? `/${poster}` : undefined,
       }
     }
   }
-  for (const file of ['hero.avif', 'hero.webp', 'hero.jpg', 'hero.jpeg', 'hero.png']) {
+  for (const file of imageCandidates) {
     if (exists(file)) {
       return { type: 'image', src: `/${file}` }
     }
