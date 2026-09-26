@@ -44,6 +44,7 @@
 
       var head = '<div class="page-head"><div><h1>' + esc(t('Recruitment Pipeline')) + '</h1><div class="sub">' + esc(t('Drag cards between stages, or use the "Move…" menu on each card. Moving to Ready does not override administrative readiness.')) + '</div></div>' +
         '<div class="actions"><button class="btn primary" data-action="add-candidate">' + icon('plus') + esc(t('Add Candidate')) + '</button></div></div>';
+      /* i18n: t('All stations') t('All recruiters') */
       var tb = '<div class="card mb-16"><div class="toolbar" style="border:0">' +
         '<div class="search-input">' + icon('search') + '<input type="search" id="pipe-q" placeholder="' + esc(t('Filter cards…')) + '" value="' + esc(f.q) + '" data-input="pipe-q" aria-label="' + esc(t('Filter pipeline')) + '"></div>' +
         '<select class="sm" data-change="pipe-filter" data-k="station" aria-label="' + esc(t('Station')) + '">' + ui.options(s.stations, f.station, { blank: 'All stations' }) + '</select>' +

@@ -58,6 +58,7 @@
       if (st.page >= pages) st.page = pages - 1;
       var slice = list.slice(st.page * SIZE, st.page * SIZE + SIZE);
 
+      /* i18n: t('All documents') */
       var tb = '<div class="toolbar"><div class="seg-tabs"><button class="' + (st.only === 'all' ? 'on' : '') + '" data-action="docs-only" data-v="all">' + esc(t('All candidates')) + '</button><button class="' + (st.only === 'missing' ? 'on' : '') + '" data-action="docs-only" data-v="missing">' + esc(t('Missing / outstanding only')) + '</button></div>' +
         '<select class="sm" data-change="docs-doc" aria-label="' + esc(t('Document')) + '">' + ui.options(defs.map(function (d) { return { key: d.key, label: d.label }; }), st.doc, { blank: 'All documents' }) + '</select>' +
         '<div class="search-input">' + icon('search') + '<input type="search" id="docs-q" placeholder="' + esc(t('Search candidate…')) + '" value="' + esc(st.q) + '" data-input="docs-q" aria-label="' + esc(t('Search')) + '"></div>' +
