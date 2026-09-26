@@ -1006,6 +1006,13 @@
     "{0}: {1} candidates added": "{0}: {1} Kandidaten hinzugefügt",
     "{0}: {1} · expires {2}": "{0}: {1} · gültig bis {2}",
     "{0}d ago": "vor {0} T.",
-    "{0}d overdue": "{0} T. überfällig"
+    "{0}d overdue": "{0} T. überfällig",
+    "High priority": "Hohe Priorität",
+    "Pending (in process)": "Ausstehend (in Bearbeitung)",
+    "Not signed (all)": "Nicht unterschrieben (alle)",
+    "Driving licence": "Führerschein",
+    "Work permit": "Arbeitserlaubnis",
+    "Residence permit": "Aufenthaltstitel",
+    "Bank details / IBAN": "Bankverbindung / IBAN",
   });
 })();

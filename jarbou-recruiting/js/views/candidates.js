@@ -170,6 +170,7 @@
       sel('station', t('Location / Station'), ui.options([{ key: '__none', label: 'Not assigned' }].concat(s.stations), f.station, { blank: 'Any' })) +
       sel('docs', t('Documents'), ui.options([{ key: 'missing', label: t('Missing / outstanding') }, { key: 'complete', label: t('Complete') }, { key: 'expiring', label: t('Expiring / expired') }]
         .concat(s.documents.map(function (d) { return { key: 'doc:' + d.key, label: t('{0} outstanding', L.shortOf(d)) }; })), f.docs, { blank: 'Any', raw: true })) +
+      /* i18n: t('Pending (in process)') t('Not signed (all)') */
       sel('contract', t('Contract status'), ui.options([{ key: 'pending', label: 'Pending (in process)' }, { key: 'unsigned', label: 'Not signed (all)' }].concat(C.CONTRACT_STATUSES.map(function (x) { return { key: 'st:' + x.key, label: x.label }; })), f.contract, { blank: 'Any' })) +
       sel('onboarding', t('Onboarding status'), ui.options([{ key: 'not_started', label: 'Not started' }, { key: 'in_progress', label: 'In progress' }, { key: 'complete', label: 'Complete' }], f.onboarding, { blank: 'Any' })) +
       sel('recruiter', t('Recruiter'), ui.options([{ key: '__none', label: 'Unassigned' }].concat(s.recruiters), f.recruiter, { blank: 'Any' })) +

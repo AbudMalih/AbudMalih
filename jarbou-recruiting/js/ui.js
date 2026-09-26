@@ -194,6 +194,7 @@
     return ui.badge(t(a.short), a.badge, key === 'ready' ? 'check' : key === 'not_available' ? 'x' : key ? 'clock' : 'minus');
   };
   ui.prioBadge = function (p) {
+    /* i18n: t('High priority') t('Medium') t('Low') */
     var map = { high: ['High priority', 'red', 'alert'], medium: ['Medium', 'amber', 'clock'], low: ['Low', 'blue', 'info'] };
     var m = map[p] || map.low;
     return '<span class="badge prio ' + m[1] + '">' + icon(m[2]) + esc(t(m[0])) + '</span>';

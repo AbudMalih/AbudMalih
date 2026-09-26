@@ -11,6 +11,7 @@
   var version = 0;
   L.bump = function () { version++; memo.clear(); };
 
+  /* i18n: t('Führungszeugnis') t('Driving licence') t('ID / Passport') t('Work permit') t('Residence permit') t('Bank details / IBAN') */
   var KEY_DOCS = {
     fuehrungszeugnis: 'Führungszeugnis',
     licence: 'Driving licence',
