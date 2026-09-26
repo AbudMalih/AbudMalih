@@ -6,7 +6,7 @@
 
   C.APP_ID = 'jarbou-recruiting';
   C.SCHEMA_VERSION = 1;
-  C.APP_VERSION = '1.0.0';
+  C.APP_VERSION = '1.1.0';
 
   C.STAGES = [
     { key: 'new', label: 'New', color: '#8a8f97' },

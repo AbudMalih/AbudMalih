@@ -201,15 +201,35 @@ FOLDER CONTENTS
 
 
 -------------------------------------------------------------------------------
+LANGUAGES / SPRACHEN / اللغات
+-------------------------------------------------------------------------------
+  The application is available in:
+    Deutsch  (German – main language, default)
+    English
+    العربية  (Arabic – right-to-left layout)
+
+  Switch the language with the DE / EN / AR selector in the top bar, or in
+  Settings > General > Language. The choice is saved and used the next time.
+
+  What is translated: all menus, buttons, statuses, warnings, reports, print
+  documents and export column headers.
+  What is NOT translated: data you type yourself (names, notes, stations,
+  recruiters, custom document names). Activity-log entries are stored in the
+  language that was active when they were written.
+  Dates are always shown as DD.MM.YYYY and amounts in euro (€).
+
+
+-------------------------------------------------------------------------------
 QUICK REFERENCE
 -------------------------------------------------------------------------------
   Ctrl+K / Cmd+K     Find a candidate from anywhere
   Esc                Close profile / dialog
   Ctrl+Enter         Save the candidate form / add a note or activity
   Top bar selector   Focus on one project (multi-project ready)
+  DE / EN / AR       Switch language (Arabic uses right-to-left layout)
   Settings           Company name, required drivers (target), stations,
                      projects, positions, recruiters, sources, document
                      requirements, onboarding checklist, backup reminder
 
-  Version 1.0.0
+  Version 1.1.0
 ===============================================================================

@@ -188,7 +188,7 @@
         [[t('Today'), 0], [t('Tomorrow'), 1], [t('+3 days'), 3], [t('+1 week'), 7]].map(function (p) { return '<button type="button" class="btn xs" data-days="' + p[1] + '">' + p[0] + '</button>'; }).join('') + '</div></div>' +
         '<div class="field span-3"><label>' + t('Follow-up note') + '</label><input type="text" name="note" value="' + esc((c && c.followUpNote) || '') + '" placeholder="' + esc(t('What needs to happen?')) + '"></div>' +
         '</form>',
-      foot: (c && c.followUpDate ? '<button class="btn ghost" id="fu-clear" style="margin-right:auto">' + t('Mark as done / clear') + '</button>' : '') + '<button class="btn" data-close>' + t('Cancel') + '</button><button class="btn primary" id="fu-save">' + t('Save Follow-up') + '</button>'
+      foot: (c && c.followUpDate ? '<button class="btn ghost" id="fu-clear" style="margin-inline-end:auto">' + t('Mark as done / clear') + '</button>' : '') + '<button class="btn" data-close>' + t('Cancel') + '</button><button class="btn primary" id="fu-save">' + t('Save Follow-up') + '</button>'
     });
     m.qa('[data-days]').forEach(function (b) { b.addEventListener('click', function () { m.q('[name=date]').value = U.addDays(U.todayISO(), +b.getAttribute('data-days')); }); });
     var clr = m.q('#fu-clear');
