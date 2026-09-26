@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Sign in · JARBOU Recruiting Command Center</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="login-page">
+  <main class="login-wrap">
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="login-brand">
+        <img src="assets/jarbou-logo.svg" alt="JARBOU Logistik GmbH" class="login-logo">
+        <div class="login-app" data-i18n="Recruiting Command Center">Recruiting Command Center</div>
+        <div class="project-tag"><span class="dhl-dot" aria-hidden="true"></span><span data-i18n="DHL Express Project">DHL Express Project</span></div>
+      </div>
+      <h1 id="login-title" data-i18n="Sign in">Sign in</h1>
+      <div class="banner amber" id="login-msg" hidden></div>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="username" data-i18n="Username or email">Username or email</label>
+          <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+        </div>
+        <div class="field mt-12">
+          <label for="password" data-i18n="Password">Password</label>
+          <div class="pw-wrap">
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="icon-btn pw-toggle" id="pw-toggle" aria-label="Show password" data-i18n-attr="aria-label:Show password;title:Show password" title="Show password">
+              <svg class="i" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <label class="check-inline mt-12"><input type="checkbox" id="remember"> <span data-i18n="Stay signed in on this device">Stay signed in on this device</span></label>
+        <div class="err mt-8" id="login-err" role="alert"></div>
+        <button class="btn primary login-btn mt-16" type="submit" id="login-btn"><span data-i18n="Sign In">Sign In</span></button>
+      </form>
+      <div class="login-foot">
+        <div class="internal"><svg class="i sm" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i18n="Internal Use Only">Internal Use Only</span></div>
+        <div class="login-langs" id="login-langs"></div>
+      </div>
+      <p class="small muted login-help" data-i18n="No account? Accounts are created by your JARBOU administrator.">No account? Accounts are created by your JARBOU administrator.</p>
+    </section>
+    <p class="login-legal">JARBOU Logistik GmbH · <span id="login-version"></span></p>
+  </main>
+  <script src="js/util.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/lang/de.js"></script>
+  <script src="js/lang/ar.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

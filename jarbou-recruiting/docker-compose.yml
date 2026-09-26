@@ -1,0 +1,66 @@
+# JARBOU Recruiting Command Center – NAS edition
+# Start:   docker compose up -d --build
+# Status:  docker compose ps        (both services should show "healthy")
+# Logs:    docker compose logs -f app
+#
+# All important data is stored in folders NEXT TO this file on the NAS:
+#   ./data/postgres   PostgreSQL database files
+#   ./data/uploads    uploaded candidate documents
+#   ./backups         automatic + manual backups
+# Never delete these folders when updating the application.
+
+name: jarbou-recruiting
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-jarbou_recruiting}
+      POSTGRES_USER: ${POSTGRES_USER:-jarbou}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      TZ: ${TZ:-Europe/Berlin}
+      PGTZ: ${TZ:-Europe/Berlin}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    # No "ports:" on purpose – PostgreSQL is reachable ONLY from the app container.
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    shm_size: 128mb
+
+  app:
+    build: .
+    image: jarbou-recruiting-app:2.0.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      NODE_ENV: production
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - ./data/uploads:/data/uploads
+      - ./backups:/backups
+    tmpfs:
+      - /var/lib/postgresql/data   # unused path inherited from the base image (keeps Docker from creating an empty volume)
+    networks: [internal, web]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+networks:
+  internal:
+    internal: true    # database network without internet access
+  web: {}

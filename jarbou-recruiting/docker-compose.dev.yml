@@ -1,0 +1,9 @@
+# Development override: live-mount frontend and backend source (no rebuild needed for changes).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Backend changes: docker compose restart app
+services:
+  app:
+    volumes:
+      - ./frontend:/app/frontend:ro
+      - ./backend/src:/app/backend/src:ro
+      - ./database:/app/database:ro

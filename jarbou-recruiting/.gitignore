@@ -1,0 +1,9 @@
+# Secrets and runtime data – NEVER commit these
+.env
+data/
+backups/
+node_modules/
+backend/node_modules/
+tests/node_modules/
+tests/output/
+*.log

@@ -1,0 +1,20 @@
+{
+  "name": "jarbou-recruiting-backend",
+  "version": "2.0.0",
+  "private": true,
+  "description": "JARBOU Recruiting Command Center – NAS edition backend (Express + PostgreSQL)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "migrate": "node src/cli.js migrate",
+    "test": "node --test ../tests/api/"
+  },
+  "engines": { "node": ">=20" },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "argon2": "^0.41.1",
+    "express": "^4.21.2",
+    "multer": "^2.0.2",
+    "pg": "^8.13.1"
+  }
+}
