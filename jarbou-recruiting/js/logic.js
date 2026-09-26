@@ -4,6 +4,7 @@
 (function () {
   'use strict';
   var J = window.J, U = J.util, C = J.config, S = J.store;
+  var t = J.t;
   var L = (J.logic = {});
 
   var memo = new Map();
@@ -32,9 +33,9 @@
   L.docDefs = function () { return S.settings().documents; };
   L.docLabel = function (key) {
     var d = L.docDefs().filter(function (x) { return x.key === key; })[0];
-    return d ? d.label : key;
+    return d ? t(d.label) : key;
   };
-  L.shortOf = function (d) { return d.short || d.label.split(' / ')[0]; };
+  L.shortOf = function (d) { return t(d.short || d.label.split(' / ')[0]); };
   L.shortDocLabel = function (key) {
     var d = L.docDefs().filter(function (x) { return x.key === key; })[0];
     return d ? L.shortOf(d) : key;
@@ -102,16 +103,15 @@
     outstandingDocs.forEach(function (k) {
       if (k === 'contract') return; // covered by contract status below
       var st = (docs[k] || {}).status;
-      reasons.push(L.shortDocLabel(k) + (st === 'requested' ? ' requested – not yet received' : ' missing'));
+      reasons.push(st === 'requested' ? t('{0} requested – not yet received', L.shortDocLabel(k)) : t('{0} missing', L.shortDocLabel(k)));
     });
-    expired.forEach(function (e) { reasons.push(L.shortDocLabel(e.key) + ' expired'); });
-    if (!signed) reasons.push('Contract not signed' + (ct.status && ct.status !== 'not_started' ? ' (' + L.contractStatus(ct.status).label + ')' : ''));
+    expired.forEach(function (e) { reasons.push(t('{0} expired', L.shortDocLabel(e.key))); });
+    if (!signed) reasons.push(ct.status && ct.status !== 'not_started' ? t('Contract not signed ({0})', t(L.contractStatus(ct.status).label)) : t('Contract not signed'));
     var missingInfo = [];
-    if (!c.phone) missingInfo.push('phone number');
-    if (!c.startDate) missingInfo.push('start date');
-    if (!c.station) missingInfo.push('station / location');
-    if (!c.employmentType) missingInfo.push('employment type');
-    missingInfo.forEach(function (m) { reasons.push(m.charAt(0).toUpperCase() + m.slice(1) + ' not recorded'); });
+    if (!c.phone) { missingInfo.push(t('phone number')); reasons.push(t('Phone number not recorded')); }
+    if (!c.startDate) { missingInfo.push(t('start date')); reasons.push(t('Start date not recorded')); }
+    if (!c.station) { missingInfo.push(t('station / location')); reasons.push(t('Station / location not recorded')); }
+    if (!c.employmentType) { missingInfo.push(t('employment type')); reasons.push(t('Employment type not recorded')); }
     var adminReady = reasons.length === 0;
 
     /* ---------- Willingness / availability */
@@ -147,61 +147,62 @@
     var w = [];
     if (!c.archived) {
       var d = daysToStart;
-      var startsTxt = d === null ? '' : d === 0 ? 'STARTS TODAY' : d > 0 ? 'STARTS IN ' + d + ' DAY' + (d === 1 ? '' : 'S') : '';
+      var startsTxt = d === null ? '' : d === 0 ? t('STARTS TODAY') : d > 0 ? (d === 1 ? t('STARTS IN {0} DAY', d) : t('STARTS IN {0} DAYS', d)) : '';
       if (d !== null && d < 0 && !started) {
-        w.push({ code: 'start_passed', priority: 'high', label: 'START DATE PASSED – STATUS NOT UPDATED', problem: 'Start date passed (' + U.fmtDate(c.startDate) + ') – not marked as Started' });
+        w.push({ code: 'start_passed', priority: 'high', label: t('START DATE PASSED – STATUS NOT UPDATED'), problem: t('Start date passed ({0}) – not marked as Started', U.fmtDate(c.startDate)) });
       }
       var progressed = stageIdx >= L.stageIndex('interested') || (d !== null && d <= 45);
       if (progressed) {
         Object.keys(KEY_DOCS).forEach(function (k) {
           var e = docs[k];
           if (!e || (e.status !== 'missing' && e.status !== 'requested')) return;
+          var kd = t(KEY_DOCS[k]);
           var pr = priorityFor(d, k === 'fuehrungszeugnis' || k === 'licence' || k === 'id_passport' || k === 'work_permit' ? 'medium' : 'low');
           w.push({
             code: 'doc_' + k, priority: pr,
-            label: KEY_DOCS[k].toUpperCase() + (e.status === 'requested' ? ' REQUESTED – NOT RECEIVED' : ' MISSING'),
-            problem: KEY_DOCS[k] + (e.status === 'requested' ? ' requested, not yet received' : ' missing')
+            label: e.status === 'requested' ? t('{0} REQUESTED – NOT RECEIVED', kd.toUpperCase()) : t('{0} MISSING', kd.toUpperCase()),
+            problem: e.status === 'requested' ? t('{0} requested, not yet received', kd) : t('{0} missing', kd)
           });
         });
         var others = outstandingDocs.filter(function (k) { return !KEY_DOCS[k] && k !== 'contract'; });
         if (others.length) {
-          w.push({ code: 'doc_other', priority: priorityFor(d, 'low'), label: others.length + ' OTHER DOCUMENT' + (others.length > 1 ? 'S' : '') + ' OUTSTANDING', problem: others.map(L.shortDocLabel).join(', ') + ' outstanding' });
+          w.push({ code: 'doc_other', priority: priorityFor(d, 'low'), label: others.length > 1 ? t('{0} OTHER DOCUMENTS OUTSTANDING', others.length) : t('{0} OTHER DOCUMENT OUTSTANDING', others.length), problem: t('{0} outstanding', others.map(L.shortDocLabel).join(', ')) });
         }
       } else if (outstandingDocs.length) {
-        w.push({ code: 'docs_open', priority: 'low', label: outstandingDocs.length + ' DOCUMENTS NOT YET COLLECTED', problem: outstandingDocs.length + ' documents not yet collected' });
+        w.push({ code: 'docs_open', priority: 'low', label: t('{0} DOCUMENTS NOT YET COLLECTED', outstandingDocs.length), problem: t('{0} documents not yet collected', outstandingDocs.length) });
       }
       var lic = docs.licence;
       if (lic && lic.status === 'received') {
-        w.push({ code: 'licence_unverified', priority: d !== null && d <= 7 ? 'high' : 'medium', label: 'DRIVING LICENCE NOT VERIFIED', problem: 'Driving licence received but not verified' });
+        w.push({ code: 'licence_unverified', priority: d !== null && d <= 7 ? 'high' : 'medium', label: t('DRIVING LICENCE NOT VERIFIED'), problem: t('Driving licence received but not verified') });
       }
       expired.forEach(function (e) {
-        w.push({ code: 'expired_' + e.key, priority: 'high', label: L.shortDocLabel(e.key).toUpperCase() + ' EXPIRED', problem: L.shortDocLabel(e.key) + ' expired ' + Math.abs(e.days) + ' days ago' });
+        w.push({ code: 'expired_' + e.key, priority: 'high', label: t('{0} EXPIRED', L.shortDocLabel(e.key).toUpperCase()), problem: t('{0} expired {1} days ago', L.shortDocLabel(e.key), Math.abs(e.days)) });
       });
       expiring.forEach(function (e) {
-        w.push({ code: 'expiring_' + e.key, priority: e.days <= 14 ? 'high' : 'medium', label: L.shortDocLabel(e.key).toUpperCase() + ' EXPIRES IN ' + e.days + ' DAYS', problem: L.shortDocLabel(e.key) + ' expires ' + U.fmtDate(U.addDays(today, e.days)) });
+        w.push({ code: 'expiring_' + e.key, priority: e.days <= 14 ? 'high' : 'medium', label: t('{0} EXPIRES IN {1} DAYS', L.shortDocLabel(e.key).toUpperCase(), e.days), problem: t('{0} expires {1}', L.shortDocLabel(e.key), U.fmtDate(U.addDays(today, e.days))) });
       });
       if (!signed && (stageIdx >= L.stageIndex('documents') || (d !== null && d <= 30))) {
         var near = d !== null && d >= 0 && d <= (s.contractWarningDays || 14);
         w.push({
           code: 'contract', priority: near ? 'high' : priorityFor(d, 'medium'),
-          label: near ? startsTxt + ' – CONTRACT NOT SIGNED' : 'CONTRACT PENDING',
-          problem: 'Contract ' + (ct.status === 'not_started' ? 'not started' : L.contractStatus(ct.status).label.toLowerCase() + ', not signed')
+          label: near ? t('{0} – CONTRACT NOT SIGNED', startsTxt) : t('CONTRACT PENDING'),
+          problem: ct.status === 'not_started' ? t('Contract not started') : t('Contract {0}, not signed', t(L.contractStatus(ct.status).label).toLowerCase())
         });
       }
       if (d !== null && d <= 14 && !obInfo.complete && (d >= 0 || started)) {
-        w.push({ code: 'onboarding', priority: d <= 3 ? 'high' : 'medium', label: (startsTxt ? startsTxt + ' – ' : '') + 'ONBOARDING INCOMPLETE', problem: 'Onboarding ' + obInfo.done + '/' + obInfo.total + ' complete' + (obInfo.next ? ' – next: ' + obInfo.next : '') });
+        w.push({ code: 'onboarding', priority: d <= 3 ? 'high' : 'medium', label: startsTxt ? t('{0} – ONBOARDING INCOMPLETE', startsTxt) : t('ONBOARDING INCOMPLETE'), problem: obInfo.next ? t('Onboarding {0}/{1} complete – next: {2}', obInfo.done, obInfo.total, t(obInfo.next)) : t('Onboarding {0}/{1} complete', obInfo.done, obInfo.total) });
       }
       if (!started && d !== null && d <= 21 && (c.availability === 'undecided' || c.availability === 'not_available' || !c.availability)) {
-        w.push({ code: 'availability', priority: 'medium', label: 'AVAILABILITY NOT CONFIRMED', problem: 'Candidate availability is "' + L.availability(c.availability).short + '"' });
+        w.push({ code: 'availability', priority: 'medium', label: t('AVAILABILITY NOT CONFIRMED'), problem: t('Candidate availability is "{0}"', t(L.availability(c.availability).short)) });
       }
       if (missingInfo.length && !started) {
-        w.push({ code: 'info', priority: priorityFor(d, 'low'), label: 'MISSING REQUIRED INFORMATION', problem: 'Missing: ' + missingInfo.join(', ') });
+        w.push({ code: 'info', priority: priorityFor(d, 'low'), label: t('MISSING REQUIRED INFORMATION'), problem: t('Missing: {0}', missingInfo.join(', ')) });
       }
       if (fu === 'overdue') {
         var od = Math.abs(U.daysUntil(c.followUpDate));
-        w.push({ code: 'followup', priority: od > 3 ? 'high' : 'medium', label: 'FOLLOW-UP OVERDUE', problem: 'Follow-up overdue by ' + od + ' day' + (od === 1 ? '' : 's') + (c.followUpNote ? ' – ' + c.followUpNote : '') });
+        w.push({ code: 'followup', priority: od > 3 ? 'high' : 'medium', label: t('FOLLOW-UP OVERDUE'), problem: (od === 1 ? t('Follow-up overdue by {0} day', od) : t('Follow-up overdue by {0} days', od)) + (c.followUpNote ? ' – ' + c.followUpNote : '') });
       } else if (fu === 'today') {
-        w.push({ code: 'followup_today', priority: 'medium', label: 'FOLLOW-UP DUE TODAY', problem: 'Follow-up due today' + (c.followUpNote ? ' – ' + c.followUpNote : '') });
+        w.push({ code: 'followup_today', priority: 'medium', label: t('FOLLOW-UP DUE TODAY'), problem: t('Follow-up due today') + (c.followUpNote ? ' – ' + c.followUpNote : '') });
       }
       w.sort(function (a, b) { return PRIO_RANK[a.priority] - PRIO_RANK[b.priority]; });
     }
@@ -264,7 +265,7 @@
   L.matches = function (c, q) {
     if (!q) return true;
     var hay = L.haystack(c);
-    return U.normalize(q).split(/\s+/).filter(Boolean).every(function (t) { return hay.indexOf(t) !== -1; });
+    return U.normalize(q).split(/\s+/).filter(Boolean).every(function (tok) { return hay.indexOf(tok) !== -1; });
   };
 
   /* ---------- KPIs */
@@ -360,7 +361,7 @@
   L.salaryText = function (c) {
     var a = c.salaryExpectationMin, b = c.salaryExpectationMax;
     if (a == null && b == null) return '';
-    var basis = c.salaryBasis === 'gross' ? ' gross' : ' net';
+    var basis = ' ' + (c.salaryBasis === 'gross' ? t('gross') : t('net'));
     if (a != null && b != null && b !== a) return U.fmtMoney(a) + '–' + U.fmtMoney(b).replace('€', '') + basis;
     return U.fmtMoney(a != null ? a : b) + basis;
   };

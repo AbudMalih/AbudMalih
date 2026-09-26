@@ -121,6 +121,7 @@
   C.defaultSettings = function () {
     return {
       companyName: 'JARBOU Logistik GmbH',
+      language: 'de',
       projects: ['DHL Express'],
       defaultProject: 'DHL Express',
       activeProject: 'all',
@@ -181,6 +182,10 @@
   C.seedCandidates = function (settings) {
     var U = J.util;
     var now = new Date().toISOString();
+    function seedNote(salary) {
+      return [J.t('Candidate availability: Ready.'), J.t('Administrative readiness: not fully ready – Führungszeugnis is outstanding.'),
+        J.t('Desired net salary: {0} net (standard reference €2,160 net).', salary), J.t('Other personal details and document statuses not yet recorded – please update.')].join('\n');
+    }
     function make(num, data) {
       var c = C.emptyCandidate(settings);
       Object.keys(data).forEach(function (k) { c[k] = data[k]; });
@@ -188,11 +193,11 @@
       c.createdAt = now; c.updatedAt = now;
       c.applicationDate = '';
       c.station = '';
-      c.documents.fuehrungszeugnis = { status: 'missing', issueDate: '', expiryDate: '', note: 'Not available – outstanding' };
+      c.documents.fuehrungszeugnis = { status: 'missing', issueDate: '', expiryDate: '', note: J.t('Not available – outstanding') };
       c.contract.type = data.employmentType;
       c.activities = [
-        { id: U.uid(), type: 'system', date: now, text: 'Candidate record created (initial data import).' },
-        { id: U.uid(), type: 'document', date: now, text: 'Führungszeugnis recorded as missing / not available.' }
+        { id: U.uid(), type: 'system', date: now, text: J.t('Candidate record created (initial data import).') },
+        { id: U.uid(), type: 'document', date: now, text: J.t('Führungszeugnis recorded as missing / not available.') }
       ];
       return c;
     }
@@ -202,16 +207,16 @@
         position: 'Driver', project: 'DHL Express', employmentType: 'Teilzeit',
         salaryReference: 2160, salaryBasis: 'net', salaryExpectationMin: 1000, salaryExpectationMax: null,
         taxClass: 'Steuerklasse 1', startDate: '2026-10-01', availability: 'ready', stage: 'documents',
-        nextAction: 'Request/receive Führungszeugnis and confirm final Teilzeit contractual conditions.',
-        notes: 'Candidate availability: Ready.\nAdministrative readiness: not fully ready – Führungszeugnis is outstanding.\nDesired net salary: €1,000 net (standard reference €2,160 net).\nOther personal details and document statuses not yet recorded – please update.'
+        nextAction: J.t('Request/receive Führungszeugnis and confirm final Teilzeit contractual conditions.'),
+        notes: seedNote('€1,000')
       }),
       make(2, {
         firstName: 'Abdalrazaq', lastName: 'Al Shaer',
         position: 'Driver', project: 'DHL Express', employmentType: 'Teilzeit',
         salaryReference: 2160, salaryBasis: 'net', salaryExpectationMin: 700, salaryExpectationMax: 800,
         taxClass: 'Steuerklasse 1', startDate: '2026-11-01', availability: 'ready', stage: 'documents',
-        nextAction: 'Request/receive Führungszeugnis and confirm final Teilzeit contractual conditions.',
-        notes: 'Candidate availability: Ready.\nAdministrative readiness: not fully ready – Führungszeugnis is outstanding.\nDesired net salary: €700–€800 net (standard reference €2,160 net).\nOther personal details and document statuses not yet recorded – please update.'
+        nextAction: J.t('Request/receive Führungszeugnis and confirm final Teilzeit contractual conditions.'),
+        notes: seedNote('€700–€800')
       })
     ];
   };

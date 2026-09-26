@@ -81,18 +81,24 @@
     d = d || new Date();
     return U.toISODate(d) + 'T' + U.pad(d.getHours()) + ':' + U.pad(d.getMinutes());
   };
+  function intl(d, opts) {
+    try { return new Intl.DateTimeFormat(J.i18n ? J.i18n.locale() : 'de-DE', opts).format(d); }
+    catch (e) { return new Intl.DateTimeFormat('en-GB', opts).format(d); }
+  }
   U.weekday = function (iso) {
     var d = U.parseDate(iso);
-    return d ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][d.getDay()] : '';
+    return d ? intl(d, { weekday: 'long' }) : '';
   };
   U.longDate = function (d) {
-    d = d || new Date();
-    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    return U.weekday(U.toISODate(d)) + ', ' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+    return intl(d || new Date(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   };
   U.monthName = function (iso) {
     var d = U.parseDate(iso);
-    return d ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][d.getMonth()] + ' ' + d.getFullYear() : '';
+    return d ? intl(d, { month: 'long', year: 'numeric' }) : '';
+  };
+  U.monthShort = function (iso) {
+    var d = U.parseDate(iso);
+    return d ? intl(d, { month: 'short' }) + ' ' + String(d.getFullYear()).slice(2) : '';
   };
   /** Monday of the ISO week containing iso. */
   U.startOfWeek = function (iso) {
@@ -116,17 +122,18 @@
   };
   U.relDays = function (n) {
     if (n === null || n === undefined) return '';
-    if (n === 0) return 'Today';
-    if (n === 1) return 'Tomorrow';
-    if (n === -1) return 'Yesterday';
-    if (n > 0) return 'in ' + n + ' days';
-    return Math.abs(n) + ' days ago';
+    var t = J.t;
+    if (n === 0) return t('Today');
+    if (n === 1) return t('Tomorrow');
+    if (n === -1) return t('Yesterday');
+    if (n > 0) return t('in {0} days', n);
+    return t('{0} days ago', Math.abs(n));
   };
   U.greeting = function () {
     var h = new Date().getHours();
-    if (h < 12) return 'Good morning';
-    if (h < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return J.t('Good morning');
+    if (h < 18) return J.t('Good afternoon');
+    return J.t('Good evening');
   };
 
   /* ------------------------------------------------------------ Numbers */
@@ -147,7 +154,7 @@
     return (a + b).toUpperCase() || '?';
   };
   U.fullName = function (c) {
-    return [c.firstName, c.lastName].filter(Boolean).join(' ') || 'Unnamed candidate';
+    return [c.firstName, c.lastName].filter(Boolean).join(' ') || J.t('Unnamed candidate');
   };
 
   /* ------------------------------------------------------------ Files */
@@ -242,6 +249,7 @@
     excel: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>'
   };
   U.icon = function (name, cls) {
+    if (name === 'arrowRight' || name === 'chevronRight') cls = (cls ? cls + ' ' : '') + 'flip-rtl';
     return '<svg class="i' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + (P[name] || P.circle) + '</svg>';
   };
 })();

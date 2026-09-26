@@ -60,7 +60,7 @@
 
   function persistErr(e) {
     console.error(e);
-    if (J.ui && J.ui.toast) J.ui.toast('Could not save to local storage: ' + (e && e.message ? e.message : e), 'error');
+    if (J.ui && J.ui.toast) J.ui.toast(J.t('Could not save to local storage: {0}', e && e.message ? e.message : e), 'error');
     throw e;
   }
 
@@ -69,7 +69,7 @@
   S.init = function () {
     return openIDB().then(function (d) {
       db = d;
-      db.onversionchange = function () { db.close(); alert('The recruiting database was updated in another tab. Please reload this page.'); };
+      db.onversionchange = function () { db.close(); alert(J.t('The recruiting database was updated in another tab. Please reload this page.')); };
       return Promise.all([idbAll('candidates'), idbAll('meta')]);
     }).then(function (res) {
       res[0].forEach(function (c) { cache.candidates.set(c.id, c); });

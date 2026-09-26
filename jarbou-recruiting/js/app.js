@@ -2,10 +2,11 @@
 (function () {
   'use strict';
   var J = window.J, U = J.util, C = J.config, S = J.store, L = J.logic, ui = J.ui, A = J.actions;
-  var esc = U.esc, icon = U.icon;
+  var esc = U.esc, icon = U.icon, t = J.t;
   var app = (J.app = {});
   J.views = J.views || {};
 
+  /* i18n: t('Dashboard') t('Candidates') t('Recruitment Pipeline') t('Onboarding') t('Documents') t('Starting Soon') t('Reports') t('Archive') t('Settings') t('Overview') t('Recruiting') t('Management') */
   var ROUTES = [
     { key: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Overview' },
     { key: 'candidates', label: 'Candidates', icon: 'users', group: 'Recruiting' },
@@ -57,22 +58,24 @@
     var alerts = { documents: k.docsMissing > 0 };
     var html = '', group = '';
     ROUTES.forEach(function (r) {
-      if (r.group !== group) { group = r.group; html += '<div class="nav-group-label">' + esc(group) + '</div>'; }
+      if (r.group !== group) { group = r.group; html += '<div class="nav-group-label">' + esc(t(group)) + '</div>'; }
       var n = counts[r.key];
-      html += '<a href="#/' + r.key + '" class="' + (current === r.key ? 'active' : '') + '" title="' + esc(r.label) + '"' + (current === r.key ? ' aria-current="page"' : '') + '>' + icon(r.icon) + '<span>' + esc(r.label) + '</span>' +
+      html += '<a href="#/' + r.key + '" class="' + (current === r.key ? 'active' : '') + '" title="' + esc(t(r.label)) + '"' + (current === r.key ? ' aria-current="page"' : '') + '>' + icon(r.icon) + '<span>' + esc(t(r.label)) + '</span>' +
         (n ? '<em class="count ' + (alerts[r.key] ? 'alert' : '') + '" style="font-style:normal">' + n + '</em>' : '') + '</a>';
     });
     document.getElementById('nav').innerHTML = html;
     var route = ROUTES.filter(function (r) { return r.key === current; })[0];
     var s = S.settings();
-    document.getElementById('crumbs').innerHTML = esc(s.companyName) + ' <span style="margin:0 6px">/</span> <b>' + esc(route.label) + '</b>';
+    document.getElementById('crumbs').innerHTML = esc(s.companyName) + ' <span style="margin:0 6px">/</span> <b>' + esc(t(route.label)) + '</b>';
     document.getElementById('foot-company').textContent = s.companyName;
-    document.title = route.label + ' · ' + s.companyName + ' Recruiting';
+    document.title = t(route.label) + ' · ' + s.companyName + ' Recruiting';
     var proj = s.activeProject && s.activeProject !== 'all' ? s.activeProject : s.defaultProject;
-    document.getElementById('sidebar-project').innerHTML = (/dhl/i.test(proj || '') ? '<span class="dhl-dot" aria-hidden="true"></span>' : '') + '<span>' + esc(proj || 'All projects') + ' Project</span>';
+    document.getElementById('sidebar-project').innerHTML = (/dhl/i.test(proj || '') ? '<span class="dhl-dot" aria-hidden="true"></span>' : '') + '<span>' + esc(proj ? t('{0} Project', proj) : t('All projects')) + '</span>';
     var sel = document.getElementById('scope-select');
-    sel.innerHTML = '<option value="all">All projects</option>' + s.projects.map(function (p) { return '<option value="' + esc(p) + '"' + (s.activeProject === p ? ' selected' : '') + '>Project: ' + esc(p) + '</option>'; }).join('');
+    sel.innerHTML = '<option value="all">' + esc(t('All projects')) + '</option>' + s.projects.map(function (p) { return '<option value="' + esc(p) + '"' + (s.activeProject === p ? ' selected' : '') + '>' + esc(t('Project: {0}', p)) + '</option>'; }).join('');
     sel.value = s.activeProject || 'all';
+    var ls = document.getElementById('lang-select');
+    ls.innerHTML = J.i18n.LANGS.map(function (l) { return '<option value="' + l.key + '"' + (l.key === J.i18n.lang ? ' selected' : '') + '>' + l.short + ' · ' + esc(l.label) + '</option>'; }).join('');
   }
 
   function renderView(fresh) {
@@ -90,7 +93,7 @@
       if (v.mount) v.mount(el, params);
     } catch (err) {
       console.error(err);
-      el.innerHTML = '<div class="banner red">' + icon('alert') + '<div class="grow">Something went wrong while displaying this page: ' + esc(err.message) + '</div></div>';
+      el.innerHTML = '<div class="banner red">' + icon('alert') + '<div class="grow">' + esc(t('Something went wrong while displaying this page: {0}', err.message)) + '</div></div>';
     }
     Object.keys(keep).forEach(function (k) { var n = el.querySelector('[data-keep-scroll="' + k + '"]'); if (n) { n.scrollTop = keep[k][0]; n.scrollLeft = keep[k][1]; } });
     if (activeId) { var f = document.getElementById(activeId); if (f) { f.focus(); if (selStart != null && f.setSelectionRange) try { f.setSelectionRange(selStart, selStart); } catch (e) { /* ignore */ } } }
@@ -115,7 +118,7 @@
   app.warnIfNotReady = function (c) {
     var i = L.info(c);
     if (c.stage === 'ready' && i.overall !== 'ready') {
-      ui.toast('Moved to Ready stage – note: ' + i.outstanding + ' requirement(s) still outstanding. Overall status stays "Not Ready".', 'warn');
+      ui.toast(t('Moved to Ready stage – note: {0} requirement(s) still outstanding. Overall status stays "Not Ready".', i.outstanding), 'warn');
     }
   };
 
@@ -124,49 +127,61 @@
     if (!c || c.stage === stage) return Promise.resolve();
     var prev = c.stage;
     c.stage = stage;
-    L.log(c, 'system', 'Moved from ' + L.stage(prev).label + ' to ' + L.stage(stage).label + '.');
-    return app.save(c, U.fullName(c) + ' moved to ' + L.stage(stage).label + '.').then(function () { app.warnIfNotReady(c); });
+    L.log(c, 'system', t('Moved from {0} to {1}.', t(L.stage(prev).label), t(L.stage(stage).label)));
+    return app.save(c, t('{0} moved to {1}.', U.fullName(c), t(L.stage(stage).label))).then(function () { app.warnIfNotReady(c); });
   };
 
   app.archive = function (id) {
     var c = S.get(id);
     var m = ui.modal({
-      title: 'Archive candidate',
-      subtitle: esc(U.fullName(c)) + ' · ' + esc(c.id) + ' — archived candidates can be restored at any time.',
-      body: '<div class="fgrid two"><div class="field span-3"><label>Archive reason <span class="req">*</span></label><select id="arch-reason">' +
-        ui.options(C.ARCHIVE_REASONS, c.stage === 'started' ? 'Started / Completed' : '', { blank: 'Select a reason…' }) + '</select></div>' +
-        '<div class="field span-3"><label>Note (optional)</label><textarea id="arch-note" rows="3" placeholder="Additional context"></textarea></div></div>',
-      foot: '<button class="btn" data-close>Cancel</button><button class="btn dark" id="arch-ok">' + icon('archive', 'sm') + 'Archive</button>'
+      title: t('Archive candidate'),
+      subtitle: esc(U.fullName(c)) + ' · ' + esc(c.id) + ' — ' + esc(t('archived candidates can be restored at any time.')),
+      body: '<div class="fgrid two"><div class="field span-3"><label>' + esc(t('Archive reason')) + ' <span class="req">*</span></label><select id="arch-reason">' +
+        ui.options(C.ARCHIVE_REASONS, c.stage === 'started' ? 'Started / Completed' : '', { blank: 'Select a reason…', tr: true }) + '</select></div>' +
+        '<div class="field span-3"><label>' + esc(t('Note (optional)')) + '</label><textarea id="arch-note" rows="3" placeholder="' + esc(t('Additional context')) + '"></textarea></div></div>',
+      foot: '<button class="btn" data-close>' + esc(t('Cancel')) + '</button><button class="btn dark" id="arch-ok">' + icon('archive', 'sm') + esc(t('Archive')) + '</button>'
     });
     m.q('#arch-ok').addEventListener('click', function () {
       var reason = m.q('#arch-reason').value;
-      if (!reason) { m.q('#arch-reason').classList.add('invalid'); ui.toast('Please select an archive reason.', 'error'); return; }
+      if (!reason) { m.q('#arch-reason').classList.add('invalid'); ui.toast(t('Please select an archive reason.'), 'error'); return; }
       c.archived = true; c.archiveReason = reason; c.archiveDate = U.todayISO(); c.archiveNote = m.q('#arch-note').value.trim();
-      L.log(c, 'system', 'Archived – ' + reason + (c.archiveNote ? ': ' + c.archiveNote : '') + '.');
-      app.save(c, U.fullName(c) + ' archived.').then(function () { m.close(); });
+      L.log(c, 'system', t('Archived – {0}', t(reason)) + (c.archiveNote ? ': ' + c.archiveNote : '') + '.');
+      app.save(c, t('{0} archived.', U.fullName(c))).then(function () { m.close(); });
     });
   };
 
   app.restore = function (id) {
     var c = S.get(id);
     c.archived = false;
-    L.log(c, 'system', 'Restored from archive (was: ' + c.archiveReason + ').');
+    L.log(c, 'system', t('Restored from archive (was: {0}).', t(c.archiveReason)));
     c.archiveReason = ''; c.archiveDate = ''; c.archiveNote = '';
-    return app.save(c, U.fullName(c) + ' restored to active candidates.');
+    return app.save(c, t('{0} restored to active candidates.', U.fullName(c)));
   };
 
   app.deleteForever = function (id) {
     var c = S.get(id);
     ui.confirm({
-      title: 'Delete permanently?',
-      message: 'This will permanently delete <b>' + esc(U.fullName(c)) + '</b> (' + esc(c.id) + ') including all documents status, notes and activity history. <br><br>This cannot be undone – consider keeping the candidate in the Archive instead.',
-      ok: 'Delete permanently', danger: true, typeToConfirm: 'DELETE'
+      title: t('Delete permanently?'),
+      message: t('This will permanently delete {0} ({1}) including all documents status, notes and activity history.', '<b>' + esc(U.fullName(c)) + '</b>', esc(c.id)) + '<br><br>' + esc(t('This cannot be undone – consider keeping the candidate in the Archive instead.')),
+      ok: t('Delete permanently'), danger: true, typeToConfirm: 'DELETE'
     }).then(function (ok) {
       if (!ok) return;
       if (J.profile.currentId() === id) J.profile.close();
-      S.remove(id).then(function () { app.refresh(); ui.toast('Candidate permanently deleted.', 'success'); });
+      S.remove(id).then(function () { app.refresh(); ui.toast(t('Candidate permanently deleted.'), 'success'); });
     });
   };
+
+  /** Switch UI language (de / en / ar) and re-render everything. */
+  app.setLanguage = function (lang) {
+    J.i18n.set(lang);
+    S.settings().language = J.i18n.lang;
+    L.bump();
+    return S.saveSettings().then(function () {
+      app.refresh();
+      ui.toast(t('Language changed to {0}.', J.i18n.info().label));
+    });
+  };
+  A['set-language'] = function (el) { app.setLanguage(el.value); };
 
   /* ------------------------------------------------------------ Global actions */
   A['add-candidate'] = function () { J.form.open(); };
@@ -180,9 +195,9 @@
     app.go(el.getAttribute('data-route'), p ? JSON.parse(p) : null);
   };
   A['copy-text'] = function (el) {
-    var t = el.getAttribute('data-text');
-    if (!t) return;
-    U.copy(t).then(function (ok) { ui.toast(ok ? el.getAttribute('data-what') + ' copied to clipboard.' : 'Could not copy – please copy manually: ' + t, ok ? 'success' : 'warn'); });
+    var txt = el.getAttribute('data-text');
+    if (!txt) return;
+    U.copy(txt).then(function (ok) { ui.toast(ok ? t('{0} copied to clipboard.', el.getAttribute('data-what')) : t('Could not copy – please copy manually: {0}', txt), ok ? 'success' : 'warn'); });
   };
   A['toggle-sidebar'] = function () {
     document.body.classList.toggle('sb-collapsed');
@@ -198,18 +213,18 @@
   A['row-menu'] = function (el) {
     var c = S.get(el.getAttribute('data-id'));
     var items = [
-      { label: 'Open profile', icon: 'user', onClick: function () { J.profile.open(c.id); } },
-      { label: 'Edit', icon: 'edit', onClick: function () { J.form.open(c.id); } },
-      { label: 'Add follow-up', icon: 'bell', onClick: function () { J.form.followUp(c.id); } },
-      { label: 'Print summary', icon: 'printer', onClick: function () { J.print.candidate(c.id); } },
-      { sep: true }, { header: 'Move to stage' }
+      { label: t('Open profile'), icon: 'user', onClick: function () { J.profile.open(c.id); } },
+      { label: t('Edit'), icon: 'edit', onClick: function () { J.form.open(c.id); } },
+      { label: t('Add follow-up'), icon: 'bell', onClick: function () { J.form.followUp(c.id); } },
+      { label: t('Print summary'), icon: 'printer', onClick: function () { J.print.candidate(c.id); } },
+      { sep: true }, { header: t('Move to stage') }
     ];
-    C.STAGES.forEach(function (st) { items.push({ label: st.label, checked: c.stage === st.key, onClick: function () { app.moveStage(c.id, st.key); } }); });
+    C.STAGES.forEach(function (st) { items.push({ label: t(st.label), checked: c.stage === st.key, onClick: function () { app.moveStage(c.id, st.key); } }); });
     items.push({ sep: true });
     if (c.archived) {
-      items.push({ label: 'Restore', icon: 'restore', onClick: function () { app.restore(c.id); } });
-      items.push({ label: 'Delete permanently…', icon: 'trash', danger: true, onClick: function () { app.deleteForever(c.id); } });
-    } else items.push({ label: 'Archive…', icon: 'archive', onClick: function () { app.archive(c.id); } });
+      items.push({ label: t('Restore'), icon: 'restore', onClick: function () { app.restore(c.id); } });
+      items.push({ label: t('Delete permanently…'), icon: 'trash', danger: true, onClick: function () { app.deleteForever(c.id); } });
+    } else items.push({ label: t('Archive…'), icon: 'archive', onClick: function () { app.archive(c.id); } });
     ui.menu(el, items);
   };
 
@@ -226,8 +241,8 @@
       box.hidden = false;
       box.innerHTML = results.length ? results.map(function (c, k) {
         var i = L.info(c);
-        return '<div class="gs-item ' + (k === active ? 'active' : '') + '" data-k="' + k + '"><div class="avatar sm">' + esc(U.initials(c)) + '</div><div style="flex:1;min-width:0"><div class="strong">' + esc(U.fullName(c)) + '</div><div class="meta">' + esc(c.id) + ' · ' + esc(c.position || '—') + (c.station ? ' · ' + esc(c.station) : '') + (c.archived ? ' · Archived' : '') + '</div></div>' + ui.overallBadge(i) + '</div>';
-      }).join('') : '<div class="gs-empty">No candidates match "' + esc(q) + '"</div>';
+        return '<div class="gs-item ' + (k === active ? 'active' : '') + '" data-k="' + k + '"><div class="avatar sm">' + esc(U.initials(c)) + '</div><div style="flex:1;min-width:0"><div class="strong">' + esc(U.fullName(c)) + '</div><div class="meta">' + esc(c.id) + ' · ' + esc(c.position || '—') + (c.station ? ' · ' + esc(c.station) : '') + (c.archived ? ' · ' + esc(t('Archived')) : '') + '</div></div>' + ui.overallBadge(i) + '</div>';
+      }).join('') : '<div class="gs-empty">' + esc(t('No candidates match "{0}"', q)) + '</div>';
     }
     function pick(k) {
       var c = results[k];
@@ -255,8 +270,13 @@
   /* ------------------------------------------------------------ Boot */
   function boot() {
     try { if (localStorage.getItem('jarbou-sb-collapsed') === '1') document.body.classList.add('sb-collapsed'); } catch (e) { /* ignore */ }
-    document.getElementById('view').innerHTML = '<div class="empty"><p>Loading local database…</p></div>';
+    J.i18n.applyStatic(document);
+    document.getElementById('view').innerHTML = '<div class="empty"><p>' + esc(t('Loading local database…')) + '</p></div>';
     S.init().then(function () {
+      var s0 = S.settings();
+      if (!s0.language) { s0.language = J.i18n.lang; S.saveSettings(); }
+      J.i18n.set(s0.language);
+      document.getElementById('lang-select').addEventListener('change', function (e) { app.setLanguage(e.target.value); });
       document.getElementById('scope-select').addEventListener('change', function (e) {
         S.settings().activeProject = e.target.value;
         S.saveSettings();
@@ -266,13 +286,13 @@
       window.addEventListener('hashchange', onRoute);
       current = null;
       onRoute();
-      if (S.mode() !== 'indexeddb') ui.toast('Browser database (IndexedDB) not available – using ' + (S.mode() === 'localstorage' ? 'localStorage fallback' : 'temporary memory only. Data will NOT be kept!'), 'warn');
+      if (S.mode() !== 'indexeddb') ui.toast(S.mode() === 'localstorage' ? t('Browser database (IndexedDB) not available – using localStorage fallback.') : t('Browser database (IndexedDB) not available – using temporary memory only. Data will NOT be kept!'), 'warn');
       // re-render once per minute so date-based warnings stay current if left open overnight
       var lastDay = U.todayISO();
       setInterval(function () { if (U.todayISO() !== lastDay) { lastDay = U.todayISO(); app.refresh(); } }, 60000);
     }).catch(function (err) {
       console.error(err);
-      document.getElementById('view').innerHTML = '<div class="banner red">' + icon('alert') + '<div class="grow">The local database could not be opened: ' + esc(err.message) + '</div></div>';
+      document.getElementById('view').innerHTML = '<div class="banner red">' + icon('alert') + '<div class="grow">' + esc(t('The local database could not be opened: {0}', err.message)) + '</div></div>';
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

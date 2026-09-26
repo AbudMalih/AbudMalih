@@ -5,7 +5,7 @@
   var J = window.J, U = J.util, C = J.config;
   var ui = (J.ui = {});
   var A = (J.actions = {});
-  var esc = U.esc, icon = U.icon;
+  var esc = U.esc, icon = U.icon, t = J.t;
 
   /* ------------------------------------------------------------ Event delegation */
   document.addEventListener('click', function (e) {
@@ -51,9 +51,9 @@
     wrap.innerHTML =
       '<div class="modal ' + (opts.wide ? 'wide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(opts.title) + '">' +
       '<div class="modal-head"><div><h3>' + esc(opts.title) + '</h3>' + (opts.subtitle ? '<p>' + opts.subtitle + '</p>' : '') + '</div>' +
-      '<button class="icon-btn" data-close aria-label="Close">' + icon('x') + '</button></div>' +
+      '<button class="icon-btn" data-close aria-label="' + esc(t('Close')) + '">' + icon('x') + '</button></div>' +
       '<div class="modal-body">' + (opts.body || '') + '</div>' +
-      (opts.foot !== false ? '<div class="modal-foot">' + (opts.foot || '<button class="btn" data-close>Close</button>') + '</div>' : '') +
+      (opts.foot !== false ? '<div class="modal-foot">' + (opts.foot || '<button class="btn" data-close>' + esc(t('Close')) + '</button>') + '</div>' : '') +
       '</div>';
     root.appendChild(wrap);
     var m = {
@@ -80,10 +80,10 @@
     return new Promise(function (resolve) {
       var typed = opts.typeToConfirm;
       var m = ui.modal({
-        title: opts.title || 'Please confirm',
+        title: opts.title || t('Please confirm'),
         body: '<p style="line-height:1.55">' + opts.message + '</p>' +
-          (typed ? '<div class="field mt-16"><label>Type <b>' + esc(typed) + '</b> to confirm</label><input type="text" id="confirm-type" autocomplete="off"></div>' : ''),
-        foot: '<button class="btn" data-close>Cancel</button><button class="btn ' + (opts.danger ? 'danger' : 'primary') + '" id="confirm-ok"' + (typed ? ' disabled' : '') + '>' + esc(opts.ok || 'Confirm') + '</button>',
+          (typed ? '<div class="field mt-16"><label>' + t('Type {0} to confirm', '<b>' + esc(typed) + '</b>') + '</label><input type="text" id="confirm-type" autocomplete="off"></div>' : ''),
+        foot: '<button class="btn" data-close>' + esc(t('Cancel')) + '</button><button class="btn ' + (opts.danger ? 'danger' : 'primary') + '" id="confirm-ok"' + (typed ? ' disabled' : '') + '>' + esc(opts.ok || t('Confirm')) + '</button>',
         onClose: function () { if (!done) resolve(false); }
       });
       var done = false;
@@ -173,30 +173,30 @@
   };
   ui.stageBadge = function (key) {
     var st = J.logic.stage(key);
-    return '<span class="badge outline"><span style="width:7px;height:7px;border-radius:50%;background:' + st.color + ';display:inline-block"></span>' + esc(st.label) + '</span>';
+    return '<span class="badge outline"><span style="width:7px;height:7px;border-radius:50%;background:' + st.color + ';display:inline-block"></span>' + esc(t(st.label)) + '</span>';
   };
   ui.overallBadge = function (info, withCount) {
     var o = C.OVERALL[info.overall];
-    var txt = o.label;
+    var txt = t(o.label);
     if (info.overall === 'not_ready' && withCount) txt += ' · ' + info.outstanding;
     return ui.badge(txt, o.badge, o.icon);
   };
   ui.docBadge = function (status) {
     var s = J.logic.docStatus(status);
-    return ui.badge(s.label, s.badge, s.icon);
+    return ui.badge(t(s.label), s.badge, s.icon);
   };
   ui.contractBadge = function (status) {
     var s = J.logic.contractStatus(status);
-    return ui.badge(s.label, s.badge, s.icon);
+    return ui.badge(t(s.label), s.badge, s.icon);
   };
   ui.availBadge = function (key) {
     var a = J.logic.availability(key);
-    return ui.badge(a.short, a.badge, key === 'ready' ? 'check' : key === 'not_available' ? 'x' : key ? 'clock' : 'minus');
+    return ui.badge(t(a.short), a.badge, key === 'ready' ? 'check' : key === 'not_available' ? 'x' : key ? 'clock' : 'minus');
   };
   ui.prioBadge = function (p) {
     var map = { high: ['High priority', 'red', 'alert'], medium: ['Medium', 'amber', 'clock'], low: ['Low', 'blue', 'info'] };
     var m = map[p] || map.low;
-    return '<span class="badge prio ' + m[1] + '">' + icon(m[2]) + m[0] + '</span>';
+    return '<span class="badge prio ' + m[1] + '">' + icon(m[2]) + esc(t(m[0])) + '</span>';
   };
   ui.progress = function (pct, cls) {
     return '<div class="progress ' + (cls || '') + '" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><span style="width:' + Math.max(0, Math.min(100, pct)) + '%"></span></div>';
@@ -209,8 +209,8 @@
   ui.daysPill = function (d) {
     if (d === null || d === undefined) return '<span class="muted">—</span>';
     var cls = d === 0 ? 'today' : d < 0 ? 'past' : d <= 7 ? 'soon' : '';
-    var t = d === 0 ? 'Today' : d < 0 ? Math.abs(d) + 'd ago' : d + (d === 1 ? ' day' : ' days');
-    return '<span class="days-pill ' + cls + '">' + t + '</span>';
+    var txt = d === 0 ? t('Today') : d < 0 ? t('{0}d ago', Math.abs(d)) : d === 1 ? t('{0} day', d) : t('{0} days', d);
+    return '<span class="days-pill ' + cls + '">' + esc(txt) + '</span>';
   };
   ui.projectPill = function (p) {
     if (!p) return '<span class="muted">—</span>';
@@ -221,19 +221,21 @@
     return '<div class="empty"><div class="ico">' + icon(ic, 'lg') + '</div><h4>' + esc(title) + '</h4>' + (text ? '<p>' + text + '</p>' : '') + (extra || '') + '</div>';
   };
   ui.val = function (v, fallback) {
-    return v === null || v === undefined || v === '' ? '<span class="muted">' + (fallback || '—') + '</span>' : esc(v);
+    return v === null || v === undefined || v === '' ? '<span class="muted">' + esc(fallback ? t(fallback) : '—') + '</span>' : esc(v);
   };
+  /** Build <option>s. Labels of {key,label} objects and the blank label are translated;
+      plain string lists are translated only with opts.tr (fixed vocabularies, not user data). */
   ui.options = function (list, selected, opts) {
     opts = opts || {};
-    var html = opts.blank !== undefined ? '<option value="">' + esc(opts.blank) + '</option>' : '';
+    var html = opts.blank !== undefined ? '<option value="">' + esc(t(opts.blank)) + '</option>' : '';
     var seen = false;
     list.forEach(function (o) {
       var v = typeof o === 'object' ? o.key : o;
-      var l = typeof o === 'object' ? o.label : o;
+      var l = typeof o === 'object' ? (opts.raw ? o.label : t(o.label)) : (opts.tr ? t(o) : o);
       if (String(v) === String(selected)) seen = true;
       html += '<option value="' + esc(v) + '"' + (String(v) === String(selected) ? ' selected' : '') + '>' + esc(l) + '</option>';
     });
-    if (selected && !seen && opts.keepUnknown !== false) html += '<option value="' + esc(selected) + '" selected>' + esc(selected) + '</option>';
+    if (selected && !seen && opts.keepUnknown !== false) html += '<option value="' + esc(selected) + '" selected>' + esc(opts.tr ? t(selected) : selected) + '</option>';
     return html;
   };
 })();

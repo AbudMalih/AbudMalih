@@ -10,36 +10,37 @@
 </head>
 <body>
   <div class="app" id="app">
-    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation" data-i18n-attr="aria-label:Main navigation">
       <div class="sidebar-brand">
         <img class="logo-full" src="assets/jarbou-logo.svg" alt="JARBOU Logistik GmbH">
         <img class="logo-mark" src="assets/jarbou-mark.svg" alt="JARBOU">
-        <div class="app-name">Recruiting Command Center</div>
+        <div class="app-name" data-i18n="Recruiting Command Center">Recruiting Command Center</div>
         <div class="project-tag" id="sidebar-project"><span class="dhl-dot" aria-hidden="true"></span><span>DHL Express Project</span></div>
       </div>
       <nav class="nav" id="nav"></nav>
       <div class="sidebar-foot">
-        <button class="collapse-btn" data-action="toggle-sidebar" title="Collapse / expand sidebar"><svg class="i sm" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg><span>Collapse</span></button>
+        <button class="collapse-btn" data-action="toggle-sidebar" title="Collapse / expand sidebar" data-i18n-attr="title:Collapse / expand sidebar"><svg class="i sm flip-rtl" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg><span data-i18n="Collapse">Collapse</span></button>
         <div class="foot-text">
           <strong id="foot-company">JARBOU Logistik GmbH</strong>
-          <span class="internal"><svg class="i sm" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Internal Use Only</span>
+          <span class="internal"><svg class="i sm" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i18n="Internal Use Only">Internal Use Only</span></span>
         </div>
       </div>
     </aside>
 
     <div class="main">
       <header class="topbar">
-        <button class="icon-btn menu-btn" data-action="open-mobile-nav" aria-label="Open menu"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <button class="icon-btn menu-btn" data-action="open-mobile-nav" aria-label="Open menu" data-i18n-attr="aria-label:Open menu"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
         <div class="crumbs" id="crumbs"></div>
         <div class="spacer"></div>
-        <select class="scope-select" id="scope-select" title="Project scope — applies to all pages" aria-label="Project scope"></select>
+        <select class="scope-select" id="scope-select" title="Project scope — applies to all pages" aria-label="Project scope" data-i18n-attr="title:Project scope — applies to all pages;aria-label:Project scope"></select>
+        <select class="scope-select lang-select" id="lang-select" aria-label="Language" data-i18n-attr="aria-label:Language;title:Language" title="Language"></select>
         <div class="global-search" id="global-search">
           <svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input type="search" id="gs-input" placeholder="Find candidate by name, ID, phone…" autocomplete="off" aria-label="Quick find candidate">
+          <input type="search" id="gs-input" placeholder="Find candidate by name, ID, phone…" autocomplete="off" aria-label="Quick find candidate" data-i18n-attr="placeholder:Find candidate by name, ID, phone…;aria-label:Quick find candidate">
           <kbd>Ctrl K</kbd>
           <div class="gs-results" id="gs-results" hidden></div>
         </div>
-        <button class="btn primary" data-action="add-candidate"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="hide-sm">Add Candidate</span></button>
+        <button class="btn primary" data-action="add-candidate"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="hide-sm" data-i18n="Add Candidate">Add Candidate</span></button>
       </header>
       <main class="content" id="view" tabindex="-1"></main>
     </div>
@@ -53,6 +54,9 @@
 
   <!-- All scripts are local. No data is sent to any server. -->
   <script src="js/util.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/lang/de.js"></script>
+  <script src="js/lang/ar.js"></script>
   <script src="js/config.js"></script>
   <script src="js/db.js"></script>
   <script src="js/logic.js"></script>
