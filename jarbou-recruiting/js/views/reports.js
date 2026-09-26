@@ -2,8 +2,9 @@
 (function () {
   'use strict';
   var J = window.J, U = J.util, C = J.config, S = J.store, L = J.logic, ui = J.ui, A = J.actions;
-  var esc = U.esc, icon = U.icon;
+  var esc = U.esc, icon = U.icon, t = J.t;
   var range = { preset: 'last90', from: '', to: '' };
+  /* i18n: t('This month') t('Last 30 days') t('Last 90 days') t('This year') t('All time') t('Custom range') */
   var PRESETS = [
     { key: 'this_month', label: 'This month' }, { key: 'last30', label: 'Last 30 days' }, { key: 'last90', label: 'Last 90 days' },
     { key: 'this_year', label: 'This year' }, { key: 'all', label: 'All time' }, { key: 'custom', label: 'Custom range' }
@@ -11,12 +12,12 @@
   var NEGATIVE = { 'Rejected': 1, 'Candidate Withdrew': 1, 'Not Suitable': 1, 'No Response': 1 };
 
   function resolve() {
-    var t = U.todayISO();
+    var today = U.todayISO();
     switch (range.preset) {
-      case 'this_month': return { from: U.startOfMonth(t), to: U.endOfMonth(t) };
-      case 'last30': return { from: U.addDays(t, -29), to: t };
-      case 'last90': return { from: U.addDays(t, -89), to: t };
-      case 'this_year': return { from: t.slice(0, 4) + '-01-01', to: t.slice(0, 4) + '-12-31' };
+      case 'this_month': return { from: U.startOfMonth(today), to: U.endOfMonth(today) };
+      case 'last30': return { from: U.addDays(today, -29), to: today };
+      case 'last90': return { from: U.addDays(today, -89), to: today };
+      case 'this_year': return { from: today.slice(0, 4) + '-01-01', to: today.slice(0, 4) + '-12-31' };
       case 'custom': return { from: range.from, to: range.to };
     }
     return { from: '', to: '' };
@@ -77,7 +78,7 @@
     var guard = 0;
     while (cur <= to && guard++ < 400) {
       var key = cur;
-      var label = monthly ? U.monthName(cur).slice(0, 3) + ' ' + cur.slice(2, 4) : U.fmtDate(cur).slice(0, 6);
+      var label = monthly ? U.monthShort(cur) : U.fmtDate(cur).slice(0, 6);
       buckets.push({ key: key, label: label, n: 0 });
       map[key] = buckets[buckets.length - 1];
       cur = monthly ? U.addDays(U.endOfMonth(cur), 1) : U.addDays(cur, 7);
@@ -92,7 +93,7 @@
 
   function barChart(data) {
     var b = data.buckets;
-    if (!b.length) return '<div class="small muted">No data in range.</div>';
+    if (!b.length) return '<div class="small muted">' + esc(t('No data in range.')) + '</div>';
     var W = 640, H = 200, padL = 28, padB = 26, padT = 14;
     var max = Math.max(1, Math.max.apply(null, b.map(function (x) { return x.n; })));
     var nice = max <= 4 ? max : Math.ceil(max / 4) * 4;
@@ -115,9 +116,9 @@
       return (path ? '<path d="' + path + '" fill="var(--chart-bar)"/>' : '') +
         (x.n && b.length <= 16 ? '<text class="val-label" x="' + cx + '" y="' + (y - 4) + '" text-anchor="middle">' + x.n + '</text>' : '') +
         (k % labelEvery === 0 ? '<text class="axis-label" x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(x.label) + '</text>' : '') +
-        '<rect class="hit" x="' + (padL + cw * k) + '" y="' + padT + '" width="' + cw + '" height="' + (H - padT - padB) + '" data-tip="' + esc((data.monthly ? '' : 'Week of ') + x.label + ': ' + x.n + ' candidate' + (x.n === 1 ? '' : 's') + ' added') + '"/>';
+        '<rect class="hit" x="' + (padL + cw * k) + '" y="' + padT + '" width="' + cw + '" height="' + (H - padT - padB) + '" data-tip="' + esc(data.monthly ? (x.n === 1 ? t('{0}: {1} candidate added', x.label, x.n) : t('{0}: {1} candidates added', x.label, x.n)) : (x.n === 1 ? t('Week of {0}: {1} candidate added', x.label, x.n) : t('Week of {0}: {1} candidates added', x.label, x.n))) + '"/>';
     }).join('');
-    return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Candidates added per ' + (data.monthly ? 'month' : 'week') + '">' + grid + '<line x1="' + padL + '" x2="' + W + '" y1="' + (H - padB) + '" y2="' + (H - padB) + '" stroke="var(--border-strong)"/>' + bars + '</svg></div>';
+    return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(data.monthly ? t('Candidates added per month') : t('Candidates added per week')) + '">' + grid + '<line x1="' + padL + '" x2="' + W + '" y1="' + (H - padB) + '" y2="' + (H - padB) + '" stroke="var(--border-strong)"/>' + bars + '</svg></div>';
   }
 
   function hbars(rows, color) {
@@ -129,18 +130,19 @@
 
   function sourceChart(src) {
     var keys = Object.keys(src).filter(function (k) { return src[k].candidates > 0; }).sort(function (a, b) { return src[b].candidates - src[a].candidates; });
-    if (!keys.length) return '<div class="small muted">No candidates added in this period.</div>';
+    if (!keys.length) return '<div class="small muted">' + esc(t('No candidates added in this period.')) + '</div>';
     var max = Math.max(1, Math.max.apply(null, keys.map(function (k) { return src[k].candidates; })));
+    /* i18n: t('Candidates') t('Ready') t('Started') */
     var series = [['candidates', 'Candidates', 'var(--series-1)'], ['ready', 'Ready', 'var(--series-3)'], ['started', 'Started', 'var(--series-2)']];
-    return '<div class="legend" style="margin:0 0 8px">' + series.map(function (s) { return '<span><i style="background:' + s[2] + '"></i>' + s[1] + '</span>'; }).join('') + '</div>' +
+    return '<div class="legend" style="margin:0 0 8px">' + series.map(function (s) { return '<span><i style="background:' + s[2] + '"></i>' + esc(t(s[1])) + '</span>'; }).join('') + '</div>' +
       keys.map(function (k) {
         var x = src[k];
-        return '<div class="gbar"><div class="lbl">' + esc(k) + '</div><div class="bars">' + series.map(function (s) {
-          return '<div class="b" data-tip="' + esc(k + ' – ' + s[1] + ': ' + x[s[0]]) + '"><span class="f" style="width:' + (x[s[0]] / max * 100) + '%;background:' + s[2] + '"></span><em>' + x[s[0]] + '</em></div>';
+        return '<div class="gbar"><div class="lbl">' + esc(t(k)) + '</div><div class="bars">' + series.map(function (s) {
+          return '<div class="b" data-tip="' + esc(t(k) + ' – ' + t(s[1]) + ': ' + x[s[0]]) + '"><span class="f" style="width:' + (x[s[0]] / max * 100) + '%;background:' + s[2] + '"></span><em>' + x[s[0]] + '</em></div>';
         }).join('') + '</div></div>';
       }).join('') +
-      '<table class="data compact static mt-16"><thead><tr><th>Source</th><th class="center">Candidates</th><th class="center">Ready</th><th class="center">Started</th><th class="center">Conversion</th></tr></thead><tbody>' +
-      keys.map(function (k) { var x = src[k]; return '<tr><td>' + esc(k) + '</td><td class="center">' + x.candidates + '</td><td class="center">' + x.ready + '</td><td class="center">' + x.started + '</td><td class="center">' + U.pct(x.ready + x.started, x.candidates) + '%</td></tr>'; }).join('') +
+      '<table class="data compact static mt-16"><thead><tr><th>' + esc(t('Source')) + '</th><th class="center">' + esc(t('Candidates')) + '</th><th class="center">' + esc(t('Ready')) + '</th><th class="center">' + esc(t('Started')) + '</th><th class="center">' + esc(t('Conversion')) + '</th></tr></thead><tbody>' +
+      keys.map(function (k) { var x = src[k]; return '<tr><td>' + esc(t(k)) + '</td><td class="center">' + x.candidates + '</td><td class="center">' + x.ready + '</td><td class="center">' + x.started + '</td><td class="center">' + U.pct(x.ready + x.started, x.candidates) + '%</td></tr>'; }).join('') +
       '</tbody></table>';
   }
 
@@ -149,55 +151,55 @@
     render: function () {
       var r = resolve();
       var m = L.report(r);
-      var label = range.preset === 'all' ? 'All time' : (r.from ? U.fmtDate(r.from) : '…') + ' – ' + (r.to ? U.fmtDate(r.to) : '…');
-      var head = '<div class="page-head"><div><h1>Reports</h1><div class="sub">Recruitment performance for the selected period · ' + esc(label) + '</div></div>' +
-        '<div class="actions"><select data-change="rep-preset" aria-label="Date range">' + ui.options(PRESETS, range.preset) + '</select>' +
-        (range.preset === 'custom' ? '<input type="date" value="' + esc(range.from) + '" data-change="rep-date" data-k="from" aria-label="From"><input type="date" value="' + esc(range.to) + '" data-change="rep-date" data-k="to" aria-label="To">' : '') +
-        '<button class="btn" data-action="rep-export">' + icon('download', 'sm') + 'Export CSV</button><button class="btn dark" data-action="rep-print">' + icon('printer', 'sm') + 'Print report</button></div></div>';
+      var label = range.preset === 'all' ? t('All time') : (r.from ? U.fmtDate(r.from) : '…') + ' – ' + (r.to ? U.fmtDate(r.to) : '…');
+      var head = '<div class="page-head"><div><h1>' + esc(t('Reports')) + '</h1><div class="sub">' + esc(t('Recruitment performance for the selected period · {0}', label)) + '</div></div>' +
+        '<div class="actions"><select data-change="rep-preset" aria-label="' + esc(t('Date range')) + '">' + ui.options(PRESETS, range.preset) + '</select>' +
+        (range.preset === 'custom' ? '<input type="date" value="' + esc(range.from) + '" data-change="rep-date" data-k="from" aria-label="' + esc(t('From')) + '"><input type="date" value="' + esc(range.to) + '" data-change="rep-date" data-k="to" aria-label="' + esc(t('To')) + '">' : '') +
+        '<button class="btn" data-action="rep-export">' + icon('download', 'sm') + esc(t('Export CSV')) + '</button><button class="btn dark" data-action="rep-print">' + icon('printer', 'sm') + esc(t('Print report')) + '</button></div></div>';
 
-      function metric(l, v, ctx) { return '<div class="metric"><div class="ml">' + l + '</div><div class="mv">' + v + '</div><div class="mc">' + (ctx || '&nbsp;') + '</div></div>'; }
-      var negTxt = Object.keys(m.negByReason).map(function (k) { return k + ' ' + m.negByReason[k]; }).join(' · ');
+      function metric(l, v, ctx) { return '<div class="metric"><div class="ml">' + esc(l) + '</div><div class="mv">' + v + '</div><div class="mc">' + (ctx ? esc(ctx) : '&nbsp;') + '</div></div>'; }
+      var negTxt = Object.keys(m.negByReason).map(function (k) { return t(k) + ' ' + m.negByReason[k]; }).join(' · ');
       var metrics = '<div class="card mb-16"><div class="metric-grid">' +
-        metric('Candidates added', m.added.length, 'By application / creation date') +
-        metric('Interviews', m.interviews, m.interviewsDone + ' completed') +
-        metric('Became ready', m.ready, 'Ready to start in period') +
-        metric('Started', m.started, 'Marked as started') +
-        metric('Rejected / Withdrawn', m.negative, negTxt || 'No drop-outs in period') +
-        metric('Missing documents', m.missingDocs, m.docsOutstanding + ' documents outstanding (current)') +
-        metric('Contracts signed', m.signed, 'By signed date') +
-        metric('Target progress', m.target.secured + ' / ' + m.target.required, m.target.remaining + ' drivers remaining (current)') +
+        metric(t('Candidates added'), m.added.length, t('By application / creation date')) +
+        metric(t('Interviews'), m.interviews, t('{0} completed', m.interviewsDone)) +
+        metric(t('Became ready'), m.ready, t('Ready to start in period')) +
+        metric(t('Started'), m.started, t('Marked as started')) +
+        metric(t('Rejected / Withdrawn'), m.negative, negTxt || t('No drop-outs in period')) +
+        metric(t('Missing documents'), m.missingDocs, t('{0} documents outstanding (current)', m.docsOutstanding)) +
+        metric(t('Contracts signed'), m.signed, t('By signed date')) +
+        metric(t('Target progress'), m.target.secured + ' / ' + m.target.required, t('{0} drivers remaining (current)', m.target.remaining)) +
         '</div></div>';
 
-      var stageRows = C.STAGES.map(function (s) { return [s.label, m.stages[s.key] || 0]; });
+      var stageRows = C.STAGES.map(function (s) { return [t(s.label), m.stages[s.key] || 0]; });
       var docRows = S.settings().documents.filter(function (d) { return d.key !== 'contract'; }).map(function (d) { return [L.shortOf(d), m.docCount[d.key] || 0]; }).filter(function (x) { return x[1] > 0; }).sort(function (a, b) { return b[1] - a[1]; });
 
-      var progress = '<div class="card"><div class="card-head"><h3>' + icon('target', 'sm') + 'Recruitment progress</h3><span class="hint">Current snapshot</span></div><div class="card-body">' +
-        '<div class="row between"><span class="small muted">Secured drivers vs. target</span><b>' + m.target.progressPct + '%</b></div><div class="mt-8">' + ui.progress(m.target.progressPct, 'lg brand') + '</div>' +
-        '<div class="rates" style="border:0;padding-top:4px"><div class="rate"><div class="rl">Readiness rate</div><div class="rv">' + m.target.readinessRate + '%</div></div><div class="rate"><div class="rl">Document completion</div><div class="rv">' + m.target.docRate + '%</div></div><div class="rate"><div class="rl">Contract completion</div><div class="rv">' + m.target.contractRate + '%</div></div></div>' +
-        '<div class="section-title mt-16">Active candidates by pipeline stage</div>' + hbars(stageRows) + '</div></div>';
+      var progress = '<div class="card"><div class="card-head"><h3>' + icon('target', 'sm') + esc(t('Recruitment progress')) + '</h3><span class="hint">' + esc(t('Current snapshot')) + '</span></div><div class="card-body">' +
+        '<div class="row between"><span class="small muted">' + esc(t('Secured drivers vs. target')) + '</span><b>' + m.target.progressPct + '%</b></div><div class="mt-8">' + ui.progress(m.target.progressPct, 'lg brand') + '</div>' +
+        '<div class="rates" style="border:0;padding-top:4px"><div class="rate"><div class="rl">' + esc(t('Readiness rate')) + '</div><div class="rv">' + m.target.readinessRate + '%</div></div><div class="rate"><div class="rl">' + esc(t('Document completion')) + '</div><div class="rv">' + m.target.docRate + '%</div></div><div class="rate"><div class="rl">' + esc(t('Contract completion')) + '</div><div class="rv">' + m.target.contractRate + '%</div></div></div>' +
+        '<div class="section-title mt-16">' + esc(t('Active candidates by pipeline stage')) + '</div>' + hbars(stageRows) + '</div></div>';
 
       return head + metrics +
         '<div class="grid halves mb-16">' +
-        '<div class="card"><div class="card-head"><h3>' + icon('chart', 'sm') + 'Candidates added per week</h3><span class="hint">Hover bars for details</span></div><div class="card-body">' + barChart(weekly(r, m.added)) + '</div></div>' +
+        '<div class="card"><div class="card-head"><h3>' + icon('chart', 'sm') + esc(t('Candidates added per week')) + '</h3><span class="hint">' + esc(t('Hover bars for details')) + '</span></div><div class="card-body">' + barChart(weekly(r, m.added)) + '</div></div>' +
         progress + '</div>' +
         '<div class="grid halves">' +
-        '<div class="card"><div class="card-head"><h3>' + icon('users', 'sm') + 'Source performance</h3><span class="hint">Candidates added in period</span></div><div class="card-body">' + sourceChart(m.sources) + '</div></div>' +
-        '<div class="card"><div class="card-head"><h3>' + icon('file', 'sm') + 'Outstanding documents by type</h3><span class="hint">Current, active candidates</span></div><div class="card-body">' + (docRows.length ? hbars(docRows, 'var(--red)') : '<div class="small muted">No outstanding documents.</div>') + '</div></div>' +
+        '<div class="card"><div class="card-head"><h3>' + icon('users', 'sm') + esc(t('Source performance')) + '</h3><span class="hint">' + esc(t('Candidates added in period')) + '</span></div><div class="card-body">' + sourceChart(m.sources) + '</div></div>' +
+        '<div class="card"><div class="card-head"><h3>' + icon('file', 'sm') + esc(t('Outstanding documents by type')) + '</h3><span class="hint">' + esc(t('Current, active candidates')) + '</span></div><div class="card-body">' + (docRows.length ? hbars(docRows, 'var(--red)') : '<div class="small muted">' + esc(t('No outstanding documents.')) + '</div>') + '</div></div>' +
         '</div>';
     }
   };
 
   A['rep-preset'] = function (el) { range.preset = el.value; if (el.value === 'custom' && !range.from) { range.from = U.addDays(U.todayISO(), -30); range.to = U.todayISO(); } J.app.rerenderView(); };
   A['rep-date'] = function (el) { range[el.getAttribute('data-k')] = el.value; J.app.rerenderView(); };
-  A['rep-print'] = function () { J.print.report(resolve(), range.preset === 'all' ? 'All time' : null); };
+  A['rep-print'] = function () { J.print.report(resolve(), range.preset === 'all' ? t('All time') : null); };
   A['rep-export'] = function () {
     var r = resolve();
     var m = L.report(r);
-    var rows = [['Metric', 'Value'], ['Period from', r.from ? U.fmtDate(r.from) : 'all'], ['Period to', r.to ? U.fmtDate(r.to) : 'all'],
-      ['Candidates added', m.added.length], ['Interviews', m.interviews], ['Interviews completed', m.interviewsDone], ['Became ready', m.ready], ['Started', m.started],
-      ['Rejected / Withdrawn', m.negative], ['Candidates with missing documents (current)', m.missingDocs], ['Contracts signed', m.signed],
-      ['Required drivers', m.target.required], ['Secured drivers', m.target.secured], ['Remaining', m.target.remaining], [], ['Source', 'Candidates', 'Ready', 'Started']];
-    Object.keys(m.sources).forEach(function (k) { var x = m.sources[k]; rows.push([k, x.candidates, x.ready, x.started]); });
+    var rows = [[t('Metric'), t('Value')], [t('Period from'), r.from ? U.fmtDate(r.from) : t('all')], [t('Period to'), r.to ? U.fmtDate(r.to) : t('all')],
+      [t('Candidates added'), m.added.length], [t('Interviews'), m.interviews], [t('Interviews completed'), m.interviewsDone], [t('Became ready'), m.ready], [t('Started'), m.started],
+      [t('Rejected / Withdrawn'), m.negative], [t('Candidates with missing documents (current)'), m.missingDocs], [t('Contracts signed'), m.signed],
+      [t('Required drivers'), m.target.required], [t('Secured drivers'), m.target.secured], [t('Remaining'), m.target.remaining], [], [t('Source'), t('Candidates'), t('Ready'), t('Started')]];
+    Object.keys(m.sources).forEach(function (k) { var x = m.sources[k]; rows.push([t(k), x.candidates, x.ready, x.started]); });
     J.io.downloadCSV(rows, 'jarbou-report_' + U.fileStamp() + '.csv');
   };
 })();

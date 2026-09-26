@@ -3,6 +3,8 @@
   'use strict';
   var J = window.J, U = J.util, C = J.config, S = J.store, L = J.logic, ui = J.ui, A = J.actions;
   var esc = U.esc, icon = U.icon;
+  var t = J.t;
+  function tv(v) { return v ? t(v) : v; }
 
   var EMPTY = { q: '', overall: '', stage: '', start: '', startFrom: '', startTo: '', employmentType: '', position: '', station: '', docs: '', contract: '', onboarding: '', recruiter: '', source: '', followUp: '' };
   var f = U.clone(EMPTY);
@@ -10,15 +12,18 @@
   var page = 0;
   var showFilters = false;
 
+  /* i18n: t('Today') t('Next 7 days') t('This week') t('This month') t('Next month') t('Next 30 days') t('Start date passed') t('No start date') t('Custom range…') */
   var START_PRESETS = [
     { key: 'today', label: 'Today' }, { key: 'next7', label: 'Next 7 days' }, { key: 'this_week', label: 'This week' },
     { key: 'this_month', label: 'This month' }, { key: 'next_month', label: 'Next month' }, { key: 'next30', label: 'Next 30 days' },
     { key: 'passed', label: 'Start date passed' }, { key: 'none', label: 'No start date' }, { key: 'custom', label: 'Custom range…' }
   ];
+  /* i18n: t('Name (A–Z)') t('Newest candidate') t('Start date (soonest)') t('Status (pipeline stage)') t('Document completion (lowest)') */
   var SORTS = [
     { key: 'name', label: 'Name (A–Z)' }, { key: 'newest', label: 'Newest candidate' }, { key: 'startDate', label: 'Start date (soonest)' },
     { key: 'stage', label: 'Status (pipeline stage)' }, { key: 'documents', label: 'Document completion (lowest)' }
   ];
+  /* i18n: t('Status') t('Stage') t('Start') t('Type') t('Position') t('Station') t('Documents') t('Contract') t('Onboarding') t('Recruiter') t('Source') t('Follow-up') */
   var FILTER_LABELS = { overall: 'Status', stage: 'Stage', start: 'Start', employmentType: 'Type', position: 'Position', station: 'Station', docs: 'Documents', contract: 'Contract', onboarding: 'Onboarding', recruiter: 'Recruiter', source: 'Source', followUp: 'Follow-up' };
 
   function startMatch(c) {
@@ -109,24 +114,24 @@
   function cell(key, c, i) {
     switch (key) {
       case 'id': return '<td class="mono">' + esc(c.id) + '</td>';
-      case 'name': return '<td class="name-cell sticky-col">' + esc(U.fullName(c)) + '<div class="sub">' + (c.phone ? esc(c.phone) : c.email ? esc(c.email) : 'Contact pending') + '</div></td>';
+      case 'name': return '<td class="name-cell sticky-col">' + esc(U.fullName(c)) + '<div class="sub">' + (c.phone ? esc(c.phone) : c.email ? esc(c.email) : t('Contact pending')) + '</div></td>';
       case 'position': return '<td>' + ui.val(c.position) + '</td>';
       case 'station': return '<td>' + ui.val(c.station, 'Pending') + '</td>';
       case 'project': return '<td>' + ui.projectPill(c.project) + '</td>';
-      case 'employmentType': return '<td>' + ui.val(c.employmentType) + '</td>';
-      case 'salary': return '<td>' + (L.salaryText(c) ? '<span data-tip="Expectation · reference ' + esc(c.salaryReference != null ? U.fmtMoney(c.salaryReference) + ' ' + c.salaryBasis : '—') + '">' + esc(L.salaryText(c)) + '</span>' : '<span class="muted">—</span>') + '</td>';
-      case 'startDate': return '<td>' + (c.startDate ? U.fmtDate(c.startDate) + ' <span class="muted small">' + (i.daysToStart >= 0 ? '(' + U.relDays(i.daysToStart) + ')' : '') + '</span>' : '<span class="muted">Pending</span>') + '</td>';
-      case 'documents': return '<td>' + ui.miniProgress(i.docs.complete, i.docs.total, i.docs.outstanding.length ? 'Outstanding: ' + i.docs.outstanding.map(L.shortDocLabel).join(', ') : 'All documents complete') + '</td>';
+      case 'employmentType': return '<td>' + ui.val(tv(c.employmentType)) + '</td>';
+      case 'salary': return '<td>' + (L.salaryText(c) ? '<span data-tip="' + esc(t('Expectation · reference {0}', c.salaryReference != null ? U.fmtMoney(c.salaryReference) + ' ' + c.salaryBasis : '—')) + '">' + esc(L.salaryText(c)) + '</span>' : '<span class="muted">—</span>') + '</td>';
+      case 'startDate': return '<td>' + (c.startDate ? U.fmtDate(c.startDate) + ' <span class="muted small">' + (i.daysToStart >= 0 ? '(' + U.relDays(i.daysToStart) + ')' : '') + '</span>' : '<span class="muted">' + t('Pending') + '</span>') + '</td>';
+      case 'documents': return '<td>' + ui.miniProgress(i.docs.complete, i.docs.total, i.docs.outstanding.length ? t('Outstanding: {0}', i.docs.outstanding.map(L.shortDocLabel).join(', ')) : t('All documents complete')) + '</td>';
       case 'contract': return '<td>' + ui.contractBadge(c.contract.status) + '</td>';
       case 'onboarding': return '<td>' + ui.miniProgress(i.onboarding.done, i.onboarding.total) + '</td>';
       case 'stage': return '<td>' + ui.stageBadge(c.stage) + '</td>';
       case 'overall': return '<td>' + ui.overallBadge(i, true) + '</td>';
       case 'lastContact': return '<td>' + (c.lastContact ? U.fmtDate(c.lastContact) : '<span class="muted">—</span>') + '</td>';
-      case 'followUp': return '<td>' + (c.followUpDate ? U.fmtDate(c.followUpDate) + (i.followUp === 'overdue' ? ' ' + ui.badge('Overdue', 'red') : '') : '<span class="muted">—</span>') + '</td>';
+      case 'followUp': return '<td>' + (c.followUpDate ? U.fmtDate(c.followUpDate) + (i.followUp === 'overdue' ? ' ' + ui.badge(t('Overdue'), 'red') : '') : '<span class="muted">—</span>') + '</td>';
       case 'phone': return '<td>' + ui.val(c.phone, 'Pending') + '</td>';
-      case 'source': return '<td>' + ui.val(c.source) + '</td>';
+      case 'source': return '<td>' + ui.val(tv(c.source)) + '</td>';
       case 'recruiter': return '<td>' + ui.val(c.recruiter, 'Unassigned') + '</td>';
-      case 'actions': return '<td class="actions-cell"><button class="icon-btn" data-action="row-menu" data-id="' + esc(c.id) + '" data-stop aria-label="Actions for ' + esc(U.fullName(c)) + '">' + icon('more') + '</button></td>';
+      case 'actions': return '<td class="actions-cell"><button class="icon-btn" data-action="row-menu" data-id="' + esc(c.id) + '" data-stop aria-label="' + esc(t('Actions for {0}', U.fullName(c))) + '">' + icon('more') + '</button></td>';
     }
     return '<td></td>';
   }
@@ -137,15 +142,16 @@
     Object.keys(FILTER_LABELS).forEach(function (k) {
       if (!f[k]) return;
       var v = f[k];
-      if (k === 'overall') v = C.OVERALL[v] ? C.OVERALL[v].label : v;
-      if (k === 'stage') v = L.stage(v).label;
-      if (k === 'start') v = f.start === 'custom' ? (f.startFrom ? U.fmtDate(f.startFrom) : '…') + ' – ' + (f.startTo ? U.fmtDate(f.startTo) : '…') : (START_PRESETS.filter(function (p) { return p.key === f.start; })[0] || {}).label;
-      if (k === 'docs') v = v === 'missing' ? 'Missing / outstanding' : v === 'complete' ? 'Complete' : v === 'expiring' ? 'Expiring / expired' : L.shortDocLabel(v.slice(4)) + ' outstanding';
-      if (k === 'contract') v = v === 'pending' ? 'Pending' : v === 'unsigned' ? 'Not signed' : L.contractStatus(v.slice(3)).label;
-      if (k === 'onboarding') v = { in_progress: 'In progress', not_started: 'Not started', complete: 'Complete' }[v];
-      if ((k === 'recruiter' || k === 'station') && v === '__none') v = k === 'recruiter' ? 'Unassigned' : 'Not assigned';
-      if (k === 'followUp') v = { overdue: 'Overdue', today: 'Due today', any: 'Any scheduled' }[v];
-      out.push('<button class="chip" data-action="cand-clear-filter" data-k="' + k + '">' + esc(FILTER_LABELS[k]) + ': <b>' + esc(v) + '</b>' + icon('x', 'sm') + '</button>');
+      if (k === 'overall') v = C.OVERALL[v] ? t(C.OVERALL[v].label) : v;
+      if (k === 'stage') v = t(L.stage(v).label);
+      if (k === 'start') v = f.start === 'custom' ? (f.startFrom ? U.fmtDate(f.startFrom) : '…') + ' – ' + (f.startTo ? U.fmtDate(f.startTo) : '…') : t((START_PRESETS.filter(function (p) { return p.key === f.start; })[0] || {}).label);
+      if (k === 'employmentType' || k === 'source') v = t(v);
+      if (k === 'docs') v = v === 'missing' ? t('Missing / outstanding') : v === 'complete' ? t('Complete') : v === 'expiring' ? t('Expiring / expired') : t('{0} outstanding', L.shortDocLabel(v.slice(4)));
+      if (k === 'contract') v = v === 'pending' ? t('Pending') : v === 'unsigned' ? t('Not signed') : t(L.contractStatus(v.slice(3)).label);
+      if (k === 'onboarding') v = { in_progress: t('In progress'), not_started: t('Not started'), complete: t('Complete') }[v];
+      if ((k === 'recruiter' || k === 'station') && v === '__none') v = k === 'recruiter' ? t('Unassigned') : t('Not assigned');
+      if (k === 'followUp') v = { overdue: t('Overdue'), today: t('Due today'), any: t('Any scheduled') }[v];
+      out.push('<button class="chip" data-action="cand-clear-filter" data-k="' + k + '">' + esc(t(FILTER_LABELS[k])) + ': <b>' + esc(v) + '</b>' + icon('x', 'sm') + '</button>');
     });
     void s;
     return out;
@@ -153,22 +159,22 @@
 
   function filtersPanel() {
     var s = S.settings();
-    function sel(k, label, opts) { return '<label>' + label + '<select class="sm" data-change="cand-filter" data-k="' + k + '">' + opts + '</select></label>'; }
+    function sel(k, label, opts) { return '<label>' + esc(label) + '<select class="sm" data-change="cand-filter" data-k="' + k + '">' + opts + '</select></label>'; }
     return '<div class="filters-panel">' +
-      sel('overall', 'Overall status', ui.options([{ key: 'ready', label: 'Ready to Start' }, { key: 'not_ready', label: 'Not Ready' }, { key: 'started', label: 'Started' }], f.overall, { blank: 'Any' })) +
-      sel('stage', 'Recruitment status', ui.options(C.STAGES, f.stage, { blank: 'Any stage' })) +
-      sel('start', 'Start date', ui.options(START_PRESETS, f.start, { blank: 'Any' })) +
-      (f.start === 'custom' ? '<label>From<input type="date" class="sm" value="' + esc(f.startFrom) + '" data-change="cand-filter" data-k="startFrom"></label><label>To<input type="date" class="sm" value="' + esc(f.startTo) + '" data-change="cand-filter" data-k="startTo"></label>' : '') +
-      sel('employmentType', 'Employment type', ui.options(C.EMPLOYMENT_TYPES, f.employmentType, { blank: 'Any' })) +
-      sel('position', 'Position', ui.options(s.positions, f.position, { blank: 'Any' })) +
-      sel('station', 'Location / Station', ui.options([{ key: '__none', label: 'Not assigned' }].concat(s.stations), f.station, { blank: 'Any' })) +
-      sel('docs', 'Documents', ui.options([{ key: 'missing', label: 'Missing / outstanding' }, { key: 'complete', label: 'Complete' }, { key: 'expiring', label: 'Expiring / expired' }]
-        .concat(s.documents.map(function (d) { return { key: 'doc:' + d.key, label: L.shortOf(d) + ' outstanding' }; })), f.docs, { blank: 'Any' })) +
-      sel('contract', 'Contract status', ui.options([{ key: 'pending', label: 'Pending (in process)' }, { key: 'unsigned', label: 'Not signed (all)' }].concat(C.CONTRACT_STATUSES.map(function (x) { return { key: 'st:' + x.key, label: x.label }; })), f.contract, { blank: 'Any' })) +
-      sel('onboarding', 'Onboarding status', ui.options([{ key: 'not_started', label: 'Not started' }, { key: 'in_progress', label: 'In progress' }, { key: 'complete', label: 'Complete' }], f.onboarding, { blank: 'Any' })) +
-      sel('recruiter', 'Recruiter', ui.options([{ key: '__none', label: 'Unassigned' }].concat(s.recruiters), f.recruiter, { blank: 'Any' })) +
-      sel('source', 'Source', ui.options(s.sources, f.source, { blank: 'Any' })) +
-      sel('followUp', 'Follow-up', ui.options([{ key: 'overdue', label: 'Overdue' }, { key: 'today', label: 'Due today' }, { key: 'any', label: 'Any scheduled' }], f.followUp, { blank: 'Any' })) +
+      sel('overall', t('Overall status'), ui.options([{ key: 'ready', label: 'Ready to Start' }, { key: 'not_ready', label: 'Not Ready' }, { key: 'started', label: 'Started' }], f.overall, { blank: 'Any' })) +
+      sel('stage', t('Recruitment status'), ui.options(C.STAGES, f.stage, { blank: 'Any stage' })) +
+      sel('start', t('Start date'), ui.options(START_PRESETS, f.start, { blank: 'Any' })) +
+      (f.start === 'custom' ? '<label>' + t('From') + '<input type="date" class="sm" value="' + esc(f.startFrom) + '" data-change="cand-filter" data-k="startFrom"></label><label>' + t('To') + '<input type="date" class="sm" value="' + esc(f.startTo) + '" data-change="cand-filter" data-k="startTo"></label>' : '') +
+      sel('employmentType', t('Employment type'), ui.options(C.EMPLOYMENT_TYPES, f.employmentType, { blank: 'Any', tr: true })) +
+      sel('position', t('Position'), ui.options(s.positions, f.position, { blank: 'Any' })) +
+      sel('station', t('Location / Station'), ui.options([{ key: '__none', label: 'Not assigned' }].concat(s.stations), f.station, { blank: 'Any' })) +
+      sel('docs', t('Documents'), ui.options([{ key: 'missing', label: t('Missing / outstanding') }, { key: 'complete', label: t('Complete') }, { key: 'expiring', label: t('Expiring / expired') }]
+        .concat(s.documents.map(function (d) { return { key: 'doc:' + d.key, label: t('{0} outstanding', L.shortOf(d)) }; })), f.docs, { blank: 'Any', raw: true })) +
+      sel('contract', t('Contract status'), ui.options([{ key: 'pending', label: 'Pending (in process)' }, { key: 'unsigned', label: 'Not signed (all)' }].concat(C.CONTRACT_STATUSES.map(function (x) { return { key: 'st:' + x.key, label: x.label }; })), f.contract, { blank: 'Any' })) +
+      sel('onboarding', t('Onboarding status'), ui.options([{ key: 'not_started', label: 'Not started' }, { key: 'in_progress', label: 'In progress' }, { key: 'complete', label: 'Complete' }], f.onboarding, { blank: 'Any' })) +
+      sel('recruiter', t('Recruiter'), ui.options([{ key: '__none', label: 'Unassigned' }].concat(s.recruiters), f.recruiter, { blank: 'Any' })) +
+      sel('source', t('Source'), ui.options(s.sources, f.source, { blank: 'Any', tr: true })) +
+      sel('followUp', t('Follow-up'), ui.options([{ key: 'overdue', label: 'Overdue' }, { key: 'today', label: 'Due today' }, { key: 'any', label: 'Any scheduled' }], f.followUp, { blank: 'Any' })) +
       '</div>';
   }
 
@@ -194,38 +200,38 @@
       var ch = chips();
       var activeCount = ch.length;
 
-      var head = '<div class="page-head"><div><h1>Candidates</h1><div class="sub">All active candidates' + (s.activeProject !== 'all' ? ' in project ' + esc(s.activeProject) : '') + '. Click a row to open the profile.</div></div>' +
-        '<div class="actions"><button class="btn" data-action="cand-export">' + icon('download', 'sm') + 'Export</button><button class="btn primary" data-action="add-candidate">' + icon('plus') + 'Add Candidate</button></div></div>';
+      var head = '<div class="page-head"><div><h1>' + t('Candidates') + '</h1><div class="sub">' + (s.activeProject !== 'all' ? t('All active candidates in project {0}. Click a row to open the profile.', esc(s.activeProject)) : t('All active candidates. Click a row to open the profile.')) + '</div></div>' +
+        '<div class="actions"><button class="btn" data-action="cand-export">' + icon('download', 'sm') + t('Export') + '</button><button class="btn primary" data-action="add-candidate">' + icon('plus') + t('Add Candidate') + '</button></div></div>';
 
       var toolbar = '<div class="toolbar">' +
-        '<div class="search-input">' + icon('search') + '<input type="search" id="cand-q" placeholder="Search name, ID, phone, email, location, notes…" value="' + esc(f.q) + '" data-input="cand-search" aria-label="Search candidates">' +
-        (f.q ? '<button class="icon-btn clear" style="width:26px;height:26px" data-action="cand-clear-filter" data-k="q" aria-label="Clear search">' + icon('x', 'sm') + '</button>' : '') + '</div>' +
-        '<button class="btn ' + (showFilters ? 'dark' : '') + '" data-action="cand-toggle-filters">' + icon('filter', 'sm') + 'Filters' + (activeCount ? ' · ' + activeCount : '') + '</button>' +
-        '<label class="row small muted" style="gap:6px">Sort<select class="sm" data-change="cand-sort" aria-label="Sort by">' + ui.options(SORTS, SORTS.some(function (x) { return x.key === sort.key; }) ? sort.key : '', { blank: 'Custom (column)' }) + '</select></label>' +
-        '<button class="icon-btn bordered" data-action="cand-sort-dir" aria-label="Reverse sort order" data-tip="Reverse order">' + icon(sort.dir === 1 ? 'arrowDown' : 'arrowUp', 'sm') + '</button>' +
+        '<div class="search-input">' + icon('search') + '<input type="search" id="cand-q" placeholder="' + esc(t('Search name, ID, phone, email, location, notes…')) + '" value="' + esc(f.q) + '" data-input="cand-search" aria-label="' + esc(t('Search candidates')) + '">' +
+        (f.q ? '<button class="icon-btn clear" style="width:26px;height:26px" data-action="cand-clear-filter" data-k="q" aria-label="' + esc(t('Clear search')) + '">' + icon('x', 'sm') + '</button>' : '') + '</div>' +
+        '<button class="btn ' + (showFilters ? 'dark' : '') + '" data-action="cand-toggle-filters">' + icon('filter', 'sm') + t('Filters') + (activeCount ? ' · ' + activeCount : '') + '</button>' +
+        '<label class="row small muted" style="gap:6px">' + t('Sort') + '<select class="sm" data-change="cand-sort" aria-label="' + esc(t('Sort by')) + '">' + ui.options(SORTS, SORTS.some(function (x) { return x.key === sort.key; }) ? sort.key : '', { blank: 'Custom (column)' }) + '</select></label>' +
+        '<button class="icon-btn bordered" data-action="cand-sort-dir" aria-label="' + esc(t('Reverse sort order')) + '" data-tip="' + esc(t('Reverse order')) + '">' + icon(sort.dir === 1 ? 'arrowDown' : 'arrowUp', 'sm') + '</button>' +
         '<div style="flex:1"></div>' +
-        '<button class="btn" data-action="cand-columns">' + icon('columns', 'sm') + 'Columns</button></div>';
+        '<button class="btn" data-action="cand-columns">' + icon('columns', 'sm') + t('Columns') + '</button></div>';
 
-      var chipBar = activeCount ? '<div class="chips">' + ch.join('') + '<button class="btn xs ghost" data-action="cand-clear-all">Clear Filters</button></div>' : '';
+      var chipBar = activeCount ? '<div class="chips">' + ch.join('') + '<button class="btn xs ghost" data-action="cand-clear-all">' + t('Clear Filters') + '</button></div>' : '';
 
       var table;
       if (!list.length) {
-        table = total ? ui.empty('search', 'No candidates match', 'Try adjusting your search or filters.', '<button class="btn" data-action="cand-clear-all">Clear Filters</button>')
-          : ui.empty('users', 'No candidates yet', 'Add your first candidate to start tracking recruitment.', '<button class="btn primary" data-action="add-candidate">' + icon('plus') + 'Add Candidate</button>');
+        table = total ? ui.empty('search', t('No candidates match'), t('Try adjusting your search or filters.'), '<button class="btn" data-action="cand-clear-all">' + t('Clear Filters') + '</button>')
+          : ui.empty('users', t('No candidates yet'), t('Add your first candidate to start tracking recruitment.'), '<button class="btn primary" data-action="add-candidate">' + icon('plus') + t('Add Candidate') + '</button>');
       } else {
         table = '<div class="table-wrap" data-keep-scroll="cand"><table class="data"><thead><tr>' + cols.map(function (c) {
           var sortable = !!c.sort;
           var ind = sort.key === c.sort ? (sort.dir === 1 ? '▲' : '▼') : '';
-          return '<th class="' + (sortable ? 'sortable ' : '') + (c.key === 'name' ? 'sticky-col' : '') + '"' + (sortable ? ' data-action="cand-sort-col" data-k="' + c.sort + '" aria-sort="' + (ind ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none') + '"' : '') + '>' + (c.key === 'actions' ? '<span class="sr-only">Actions</span>' : esc(c.label)) + ' <span class="sort-ind">' + ind + '</span></th>';
+          return '<th class="' + (sortable ? 'sortable ' : '') + (c.key === 'name' ? 'sticky-col' : '') + '"' + (sortable ? ' data-action="cand-sort-col" data-k="' + c.sort + '" aria-sort="' + (ind ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none') + '"' : '') + '>' + (c.key === 'actions' ? '<span class="sr-only">' + t('Actions') + '</span>' : esc(t(c.label))) + ' <span class="sort-ind">' + ind + '</span></th>';
         }).join('') + '</tr></thead><tbody>' +
           slice.map(function (c) {
             var i = L.info(c);
             return '<tr data-action="open-candidate" data-id="' + esc(c.id) + '">' + cols.map(function (col) { return cell(col.key, c, i); }).join('') + '</tr>';
           }).join('') + '</tbody></table></div>' +
-          '<div class="pager"><span>Showing <b>' + (page * size + 1) + '–' + Math.min(list.length, page * size + size) + '</b> of <b>' + list.length + '</b>' + (list.length !== total ? ' (filtered from ' + total + ')' : '') + '</span>' +
-          '<div class="row"><select class="sm" data-change="cand-pagesize" aria-label="Rows per page">' + ui.options([25, 50, 100, 250].map(function (n) { return { key: n, label: n + ' / page' }; }), size) + '</select>' +
-          '<button class="btn sm" data-action="cand-page" data-d="-1"' + (page === 0 ? ' disabled' : '') + '>Previous</button><span>Page ' + (page + 1) + ' of ' + pages + '</span>' +
-          '<button class="btn sm" data-action="cand-page" data-d="1"' + (page >= pages - 1 ? ' disabled' : '') + '>Next</button></div></div>';
+          '<div class="pager"><span>' + t('Showing {0} of {1}', '<b>' + (page * size + 1) + '–' + Math.min(list.length, page * size + size) + '</b>', '<b>' + list.length + '</b>') + (list.length !== total ? ' ' + t('(filtered from {0})', total) : '') + '</span>' +
+          '<div class="row"><select class="sm" data-change="cand-pagesize" aria-label="' + esc(t('Rows per page')) + '">' + ui.options([25, 50, 100, 250].map(function (n) { return { key: n, label: t('{0} / page', n) }; }), size, { raw: true }) + '</select>' +
+          '<button class="btn sm" data-action="cand-page" data-d="-1"' + (page === 0 ? ' disabled' : '') + '>' + t('Previous') + '</button><span>' + t('Page {0} of {1}', page + 1, pages) + '</span>' +
+          '<button class="btn sm" data-action="cand-page" data-d="1"' + (page >= pages - 1 ? ' disabled' : '') + '>' + t('Next') + '</button></div></div>';
       }
       return head + '<div class="card">' + toolbar + (showFilters ? filtersPanel() : '') + chipBar + table + '</div>';
     }
@@ -259,11 +265,11 @@
   A['cand-pagesize'] = function (el) { S.settings().pageSize = +el.value; S.saveSettings(); page = 0; rerender(); };
   A['cand-columns'] = function (el) {
     var s = S.settings();
-    var items = [{ header: 'Visible columns' }];
+    var items = [{ header: t('Visible columns') }];
     C.TABLE_COLUMNS.forEach(function (col) {
       if (col.locked) return;
       items.push({
-        label: col.label, checked: s.tableColumns.indexOf(col.key) !== -1, keepOpen: true,
+        label: t(col.label), checked: s.tableColumns.indexOf(col.key) !== -1, keepOpen: true,
         onClick: function (btn) {
           var idx = s.tableColumns.indexOf(col.key);
           if (idx === -1) s.tableColumns.push(col.key); else s.tableColumns.splice(idx, 1);
@@ -275,7 +281,7 @@
       });
     });
     items.push({ sep: true });
-    items.push({ label: 'Reset to default', icon: 'restore', onClick: function () { s.tableColumns = C.defaultSettings().tableColumns; S.saveSettings(); rerender(); } });
+    items.push({ label: t('Reset to default'), icon: 'restore', onClick: function () { s.tableColumns = C.defaultSettings().tableColumns; S.saveSettings(); rerender(); } });
     ui.menu(el, items);
   };
   A['cand-export'] = function (el) { J.io.exportMenu(el, filtered(), 'filtered'); };

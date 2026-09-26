@@ -3,33 +3,34 @@
   'use strict';
   var J = window.J, U = J.util, C = J.config, S = J.store, L = J.logic, ui = J.ui, A = J.actions;
   var esc = U.esc, icon = U.icon;
+  var t = J.t;
   var IO = (J.io = {});
 
   /* ------------------------------------------------------------ Flat rows */
   IO.rows = function (list) {
     var s = S.settings();
     var docs = s.documents;
-    var header = ['Candidate ID', 'First Name', 'Family Name', 'Phone', 'Email', 'Date of Birth', 'Address', 'City', 'Nationality', 'Preferred Language',
-      'Position', 'Project', 'Station / Location', 'Employment Type', 'Planned Start Date', 'Tax Class', 'Standard Salary Reference (EUR)', 'Salary Basis',
-      'Salary Expectation From (EUR)', 'Salary Expectation To (EUR)', 'Working Hours / Week', 'Candidate Availability',
-      'Application Date', 'Source', 'Interview Date', 'Interview Status', 'Recruiter', 'Recruitment Status', 'Overall Status', 'Administrative Readiness',
-      'Outstanding Requirements', 'Documents Complete', 'Documents Required', 'Document Completion %']
-      .concat(docs.map(function (d) { return 'Doc: ' + d.label; }))
-      .concat(['Contract Status', 'Contract Type', 'Contract Salary (EUR)', 'Contract Hours / Week', 'Contract Start', 'Contract End', 'Contract Signed Date',
-        'Onboarding Done', 'Onboarding Steps', 'Onboarding %', 'Next Action', 'Next Follow-up', 'Follow-up Note', 'Last Contact', 'Internal Notes',
-        'Archived', 'Archive Reason', 'Archive Date', 'Created', 'Last Updated']);
+    var header = [t('Candidate ID'), t('First Name'), t('Family Name'), t('Phone'), t('Email'), t('Date of Birth'), t('Address'), t('City'), t('Nationality'), t('Preferred Language'),
+      t('Position'), t('Project'), t('Station / Location'), t('Employment Type'), t('Planned Start Date'), t('Tax Class'), t('Standard Salary Reference (EUR)'), t('Salary Basis'),
+      t('Salary Expectation From (EUR)'), t('Salary Expectation To (EUR)'), t('Working Hours / Week'), t('Candidate Availability'),
+      t('Application Date'), t('Source'), t('Interview Date'), t('Interview Status'), t('Recruiter'), t('Recruitment Status'), t('Overall Status'), t('Administrative Readiness'),
+      t('Outstanding Requirements'), t('Documents Complete'), t('Documents Required'), t('Document Completion %')]
+      .concat(docs.map(function (d) { return t('Doc: {0}', t(d.label)); }))
+      .concat([t('Contract Status'), t('Contract Type'), t('Contract Salary (EUR)'), t('Contract Hours / Week'), t('Contract Start'), t('Contract End'), t('Contract Signed Date'),
+        t('Onboarding Done'), t('Onboarding Steps'), t('Onboarding %'), t('Next Action'), t('Next Follow-up'), t('Follow-up Note'), t('Last Contact'), t('Internal Notes'),
+        t('Archived'), t('Archive Reason'), t('Archive Date'), t('Created'), t('Last Updated')]);
     var rows = [header];
     list.forEach(function (c) {
       var i = L.info(c);
       rows.push([c.id, c.firstName, c.lastName, c.phone, c.email, U.fmtDate(c.dob), c.address, c.city, c.nationality, c.language,
-        c.position, c.project, c.station, c.employmentType, U.fmtDate(c.startDate), c.taxClass, c.salaryReference, c.salaryBasis,
-        c.salaryExpectationMin, c.salaryExpectationMax, c.hoursPerWeek, L.availability(c.availability).short,
-        U.fmtDate(c.applicationDate), c.source, U.fmtDate(c.interviewDate), c.interviewStatus, c.recruiter, L.stage(c.stage).label, C.OVERALL[i.overall].label,
-        i.admin.ready ? 'Complete' : 'Not ready', i.admin.reasons.join('; '), i.docs.complete, i.docs.total, i.docs.pct]
-        .concat(docs.map(function (d) { var e = c.documents[d.key]; var st = e ? e.status : (d.required ? 'missing' : 'not_required'); return L.docStatus(st).label + (e && e.expiryDate ? ' (exp. ' + U.fmtDate(e.expiryDate) + ')' : ''); }))
-        .concat([L.contractStatus(c.contract.status).label, c.contract.type, c.contract.salary, c.contract.hours, U.fmtDate(c.contract.startDate), U.fmtDate(c.contract.endDate), U.fmtDate(c.contract.signedDate),
+        c.position, c.project, c.station, t(c.employmentType), U.fmtDate(c.startDate), t(c.taxClass), c.salaryReference, t(c.salaryBasis),
+        c.salaryExpectationMin, c.salaryExpectationMax, c.hoursPerWeek, t(L.availability(c.availability).short),
+        U.fmtDate(c.applicationDate), t(c.source), U.fmtDate(c.interviewDate), t(c.interviewStatus), c.recruiter, t(L.stage(c.stage).label), t(C.OVERALL[i.overall].label),
+        i.admin.ready ? t('Complete') : t('Not ready'), i.admin.reasons.join('; '), i.docs.complete, i.docs.total, i.docs.pct]
+        .concat(docs.map(function (d) { var e = c.documents[d.key]; var st = e ? e.status : (d.required ? 'missing' : 'not_required'); return e && e.expiryDate ? t('{0} (exp. {1})', t(L.docStatus(st).label), U.fmtDate(e.expiryDate)) : t(L.docStatus(st).label); }))
+        .concat([t(L.contractStatus(c.contract.status).label), t(c.contract.type), c.contract.salary, c.contract.hours, U.fmtDate(c.contract.startDate), U.fmtDate(c.contract.endDate), U.fmtDate(c.contract.signedDate),
           i.onboarding.done, i.onboarding.total, i.onboarding.pct, c.nextAction, U.fmtDate(c.followUpDate), c.followUpNote, U.fmtDate(c.lastContact), c.notes,
-          c.archived ? 'Yes' : 'No', c.archiveReason, U.fmtDate(c.archiveDate), U.fmtDateTime(c.createdAt), U.fmtDateTime(c.updatedAt)]));
+          c.archived ? t('Yes') : t('No'), t(c.archiveReason), U.fmtDate(c.archiveDate), U.fmtDateTime(c.createdAt), U.fmtDateTime(c.updatedAt)]));
     });
     return rows;
   };
@@ -46,14 +47,14 @@
   IO.toCSV = function (rows) { return rows.map(function (r) { return r.map(csvCell).join(';'); }).join('\r\n'); };
   IO.downloadCSV = function (rows, name) {
     U.download(name, '﻿' + IO.toCSV(rows), 'text/csv;charset=utf-8');
-    ui.toast('CSV exported (' + (rows.length - 1) + ' rows).');
+    ui.toast(t('CSV exported ({0} rows).', rows.length - 1));
   };
 
   /* ------------------------------------------------------------ XLSX (minimal OOXML + stored ZIP) */
   var CRC_TABLE = (function () {
-    var t = new Uint32Array(256);
-    for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
-    return t;
+    var tbl = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; tbl[n] = c >>> 0; }
+    return tbl;
   })();
   function crc32(bytes) { var c = 0xffffffff; for (var i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
   function zip(files) {
@@ -76,7 +77,7 @@
       central.push(new Uint8Array(cd.buffer), name);
       offset += 30 + name.length + data.length;
     });
-    var cdSize = central.reduce(function (t, a) { return t + a.length; }, 0);
+    var cdSize = central.reduce(function (sum, a) { return sum + a.length; }, 0);
     var end = new DataView(new ArrayBuffer(22));
     end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
     end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
@@ -108,27 +109,27 @@
 
   IO.exportList = function (list, fmt, label) {
     var base = 'jarbou-candidates_' + (label || 'export') + '_' + U.fileStamp();
-    if (!list.length) { ui.toast('Nothing to export – the list is empty.', 'warn'); return; }
+    if (!list.length) { ui.toast(t('Nothing to export – the list is empty.'), 'warn'); return; }
     if (fmt === 'csv') return IO.downloadCSV(IO.rows(list), base + '.csv');
-    if (fmt === 'xlsx') { U.download(base + '.xlsx', IO.toXLSX(IO.rows(list), 'Candidates')); ui.toast('Excel file exported (' + list.length + ' candidates).'); return; }
+    if (fmt === 'xlsx') { U.download(base + '.xlsx', IO.toXLSX(IO.rows(list), t('Candidates'))); ui.toast(t('Excel file exported ({0} candidates).', list.length)); return; }
     if (fmt === 'json') {
       U.download(base + '.json', JSON.stringify({ app: C.APP_ID, type: 'candidate-export', exportedAt: new Date().toISOString(), candidates: list }, null, 2), 'application/json');
-      ui.toast('JSON exported (' + list.length + ' candidates).');
+      ui.toast(t('JSON exported ({0} candidates).', list.length));
     }
   };
 
   IO.exportMenu = function (anchor, list, label) {
     var all = S.all();
     ui.menu(anchor, [
-      { header: (label === 'filtered' ? 'Current view' : label === 'archive' ? 'Archive' : 'Active candidates') + ' · ' + list.length },
-      { label: 'CSV (Excel, semicolon)', icon: 'download', onClick: function () { IO.exportList(list, 'csv', label); } },
-      { label: 'Excel (.xlsx)', icon: 'excel', onClick: function () { IO.exportList(list, 'xlsx', label); } },
+      { header: (label === 'filtered' ? t('Current view') : label === 'archive' ? t('Archive') : t('Active candidates')) + ' · ' + list.length },
+      { label: t('CSV (Excel, semicolon)'), icon: 'download', onClick: function () { IO.exportList(list, 'csv', label); } },
+      { label: t('Excel (.xlsx)'), icon: 'excel', onClick: function () { IO.exportList(list, 'xlsx', label); } },
       { label: 'JSON', icon: 'database', onClick: function () { IO.exportList(list, 'json', label); } },
-      { sep: true }, { header: 'All candidates incl. archive · ' + all.length },
-      { label: 'All – CSV', icon: 'download', onClick: function () { IO.exportList(all, 'csv', 'all'); } },
-      { label: 'All – Excel (.xlsx)', icon: 'excel', onClick: function () { IO.exportList(all, 'xlsx', 'all'); } },
+      { sep: true }, { header: t('All candidates incl. archive · {0}', all.length) },
+      { label: t('All – CSV'), icon: 'download', onClick: function () { IO.exportList(all, 'csv', 'all'); } },
+      { label: t('All – Excel (.xlsx)'), icon: 'excel', onClick: function () { IO.exportList(all, 'xlsx', 'all'); } },
       { sep: true },
-      { label: 'Print list / PDF', icon: 'printer', onClick: function () { J.print.list(list, label === 'filtered' ? 'Candidate list (filtered)' : label === 'archive' ? 'Archived candidates' : 'Candidate list'); } }
+      { label: t('Print list / PDF'), icon: 'printer', onClick: function () { J.print.list(list, label === 'filtered' ? t('Candidate list (filtered)') : label === 'archive' ? t('Archived candidates') : t('Candidate list')); } }
     ]);
   };
 
@@ -138,18 +139,18 @@
     U.download('jarbou-recruiting-backup_' + U.fileStamp() + '.json', JSON.stringify(data, null, 2), 'application/json');
     var ts = new Date().toISOString();
     return S.saveMeta('lastBackup', ts).then(function () {
-      if (!quiet) { ui.toast('Backup downloaded (' + data.candidateCount + ' candidates). Store the file in a safe place.'); J.app.refresh(); }
+      if (!quiet) { ui.toast(t('Backup downloaded ({0} candidates). Store the file in a safe place.', data.candidateCount)); J.app.refresh(); }
     });
   };
 
   function validate(data) {
-    if (!data || typeof data !== 'object') return 'The file is not a valid backup.';
-    if (data.app !== C.APP_ID) return 'This file is not a JARBOU Recruiting backup.';
-    if (!Array.isArray(data.candidates)) return 'The backup contains no candidate list.';
-    if (!data.meta || !data.meta.settings) return 'The backup contains no settings. Use a full "Backup Data" file.';
+    if (!data || typeof data !== 'object') return t('The file is not a valid backup.');
+    if (data.app !== C.APP_ID) return t('This file is not a JARBOU Recruiting backup.');
+    if (!Array.isArray(data.candidates)) return t('The backup contains no candidate list.');
+    if (!data.meta || !data.meta.settings) return t('The backup contains no settings. Use a full "Backup Data" file.');
     var bad = data.candidates.filter(function (c) { return !c || typeof c.id !== 'string' || !c.id; }).length;
-    if (bad) return bad + ' candidate record(s) in the file are invalid.';
-    if ((data.schemaVersion || 1) > C.SCHEMA_VERSION) return 'This backup was created by a newer version of the application. Please update the application first.';
+    if (bad) return t('{0} candidate record(s) in the file are invalid.', bad);
+    if ((data.schemaVersion || 1) > C.SCHEMA_VERSION) return t('This backup was created by a newer version of the application. Please update the application first.');
     return null;
   }
 
@@ -170,18 +171,18 @@
     var reader = new FileReader();
     reader.onload = function () {
       var data;
-      try { data = JSON.parse(reader.result); } catch (e) { ui.toast('Could not read the file – it is not valid JSON.', 'error'); return; }
+      try { data = JSON.parse(reader.result); } catch (e) { ui.toast(t('Could not read the file – it is not valid JSON.'), 'error'); return; }
       var err = validate(data);
       if (err) { ui.toast(err, 'error'); return; }
       var m = ui.modal({
-        title: 'Restore backup',
+        title: t('Restore backup'),
         subtitle: esc(file.name),
-        body: '<div class="banner red" style="margin-bottom:14px">' + icon('alert') + '<div class="grow"><b>This will replace the current local database.</b></div></div>' +
-          '<dl class="dl"><dt>Backup created</dt><dd>' + (data.exportedAt ? U.fmtDateTime(data.exportedAt) : 'unknown') + '</dd>' +
-          '<dt>Candidates in backup</dt><dd>' + data.candidates.length + '</dd>' +
-          '<dt>Candidates currently stored</dt><dd>' + S.count() + ' (will be replaced)</dd></dl>' +
-          '<label class="check-inline mt-16"><input type="checkbox" id="rs-safety" checked> Download a safety backup of the current data first (recommended)</label>',
-        foot: '<button class="btn" data-close>Cancel</button><button class="btn danger" id="rs-ok">' + icon('upload', 'sm') + 'Replace database</button>'
+        body: '<div class="banner red" style="margin-bottom:14px">' + icon('alert') + '<div class="grow"><b>' + t('This will replace the current local database.') + '</b></div></div>' +
+          '<dl class="dl"><dt>' + t('Backup created') + '</dt><dd>' + (data.exportedAt ? U.fmtDateTime(data.exportedAt) : t('unknown')) + '</dd>' +
+          '<dt>' + t('Candidates in backup') + '</dt><dd>' + data.candidates.length + '</dd>' +
+          '<dt>' + t('Candidates currently stored') + '</dt><dd>' + t('{0} (will be replaced)', S.count()) + '</dd></dl>' +
+          '<label class="check-inline mt-16"><input type="checkbox" id="rs-safety" checked> ' + t('Download a safety backup of the current data first (recommended)') + '</label>',
+        foot: '<button class="btn" data-close>' + t('Cancel') + '</button><button class="btn danger" id="rs-ok">' + icon('upload', 'sm') + t('Replace database') + '</button>'
       });
       m.q('#rs-ok').addEventListener('click', function () {
         var pre = m.q('#rs-safety').checked ? IO.backup(true) : Promise.resolve();
@@ -194,11 +195,11 @@
           m.close();
           L.bump(); J.profile.close();
           J.app.refresh();
-          ui.toast('Backup restored – ' + data.candidates.length + ' candidates loaded.', 'success');
+          ui.toast(t('Backup restored – {0} candidates loaded.', data.candidates.length), 'success');
         });
       });
     };
-    reader.onerror = function () { ui.toast('Could not read the file.', 'error'); };
+    reader.onerror = function () { ui.toast(t('Could not read the file.'), 'error'); };
     reader.readAsText(file);
   };
 
