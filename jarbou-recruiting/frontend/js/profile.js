@@ -9,7 +9,7 @@
   function basis(c) { return c.salaryBasis === 'gross' ? t('gross') : t('net'); }
   var P = (J.profile = {});
   var state = { id: null, tab: 'overview', pending: false, loading: null, failed: null };
-  var MAX_MB = 15;
+  function maxMb() { var s = S.settings(); return (s && s.uploadMaxMb) || 15; }
   var ALLOWED_EXT = /\.(pdf|jpe?g|png|webp|heic|docx|xlsx)$/i;
   var VIEWABLE = /^(application\/pdf|image\/(jpeg|png|webp))$/;
 
@@ -102,8 +102,8 @@
     P.refresh();
   }
 
-  /* i18n: t('Open') t('Done') t('Cancelled') */
-  var FU_STATUS = { open: ['Open', 'blue', 'clock'], done: ['Done', 'green', 'check'], cancelled: ['Cancelled', '', 'x'] };
+  /* i18n: t('Pending') t('Done') t('Cancelled') */
+  var FU_STATUS = { open: ['Pending', 'blue', 'clock'], done: ['Done', 'green', 'check'], cancelled: ['Cancelled', '', 'x'] };
   function fuType(key) { return (J.form.FOLLOW_TYPES || []).filter(function (x) { return x.key === key; })[0]; }
   function fuTypeLabel(key) { var f = fuType(key); return f ? t(f.label) : ''; }
   function fmtSize(n) {
@@ -327,12 +327,12 @@
       '<div class="card mt-16"><div class="card-head"><h3>' + icon('file', 'sm') + t('Other files') + '</h3>' + uploadBtn(c, '') + '</div><div class="card-body" style="padding-top:8px;padding-bottom:10px">' +
       filesBlock(c, '', activeKeys, true) + '</div></div>' +
       '<p class="small muted mt-12">' + t('"Received" and "Verified" count as complete. Documents past their expiry date count as outstanding. Changes are saved automatically.') + '</p>' +
-      (J.auth.can('attachment.write') ? '<p class="small muted">' + icon('upload', 'sm') + ' ' + esc(t('Allowed file types: {0} – max. {1} MB per file.', 'PDF, JPG, PNG, WEBP, HEIC, DOCX, XLSX', MAX_MB)) + '</p>' : '');
+      (J.auth.can('attachment.write') ? '<p class="small muted">' + icon('upload', 'sm') + ' ' + esc(t('Allowed file types: {0} – max. {1} MB per file.', 'PDF, JPG, PNG, WEBP, HEIC, DOCX, XLSX', maxMb())) + '</p>' : '');
   };
 
   function uploadBtn(c, docKey) {
     if (!J.auth.can('attachment.write')) return '';
-    return '<label class="btn xs file-btn" data-tip="' + esc(t('PDF, JPG, PNG, WEBP, HEIC, DOCX, XLSX – max. {0} MB', MAX_MB)) + '">' + icon('upload', 'sm') + esc(t('Attach file')) +
+    return '<label class="btn xs file-btn" data-tip="' + esc(t('PDF, JPG, PNG, WEBP, HEIC, DOCX, XLSX – max. {0} MB', maxMb())) + '">' + icon('upload', 'sm') + esc(t('Attach file')) +
       '<input type="file" data-change="attachment-file" data-id="' + esc(c.id) + '" data-doc="' + esc(docKey) + '" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.docx,.xlsx" aria-label="' + esc(t('Attach file')) + '"></label>';
   }
 
@@ -638,7 +638,7 @@
     var id = el.getAttribute('data-id'), docKey = el.getAttribute('data-doc') || '';
     el.value = '';
     if (!ALLOWED_EXT.test(file.name)) { ui.toast(t('This file type is not allowed. Allowed: PDF, JPG, PNG, WEBP, HEIC, DOCX, XLSX.'), 'error'); return; }
-    if (file.size > MAX_MB * 1024 * 1024) { ui.toast(t('The file is too large (maximum {0} MB).', MAX_MB), 'error'); return; }
+    if (file.size > maxMb() * 1024 * 1024) { ui.toast(t('The file is too large (maximum {0} MB).', maxMb()), 'error'); return; }
     if (!file.size) { ui.toast(t('Please choose a file.'), 'error'); return; }
     var docLabel = docKey ? L.docLabel(docKey) : t('Other files');
     var fd = new FormData();

@@ -3,6 +3,7 @@
 'use strict';
 const express = require('express');
 const db = require('./db');
+const config = require('./config');
 const audit = require('./audit');
 const events = require('./events');
 const { requirePerm } = require('./rbac');
@@ -65,6 +66,8 @@ async function loadSettings() {
   s.recruiters = recruiters.rows.map((r) => r.full_name);
   const last = Number(seq.rows[0].last_value);
   s.nextNumber = seq.rows[0].is_called ? last + 1 : last;
+  s.uploadsEnabled = config.uploads.enabled;
+  s.uploadMaxMb = config.uploads.maxMb;
   return s;
 }
 

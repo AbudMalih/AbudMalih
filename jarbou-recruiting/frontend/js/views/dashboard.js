@@ -191,9 +191,12 @@
         (meta.length ? '<div class="meta">' + meta.join(' · ') + '</div>' : '') + '</div>' + when +
         (canWrite ? '<button class="icon-btn" data-action="follow-up" data-id="' + esc(c.id) + '" data-stop aria-label="' + esc(t('Update follow-up')) + '" data-tip="' + esc(t('Reschedule or mark done')) + '">' + icon('edit', 'sm') + '</button>' : '') + '</div>';
     }
+    var MAX = 8;
     function group(title, items, kind, emptyText, first) {
+      var more = items.length - MAX;
       return '<div class="section-title" style="padding:12px 18px 0' + (first ? '' : ';border-top:1px solid var(--border)') + '">' + esc(title) + ' · ' + items.length + '</div>' +
-        (items.length ? items.map(function (c) { return row(c, kind); }).join('') : '<div class="small muted" style="padding:6px 18px 12px">' + esc(emptyText) + '</div>');
+        (items.length ? items.slice(0, MAX).map(function (c) { return row(c, kind); }).join('') : '<div class="small muted" style="padding:6px 18px 12px">' + esc(emptyText) + '</div>') +
+        (more > 0 ? '<div style="padding:6px 18px 10px"><button class="btn xs ghost" data-action="go" data-route="candidates" data-params=\'' + esc(JSON.stringify({ followUp: kind === 'upcoming' ? 'any' : kind })) + '\'>' + esc(t('+{0} more', more)) + ' ' + icon('arrowRight', 'sm') + '</button></div>' : '');
     }
     return '<div class="card"><div class="card-head"><h3>' + icon('bell', 'sm') + esc(t('Follow-ups')) + '</h3>' +
       (canWrite ? '<button class="btn xs" data-action="follow-up">' + icon('plus', 'sm') + esc(t('Add follow-up')) + '</button>' : '') + '</div>' +
