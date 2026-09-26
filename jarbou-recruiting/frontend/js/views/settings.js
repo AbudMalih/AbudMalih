@@ -125,7 +125,7 @@
         '<td>' + esc(U.fmtDate(u.createdAt)) + '</td>' +
         '<td>' + (u.lastLoginAt ? esc(U.fmtDateTime(u.lastLoginAt)) : '<span class="muted">' + esc(t('Never')) + '</span>') + '</td>' +
         '<td class="center">' + esc(u.activeSessions || 0) + '</td>' +
-        '<td class="actions-cell"><button class="icon-btn" data-action="user-menu" data-id="' + esc(u.id) + '" aria-label="' + esc(t('Actions')) + '">' + icon('more', 'sm') + '</button></td></tr>';
+        '<td class="actions-cell"><button class="icon-btn" data-action="settings-user-menu" data-id="' + esc(u.id) + '" aria-label="' + esc(t('Actions')) + '">' + icon('more', 'sm') + '</button></td></tr>';
     }).join('');
     return '<div class="table-wrap" style="max-height:none;min-height:0"><table class="data compact static"><thead><tr>' +
       '<th>' + esc(t('Full Name')) + '</th><th>' + esc(t('Username')) + '</th><th>' + esc(t('Email')) + '</th><th>' + esc(t('Role')) + '</th><th>' + esc(t('Status')) + '</th>' +
@@ -245,7 +245,7 @@
   function backupHistory(b) {
     var h = (b.history || []).slice(0, 10);
     if (!h.length) return '';
-    return '<div class="section-title mt-24">' + esc(t('Backup history')) + '</div><div class="editable-list">' + h.map(function (x) {
+    return '<div class="section-title" style="margin-top:22px">' + esc(t('Backup history')) + '</div><div class="editable-list">' + h.map(function (x) {
       return '<div class="el-row small"><span class="nowrap">' + dt(x.finished_at || x.started_at) + '</span>' +
         (x.status === 'success' ? ui.badge(t('Success'), 'green') : ui.badge(t('Failed'), 'red')) + ui.badge(t(KINDS[x.kind] || x.kind), '') +
         '<div class="grow"><span class="mono">' + esc(x.file_name) + '</span>' + (x.status !== 'success' && x.message ? '<div style="color:var(--red)">' + esc(x.message) + '</div>' : '') + '</div>' +
@@ -260,7 +260,7 @@
       '<div class="row wrap mt-16"><button class="btn dark" data-action="backup-create"' + (busy ? ' disabled' : '') + '>' + icon('database', 'sm') + esc(busy ? t('Backup running…') : t('Create backup now')) + '</button>' +
       '<label class="btn file-btn">' + icon('upload', 'sm') + esc(t('Upload backup file')) + '<input type="file" accept=".gz,.tar.gz,application/gzip" data-change="backup-upload" aria-label="' + esc(t('Upload backup file')) + '"></label>' +
       '<button class="btn ghost" data-action="backup-reload">' + icon('restore', 'sm') + esc(t('Refresh')) + '</button></div>' +
-      '<div class="section-title mt-24">' + esc(t('Backup files')) + '</div>' + backupFiles(backups) + backupHistory(backups) +
+      '<div class="section-title" style="margin-top:22px">' + esc(t('Backup files')) + '</div>' + backupFiles(backups) + backupHistory(backups) +
       '<div class="banner blue mt-16">' + icon('info') + '<div class="grow">' + esc(t('Backups contain the complete database and all uploaded files and are stored in the backup folder on the NAS. Copy them regularly to a second location outside the NAS as well (e.g. UGREEN backup app, USB drive or a second NAS) – a backup on the same device does not protect against device failure.')) + '</div></div>';
   }
 
@@ -306,9 +306,12 @@
     },
     mount: function (root) {
       if (scrollTo) {
-        var el = root.querySelector('#set-' + scrollTo);
-        if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30);
+        // Users/backups load asynchronously and change the page height – re-apply the jump a few times.
+        var target = scrollTo;
         scrollTo = '';
+        [30, 700, 1600].forEach(function (ms) {
+          setTimeout(function () { var el = document.getElementById('set-' + target); if (el) el.scrollIntoView({ block: 'start' }); }, ms);
+        });
       }
       root.querySelectorAll('[data-enter]').forEach(function (inp) {
         inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); A[inp.getAttribute('data-enter')](inp); } });
@@ -325,7 +328,7 @@
         ['targets', 'Recruitment Targets', 1], ['documents', 'Document Requirements', 1], ['onboarding', 'Onboarding Checklist', 1],
         ['backup', 'Backups', can('backup.manage')], ['import', 'Import offline backup', can('import')], ['data', 'Data & Privacy', 1]]
         .filter(function (n) { return n[2]; });
-      var usersHead = '<button class="btn primary sm" data-action="user-create">' + icon('plus', 'sm') + esc(t('Create user')) + '</button>';
+      var usersHead = '<button class="btn primary sm" data-action="settings-user-create">' + icon('plus', 'sm') + esc(t('Create user')) + '</button>';
 
       return '<div class="page-head" id="settings-root"><div><h1>' + esc(t('Settings')) + '</h1><div class="sub">' + esc(can('settings.write') ? t('Configure the recruiting system. Shared settings apply to all users and are saved immediately.') : t('Your personal preferences and account. Shared settings can only be changed by administrators.')) + '</div></div></div>' +
         '<div class="settings-layout"><nav class="settings-nav">' + nav.map(function (n) { return '<a href="#" data-action="settings-jump" data-s="' + n[0] + '">' + esc(t(n[1])) + '</a>'; }).join('') + '</nav><div>' +
@@ -483,8 +486,8 @@
     });
   }
 
-  A['user-create'] = function () { userDialog(); };
-  A['user-menu'] = function (el) {
+  A['settings-user-create'] = function () { userDialog(); };
+  A['settings-user-menu'] = function (el) {
     var u = findUser(el.getAttribute('data-id'));
     if (!u) return;
     var self = J.auth.user && J.auth.user.id === u.id;

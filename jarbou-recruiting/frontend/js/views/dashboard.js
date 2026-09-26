@@ -131,7 +131,7 @@
       '<span style="width:' + wStarted + '%;background:var(--ink)" data-tip="' + esc(t('Started: {0}', tg.started)) + '"></span>' +
       '<span style="width:' + wReady + '%;background:var(--green)" data-tip="' + esc(t('Ready, not yet started: {0}', Math.max(0, tg.adminReady - tg.started))) + '"></span></div>' +
       '<div class="legend"><span><i style="background:var(--ink)"></i>' + esc(t('Started {0}', tg.started)) + '</span><span><i style="background:var(--green)"></i>' + esc(t('Ready, not yet started: {0}', Math.max(0, tg.adminReady - tg.started))) + '</span></div>' +
-      '<div class="target-stats" style="grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:6px">' + stat(t('Required'), tg.required) + stat(t('Candidates'), tg.candidates) +
+      '<div class="target-stats" style="gap:6px">' + stat(t('Required'), tg.required) + stat(t('Candidates'), tg.candidates) +
       stat(t('Admin. ready'), tg.adminReady, 'var(--green)') + stat(t('Started'), tg.started) + stat(t('Remaining'), tg.remaining, tg.remaining ? 'var(--red)' : 'var(--green)') + '</div>' +
       table + rates +
       (tg.position ? '<div class="small muted mt-12">' + (proj !== 'all'
@@ -223,8 +223,9 @@
   }
 
   function activityCard() {
-    var stamp = dataStamp();
-    if (stale('activity', stamp)) fetchRemote('activity', '/api/activity/recent?limit=12', stamp);
+    var proj = S.settings().activeProject || 'all';
+    var stamp = dataStamp() + '|' + proj;
+    if (stale('activity', stamp)) fetchRemote('activity', '/api/activity/recent?limit=12&project=' + encodeURIComponent(proj), stamp);
     var r = remote.activity;
     var body;
     if (!r.data) {

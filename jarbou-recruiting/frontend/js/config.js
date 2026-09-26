@@ -135,7 +135,7 @@
       requiredDrivers: 30,
       targetPosition: 'Driver',
       recruiters: [],
-      sources: ['Kleinanzeigen', 'Indeed', 'Facebook', 'Instagram', 'Recommendation', 'WhatsApp', 'Website', 'Other'],
+      sources: ['Kleinanzeigen', 'Indeed', 'Facebook', 'Instagram', 'WhatsApp', 'Referral', 'Website', 'Other'],
       documents: J.util.clone(C.DEFAULT_DOCUMENTS),
       onboardingSteps: J.util.clone(C.DEFAULT_ONBOARDING),
       standardSalaryReference: 2160,

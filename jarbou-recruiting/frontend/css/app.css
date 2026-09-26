@@ -879,3 +879,10 @@ html[lang="ar"] .prio, html[lang="ar"] .filters-panel label { letter-spacing: 0;
 .audit-change .to { color: var(--green); font-weight: 600; }
 .audit-change .arrow { color: var(--text-3); margin: 0 4px; }
 body[data-role="viewer"] .write-only { display: none !important; }
+
+/* NAS edition layout refinements */
+.topbar .scope-select, .topbar .lang-select, .topbar .user-btn { flex: none; }
+.lang-select { min-width: 118px; }
+.target-stats { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); }
+.target-stats .s span { display: block; font-size: 10px; letter-spacing: .03em; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; min-height: 25px; }
+@media (max-width: 1180px) { .global-search { width: 240px; } }

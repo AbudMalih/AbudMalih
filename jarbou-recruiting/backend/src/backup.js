@@ -20,6 +20,7 @@ const NAME_RE = /^jarbou-recruiting_(\d{4}-\d{2}-\d{2})_(\d{6})_(auto|manual|pre
 let busy = null;           // 'backup' | 'restore' | null
 let maintenance = false;   // true while a restore replaces the database
 let lastRun = { status: null, at: null, message: '' };
+let lastAutoFailure = 0;
 
 function pgEnv() {
   return Object.assign({}, process.env, { PGHOST: config.db.host, PGPORT: String(config.db.port), PGUSER: config.db.user, PGPASSWORD: config.db.password, PGDATABASE: config.db.database });
@@ -104,7 +105,7 @@ async function createBackup(kind, by) {
     await record(name, kind, 'failed', null, started, err.message, by);
     log.error('Backup failed', { error: err.message, kind });
     try { fs.unlinkSync(path.join(config.paths.backups, name + '.partial')); } catch (e) { /* ignore */ }
-    throw err;
+    throw Object.assign(new Error('Backup failed: ' + err.message), { status: err.status || 500, code: err.status === 409 ? 'conflict' : 'backup_failed' });
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
     busy = null;
@@ -232,8 +233,10 @@ function startScheduler() {
       const due = now.getHours() > h || (now.getHours() === h && now.getMinutes() >= m);
       if (!due || busy) return;
       if (listFiles().some((f) => f.kind === 'auto' && f.date === localDate(now))) return;
+      if (lastAutoFailure && Date.now() - lastAutoFailure < 60 * 60 * 1000) return; // retry at most hourly
       await createBackup('auto', 'System (scheduled)');
-    } catch (e) { /* already logged */ }
+      lastAutoFailure = 0;
+    } catch (e) { lastAutoFailure = Date.now(); /* already logged */ }
   };
   setInterval(tick, 60 * 1000).unref();
   setTimeout(tick, 30 * 1000).unref();

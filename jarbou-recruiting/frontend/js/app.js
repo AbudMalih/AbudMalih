@@ -278,6 +278,7 @@
     b.innerHTML = '<span class="avatar">' + esc((u.fullName || u.username).split(/\s+/).map(function (x) { return x[0]; }).join('').slice(0, 2).toUpperCase()) + '</span>' +
       '<span class="un hide-sm">' + esc(u.fullName) + '</span><span class="role-pill ' + u.role + ' hide-sm">' + esc(J.auth.roleLabel()) + '</span>';
     document.getElementById('app-version').textContent = 'v' + (J.auth.version || '') + ' NAS';
+    J.auth.gate(document.querySelector('.topbar'));
   }
 
   /* ------------------------------------------------------------ Global search */

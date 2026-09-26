@@ -29,9 +29,12 @@ auditRouter.get('/', requirePerm('audit.read'), wrap(async (req, res) => {
 const activityRouter = express.Router();
 activityRouter.get('/recent', requirePerm('read'), wrap(async (req, res) => {
   const limit = Math.min(50, Math.max(5, parseInt(req.query.limit, 10) || 12));
+  const project = req.query.project && req.query.project !== 'all' ? String(req.query.project).slice(0, 80) : null;
   const r = await db.query(`SELECT a.id, a.candidate_id, a.type, a.text, a.created_at, u.full_name AS by, c.first_name, c.last_name
     FROM candidate_activity a JOIN candidates c ON c.id = a.candidate_id LEFT JOIN users u ON u.id = a.created_by
-    ORDER BY a.created_at DESC LIMIT ${limit}`);
+    LEFT JOIN projects p ON p.id = c.project_id
+    WHERE ($1::text IS NULL OR lower(p.name) = lower($1))
+    ORDER BY a.created_at DESC LIMIT ${limit}`, [project]);
   res.json(r.rows.map((x) => ({ id: x.id, candidateId: x.candidate_id, candidate: x.first_name + ' ' + x.last_name, type: x.type, text: x.text, date: x.created_at, by: x.by || '' })));
 }));
 
