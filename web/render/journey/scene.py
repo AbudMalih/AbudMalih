@@ -240,11 +240,12 @@ def build(cam_name="desktop", samples=64):
     M, TMt = WM, TM
     for f in range(N):
         on = lambda start, dur=4: smoothstep((f - start) / dur)
-        hl = [on(2 + i * 2.5, 2) for i in range(4)]
+        # a faint night level before the lights switch on (never pure black)
+        hl = [0.06 + 0.94 * on(2 + i * 2.5, 2) for i in range(4)]
         for i, l in enumerate(hall["hall_lights"]):
             l.data.energy = 650 * hl[i // 3]
             l.data.keyframe_insert("energy", frame=f)
-        key_emission(M["lamp_hall"], f, 14 * on(2, 8))
+        key_emission(M["lamp_hall"], f, 14 * (0.04 + 0.96 * on(2, 8)))
         key_emission(M["ribbon"], f, 3.0 * on(2, 8))
         hall["leak"].data.energy = 700 * on(2, 8)
         hall["leak"].data.keyframe_insert("energy", frame=f)
