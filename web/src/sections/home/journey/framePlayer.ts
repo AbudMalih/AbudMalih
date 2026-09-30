@@ -97,6 +97,10 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
     ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
   };
 
+  // Blend only through the middle of a step (short dissolve) and show a
+  // clean frame once scrolling pauses – never a static double exposure.
+  let settled = true;
+  let settleTimer = 0;
   const draw = () => {
     raf = 0;
     if (!ctx) return;
@@ -105,8 +109,13 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
     const a = frames[i0];
     const b = frames[Math.min(FRAME_COUNT - 1, i0 + 1)];
     if (a && b) {
-      blit(a, 1);
-      if (t > 0.02) blit(b, t);
+      const w = settled ? (t < 0.5 ? 0 : 1) : Math.min(1, Math.max(0, (t - 0.35) / 0.3));
+      if (w <= 0.001) blit(a, 1);
+      else if (w >= 0.999) blit(b, 1);
+      else {
+        blit(a, 1);
+        blit(b, w * w * (3 - 2 * w));
+      }
     } else {
       const n = nearest(pos);
       if (!n) return;
@@ -126,11 +135,18 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
   return {
     seek(f: number) {
       pos = Math.min(FRAME_COUNT - 1, Math.max(0, f));
+      settled = false;
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        settled = true;
+        schedule();
+      }, 140);
       schedule();
     },
     dispose() {
       disposed = true;
       cancelAnimationFrame(raf);
+      window.clearTimeout(settleTimer);
       window.removeEventListener("resize", resize);
     },
   };
