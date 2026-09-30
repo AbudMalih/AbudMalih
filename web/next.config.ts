@@ -43,6 +43,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // pre-rendered film frames: cache hard, revalidate in the background
+        source: "/journey/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=2592000" }],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "Content-Security-Policy", value: csp },

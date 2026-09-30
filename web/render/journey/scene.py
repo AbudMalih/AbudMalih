@@ -22,7 +22,7 @@ from lib import key_emission, sky_world  # noqa: E402
 
 N = 150
 V = 4.8                  # cruising distance per frame (m)
-T_START, T_CRUISE, T_BRAKE = 34, 64, 128
+T_START, T_CRUISE, T_BRAKE = 38, 64, 128
 X0 = -3.4                # cab front inside the hall
 
 
@@ -61,31 +61,39 @@ STOP_X = front_x(N - 1)
 # front (x offset), "W" = world coordinates.
 CAMS = {
     "desktop": {
-        "res": (1280, 720),
+        "res": (1440, 810),
         "keys": [
-            (0, "W", (27.0, -21.0, 1.9), (-2.0, -3.0, 5.2), 30),
-            (30, "W", (21.0, -16.0, 1.75), (-1.5, -1.5, 4.2), 30),
-            (46, "W", (19.0, -16.0, 1.8), ("T", -5.0, 0.0, 3.0), 30),
-            (64, "T", (-1.0, -19.0, 2.3), (-8.0, 0.0, 3.2), 35),
-            (84, "T", (-9.0, -18.0, 2.1), (-8.5, 0.0, 3.1), 35),
+            # interior: hall lights and headlamps come on
+            (0, "W", (-0.4, -7.8, 1.5), (-9.0, 0.5, 2.35), 26),
+            (26, "W", (-1.3, -6.9, 1.55), (-8.8, 0.6, 2.25), 26),
+            # cut (with the first text change): exterior, door opens, departure
+            (27, "W", (26.5, -11.5, 1.45), (0.0, -0.8, 2.7), 32, True),
+            (40, "W", (25.5, -10.4, 1.4), (2.0, 0.0, 2.5), 32),
+            (52, "W", (24.5, -9.8, 1.35), ("T", -5.0, 0.0, 2.4), 32),
+            # Autobahn tracking, close pass along the cab, back out
+            (64, "T", (4.5, -17.5, 1.9), (-8.3, 0.0, 2.35), 35),
+            (84, "T", (-3.0, -18.0, 2.0), (-8.5, 0.0, 2.8), 35),
             (96, "T", (3.2, -4.7, 1.05), (-2.6, 0.0, 1.55), 32),
             (106, "T", (1.6, -4.5, 1.0), (-3.4, 0.0, 1.6), 32),
-            (120, "T", (2.0, -19.0, 2.4), (-8.0, 0.0, 3.2), 35),
-            (138, "W", (STOP_X + 7.5, -12.0, 1.9), (STOP_X - 8.0, 6.0, 3.7), 32),
-            (149, "W", (STOP_X + 8.5, -12.8, 2.0), (STOP_X - 8.0, 6.0, 3.7), 32),
+            (120, "T", (4.5, -17.5, 1.9), (-8.3, 0.0, 2.35), 35),
+            # arrival at the hub
+            (138, "W", (STOP_X + 8.5, -12.8, 2.0), (STOP_X - 8.0, 6.0, 3.7), 32),
+            (149, "W", (STOP_X + 9.3, -13.4, 2.05), (STOP_X - 8.0, 6.0, 3.7), 32),
         ],
     },
     "mobile": {
-        "res": (640, 1136),
+        "res": (720, 1280),
         "keys": [
-            (0, "W", (16.0, -11.0, 1.6), (-1.0, -1.5, 5.0), 26),
-            (30, "W", (12.5, -8.2, 1.5), (-1.5, -0.6, 4.2), 26),
-            (46, "W", (12.0, -8.5, 1.6), ("T", -4.0, 0.0, 3.0), 26),
-            (64, "T", (6.8, -7.0, 1.6), (-6.0, 0.0, 2.9), 26),
+            (0, "W", (-0.6, -6.6, 1.45), (-6.4, 0.9, 2.6), 24),
+            (26, "W", (-1.2, -6.0, 1.5), (-6.2, 1.0, 2.5), 24),
+            (27, "W", (11.5, -6.4, 1.4), (0.0, -0.3, 3.0), 26, True),
+            (40, "W", (11.0, -6.2, 1.4), (1.5, 0.0, 2.9), 26),
+            (52, "W", (11.5, -7.4, 1.45), ("T", -4.0, 0.0, 2.8), 26),
+            (64, "T", (6.0, -6.3, 1.55), (-6.0, 0.0, 2.8), 26),
             (84, "T", (5.5, -8.4, 1.7), (-6.5, 0.0, 3.0), 26),
             (96, "T", (2.6, -3.9, 1.0), (-2.2, 0.0, 1.9), 24),
             (106, "T", (1.6, -3.8, 1.0), (-2.8, 0.0, 1.9), 24),
-            (120, "T", (6.8, -7.0, 1.6), (-6.0, 0.0, 2.9), 26),
+            (120, "T", (6.0, -6.3, 1.55), (-6.0, 0.0, 2.8), 26),
             (138, "W", (STOP_X + 7.0, -8.0, 1.7), (STOP_X - 6.5, 2.5, 3.4), 26),
             (149, "W", (STOP_X + 7.8, -8.6, 1.8), (STOP_X - 6.5, 2.5, 3.4), 26),
         ],
@@ -113,6 +121,11 @@ def camera_at(keys, f):
     k1, k2 = keys[i], keys[i + 1]
     k0 = keys[max(0, i - 1)]
     k3 = keys[min(len(keys) - 1, i + 2)]
+    # hard cuts: never let the spline look across a cut
+    if len(k1) > 5 and k1[5]:
+        k0 = k1
+    if len(k3) > 5 and k3[5]:
+        k3 = k2
     t = smoothstep((f - k1[0]) / (k2[0] - k1[0])) * 0.35 + ((f - k1[0]) / (k2[0] - k1[0])) * 0.65
     pos = _catmull(*[_resolve(k[2], k[1], f) for k in (k0, k1, k2, k3)], t)
     tgt = _catmull(*[_resolve(k[3], k[1], f) for k in (k0, k1, k2, k3)], t)
@@ -180,7 +193,7 @@ def build(cam_name="desktop", samples=64):
     cars = []
     for k, (y, x0, v, col, d) in enumerate((
         (11.2, 260, -9.5, 0, -1), (15.4, 330, -8.0, 2, -1), (11.2, 470, -9.0, 1, -1), (15.4, 560, -8.5, 3, -1),
-        (11.2, 720, -9.5, 2, -1), (15.4, 900, -8.5, 4, -1), (3.75, -80, 6.2, 1, 1), (3.75, -150, 6.0, 3, 1),
+        (11.2, 720, -9.5, 2, -1), (15.4, 900, -8.5, 4, -1), (3.75, -330, 6.2, 1, 1), (3.75, -420, 6.0, 3, 1),
     )):
         c = world.car(WM, f"car{k}", col, d)
         cars.append((c, y, x0, v))
@@ -206,13 +219,19 @@ def build(cam_name="desktop", samples=64):
         T["body"].keyframe_insert("location", frame=f)
         T["body"].keyframe_insert("rotation_euler", frame=f)
         for c, y, cx0, v in cars:
-            c.location = (cx0 + v * f, y, 0)
+            cx = cx0 + v * f
+            c.location = (cx, y, 0)
             c.keyframe_insert("location", frame=f)
+            # traffic only exists on the Autobahn section
+            off = not (world.HWY_START + 5 < cx < world.HWY_END + 20)
+            for o in [c, *c.children_recursive]:
+                o.hide_render = off
+                o.keyframe_insert("hide_render", frame=f)
         for r in rotors:
             r.rotation_euler = (f * 0.035, 0, 0)
             r.keyframe_insert("rotation_euler", frame=f)
         # sectional door
-        d = smoothstep((f - 18) / 22)
+        d = smoothstep((f - 26) / 16)
         hall["door"].location = (0, 0, d * (world.DOOR_H + 0.4))
         hall["door"].keyframe_insert("location", frame=f)
 
@@ -250,6 +269,7 @@ def build(cam_name="desktop", samples=64):
     cam = bpy.data.objects.new("cam", cd)
     sc.collection.objects.link(cam)
     sc.camera = cam
+    cam.parent = T["root"]
     cd.sensor_width = 36
     cd.clip_start = 0.1
     cd.clip_end = 3000
@@ -277,7 +297,9 @@ def build(cam_name="desktop", samples=64):
         pos, tgt, lens = camera_at(cfg["keys"], f)
         # a hint of hand-held float so the camera never feels robotic
         pos = pos + Vector((0.03 * math.sin(f * 0.21), 0.02 * math.sin(f * 0.13 + 1), 0.025 * math.sin(f * 0.17 + 2)))
-        cam.location = pos
+        # the camera rides on the truck (local offset) – this keeps Cycles'
+        # motion blur exact for tracking shots; world shots cancel out
+        cam.location = pos - Vector((front_x(f), 0, 0))
         cam.rotation_euler = (tgt - pos).to_track_quat("-Z", "Y").to_euler()
         cam.keyframe_insert("location", frame=f)
         cam.keyframe_insert("rotation_euler", frame=f)
@@ -307,6 +329,14 @@ def build(cam_name="desktop", samples=64):
         for fc in _fcurves(a):
             for kp in fc.keyframe_points:
                 kp.interpolation = "LINEAR"
+    # hold the camera until a hard cut (output frames may land on subframes)
+    cuts = [k[0] for k in cfg["keys"] if len(k) > 5 and k[5]]
+    for idb in (cam, cd):
+        if idb.animation_data and idb.animation_data.action:
+            for fc in _fcurves(idb.animation_data.action):
+                for kp in fc.keyframe_points:
+                    if int(round(kp.co.x)) + 1 in cuts:
+                        kp.interpolation = "CONSTANT"
     return T, hall
 
 

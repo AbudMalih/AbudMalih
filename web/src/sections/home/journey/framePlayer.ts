@@ -1,4 +1,16 @@
-import { FRAME_COUNT, frameSrc, type FrameSet } from "./frames";
+import { AVIF_PROBE, FRAME_COUNT, frameSrc, type FrameFormat, type FrameSet } from "./frames";
+
+let avif: Promise<boolean> | null = null;
+/** Resolves once whether the browser decodes AVIF (cached). */
+export function supportsAvif() {
+  avif ??= new Promise<boolean>((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img.width > 0);
+    img.onerror = () => resolve(false);
+    img.src = AVIF_PROBE;
+  });
+  return avif;
+}
 
 /**
  * Draws a pre-rendered frame sequence onto a canvas, driven by a fractional
@@ -6,7 +18,7 @@ import { FRAME_COUNT, frameSrc, type FrameSet } from "./frames";
  * all) so the story is scrubbable early; missing frames fall back to the
  * nearest loaded one and neighbours are cross-faded for smooth motion.
  */
-export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet) {
+export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, format: FrameFormat = "webp") {
   const ctx = canvas.getContext("2d", { alpha: false });
   const frames: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
   let pos = 0;
@@ -35,7 +47,9 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet) {
     const i = order[next++]!;
     const img = new Image();
     img.decoding = "async";
-    img.src = frameSrc(set, i);
+    // never compete with the rest of the page for bandwidth
+    img.fetchPriority = "low";
+    img.src = frameSrc(set, i, format);
     img
       .decode()
       .then(() => {
@@ -47,7 +61,7 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet) {
       .catch(() => {})
       .finally(pump);
   };
-  for (let k = 0; k < 6; k++) pump();
+  for (let k = 0; k < (lean ? 3 : 6); k++) pump();
 
   const nearest = (f: number) => {
     const c = Math.round(f);

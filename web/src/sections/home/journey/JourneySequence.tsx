@@ -5,8 +5,8 @@ import { Slashes } from "@/components/brand/Slashes";
 import { StatRow } from "@/components/ui/StatRow";
 import { processSteps } from "@/content/services";
 import { countUp } from "@/motion/countUp";
-import { createFramePlayer } from "./framePlayer";
-import { FILM_END, FRAME_COUNT, FRAME_SETS, frameSrc, STILL_FRAME } from "./frames";
+import { createFramePlayer, supportsAvif } from "./framePlayer";
+import { FILM_END, FRAME_COUNT, FRAME_SETS, frameSrc, POSTER_FRAME, STILL_FRAME } from "./frames";
 
 /** Beat windows on the 0–100 timeline. */
 const BEATS: [number, number][] = [
@@ -41,7 +41,7 @@ export function JourneySequence() {
 
     // GSAP is only needed once the story is near – keep it off the critical path.
     const init = async () => {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
+      const [{ gsap }, { ScrollTrigger }, avif] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger"), supportsAvif()]);
       if (cancelled) return;
       gsap.registerPlugin(ScrollTrigger);
 
@@ -70,7 +70,7 @@ export function JourneySequence() {
           const { desktop, reduce } = ctx.conditions as { desktop: boolean; reduce: boolean };
           if (reduce) return;
 
-          const player = createFramePlayer(canvas, desktop ? FRAME_SETS.desktop : FRAME_SETS.mobile);
+          const player = createFramePlayer(canvas, desktop ? FRAME_SETS.desktop : FRAME_SETS.mobile, avif ? "avif" : "webp");
           const film = { frame: 0 };
           player.seek(0);
 
@@ -161,11 +161,15 @@ export function JourneySequence() {
         >
           {/* Opening frame until the film has loaded; a still for reduced motion */}
           <picture className="absolute inset-0 motion-reduce:hidden">
-            <source media={DESKTOP} srcSet={frameSrc(FRAME_SETS.desktop, 0)} />
-            <img src={frameSrc(FRAME_SETS.mobile, 0)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+            <source media={DESKTOP} type="image/avif" srcSet={frameSrc(FRAME_SETS.desktop, POSTER_FRAME, "avif")} />
+            <source media={DESKTOP} srcSet={frameSrc(FRAME_SETS.desktop, POSTER_FRAME)} />
+            <source type="image/avif" srcSet={frameSrc(FRAME_SETS.mobile, POSTER_FRAME, "avif")} />
+            <img src={frameSrc(FRAME_SETS.mobile, POSTER_FRAME)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
           </picture>
           <picture className="absolute inset-0 hidden motion-reduce:block">
+            <source media={DESKTOP} type="image/avif" srcSet={frameSrc(FRAME_SETS.desktop, STILL_FRAME, "avif")} />
             <source media={DESKTOP} srcSet={frameSrc(FRAME_SETS.desktop, STILL_FRAME)} />
+            <source type="image/avif" srcSet={frameSrc(FRAME_SETS.mobile, STILL_FRAME, "avif")} />
             <img
               src={frameSrc(FRAME_SETS.mobile, STILL_FRAME)}
               alt="Ein JARBOU-Sattelzug fährt in der Abenddämmerung über die Autobahn."

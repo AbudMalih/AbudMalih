@@ -183,7 +183,7 @@ def ground(M):
     mesh_obj("yard", bm, M["asphalt_yard"], loc=(10, -2, 0))
     # carriageways
     road = lambda nm, x0, x1, y0, y1, mat: box(nm, (x1 - x0, y1 - y0, 0.1), ((x0 + x1) / 2, (y0 + y1) / 2, -0.045), mat)
-    road("hwy_main", 50, HWY_END + 60, -4.4, 5.9, M["asphalt"])
+    road("hwy_main", 50, HUB_X0 - 40, -4.4, 5.9, M["asphalt"])
     road("hwy_opposite", 50, HWY_END - 5, 8.9, 19.2, M["asphalt"])
     road("hub_yard", HUB_X0 - 60, HUB_X0 + 150, -16, 42, M["asphalt_yard"])
     # grass verges / fields

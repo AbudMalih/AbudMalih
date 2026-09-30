@@ -33,11 +33,12 @@ def frames(spec):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--cam", default="desktop")
-    p.add_argument("--frames", default="0-149")
+    p.add_argument("--frames", default="0-119")
     p.add_argument("--samples", type=int, default=64)
     p.add_argument("--scale", type=int, default=100)
     p.add_argument("--out", default="out")
     p.add_argument("--skip-existing", action="store_true")
+    p.add_argument("--count", type=int, default=scene.N, help="output frames, spread over the film")
     a = p.parse_args()
     scene.build(a.cam, a.samples)
     sc = bpy.context.scene
@@ -47,7 +48,8 @@ def main():
         path = os.path.join(a.out, f"f{f:03d}.png")
         if a.skip_existing and os.path.exists(path):
             continue
-        sc.frame_set(f)
+        d = f * (scene.N - 1) / (a.count - 1)  # design frame (may be fractional)
+        sc.frame_set(int(d), subframe=d - int(d))
         sc.render.filepath = path
         t = time.time()
         bpy.ops.render.render(write_still=True)
