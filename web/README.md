@@ -99,21 +99,39 @@ Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das M
 
 ## E-Mail-Versand (Formulare)
 
-Alle Formulare senden serverseitig über `src/lib/mail`. Zugangsdaten liegen ausschließlich in Umgebungsvariablen (siehe `.env.example`), nie im Browser-Code.
+Alle Formulare senden serverseitig über `src/lib/mail` (SMTP via nodemailer). Zugangsdaten stehen ausschließlich in Umgebungsvariablen des Hostings – nie im Code, nie im Browser.
 
-| Formular | Endpoint | Empfänger |
+**Produktion (one.com):** `SMTP_HOST=send.one.com`, `SMTP_PORT=465`, `SMTP_SECURE=true`, dazu `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` (Absender = Postfach von `SMTP_USER` oder dessen Alias). Vorlage: `.env.example`.
+
+| Formular | Endpoint | Empfänger-Variable |
 |---|---|---|
-| Kurz-, vollständige und Initiativbewerbung | `POST /api/bewerbung` | `MAIL_TO_CAREERS` (Standard `karriere@jarbou-logistik.com`) |
-| Projektanfrage | `POST /api/geschaeftsanfrage` | `MAIL_TO_BUSINESS` – **noch offen** |
-| Allgemeiner Kontakt | `POST /api/kontakt` | `MAIL_TO_GENERAL` – **noch offen** |
+| Kurz-, vollständige und Initiativbewerbung | `POST /api/bewerbung` | `CAREER_RECIPIENT` (Standard `karriere@jarbou-logistik.com`) |
+| Projektanfrage | `POST /api/geschaeftsanfrage` | `BUSINESS_RECIPIENT` – **noch offen** |
+| Allgemeiner Kontakt | `POST /api/kontakt` | `GENERAL_RECIPIENT` – **noch offen** |
 
-- **Ohne Konfiguration** antworten die Endpoints mit HTTP 503 und die Formulare zeigen ehrlich „Online-Versand noch nicht aktiviert“ – bei Bewerbungen mit Hinweis auf karriere@jarbou-logistik.com. Es wird nichts „vorgetäuscht“.
-- `MAIL_DRIVER=log` schreibt Nachrichten in die Server-Konsole – nur für die Entwicklung, in Produktion automatisch deaktiviert.
-- Uploads: PDF, DOC, DOCX, JPG, PNG; max. 10 MB je Datei, 5 Dateien, 20 MB gesamt; serverseitige Prüfung per Datei-Signatur (Magic Bytes).
-- Schutz: Honeypot-Feld, Rate-Limit je Endpoint und IP (Best Effort, pro Server-Instanz).
-- **Keine Speicherung:** Einsendungen werden nicht in einer Datenbank abgelegt, sondern nur per E-Mail zugestellt. Jede Bewerbungs-E-Mail enthält ein Löschdatum (`APPLICANT_RETENTION_DAYS`, Standard 180 Tage).
+- **E-Mails:** gebrandete, einfache HTML-Mails + Textversion (`src/lib/mail/templates.ts`) mit Art, Eingang (Datum/Uhrzeit), Referenz, Kontakt, allen Feldern, Anhängen und Zeitpunkt der Einwilligung. „Antworten“ geht direkt an die Absenderin/den Absender (Reply-To). Bewerberinnen und Bewerber erhalten **keine** automatischen E-Mails.
+- **Ohne Konfiguration** melden die Formulare „Online-Versand derzeit nicht verfügbar“ (bei Bewerbungen mit Hinweis auf karriere@jarbou-logistik.com). Nichts wird vorgetäuscht.
+- **Entwicklung:** `MAIL_DRIVER=log` versendet nichts, sondern legt eine HTML-Vorschau im Temp-Ordner ab (in Produktion deaktiviert).
 
-**Benötigt für den Live-Betrieb:** SMTP-Host, Port, Verschlüsselung (STARTTLS/SSL), Benutzer, Passwort, freigegebene Absenderadresse (mit SPF/DKIM für die Domain) sowie die Empfänger für Geschäfts- und allgemeine Anfragen. Jeder SMTP-fähige Anbieter funktioniert (z. B. Microsoft 365, Google Workspace, IONOS, Brevo, Postmark, Mailjet).
+### Sicherheit der Formulare
+Zod-Validierung im Browser **und** auf dem Server, Längenbegrenzungen, Upload-Prüfung (Endung + Datei-Signatur, max. 10 MB/Datei, 5 Dateien, 20 MB gesamt), bereinigte Dateinamen, Honeypot + Mindest-Ausfüllzeit, Rate-Limit je Formular und IP, Same-Origin-Prüfung, Schutz vor Doppel-Absendungen, HTML-Escaping in E-Mails, bereinigte Mail-Header. Server-Logs enthalten nur technische Fehlercodes – keine Formularinhalte, Namen oder Adressen. Einsendungen und Dokumente werden **nicht gespeichert**, nur per E-Mail zugestellt.
+
+### Aufbewahrung von Bewerberdaten
+`APPLICANT_RETENTION_DAYS` ist bewusst **leer**. Erst wenn die Frist in der Datenschutzerklärung festgelegt ist, eintragen – dann enthält jede Bewerbungs-E-Mail das konkrete Löschdatum.
+
+## Rechtliches (Impressum & Datenschutz)
+
+Inhalte in `src/content/legal.ts`. Fehlende Angaben sind dort als `null` markiert und werden nicht angezeigt; solange `approved: false` gilt, zeigen beide Seiten einen neutralen Hinweis und bleiben `noindex` (auch nicht in der Sitemap). Für die Datenschutzerklärung ist u. a. ein Abschnitt „Bewerbungen“ vorbereitet.
+
+**Technische Fakten für die Rechtsprüfung:** keine Analyse- oder Marketing-Dienste; ein technisch notwendiger Eintrag im Browser (`localStorage`, Cookie-Auswahl); Formulare: Kontakt, Projektanfrage, Kurz-/vollständige/Initiativbewerbung mit den im Formular sichtbaren Feldern und optionalen Dokumenten; Übermittlung per verschlüsselter SMTP-Verbindung an die konfigurierten Postfächer (one.com); keine Datenbank-Speicherung auf der Website; Schriften werden selbst gehostet (keine Verbindung zu Google).
+
+## Domain & SEO
+
+Kanonische Domain: `https://www.jarbou-logistik.com`. Aufrufe von `jarbou-logistik.com` leiten dauerhaft (308) auf `www` um; HTTP→HTTPS übernimmt das Hosting. Canonical-Tags, Open Graph, Sitemap, robots.txt und strukturierte Daten (Organization, JobPosting, FAQPage, BreadcrumbList) nutzen `NEXT_PUBLIC_SITE_URL`.
+
+## Fotos (echte JARBOU-Aufnahmen)
+
+In `src/content/media.ts` sind Plätze für LKW, Transporter, Fahrer, Disposition, Standorte, Büro, Team und Beladung vorbereitet (`photo-*`). Ein Platz erscheint erst, wenn `src` gesetzt und `placeholder: false` ist – ohne Fotos bleibt das Layout vollständig. Keine KI-generierten Personen, keine beliebigen Stockfotos.
 
 ## DSGVO
 
@@ -125,10 +143,11 @@ Alle Formulare senden serverseitig über `src/lib/mail`. Zugangsdaten liegen aus
 | Was | Wo | Warum |
 |---|---|---|
 | Produktionsdomain | `NEXT_PUBLIC_SITE_URL` (siehe `.env.example`) | Canonical-URLs, Sitemap, Open Graph. Standard aktuell `https://www.jarbou-logistik.com` |
-| SMTP-Zugang + Absenderadresse | Hosting-Umgebung (`.env`) | Ohne diese Daten werden keine Formulare zugestellt |
+| SMTP-Passwort + Absenderpostfach (one.com) | Hosting-Umgebung (`SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`) | Ohne diese Daten werden keine Formulare zugestellt |
+| Aufbewahrungsfrist Bewerberdaten | `APPLICANT_RETENTION_DAYS` + Datenschutzerklärung | Muss übereinstimmen |
 | Impressum-Angaben, Anschrift, Telefon, Registergericht | `src/content/company.ts`, Impressum-Seite | Gesetzliche Pflicht (§ 5 DDG) |
 | Datenschutzerklärung | Datenschutz-Seite | Rechtlich geprüfter Text nötig |
-| E-Mail für Geschäfts- und allgemeine Anfragen | `company.email` (Anzeige) + `MAIL_TO_BUSINESS` / `MAIL_TO_GENERAL` (Versand) | Nur `karriere@jarbou-logistik.com` ist bekannt |
+| E-Mail für Geschäfts- und allgemeine Anfragen | `company.email` (Anzeige) + `BUSINESS_RECIPIENT` / `GENERAL_RECIPIENT` (Versand) | Nur `karriere@jarbou-logistik.com` ist bekannt |
 | Adresse/PLZ des Einsatzorts Hannover | `jobs.ts` → `address` | Verbessert das JobPosting-Schema (optional) |
 | Gültigkeitsdatum der Stellen | `jobs.ts` → `validThrough` | Von Google empfohlen |
 | Mitarbeitergeschichten mit Einwilligung | `stories.ts` | Sektion erscheint erst dann |

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { PageHero } from "@/components/layout/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
+import { MediaSlot } from "@/components/ui/MediaSlot";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import {
   applicationSteps,
@@ -91,6 +93,7 @@ export default function CareersPage() {
           <h2 id="why-title" className="h-section mt-6">
             Warum JARBOU?
           </h2>
+          <MediaSlot id="photo-drivers" className="mt-12 aspect-[21/9]" sizes="100vw" />
           <dl className="mt-14 grid gap-x-10 border-t border-white/15 sm:grid-cols-2 lg:grid-cols-3">
             {whyJarbou.map((w, i) => (
               <div key={w.id} className="border-b border-white/10 py-8">
@@ -120,7 +123,7 @@ export default function CareersPage() {
       </section>
 
       {/* Bewerbungsprozess */}
-      <section id="bewerbungsprozess" aria-labelledby="process-title" className="scroll-mt-16 bg-paper py-20 text-ink lg:py-28">
+      <section id="bewerbungsprozess" aria-labelledby="process-title" className="scroll-mt-16 defer-render bg-paper py-20 text-ink lg:py-28">
         <div className="shell">
           <SectionLabel index="03" tone="dark">
             Bewerbungsprozess
@@ -138,7 +141,7 @@ export default function CareersPage() {
       </section>
 
       {/* Entwicklung */}
-      <section id="entwicklung" aria-labelledby="dev-title" className="scroll-mt-16 bg-ink py-20 lg:py-28">
+      <section id="entwicklung" aria-labelledby="dev-title" className="scroll-mt-16 defer-render bg-ink py-20 lg:py-28">
         <div className="shell">
           <SectionLabel index="04">Entwicklung</SectionLabel>
           <h2 id="dev-title" className="h-section mt-6 max-w-3xl">
@@ -153,12 +156,12 @@ export default function CareersPage() {
       <EmployeeStories stories={visibleStories} />
 
       {/* Standorte */}
-      <section id="standorte" aria-labelledby="loc-title" className="scroll-mt-16 border-t border-white/10 bg-graphite-900 py-20 lg:py-28">
+      <section id="standorte" aria-labelledby="loc-title" className="scroll-mt-16 defer-render border-t border-white/10 bg-graphite-900 py-20 lg:py-28">
         <div className="shell grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <SectionLabel index="05">Standorte</SectionLabel>
             <h2 id="loc-title" className="h-section mt-6">
-              Arbeiten in Ihrer Region.
+              Arbeiten in deiner Region.
             </h2>
             <p className="mt-6 max-w-md text-steel-300">JARBOU ist in mehreren Regionen Deutschlands im Einsatz. Offene Stellen sind direkt am Standort verlinkt.</p>
             <div className="mt-8">
@@ -190,7 +193,7 @@ export default function CareersPage() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" aria-labelledby="faq-title" className="scroll-mt-16 bg-paper py-20 text-ink lg:py-28">
+      <section id="faq" aria-labelledby="faq-title" className="scroll-mt-16 defer-render bg-paper py-20 text-ink lg:py-28">
         <div className="shell grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <SectionLabel index="06" tone="dark">
@@ -226,6 +229,7 @@ export default function CareersPage() {
 
       <StickyApply href={APPLY} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd(faqs)) }} />
+      <Breadcrumbs trail={[{ name: "Karriere", path: "/karriere" }]} />
     </>
   );
 }

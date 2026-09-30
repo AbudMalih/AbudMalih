@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getPublishedJobs } from "@/content/jobs";
+import { imprint, privacyPolicy } from "@/content/legal";
 import { site } from "@/content/site";
 
 /** Indexable pages only. Legal placeholders stay out until their final text exists. */
@@ -14,6 +15,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/karriere/initiativbewerbung", 0.6, "monthly"],
     ["/business", 0.8, "monthly"],
     ["/kontakt", 0.5, "yearly"],
+    // Legal pages only once their final text is approved.
+    ...(imprint.approved ? [["/impressum", 0.2, "yearly"] as [string, number, "yearly"]] : []),
+    ...(privacyPolicy.approved ? [["/datenschutz", 0.2, "yearly"] as [string, number, "yearly"]] : []),
   ];
   return [
     ...pages.map(([path, priority, changeFrequency]) => ({ url: `${site.url}${path}`, priority, changeFrequency })),

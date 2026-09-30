@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { ContactForm } from "@/components/forms/ContactForm";
@@ -95,6 +96,7 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+      <Breadcrumbs trail={[{ name: "Kontakt", path: "/kontakt" }]} />
     </>
   );
 }

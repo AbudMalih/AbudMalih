@@ -1,4 +1,4 @@
-import type { Stat, TimelineEntry } from "./types";
+import type { MediaKey, Stat, TimelineEntry } from "./types";
 
 /**
  * Verified company facts (supplied by JARBOU Logistik GmbH).
@@ -40,24 +40,28 @@ export const companyPage = {
   chapters: [
     {
       id: "wachstum",
+      media: "photo-truck-40t" as MediaKey,
       eyebrow: "Wachstum",
       title: "Gewachsen durch Verlässlichkeit.",
       text: "Wachstum in der Logistik entsteht nicht durch Versprechen, sondern durch Einsatztage, die funktionieren. Jede neue Tour, jedes neue Fahrzeug und jedes neue Team muss in einen Ablauf passen, der jeden Tag trägt.",
     },
     {
       id: "menschen",
+      media: "photo-team" as MediaKey,
       eyebrow: "Menschen",
       title: "Über 160 Menschen, ein Anspruch.",
       text: "Fahrerinnen und Fahrer, Disposition und Führung arbeiten Hand in Hand. Wir setzen auf klare Einarbeitung, feste Ansprechpartner und Teams, die sich aufeinander verlassen können.",
     },
     {
       id: "betrieb",
+      media: "photo-vans" as MediaKey,
       eyebrow: "Operative Stärke",
       title: "Fahrzeuge, Teams und Führung aus einer Hand.",
       text: "Mit mehr als 180 Transportern und 25 LKW stellen wir die Kapazität, die Transport-, Express- und Last-Mile-Projekte brauchen – geplant, disponiert und geführt von eigenen Teams.",
     },
     {
       id: "verantwortung",
+      media: "photo-dispatch" as MediaKey,
       eyebrow: "Verantwortung",
       title: "Klare Zuständigkeit. Messbare Qualität.",
       text: "Wir steuern unsere Leistung anhand klarer Kennzahlen, behandeln Abweichungen offen und leiten konkrete Maßnahmen ab. So entsteht Logistik, die messbar funktioniert.",

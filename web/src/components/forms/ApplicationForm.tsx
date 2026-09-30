@@ -56,7 +56,7 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
   const top = useRef<HTMLDivElement>(null);
-  const { state, submit } = useSubmit("/api/bewerbung");
+  const { state, submit } = useSubmit("/api/bewerbung", "du");
 
   const form = useForm<FullApplyValues>({
     resolver: zodResolver(isQuick ? quickApplySchema : fullApplySchema) as never,
@@ -99,8 +99,9 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
 
   if (state.status === "success") {
     return (
-      <FormSuccess title="Vielen Dank für Ihre Bewerbung." reference={state.reference}>
-        <p>Ihre Bewerbung ist bei uns eingegangen. So geht es weiter:</p>
+      <FormSuccess title="Bewerbung erhalten." reference={state.reference}>
+        <p>Danke für dein Interesse an JARBOU. Wir haben deine Bewerbung erhalten.</p>
+        <p className="mt-4">So geht es weiter:</p>
         <ol className="mt-4 space-y-1 text-sm">
           {applicationSteps.slice(1, 4).map((s) => (
             <li key={s.id}>
@@ -114,11 +115,11 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
 
   const fallback = (
     <p>
-      Senden Sie Ihre Bewerbung bitte an{" "}
+      Du kannst deine Bewerbung auch direkt per E-Mail an{" "}
       <a className="font-semibold underline underline-offset-4" href={`mailto:${careersEmail}?subject=${encodeURIComponent("Bewerbung")}`}>
         {careersEmail}
-      </a>
-      .
+      </a>{" "}
+      senden.
     </p>
   );
 
@@ -192,11 +193,11 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
         </div>
 
         <fieldset className="space-y-5">
-          <legend className="mb-5 text-lg font-bold uppercase tracking-[-0.01em]">Über Sie</legend>
+          <legend className="mb-5 text-lg font-bold uppercase tracking-[-0.01em]">Über dich</legend>
           {contactFields}
         </fieldset>
         <fieldset className="mt-10 space-y-5">
-          <legend className="mb-5 text-lg font-bold uppercase tracking-[-0.01em]">Ihre Stelle</legend>
+          <legend className="mb-5 text-lg font-bold uppercase tracking-[-0.01em]">Deine Stelle</legend>
           {jobFields}
         </fieldset>
         <div className="mt-10">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import Image from "next/image";
 import { ServiceIllustration } from "@/components/illustrations/ServiceIllustration";
@@ -99,6 +100,7 @@ export default function ServicesPage() {
           <ButtonLink href="/business">Projekt anfragen</ButtonLink>
         </div>
       </section>
+      <Breadcrumbs trail={[{ name: "Leistungen", path: "/leistungen" }]} />
     </>
   );
 }

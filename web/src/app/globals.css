@@ -56,6 +56,12 @@
     outline: 2px solid var(--color-red);
     outline-offset: 3px;
   }
+  /* Form controls: flush focus ring (always visible, also for mouse focus in text fields). */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline-offset: 0;
+  }
   h1, h2, h3 {
     text-wrap: balance;
     hyphens: manual;

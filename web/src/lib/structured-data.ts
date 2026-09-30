@@ -70,3 +70,13 @@ export function faqJsonLd(faqs: import("@/content/types").Faq[]) {
     mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })),
   };
 }
+
+/** BreadcrumbList: Start › … › current page. `trail` excludes the home entry. */
+export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
+  const items = [{ name: "Start", path: "/" }, ...trail];
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((it, i) => ({ "@type": "ListItem", position: i + 1, name: it.name, item: `${site.url}${it.path === "/" ? "/" : it.path}` })),
+  };
+}

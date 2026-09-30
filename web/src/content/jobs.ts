@@ -24,7 +24,7 @@ export const jobs: Job[] = [
     startDate: "2026-11-01",
     summary: "Zustellung im DHL-Express-Projekt in Hannover.",
     description:
-      "Für unser DHL-Express-Projekt in Hannover suchen wir zuverlässige Fahrerinnen und Fahrer, die Sendungen pünktlich und sorgfältig zustellen.",
+      "Für unser DHL-Express-Projekt in Hannover suchen wir zuverlässige Fahrerinnen und Fahrer, die Sendungen pünktlich und sorgfältig zustellen – vielleicht dich.",
     responsibilities: ["Zustellung von Sendungen im DHL-Express-Projekt am Standort Hannover"],
     requirements: [
       "Führerschein Klasse B",
@@ -62,7 +62,7 @@ export const jobs: Job[] = [
     startDate: null,
     summary: "Koordination von Fahrern, Touren und Fahrzeugen im täglichen Betrieb.",
     description:
-      "Sie organisieren den täglichen operativen Betrieb in Hannover und sorgen dafür, dass Fahrer, Touren und Fahrzeuge zuverlässig zusammenspielen.",
+      "Du organisierst den täglichen operativen Betrieb in Hannover und sorgst dafür, dass Fahrer, Touren und Fahrzeuge zuverlässig zusammenspielen.",
     responsibilities: [
       "Fahrerkoordination",
       "Tourenkoordination",

@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import { BusinessInquiryForm } from "@/components/forms/BusinessInquiryForm";
 import { PageHero } from "@/components/layout/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
+import { MediaSlot } from "@/components/ui/MediaSlot";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { businessPage, serviceTypeOptions, vehicleNeedOptions } from "@/content/business";
 import { company } from "@/content/company";
@@ -25,6 +27,7 @@ export default function BusinessPage() {
       {/* Capacity – verified figures only */}
       <section aria-labelledby="cap-title" className="bg-ink pb-24 lg:pb-32">
         <div className="shell">
+          <MediaSlot id="photo-loading" className="mb-16 aspect-[21/9]" sizes="100vw" />
           <h2 id="cap-title" className="sr-only">
             Kapazität
           </h2>
@@ -145,6 +148,7 @@ export default function BusinessPage() {
           </div>
         </div>
       </section>
+      <Breadcrumbs trail={[{ name: "Für Unternehmen", path: "/business" }]} />
     </>
   );
 }

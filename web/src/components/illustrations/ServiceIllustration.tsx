@@ -1,4 +1,4 @@
-import type { MediaKey } from "@/content/types";
+import type { ServiceMediaKey } from "@/content/types";
 
 /**
  * PLACEHOLDER ARTWORK – schematic line drawings shown until approved JARBOU
@@ -143,7 +143,7 @@ function Operations() {
   );
 }
 
-const MAP: Record<MediaKey, () => React.JSX.Element> = {
+const MAP: Record<ServiceMediaKey, () => React.JSX.Element> = {
   "service-disposition": Disposition,
   "service-routes": Routes,
   "service-delivery": Delivery,
@@ -152,7 +152,7 @@ const MAP: Record<MediaKey, () => React.JSX.Element> = {
   "service-operations": Operations,
 };
 
-export function ServiceIllustration({ id, label }: { id: MediaKey; label: string }) {
+export function ServiceIllustration({ id, label }: { id: ServiceMediaKey; label: string }) {
   const Art = MAP[id];
   return (
     <svg viewBox="0 0 640 600" role="img" aria-label={label} className="h-full w-full" preserveAspectRatio="xMidYMid meet">

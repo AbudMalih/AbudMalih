@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { ApplicationExperience } from "@/components/forms/ApplicationExperience";
@@ -9,7 +10,7 @@ import { applicationOptions } from "@/lib/forms/options";
 
 export const metadata: Metadata = pageMeta({
   title: "Jetzt bewerben",
-  description: "Bewerben Sie sich bei JARBOU Logistik – Kurzbewerbung in rund zwei Minuten oder vollständige Bewerbung mit Unterlagen. Ohne Konto.",
+  description: "Bewirb dich bei JARBOU Logistik – Kurzbewerbung in rund zwei Minuten oder vollständige Bewerbung mit Unterlagen. Ohne Konto.",
   path: "/karriere/bewerben",
 });
 
@@ -46,6 +47,7 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
           </div>
         </div>
       </section>
+      <Breadcrumbs trail={[{ name: "Karriere", path: "/karriere" }, { name: "Jetzt bewerben", path: "/karriere/bewerben" }]} />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import { ApplicationForm } from "@/components/forms/ApplicationForm";
 import { PageHero } from "@/components/layout/PageHero";
@@ -7,7 +8,7 @@ import { applicationOptions } from "@/lib/forms/options";
 
 export const metadata: Metadata = pageMeta({
   title: "Initiativbewerbung",
-  description: "Keine passende Stelle gefunden? Bewerben Sie sich initiativ bei JARBOU Logistik – für Ihre Wunschtätigkeit und Ihren Wunschstandort.",
+  description: "Keine passende Stelle gefunden? Bewirb dich initiativ bei JARBOU Logistik – für deine Wunschtätigkeit und deinen Wunschstandort.",
   path: "/karriere/initiativbewerbung",
 });
 
@@ -17,8 +18,8 @@ export default function InitiativePage() {
     <>
       <PageHero
         eyebrow="Initiativbewerbung"
-        lines={["Ihre Stelle ist", "noch nicht dabei?"]}
-        lead="Erzählen Sie uns, was Sie suchen und wo Sie arbeiten möchten. Wir melden uns, wenn es passt."
+        lines={["Deine Stelle ist", "noch nicht dabei?"]}
+        lead="Erzähl uns, was du suchst und wo du arbeiten möchtest. Wir melden uns, wenn es passt."
       />
       <section aria-label="Initiativbewerbung" className="bg-paper py-16 text-ink lg:py-24">
         <div className="shell grid gap-12 lg:grid-cols-12">
@@ -33,6 +34,7 @@ export default function InitiativePage() {
           </div>
         </div>
       </section>
+      <Breadcrumbs trail={[{ name: "Karriere", path: "/karriere" }, { name: "Initiativbewerbung", path: "/karriere/initiativbewerbung" }]} />
     </>
   );
 }

@@ -55,7 +55,7 @@ export type Service = {
   lead: string;
   points: string[];
   /** Key into the media registry. */
-  media: MediaKey;
+  media: ServiceMediaKey;
 };
 
 export type ProcessStep = {
@@ -71,7 +71,18 @@ export type MediaKey =
   | "service-delivery"
   | "service-quality"
   | "service-fleet"
-  | "service-operations";
+  | "service-operations"
+  /* Real JARBOU photography slots – empty until approved photos exist. */
+  | "photo-truck-40t"
+  | "photo-vans"
+  | "photo-drivers"
+  | "photo-dispatch"
+  | "photo-facilities"
+  | "photo-offices"
+  | "photo-team"
+  | "photo-loading";
+
+export type ServiceMediaKey = Extract<MediaKey, `service-${string}`>;
 
 export type MediaItem = {
   /** Path in /public or remote URL. `null` = no approved photograph yet. */

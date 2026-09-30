@@ -15,7 +15,7 @@ type Props = { serviceTypes: string[]; vehicleNeeds: readonly string[]; business
 
 export function BusinessInquiryForm({ serviceTypes, vehicleNeeds, businessEmail }: Props) {
   const [files, setFiles] = useState<File[]>([]);
-  const { state, submit } = useSubmit("/api/geschaeftsanfrage");
+  const { state, submit } = useSubmit("/api/geschaeftsanfrage", "sie");
   const {
     register,
     handleSubmit,
@@ -28,8 +28,8 @@ export function BusinessInquiryForm({ serviceTypes, vehicleNeeds, businessEmail 
 
   if (state.status === "success") {
     return (
-      <FormSuccess title="Vielen Dank für Ihre Anfrage." reference={state.reference}>
-        <p>Ihre Projektanfrage ist bei uns eingegangen. Wir melden uns, um die nächsten Schritte abzustimmen.</p>
+      <FormSuccess title="Anfrage erhalten." reference={state.reference}>
+        <p>Vielen Dank für Ihr Interesse an JARBOU. Wir haben Ihre Projektanfrage erhalten und melden uns bei Ihnen, um die nächsten Schritte abzustimmen.</p>
       </FormSuccess>
     );
   }

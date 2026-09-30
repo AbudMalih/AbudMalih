@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import { OperationsMap } from "@/components/data/OperationsMap";
 import { PageHero } from "@/components/layout/PageHero";
@@ -77,6 +78,7 @@ export default function LocationsPage() {
           </div>
         </div>
       </section>
+      <Breadcrumbs trail={[{ name: "Standorte", path: "/standorte" }]} />
     </>
   );
 }

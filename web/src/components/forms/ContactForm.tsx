@@ -10,7 +10,7 @@ import { FormError, FormSuccess } from "./FormFeedback";
 import { useSubmit } from "./submit";
 
 export function ContactForm({ generalEmail }: { generalEmail: string | null }) {
-  const { state, submit } = useSubmit("/api/kontakt");
+  const { state, submit } = useSubmit("/api/kontakt", "sie");
   const {
     register,
     handleSubmit,
@@ -23,8 +23,8 @@ export function ContactForm({ generalEmail }: { generalEmail: string | null }) {
 
   if (state.status === "success") {
     return (
-      <FormSuccess title="Vielen Dank für Ihre Nachricht." reference={state.reference}>
-        <p>Ihre Nachricht ist bei uns eingegangen.</p>
+      <FormSuccess title="Nachricht erhalten." reference={state.reference}>
+        <p>Vielen Dank. Wir haben Ihre Nachricht erhalten.</p>
       </FormSuccess>
     );
   }

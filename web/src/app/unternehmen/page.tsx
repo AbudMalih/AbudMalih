@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import { PageHero } from "@/components/layout/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { MediaSlot } from "@/components/ui/MediaSlot";
 import { StatRow } from "@/components/ui/StatRow";
 import { company, companyPage, timeline } from "@/content/company";
 import { InView } from "@/motion/InView";
@@ -67,6 +69,7 @@ export default function CompanyPage() {
               <p className="reveal max-w-md text-lg leading-relaxed text-steel-300 lg:col-span-4" style={{ "--d": "200ms" } as React.CSSProperties}>
                 {c.text}
               </p>
+              <MediaSlot id={c.media} className="aspect-[3/2] lg:col-span-9 lg:col-start-4" sizes="(min-width: 1024px) 70vw, 100vw" />
             </InView>
           ))}
         </div>
@@ -104,6 +107,7 @@ export default function CompanyPage() {
           </div>
         </div>
       </section>
+      <Breadcrumbs trail={[{ name: "Unternehmen", path: "/unternehmen" }]} />
     </>
   );
 }

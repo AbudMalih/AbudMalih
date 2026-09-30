@@ -8,9 +8,12 @@ import type { SubmitState } from "./submit";
 export function FormError({ state, fallback }: { state: SubmitState; fallback?: ReactNode }) {
   if (state.status !== "error") return null;
   return (
-    <div role="alert" className="border-l-2 border-red-ink bg-white p-4 text-sm leading-relaxed text-ink">
-      <p className="font-semibold">{state.message}</p>
-      {state.code === "not_configured" && fallback && <div className="mt-2 text-graphite-700">{fallback}</div>}
+    <div role="alert" className="flex gap-3 border-l-2 border-red-ink bg-white p-4 text-sm leading-relaxed text-ink">
+      <span aria-hidden="true" className="mt-[0.35em] inline-block h-2.5 w-4 shrink-0 bg-red-ink [transform:skewX(-28deg)]" />
+      <div>
+        <p className="font-semibold">{state.message}</p>
+        {["not_configured", "failed"].includes(state.code) && fallback && <div className="mt-2 text-graphite-700">{fallback}</div>}
+      </div>
     </div>
   );
 }

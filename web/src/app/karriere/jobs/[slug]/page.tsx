@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
+import { Breadcrumbs, JsonLd } from "@/components/seo/JsonLd";
 import { pageMeta } from "@/lib/seo";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ApplicationExperience } from "@/components/forms/ApplicationExperience";
+import { LazyApplication } from "@/components/forms/LazyApplication";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ButtonLink } from "@/components/ui/Button";
 import { formatStartDate, getJob, getPublishedJobs } from "@/content/jobs";
 import { applicationOptions } from "@/lib/forms/options";
-import { jobPostingJsonLd, jsonLdScript } from "@/lib/structured-data";
+import { jobPostingJsonLd } from "@/lib/structured-data";
 import { StickyApply } from "@/sections/careers/StickyApply";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -18,7 +19,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const job = getJob((await params).slug);
-  if (!job) return {};
+  if (!job) return { title: "Stelle nicht verfügbar", robots: { index: false, follow: true } };
   const title = `${job.title} in ${job.location}`;
   return pageMeta({
     title,
@@ -38,8 +39,8 @@ export default async function JobPage({ params }: Params) {
     ["Bereich", job.department],
   ] as const;
   const blocks = [
-    { id: "aufgaben", title: "Ihre Aufgaben", items: job.responsibilities },
-    { id: "anforderungen", title: "Das bringen Sie mit", items: job.requirements },
+    { id: "aufgaben", title: "Deine Aufgaben", items: job.responsibilities },
+    { id: "anforderungen", title: "Das bringst du mit", items: job.requirements },
     { id: "vorteil", title: "Von Vorteil", items: job.niceToHave },
     { id: "angebot", title: "Das bieten wir", items: job.benefits },
   ].filter((b) => b.items.length > 0);
@@ -95,9 +96,6 @@ export default async function JobPage({ params }: Params) {
                 </ul>
               </div>
             ))}
-            {!job.salary && (
-              <p className="text-sm text-steel-600">Details zur Vergütung besprechen wir persönlich im Bewerbungsgespräch.</p>
-            )}
           </div>
           <aside className="lg:col-span-4">
             <div className="sticky top-28 bg-ink p-8 text-white">
@@ -133,13 +131,14 @@ export default async function JobPage({ params }: Params) {
             </p>
           </div>
           <div className="lg:col-span-7 lg:col-start-6">
-            <ApplicationExperience {...opts} defaultPosition={job.slug} defaultLocation={job.location} />
+            <LazyApplication {...opts} defaultPosition={job.slug} defaultLocation={job.location} />
           </div>
         </div>
       </section>
 
       <StickyApply href="#bewerben" hideWhenVisible="bewerben" />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jobPostingJsonLd(job)) }} />
+      <JsonLd data={jobPostingJsonLd(job)} />
+      <Breadcrumbs trail={[{ name: "Karriere", path: "/karriere" }, { name: job.title, path: `/karriere/jobs/${job.slug}` }]} />
     </>
   );
 }

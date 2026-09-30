@@ -1,73 +1,68 @@
 import "server-only";
+import { mailConfig } from "./config";
 
 /**
  * Mail adapter.
- *
- * Provider-agnostic interface with two drivers:
- *  - "smtp": real delivery via nodemailer (any SMTP provider: IONOS, Microsoft
- *    365, Google Workspace, Mailjet, Brevo, Postmark SMTP, …)
- *  - "log":  development only – prints the message to the server console.
- *    Refused in production so the site never pretends mail was delivered.
- *
- * Without configuration `getMailer()` returns null and the API routes answer
- * with 503 + an honest message. See README → "E-Mail-Versand".
+ *  - SMTP (production): used when SMTP_HOST, SMTP_USER, SMTP_PASSWORD and
+ *    SMTP_FROM are set. Works with one.com (send.one.com:465, SSL).
+ *  - "log" (development only, MAIL_DRIVER=log): nothing is sent; an HTML
+ *    preview is written to the OS temp folder. Refused in production.
+ * Without configuration `getMailer()` returns null and the API answers 503.
  */
 export type MailAttachment = { filename: string; content: Buffer; contentType: string };
-export type MailMessage = { to: string; replyTo?: string; subject: string; text: string; attachments?: MailAttachment[] };
+export type MailMessage = { to: string; replyTo?: string; subject: string; text: string; html: string; attachments?: MailAttachment[] };
 export interface Mailer {
   send(message: MailMessage): Promise<void>;
 }
 
-const env = (k: string) => process.env[k]?.trim() || undefined;
+type Transport = { sendMail(opts: Record<string, unknown>): Promise<unknown> };
+let transport: Transport | null = null;
 
 export function getMailer(): Mailer | null {
-  const driver = env("MAIL_DRIVER");
-  if (driver === "log") {
+  if (mailConfig.driver() === "log") {
     if (process.env.NODE_ENV === "production") return null;
     return {
       async send(m) {
-        console.info("[mail:log] (nicht versendet – nur Entwicklung)", {
-          to: m.to,
-          subject: m.subject,
-          attachments: m.attachments?.map((a) => `${a.filename} (${a.content.length} B)`),
-        });
-        console.info(m.text);
+        const [{ mkdir, writeFile }, { tmpdir }, { join }] = await Promise.all([import("node:fs/promises"), import("node:os"), import("node:path")]);
+        const dir = join(tmpdir(), "jarbou-mail-preview");
+        await mkdir(dir, { recursive: true });
+        const file = join(dir, `${Date.now()}.html`);
+        await writeFile(file, m.html, "utf8");
+        // Metadata only – no applicant data in the console.
+        console.info(`[mail:log] not sent (development). to=${m.to} attachments=${m.attachments?.length ?? 0} preview=${file}`);
       },
     };
   }
-  if (driver === "smtp") {
-    const host = env("SMTP_HOST");
-    const from = env("MAIL_FROM");
-    if (!host || !from) return null;
-    return {
-      async send(m) {
+  const host = mailConfig.host();
+  const user = mailConfig.user();
+  const pass = mailConfig.password();
+  const from = mailConfig.from();
+  if (!host || !user || !pass || !from) return null;
+  return {
+    async send(m) {
+      if (!transport) {
         const nodemailer = await import("nodemailer");
-        const transport = nodemailer.createTransport({
+        transport = nodemailer.createTransport({
           host,
-          port: Number(env("SMTP_PORT") ?? 587),
-          secure: env("SMTP_SECURE") === "true",
-          auth: env("SMTP_USER") ? { user: env("SMTP_USER"), pass: env("SMTP_PASS") } : undefined,
-        });
-        await transport.sendMail({
-          from,
-          to: m.to,
-          replyTo: m.replyTo,
-          subject: m.subject,
-          text: m.text,
-          attachments: m.attachments,
-        });
-      },
-    };
-  }
-  return null;
+          port: mailConfig.port(),
+          secure: mailConfig.secure(),
+          auth: { user, pass },
+          connectionTimeout: 15_000,
+          greetingTimeout: 10_000,
+          socketTimeout: 30_000,
+        }) as unknown as Transport;
+      }
+      await transport.sendMail({
+        from,
+        to: m.to,
+        replyTo: m.replyTo,
+        subject: m.subject,
+        text: m.text,
+        html: m.html,
+        attachments: m.attachments,
+        disableUrlAccess: true,
+        disableFileAccess: true,
+      });
+    },
+  };
 }
-
-/** Recipients. Careers has a confirmed default; the others must be configured. */
-export const recipients = {
-  careers: () => env("MAIL_TO_CAREERS") ?? "karriere@jarbou-logistik.com",
-  business: () => env("MAIL_TO_BUSINESS") ?? null,
-  general: () => env("MAIL_TO_GENERAL") ?? null,
-};
-
-/** Days after which applicant data should be deleted if no hire follows. */
-export const applicantRetentionDays = () => Number(env("APPLICANT_RETENTION_DAYS") ?? 180);

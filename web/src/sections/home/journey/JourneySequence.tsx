@@ -124,8 +124,9 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
       const mm = gsap.matchMedia(el);
       mm.add(
         {
-          desktop: "(min-width: 768px)",
-          mobile: "(max-width: 767.98px)",
+          // Landscape screens get the wide composition; phones and portrait tablets the tall one.
+          desktop: "(min-width: 768px) and (min-aspect-ratio: 1/1)",
+          mobile: "(max-width: 767.98px), (max-aspect-ratio: 1/1)",
           reduce: "(prefers-reduced-motion: reduce)",
         },
         (ctx) => {
@@ -299,7 +300,7 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
           <aside
             data-hud
             aria-label="Illustrative Tourübersicht"
-            className="absolute bottom-8 left-5 right-5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-steel-300 motion-reduce:hidden md:bottom-auto md:left-auto md:right-12 md:top-32 md:w-80"
+            className="absolute bottom-8 left-5 right-5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-steel-300 motion-reduce:hidden lg:bottom-auto lg:left-auto lg:right-12 lg:top-32 lg:w-80"
           >
             <div className="flex items-center gap-3">
               <Slashes className="h-3 w-auto shrink-0 text-red" />

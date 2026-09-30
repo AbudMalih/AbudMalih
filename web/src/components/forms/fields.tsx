@@ -6,7 +6,7 @@ import type { FieldError, UseFormRegisterReturn } from "react-hook-form";
 /** Shared form primitives – large tap targets, 16px text (no iOS zoom), accessible errors. */
 
 const control =
-  "block w-full min-h-[3.25rem] border border-ink/20 bg-white px-4 text-base text-ink placeholder:text-steel-500 transition-colors hover:border-ink/40 focus:border-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-red aria-[invalid=true]:border-red-ink";
+  "block w-full min-h-[3.25rem] border border-ink/20 bg-white px-4 text-base text-ink placeholder:text-steel-500 transition-colors hover:border-ink/40 focus:border-ink aria-[invalid=true]:border-red-ink";
 
 type BaseProps = { label: string; hint?: string; error?: FieldError; required?: boolean; className?: string };
 

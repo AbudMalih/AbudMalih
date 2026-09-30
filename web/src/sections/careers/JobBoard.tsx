@@ -47,7 +47,7 @@ export function JobBoard({ jobs, facets }: { jobs: JobRow[]; facets: Facets }) {
                 id={`${id}-${f.key}`}
                 value={f.value}
                 onChange={(e) => f.set(e.target.value)}
-                className="block min-h-[3.25rem] w-full appearance-none border border-ink/20 bg-white px-4 pr-12 text-base text-ink hover:border-ink/40 focus:border-ink focus:outline-none focus-visible:outline-2 focus-visible:outline-red"
+                className="block min-h-[3.25rem] w-full appearance-none border border-ink/20 bg-white px-4 pr-12 text-base text-ink hover:border-ink/40 focus:border-ink"
               >
                 <option value="">Alle</option>
                 {f.options.map((o) => (
@@ -114,9 +114,9 @@ export function JobBoard({ jobs, facets }: { jobs: JobRow[]; facets: Facets }) {
         <div className="py-12">
           <p className="text-xl font-semibold">Keine Stelle passt zu diesen Filtern.</p>
           <p className="mt-2 text-graphite-600">
-            Ändern Sie die Auswahl oder{" "}
+            Ändere die Auswahl oder{" "}
             <Link href="/karriere/initiativbewerbung" className="font-semibold underline underline-offset-4">
-              bewerben Sie sich initiativ
+              bewirb dich initiativ
             </Link>
             .
           </p>
