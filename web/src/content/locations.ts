@@ -32,6 +32,15 @@ export const locationTypeLabel: Record<LocationType, string> = {
   recruiting_location: "Recruiting-Standort",
 };
 
+export const locationTypePlural: Record<LocationType, string> = {
+  office: "Büros",
+  warehouse: "Lager",
+  logistics_site: "Logistikstandorte",
+  project: "Projektstandorte",
+  operational_area: "Einsatzgebiete",
+  recruiting_location: "Recruiting-Standorte",
+};
+
 /** Classification label, or `null` while the type is unconfirmed. */
 export function labelFor(location: Location): string | null {
   if (!location.type) return null;

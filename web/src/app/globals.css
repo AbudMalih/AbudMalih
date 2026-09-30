@@ -22,6 +22,8 @@
   --color-red-ink: #c8060c;
   /* Button fill: brand red nudged for AA contrast with white text. */
   --color-red-cta: #e3070e;
+  /* Small red text on graphite backgrounds (WCAG AA ≥ 4.5:1). */
+  --color-red-glow: #ff4545;
 
   --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;

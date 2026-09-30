@@ -98,10 +98,18 @@ export type Partner = {
 
 export type EmploymentType = "Vollzeit" | "Teilzeit" | "Minijob" | "Aushilfe";
 
+/** Position families used for the job filter. */
+export type PositionCategory = "Fahrer" | "Disposition" | "Teamleitung" | "Verwaltung";
+
 export type Job = {
   slug: string;
   title: string;
+  /** Id from locations.ts – drives the location filter and map links. */
+  locationId: string;
   location: string;
+  /** Used for JobPosting structured data. Only confirmed values. */
+  address: { locality: string; region: string; postalCode: string | null; street: string | null };
+  category: PositionCategory;
   department: string;
   employmentType: EmploymentType;
   /** ISO date or null when "ab sofort" / not specified. */
@@ -121,4 +129,32 @@ export type Job = {
   validThrough: string | null;
   featured: boolean;
   applicationQuestions: string[];
+};
+
+export type TimelineEntry = {
+  id: string;
+  /** Year or null for "heute". */
+  year: number | null;
+  title: string;
+  text: string;
+  /** Only published entries are rendered. Add verified milestones here. */
+  published: boolean;
+};
+
+export type Faq = { id: string; question: string; answer: string; category: string };
+
+export type EmployeeStory = {
+  id: string;
+  name: string;
+  role: string;
+  location: string;
+  photo: MediaItem | null;
+  /** Video URL (e.g. self-hosted MP4). */
+  video: string | null;
+  story: string;
+  /** e.g. "seit 2021" */
+  employedSince: string | null;
+  /** Written consent of the employee to publish name, photo and story. */
+  publicationPermission: boolean;
+  published: boolean;
 };

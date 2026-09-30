@@ -1,14 +1,10 @@
 import Link from "next/link";
 import { Arrow, ButtonLink } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { whyJarbou } from "@/content/careers";
 import { formatStartDate, getPublishedJobs } from "@/content/jobs";
 
-const REASONS = [
-  { title: "Strukturierte Einarbeitung", text: "Klare Abläufe und feste Ansprechpartner vom ersten Tag an." },
-  { title: "Moderner Fuhrpark", text: "Mehr als 180 Transporter und 25 LKW im Einsatz." },
-  { title: "Starke Teams", text: "Über 160 Kolleginnen und Kollegen an mehreren Standorten." },
-  { title: "Langfristige Perspektive", text: "Entwicklung nach Leistung, Erfahrung und betrieblichem Bedarf." },
-];
+const REASONS = whyJarbou.filter((w) => ["onboarding", "fleet", "teams", "perspective"].includes(w.id));
 
 export function CareersTeaser() {
   const jobs = getPublishedJobs().filter((j) => j.featured);
@@ -45,7 +41,7 @@ export function CareersTeaser() {
             <ul className="mt-6 border-t border-ink">
               {jobs.map((job) => (
                 <li key={job.slug} className="border-b border-ink/15">
-                  <Link href="/karriere" className="group grid gap-3 py-7 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <Link href={`/karriere/jobs/${job.slug}`} className="group grid gap-3 py-7 sm:grid-cols-[1fr_auto] sm:items-center">
                     <span>
                       <span className="block text-xl font-bold tracking-[-0.015em] sm:text-2xl">{job.title}</span>
                       <span className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[0.72rem] uppercase tracking-[0.12em] text-graphite-600">
@@ -63,7 +59,7 @@ export function CareersTeaser() {
               ))}
             </ul>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/karriere">Jetzt bewerben</ButtonLink>
+              <ButtonLink href="/karriere/bewerben">Jetzt bewerben</ButtonLink>
               <ButtonLink href="/karriere" variant="outline-dark">
                 Karriere bei JARBOU
               </ButtonLink>

@@ -1,7 +1,7 @@
 # JARBOU Logistik GmbH – Website (Neubau)
 
-Neubau der Website von JARBOU Logistik GmbH. **Phase 1:** Designsystem, Architektur, Startseite und die Scroll-Sequenz „Vom Lager zum Ziel“.
-Alle anderen Routen sind als ehrliche „In Vorbereitung“-Seiten angelegt (`noindex`, nicht in der Sitemap), damit keine Navigation ins Leere führt.
+**Phase 1** (freigegeben): Designsystem, Startseite, 40-t-Sattelzug-Scroll-Sequenz.
+**Phase 2**: Unternehmen, Leistungen, Standorte, Karriere-Plattform mit Stellenseiten und Online-Bewerbung, Initiativbewerbung, Business mit Projektanfrage, Kontakt, Formular-Backend.
 
 > Das alte Prototyp-Projekt im Repository-Root (`/app`, `/components`, `/lib` …) ist **nicht** Teil dieses Neubaus und kann nach Freigabe entfernt werden.
 
@@ -12,6 +12,8 @@ Alle anderen Routen sind als ehrliche „In Vorbereitung“-Seiten angelegt (`no
 | Framework | Next.js 16 (App Router, statisch vorgerendert), React 19, TypeScript (strict) |
 | Styling | Tailwind CSS 4, Design-Tokens in `src/app/globals.css` |
 | Motion | GSAP + ScrollTrigger (nur für die Scroll-Sequenz, wird erst beim ersten Scrollen geladen), sonst CSS |
+| Formulare | React Hook Form + Zod (gemeinsame Schemas für Browser und Server), Route Handler unter `/api/*` |
+| E-Mail | Adapter mit SMTP-Treiber (nodemailer) – siehe „E-Mail-Versand“ |
 | Schriften | Inter Tight (Headlines & Text), Geist Mono (Labels) – via `next/font`, selbst gehostet |
 
 ```bash
@@ -42,6 +44,22 @@ src/
 public/brand/              Logo (SVG hell/dunkel + Originaldatei)
 ```
 
+## Seiten
+
+| Route | Inhalt | Index |
+|---|---|---|
+| `/` | Startseite mit Scroll-Sequenz | ja |
+| `/unternehmen` | Geschichte 2019 → heute, Kapitel, Grundsätze | ja |
+| `/leistungen` | Sechs Leistungen im Detail mit Scroll-Index | ja |
+| `/standorte` | Interaktive Karte mit Filter, Detailansicht, offenen Stellen | ja |
+| `/karriere` | Jobs mit Filter, Warum JARBOU, Ein Tag bei JARBOU, Bewerbungsprozess, Entwicklung, Standorte, FAQ | ja |
+| `/karriere/jobs/[slug]` | Stellenseite + Bewerbung + JobPosting-Schema | ja |
+| `/karriere/bewerben?stelle=…` | Kurz- oder vollständige Bewerbung | ja |
+| `/karriere/initiativbewerbung` | Initiativbewerbung (5 Schritte) | ja |
+| `/business` | B2B-Seite + Projektanfrage | ja |
+| `/kontakt` | Geschäft / Karriere / Allgemein getrennt | ja |
+| `/impressum`, `/datenschutz` | Platzhalter bis zur rechtlichen Freigabe | **nein** |
+
 ## Inhalte pflegen (`src/content`)
 
 Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das Modell). Die Struktur ist so gewählt, dass später ein Headless-CMS die Module ersetzen kann, ohne Komponenten anzufassen. **Ein CMS ist noch nicht angebunden.**
@@ -50,11 +68,16 @@ Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das M
 |---|---|---|
 | `company.ts` | Firmendaten & Kennzahlen (2019, 160+, 180+, 25) | Nur bestätigte Zahlen eintragen |
 | `locations.ts` | Bremen, Hannover, Köln, Magdeburg, Kassel, Haiger, Erfurt, Suhl, Zwickau | `type: null` = noch nicht bestätigt → nur der Ortsname wird angezeigt |
-| `jobs.ts` | Fahrer DHL Express Hannover, Disponent Hannover | `status: "published"` + `validThrough` steuern Sichtbarkeit |
+| `jobs.ts` | Fahrer DHL Express Hannover, Disponent Hannover | `status: "published"` + `validThrough` steuern Sichtbarkeit; Filter, Sitemap, JobPosting und Formularoptionen leiten sich automatisch ab. Leere Listen (z. B. Anforderungen) werden ausgeblendet. |
 | `services.ts` | 6 Leistungen + 5 Prozessschritte | |
 | `media.ts` | Bild-Slots für Leistungen | Alle `placeholder: true` – siehe unten |
 | `partners.ts` | Partnerlogos | Sektion erscheint erst mit `publicUseApproved: true` + Logo-Datei |
 | `quality.ts` | Qualitäts-Regelkreis + „Was wir messen“ | Prozessbeschreibung, keine Kennzahlen. Echte KPIs erst nach Freigabe und Datenanbindung |
+| `careers.ts` | Karriere-Texte, Bewerbungsprozess, „Ein Tag bei JARBOU“, Entwicklungspfad, Führerscheinklassen | |
+| `faqs.ts` | Bewerber-FAQ (sichtbar + FAQPage-Schema) | Keine Gehalts- oder Zeitversprechen |
+| `stories.ts` | Mitarbeitergeschichten | Leer. Anzeige nur mit `published` + `publicationPermission` |
+| `business.ts` | B2B-Texte, Projektstart, Formularoptionen | Keine Kundenreferenzen ohne Freigabe |
+| `company.ts` | Fakten, Unternehmensseite, Zeitleiste | Weitere Meilensteine als `published: false` anlegen und erst nach Prüfung veröffentlichen |
 | `navigation.ts`, `site.ts` | Navigation, SEO-Basis | |
 
 ### Standort-Typen
@@ -74,6 +97,24 @@ Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das M
 - Kennzahlen stehen vollständig im HTML; das Hochzählen startet einmalig und endet immer auf dem exakten Wert.
 - Normaler System-Cursor, kein Scroll-Hijacking (die Sequenz nutzt `position: sticky` mit normalem Scrollen).
 
+## E-Mail-Versand (Formulare)
+
+Alle Formulare senden serverseitig über `src/lib/mail`. Zugangsdaten liegen ausschließlich in Umgebungsvariablen (siehe `.env.example`), nie im Browser-Code.
+
+| Formular | Endpoint | Empfänger |
+|---|---|---|
+| Kurz-, vollständige und Initiativbewerbung | `POST /api/bewerbung` | `MAIL_TO_CAREERS` (Standard `karriere@jarbou-logistik.com`) |
+| Projektanfrage | `POST /api/geschaeftsanfrage` | `MAIL_TO_BUSINESS` – **noch offen** |
+| Allgemeiner Kontakt | `POST /api/kontakt` | `MAIL_TO_GENERAL` – **noch offen** |
+
+- **Ohne Konfiguration** antworten die Endpoints mit HTTP 503 und die Formulare zeigen ehrlich „Online-Versand noch nicht aktiviert“ – bei Bewerbungen mit Hinweis auf karriere@jarbou-logistik.com. Es wird nichts „vorgetäuscht“.
+- `MAIL_DRIVER=log` schreibt Nachrichten in die Server-Konsole – nur für die Entwicklung, in Produktion automatisch deaktiviert.
+- Uploads: PDF, DOC, DOCX, JPG, PNG; max. 10 MB je Datei, 5 Dateien, 20 MB gesamt; serverseitige Prüfung per Datei-Signatur (Magic Bytes).
+- Schutz: Honeypot-Feld, Rate-Limit je Endpoint und IP (Best Effort, pro Server-Instanz).
+- **Keine Speicherung:** Einsendungen werden nicht in einer Datenbank abgelegt, sondern nur per E-Mail zugestellt. Jede Bewerbungs-E-Mail enthält ein Löschdatum (`APPLICANT_RETENTION_DAYS`, Standard 180 Tage).
+
+**Benötigt für den Live-Betrieb:** SMTP-Host, Port, Verschlüsselung (STARTTLS/SSL), Benutzer, Passwort, freigegebene Absenderadresse (mit SPF/DKIM für die Domain) sowie die Empfänger für Geschäfts- und allgemeine Anfragen. Jeder SMTP-fähige Anbieter funktioniert (z. B. Microsoft 365, Google Workspace, IONOS, Brevo, Postmark, Mailjet).
+
 ## DSGVO
 
 - Cookie-Banner unterscheidet *notwendig / Statistik / Marketing*. Aktuell sind **keine** optionalen Dienste eingebunden (`optionalTechnologies` in `src/lib/consent.ts` ist leer); neue Dienste dürfen nur über diese Liste geladen werden.
@@ -84,14 +125,14 @@ Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das M
 | Was | Wo | Warum |
 |---|---|---|
 | Produktionsdomain | `NEXT_PUBLIC_SITE_URL` (siehe `.env.example`) | Canonical-URLs, Sitemap, Open Graph. Standard aktuell `https://www.jarbou-logistik.com` |
+| SMTP-Zugang + Absenderadresse | Hosting-Umgebung (`.env`) | Ohne diese Daten werden keine Formulare zugestellt |
 | Impressum-Angaben, Anschrift, Telefon, Registergericht | `src/content/company.ts`, Impressum-Seite | Gesetzliche Pflicht (§ 5 DDG) |
 | Datenschutzerklärung | Datenschutz-Seite | Rechtlich geprüfter Text nötig |
-| E-Mail für Geschäfts- und allgemeine Anfragen | `company.email` | Nur `karriere@jarbou-logistik.com` ist bekannt |
+| E-Mail für Geschäfts- und allgemeine Anfragen | `company.email` (Anzeige) + `MAIL_TO_BUSINESS` / `MAIL_TO_GENERAL` (Versand) | Nur `karriere@jarbou-logistik.com` ist bekannt |
+| Adresse/PLZ des Einsatzorts Hannover | `jobs.ts` → `address` | Verbessert das JobPosting-Schema (optional) |
+| Gültigkeitsdatum der Stellen | `jobs.ts` → `validThrough` | Von Google empfohlen |
+| Mitarbeitergeschichten mit Einwilligung | `stories.ts` | Sektion erscheint erst dann |
 | Standort-Klassifizierung | `locations.ts` | Welche Orte sind Logistikstandort / Projekt / Einsatzgebiet? |
 | Freigabe DHL-Express-Logo | `partners.ts` | Logo nur mit schriftlicher Freigabe |
 | Fotos (Mitarbeitende, Fahrzeuge, Betrieb) | `media.ts` | Ersetzen die schematischen Grafiken |
 | Firmen-Meilensteine seit 2019 | folgt mit `/unternehmen` | Keine erfundenen Meilensteine |
-
-## Phase 2 (nach Freigabe der Startseite)
-
-`/unternehmen`, `/leistungen`, `/standorte` (große interaktive Karte), `/karriere` inkl. Jobseiten `/karriere/jobs/[slug]` mit JobPosting-Schema, Quick-Apply und vollständige Bewerbung (React Hook Form + Zod), `/business` mit Anfrageformular, `/kontakt` mit getrennten Wegen. Für den Formularversand wird ein E-Mail-Adapter (SMTP oder API-Dienst) mit serverseitigen Umgebungsvariablen benötigt.

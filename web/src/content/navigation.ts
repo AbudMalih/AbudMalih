@@ -11,7 +11,7 @@ export const mainNav: NavItem[] = [
 
 export const ctas = {
   business: { label: "Logistik anfragen", href: "/business" },
-  apply: { label: "Jetzt bewerben", href: "/karriere" },
+  apply: { label: "Jetzt bewerben", href: "/karriere/bewerben" },
 } as const;
 
 export const footerNav: { title: string; items: NavItem[] }[] = [
@@ -27,17 +27,17 @@ export const footerNav: { title: string; items: NavItem[] }[] = [
   {
     title: "Karriere",
     items: [
-      { label: "Jobs", href: "/karriere" },
-      { label: "Bei JARBOU", href: "/karriere" },
-      { label: "Bewerbungsprozess", href: "/karriere" },
-      { label: "Initiativbewerbung", href: "/karriere" },
+      { label: "Jobs", href: "/karriere#jobs" },
+      { label: "Bei JARBOU", href: "/karriere#bei-jarbou" },
+      { label: "Bewerbungsprozess", href: "/karriere#bewerbungsprozess" },
+      { label: "Initiativbewerbung", href: "/karriere/initiativbewerbung" },
     ],
   },
   {
     title: "Kontakt",
     items: [
-      { label: "Geschäftsanfrage", href: "/business" },
-      { label: "Allgemeiner Kontakt", href: "/kontakt" },
+      { label: "Geschäftsanfrage", href: "/business#anfrage" },
+      { label: "Allgemeiner Kontakt", href: "/kontakt#allgemein" },
     ],
   },
 ];
