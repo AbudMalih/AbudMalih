@@ -1,0 +1,346 @@
+"use client";
+
+import { useEffect, useRef, type ReactNode } from "react";
+import { Slashes } from "@/components/brand/Slashes";
+import { StatRow } from "@/components/ui/StatRow";
+import { processSteps } from "@/content/services";
+import { countUp } from "@/motion/countUp";
+import { PARALLAX, TRUCK } from "./geometry";
+
+/** Per-breakpoint camera framing. `sx` = truck position on screen. */
+const FRAMING = {
+  desktop: { viewBox: "0 0 1600 900", aspect: "xMidYMax slice", cam0: 0, sx0: TRUCK.startX, sxDrive: 620, sxEnd: 300 },
+  mobile: { viewBox: "150 -420 1100 1500", aspect: "xMidYMid slice", cam0: 400, sx0: TRUCK.startX - 400, sxDrive: 420, sxEnd: 380 },
+} as const;
+
+/** Beat windows on the 0–100 timeline. */
+const BEATS: [number, number][] = [
+  [0, 16],
+  [16, 30],
+  [30, 46],
+  [46, 72],
+  [72, 87],
+];
+
+const STATUS = [
+  { from: 0, label: "Bereitstellung" },
+  { from: 30, label: "Unterwegs" },
+  { from: 80, label: "Angekommen" },
+];
+
+/**
+ * Client controller for the scroll story. The SVG stage (`scene`) is rendered
+ * on the server and passed in, so its markup never ships as client JS.
+ */
+export function JourneySequence({ scene }: { scene: ReactNode }) {
+  const root = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    let revert: (() => void) | undefined;
+    let cancelled = false;
+
+    // GSAP is only needed once the story is near – keep it off the critical path.
+    const init = async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
+
+      const q = <T extends Element = SVGElement>(s: string) => el.querySelector<T & Element>(s) as T;
+      const qa = <T extends Element = SVGElement>(s: string) => Array.from(el.querySelectorAll<T & Element>(s)) as T[];
+
+      const svg = q<SVGSVGElement>("[data-scene]");
+      const layers = {
+        far: q("[data-layer=far]"),
+        mid: q("[data-layer=mid]"),
+        world: q("[data-layer=world]"),
+        shade: q("[data-layer=shade]"),
+        fg: q("[data-layer=fg]"),
+      };
+      const truck = q("[data-truck]");
+      const wheels = qa("[data-wheel]");
+      const blades = qa("[data-blades]");
+      const trail = q("[data-trail]");
+      const stage = q<HTMLElement>("[data-stage]");
+
+      const state: { cam: number; sx: number } = { cam: 0, sx: TRUCK.startX };
+      const wheelCenters = wheels.map((w) => {
+        const c = w.querySelector("circle");
+        return { x: Number(c?.getAttribute("cx") ?? 0), y: Number(c?.getAttribute("cy") ?? 0) };
+      });
+      const trailStart = Number(trail.getAttribute("x1"));
+      const trailEnd = Number(trail.getAttribute("x2"));
+
+      const render = () => {
+        const { cam, sx } = state;
+        const tx = (f: number) => `translate(${(-cam * f).toFixed(2)} 0)`;
+        layers.far.setAttribute("transform", tx(PARALLAX.far));
+        layers.mid.setAttribute("transform", tx(PARALLAX.mid));
+        layers.world.setAttribute("transform", tx(1));
+        layers.shade.setAttribute("transform", tx(1));
+        layers.fg.setAttribute("transform", tx(PARALLAX.fg));
+        const worldX = cam + sx;
+        const bob = Math.sin(worldX / 21) * 0.5;
+        truck.setAttribute("transform", `translate(${sx.toFixed(2)} ${(740 + bob).toFixed(2)})`);
+        const angle = ((worldX - TRUCK.startX) / TRUCK.wheelR) * (180 / Math.PI);
+        wheels.forEach((w, i) => {
+          const c = wheelCenters[i]!;
+          w.setAttribute("transform", `rotate(${angle.toFixed(1)} ${c.x} ${c.y})`);
+        });
+        const p = Math.min(1, Math.max(0, (worldX - trailStart) / (trailEnd - trailStart)));
+        trail.setAttribute("stroke-dashoffset", String(1 - p));
+        // Wind turbines turn with the scroll instead of a constant animation.
+        blades.forEach((b, i) => b.setAttribute("transform", `rotate(${(i * 37 + cam * 0.08).toFixed(1)})`));
+      };
+
+      const setSlant = () => {
+        const r = stage.getBoundingClientRect();
+        // Keep the wipe edge at the logo's slash angle (≈28°).
+        const s = ((r.height * 0.532) / Math.max(1, r.width)) * 100;
+        stage.style.setProperty("--s", s.toFixed(2));
+        return s;
+      };
+
+      const mm = gsap.matchMedia(el);
+      mm.add(
+        {
+          desktop: "(min-width: 768px)",
+          mobile: "(max-width: 767.98px)",
+          reduce: "(prefers-reduced-motion: reduce)",
+        },
+        (ctx) => {
+          const { desktop, reduce } = ctx.conditions as { desktop: boolean; reduce: boolean };
+          const f = desktop ? FRAMING.desktop : FRAMING.mobile;
+          svg.setAttribute("viewBox", f.viewBox);
+          svg.setAttribute("preserveAspectRatio", f.aspect);
+
+          if (reduce) {
+            // Static, low-motion frame: the truck on the Autobahn, lights on.
+            state.cam = 2900;
+            state.sx = f.sxDrive;
+            render();
+            gsap.set("[data-lamp]", { opacity: 1 });
+            gsap.set("[data-beam], [data-headlight], [data-trail-start]", { opacity: 1 });
+            return;
+          }
+
+          state.cam = f.cam0;
+          state.sx = f.sx0;
+          render();
+
+          const camA = desktop ? 1100 : 1300;
+          const cam78 = 5600 - f.sxDrive;
+          const camEnd = TRUCK.endX - f.sxEnd;
+          const s = setSlant();
+          const onResize = () => setSlant();
+          window.addEventListener("resize", onResize);
+
+          const tl = gsap.timeline({
+            defaults: { ease: "none" },
+            scrollTrigger: {
+              trigger: q<HTMLElement>("[data-track]"),
+              start: "top top",
+              end: "bottom bottom",
+              scrub: 0.6,
+              invalidateOnRefresh: true,
+            },
+          });
+
+          // Scene 1 – lights, door
+          tl.to("[data-dark]", { opacity: 0.2, duration: 7 }, 0);
+          qa("[data-lamp]").forEach((lamp, i) => tl.to(lamp, { opacity: 1, duration: 1.2, ease: "power1.in" }, 0.5 + i * 1.4));
+          tl.to("[data-headlight], [data-beam]", { opacity: 1, duration: 2 }, 7);
+          tl.to("[data-door]", { y: -340, duration: 12, ease: "power1.inOut" }, 8);
+          tl.to("[data-door-light]", { opacity: 1, duration: 7 }, 9);
+
+          // Scene 2 – depart
+          tl.to(state, { cam: camA, sx: f.sxDrive, duration: 14, ease: "power2.in", onUpdate: render }, 20);
+          tl.to("[data-trail-start]", { opacity: 1, duration: 2 }, 29);
+
+          // Scene 3/4 – Autobahn
+          tl.to(state, { cam: cam78, duration: 44, onUpdate: render }, 34);
+
+          // Scene 5 – arrival
+          tl.to(state, { cam: camEnd, sx: f.sxEnd, duration: 10, ease: "power2.out", onUpdate: render }, 78);
+          tl.to("[data-dock]", { opacity: 1, duration: 6 }, 80);
+          tl.to("[data-beam]", { opacity: 0, duration: 4 }, 86);
+
+          // Beats
+          const beats = qa<HTMLElement>("[data-beat]");
+          beats.forEach((b, i) => {
+            const [a, z] = BEATS[i]!;
+            if (i > 0) tl.fromTo(b, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 2 }, a);
+            tl.to(b, { autoAlpha: 0, y: -24, duration: 2 }, z - 2);
+          });
+
+          // HUD
+          tl.fromTo("[data-route-fill]", { scaleX: 0 }, { scaleX: 1, duration: 56 }, 30);
+          qa<HTMLElement>("[data-node]").forEach((n, i) => tl.to(n, { backgroundColor: "#f0080f", borderColor: "#f0080f", duration: 1 }, BEATS[i]![0] + 0.5));
+          qa<HTMLElement>("[data-status]").forEach((st, i) => {
+            if (i > 0) tl.fromTo(st, { autoAlpha: 0 }, { autoAlpha: 1, duration: 1 }, STATUS[i]!.from);
+            if (i < STATUS.length - 1) tl.to(st, { autoAlpha: 0, duration: 1 }, STATUS[i + 1]!.from - 1);
+          });
+          tl.fromTo("[data-qc-open]", { autoAlpha: 1 }, { autoAlpha: 0, duration: 1 }, 83);
+          tl.fromTo("[data-qc-done]", { autoAlpha: 0 }, { autoAlpha: 1, duration: 1 }, 84);
+          tl.fromTo("[data-progress]", { scaleX: 0 }, { scaleX: 1, duration: 58 }, 30);
+          tl.to("[data-hud]", { autoAlpha: 0, duration: 2 }, 87);
+
+          // Finale – slash wipe into the claim + figures
+          tl.fromTo(stage, { "--w": -80 }, { "--w": 108 + s + 12, duration: 9, ease: "power2.inOut" }, 88);
+          tl.fromTo("[data-panel-content] > *", { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 3, stagger: 1 }, 92);
+          tl.call(() => qa<HTMLElement>("[data-panel] [data-count]").forEach((n) => countUp(n)), undefined, 91.5);
+          tl.to({}, { duration: 3 }, 97);
+
+          return () => window.removeEventListener("resize", onResize);
+        },
+      );
+      revert = () => mm.revert();
+    };
+
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      io.disconnect();
+      window.removeEventListener("scroll", start);
+      void init();
+    };
+    // Load on first scroll (user intent) or when the section is already in view.
+    const io = new IntersectionObserver(([entry]) => entry?.isIntersecting && start());
+    io.observe(el);
+    window.addEventListener("scroll", start, { passive: true, once: true });
+
+    return () => {
+      cancelled = true;
+      io.disconnect();
+      window.removeEventListener("scroll", start);
+      revert?.();
+    };
+  }, []);
+
+  return (
+    <section ref={root} id="ablauf" aria-labelledby="journey-title" className="relative bg-ink">
+      <h2 id="journey-title" className="sr-only">
+        Vom Lager zum Ziel: So läuft ein Einsatz bei JARBOU
+      </h2>
+      <div data-track className="relative h-[600vh] max-md:h-[480vh] motion-reduce:h-auto">
+        <div
+          data-stage
+          className="sticky top-0 h-svh overflow-hidden bg-ink motion-reduce:relative motion-reduce:h-[70svh] motion-reduce:min-h-[420px]"
+          style={{ "--w": -80, "--s": 33 } as React.CSSProperties}
+        >
+          {scene}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-ink/80 via-ink/30 to-transparent" />
+
+          {/* Beats */}
+          <ol className="pointer-events-none absolute inset-x-0 top-24 motion-reduce:hidden md:top-32">
+            {processSteps.map((step, i) => (
+              <li
+                key={step.id}
+                data-beat
+                className={`shell absolute inset-x-0 top-0 ${i === 0 ? "" : "invisible opacity-0"}`}
+              >
+                <p className="eyebrow text-steel-300">
+                  <span className="text-red">{step.index}</span> / 05
+                </p>
+                <p className="display mt-3 text-[clamp(2.75rem,9vw,8.5rem)] text-white">{step.title}</p>
+                <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-steel-200 max-md:hidden">{step.text}</p>
+              </li>
+            ))}
+          </ol>
+
+          {/* Operational HUD – illustrative, not live data */}
+          <aside
+            data-hud
+            aria-label="Illustrative Tourübersicht"
+            className="absolute bottom-6 left-5 right-5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-steel-300 motion-reduce:hidden md:bottom-auto md:left-auto md:right-12 md:top-32 md:w-80"
+          >
+            <div className="flex items-center gap-3">
+              <Slashes className="h-3 w-auto shrink-0 text-red" />
+              <div className="relative h-px flex-1 bg-white/20">
+                <div data-route-fill className="absolute inset-0 origin-left scale-x-0 bg-red" />
+                <div className="absolute inset-x-0 -top-[5px] flex justify-between">
+                  {processSteps.map((s) => (
+                    <span key={s.id} data-node className="size-[11px] border border-white/40 bg-ink" />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <dl className="mt-5 grid grid-cols-2 gap-y-2 border-t border-white/10 pt-4 max-md:hidden">
+              <dt>Fahrzeugstatus</dt>
+              <dd className="relative text-right text-white">
+                {STATUS.map((st, i) => (
+                  <span key={st.label} data-status className={`absolute right-0 top-0 ${i === 0 ? "" : "invisible opacity-0"}`}>
+                    {st.label}
+                  </span>
+                ))}
+                &nbsp;
+              </dd>
+              <dt>Qualitätsprüfung</dt>
+              <dd className="relative text-right text-white">
+                <span data-qc-open className="absolute right-0 top-0">Ausstehend</span>
+                <span data-qc-done className="invisible absolute right-0 top-0 text-red opacity-0">Abgeschlossen</span>
+                &nbsp;
+              </dd>
+              <dt>Tourfortschritt</dt>
+              <dd className="flex items-center">
+                <span className="relative h-1 w-full bg-white/15">
+                  <span data-progress className="absolute inset-0 origin-left scale-x-0 bg-white" />
+                </span>
+              </dd>
+            </dl>
+            <p className="mt-4 text-[0.62rem] text-steel-500 max-md:hidden">Illustrative Darstellung</p>
+          </aside>
+
+          {/* Finale */}
+          <div
+            data-panel
+            className="absolute inset-0 bg-ink motion-reduce:hidden"
+            style={{ clipPath: "polygon(-20% 0, calc(var(--w) * 1%) 0, calc((var(--w) - var(--s)) * 1%) 100%, -20% 100%)" }}
+          >
+            <div data-panel-content className="shell flex h-full flex-col justify-center gap-12 pt-16 md:gap-16">
+              <div>
+                <p className="eyebrow text-steel-300">
+                  <span className="text-red">{"//"}</span> Ziel erreicht
+                </p>
+                <p className="display mt-5 max-w-5xl text-[clamp(2.6rem,7vw,7.25rem)] text-white">
+                  <span className="block">Logistik,</span>
+                  <span className="block">die messbar</span>
+                  <span className="block">
+                    funktioniert<span className="text-red">.</span>
+                  </span>
+                </p>
+              </div>
+              <StatRow />
+            </div>
+          </div>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden">
+            <span
+              className="absolute inset-y-0 w-[max(14px,2.2vw)] bg-red"
+              style={{ left: "calc((var(--w) - var(--s) / 2) * 1%)", transform: "translateX(-100%) skewX(-28deg)" }}
+            />
+            <span
+              className="absolute inset-y-0 w-[max(14px,2.2vw)] bg-red"
+              style={{ left: "calc((var(--w) - var(--s) / 2) * 1% + max(26px, 3.6vw))", transform: "translateX(-100%) skewX(-28deg)" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Reduced-motion: static claim + figures */}
+      <div className="hidden motion-reduce:block">
+        <div className="shell py-20">
+          <p className="display max-w-5xl text-[clamp(2.6rem,7vw,7.25rem)] text-white">
+            <span className="block">Logistik,</span>
+            <span className="block">die messbar</span>
+            <span className="block">
+              funktioniert<span className="text-red">.</span>
+            </span>
+          </p>
+          <StatRow className="mt-14" />
+        </div>
+      </div>
+    </section>
+  );
+}
