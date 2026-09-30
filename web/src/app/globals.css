@@ -184,3 +184,20 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 1200px;
 }
+
+/* Film grain over the pre-rendered journey (kept out of the frames so they compress well) */
+.film-grain {
+  background-image: url("/journey-grain.png");
+  background-size: 128px 128px;
+  mix-blend-mode: overlay;
+  opacity: 0.22;
+  inset: -80px;
+  animation: grain 0.5s steps(4) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-37px, 21px); }
+  50% { transform: translate(18px, -44px); }
+  75% { transform: translate(-12px, 33px); }
+  100% { transform: translate(0, 0); }
+}

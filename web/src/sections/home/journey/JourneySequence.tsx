@@ -1,24 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { Slashes } from "@/components/brand/Slashes";
 import { StatRow } from "@/components/ui/StatRow";
 import { processSteps } from "@/content/services";
 import { countUp } from "@/motion/countUp";
-import { GROUND_Y, PARALLAX, TRUCK } from "./geometry";
-
-/**
- * Framing. The viewBox is computed from the stage's real aspect ratio so the
- * whole Sattelzug is composed deliberately on every screen instead of being
- * cropped: desktop shows ~1600+ units (truck ≈ 65 % of the width), mobile a
- * dedicated tall composition with ~1300 units (truck ≈ 82 %).
- * `sx` = truck rear position in view units, `ground` = road line height (0–1).
- */
-const FRAMING = {
-  desktop: { minWidth: 1600, height: 1000, ground: 0.74, cam0: 0, sx0: TRUCK.startX, sxEnd: 200 },
-  // Mobile: truck ≈ 82 % of the width, door kept in frame at the start.
-  mobile: { minWidth: 1300, height: 0, ground: 0.56, cam0: 140, sx0: TRUCK.startX - 140, sxEnd: 50 },
-} as const;
+import { createFramePlayer } from "./framePlayer";
+import { FILM_END, FRAME_COUNT, FRAME_SETS, frameSrc, STILL_FRAME } from "./frames";
 
 /** Beat windows on the 0–100 timeline. */
 const BEATS: [number, number][] = [
@@ -35,11 +23,14 @@ const STATUS = [
   { from: 80, label: "Angekommen" },
 ];
 
+const DESKTOP = "(min-width: 768px) and (min-aspect-ratio: 1/1)";
+
 /**
- * Client controller for the scroll story. The SVG stage (`scene`) is rendered
- * on the server and passed in, so its markup never ships as client JS.
+ * Scroll story: a pre-rendered, photorealistic film (warehouse → Autobahn →
+ * hub) scrubbed frame by frame on a canvas, with the text beats, the
+ * illustrative HUD and the finale wipe layered on top as HTML.
  */
-export function JourneySequence({ scene }: { scene: ReactNode }) {
+export function JourneySequence() {
   const root = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -54,64 +45,10 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
       if (cancelled) return;
       gsap.registerPlugin(ScrollTrigger);
 
-      const q = <T extends Element = SVGElement>(s: string) => el.querySelector<T & Element>(s) as T;
-      const qa = <T extends Element = SVGElement>(s: string) => Array.from(el.querySelectorAll<T & Element>(s)) as T[];
-
-      const svg = q<SVGSVGElement>("[data-scene]");
-      const layers = {
-        far: q("[data-layer=far]"),
-        mid: q("[data-layer=mid]"),
-        roadfar: q("[data-layer=roadfar]"),
-        world: q("[data-layer=world]"),
-        shade: q("[data-layer=shade]"),
-        lamps: q("[data-layer=lamps]"),
-        fg: q("[data-layer=fg]"),
-      };
-      const truck = q("[data-truck]");
-      const wheels = qa("[data-wheel]");
-      const blades = qa("[data-blades]");
-      const trail = q("[data-trail]");
+      const q = <T extends Element = HTMLElement>(sel: string) => el.querySelector(sel) as unknown as T;
+      const qa = <T extends Element = HTMLElement>(sel: string) => Array.from(el.querySelectorAll(sel)) as unknown as T[];
       const stage = q<HTMLElement>("[data-stage]");
-
-      const state = { cam: 0, sx: TRUCK.startX as number, zoom: 1 };
-      let frame = { x: 0, y: 0, w: 1600, h: 1000, ground: 0.74 };
-      const wheelCenters = wheels.map((w) => {
-        const c = w.querySelector("circle");
-        return { x: Number(c?.getAttribute("cx") ?? 0), y: Number(c?.getAttribute("cy") ?? 0) };
-      });
-      const trailStart = Number(trail.getAttribute("x1"));
-      const trailEnd = Number(trail.getAttribute("x2"));
-
-      const render = () => {
-        const { cam, sx, zoom } = state;
-        // Camera push: zoom around the road line at the horizontal centre.
-        const w = frame.w / zoom;
-        const h = frame.h / zoom;
-        svg.setAttribute(
-          "viewBox",
-          `${(frame.x + (frame.w - w) / 2).toFixed(1)} ${(frame.y + (frame.h - h) * frame.ground).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`,
-        );
-        const tx = (f: number) => `translate(${(-cam * f).toFixed(2)} 0)`;
-        layers.far.setAttribute("transform", tx(PARALLAX.far));
-        layers.mid.setAttribute("transform", tx(PARALLAX.mid));
-        layers.roadfar.setAttribute("transform", tx(PARALLAX.roadFar));
-        layers.world.setAttribute("transform", tx(1));
-        layers.shade.setAttribute("transform", tx(1));
-        layers.lamps.setAttribute("transform", tx(1));
-        layers.fg.setAttribute("transform", tx(PARALLAX.fg));
-        const worldX = cam + sx;
-        const bob = Math.sin(worldX / 29) * 0.35;
-        truck.setAttribute("transform", `translate(${sx.toFixed(2)} ${(740 + bob).toFixed(2)})`);
-        const angle = ((worldX - TRUCK.startX) / TRUCK.wheelR) * (180 / Math.PI);
-        wheels.forEach((w, i) => {
-          const c = wheelCenters[i]!;
-          w.setAttribute("transform", `rotate(${angle.toFixed(1)} ${c.x} ${c.y})`);
-        });
-        const p = Math.min(1, Math.max(0, (worldX - trailStart) / (trailEnd - trailStart)));
-        trail.setAttribute("stroke-dashoffset", String(1 - p));
-        // Wind turbines turn with the scroll instead of a constant animation.
-        blades.forEach((b, i) => b.setAttribute("transform", `rotate(${(i * 37 + cam * 0.08).toFixed(1)})`));
-      };
+      const canvas = q<HTMLCanvasElement>("[data-film]");
 
       const setSlant = () => {
         const r = stage.getBoundingClientRect();
@@ -124,58 +61,21 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
       const mm = gsap.matchMedia(el);
       mm.add(
         {
-          // Landscape screens get the wide composition; phones and portrait tablets the tall one.
-          desktop: "(min-width: 768px) and (min-aspect-ratio: 1/1)",
+          // Landscape screens get the wide film; phones and portrait tablets the tall one.
+          desktop: DESKTOP,
           mobile: "(max-width: 767.98px), (max-aspect-ratio: 1/1)",
           reduce: "(prefers-reduced-motion: reduce)",
         },
         (ctx) => {
           const { desktop, reduce } = ctx.conditions as { desktop: boolean; reduce: boolean };
-          const f = desktop ? FRAMING.desktop : FRAMING.mobile;
-          const measure = () => {
-            const r = stage.getBoundingClientRect();
-            const aspect = Math.max(0.3, r.width / Math.max(1, r.height));
-            let w = f.height ? f.height * aspect : f.minWidth;
-            if (w < f.minWidth) w = f.minWidth;
-            const h = w / aspect;
-            frame = { x: 0, y: GROUND_Y - h * f.ground, w, h, ground: f.ground };
-          };
-          measure();
-          svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
-          // Centre the Sattelzug in the frame while driving.
-          const sxDrive = (frame.w - TRUCK.length) / 2;
+          if (reduce) return;
 
-          if (reduce) {
-            // Static, low-motion frame: the Sattelzug on the Autobahn, lights on.
-            state.cam = 3300;
-            state.sx = sxDrive;
-            state.zoom = 1;
-            render();
-            gsap.set("[data-lamp]", { opacity: 1 });
-            gsap.set("[data-beam], [data-headlight], [data-trail-start], [data-marker]", { opacity: 1 });
-            const onResizeStatic = () => {
-              measure();
-              render();
-            };
-            window.addEventListener("resize", onResizeStatic);
-            return () => window.removeEventListener("resize", onResizeStatic);
-          }
+          const player = createFramePlayer(canvas, desktop ? FRAME_SETS.desktop : FRAME_SETS.mobile);
+          const film = { frame: 0 };
+          player.seek(0);
 
-          state.cam = f.cam0;
-          state.sx = f.sx0;
-          state.zoom = 1.08;
-          render();
-
-          // Rear of the trailer must clear the door (world x ≈ 1390) before the Autobahn.
-          const camA = 1560 - sxDrive;
-          const cam76 = TRUCK.endX - 900 - sxDrive;
-          const camEnd = TRUCK.endX - f.sxEnd;
           const s = setSlant();
-          const onResize = () => {
-            setSlant();
-            measure();
-            render();
-          };
+          const onResize = () => setSlant();
           window.addEventListener("resize", onResize);
 
           const tl = gsap.timeline({
@@ -189,28 +89,8 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
             },
           });
 
-          // Scene 1 – hall lights, truck lights, door
-          tl.to("[data-dark]", { opacity: 0.18, duration: 7 }, 0);
-          qa("[data-lamp]").forEach((lamp) => tl.to(lamp, { opacity: 1, duration: 1.2, ease: "power1.in" }, 0.5 + Number(lamp.getAttribute("data-lamp")) * 1.4));
-          tl.to("[data-marker]", { opacity: 1, duration: 1.5 }, 6);
-          tl.to("[data-headlight], [data-beam]", { opacity: 1, duration: 2 }, 7.5);
-          tl.to("[data-door]", { y: -330, duration: 12, ease: "power1.inOut" }, 8);
-          tl.to("[data-door-light]", { opacity: 1, duration: 7 }, 9);
-
-          // Scene 2 – departure: slow pull-away, camera eases back out
-          tl.to(state, { cam: camA, sx: sxDrive, duration: 16, ease: "power2.in", onUpdate: render }, 20);
-          tl.to(state, { zoom: 1, duration: 16, ease: "sine.inOut", onUpdate: render }, 18);
-          tl.to("[data-trail-start]", { opacity: 1, duration: 2 }, 30);
-
-          // Scene 3/4 – Autobahn at constant speed
-          tl.to(state, { cam: cam76, duration: 40, onUpdate: render }, 36);
-
-          // Scene 5 – braking into the hub yard, brake lights, dock light
-          tl.to(state, { cam: camEnd, sx: f.sxEnd, duration: 12, ease: "power3.out", onUpdate: render }, 76);
-          tl.to(state, { zoom: 1.05, duration: 12, ease: "sine.inOut", onUpdate: render }, 76);
-          tl.to("[data-tail]", { opacity: 1, duration: 2 }, 78);
-          tl.to("[data-dock]", { opacity: 1, duration: 6 }, 80);
-          tl.to("[data-beam]", { opacity: 0.35, duration: 4 }, 85);
+          // The film: warehouse, door, pull-out, Autobahn, braking into the hub.
+          tl.to(film, { frame: FRAME_COUNT - 1, duration: FILM_END, onUpdate: () => player.seek(film.frame) }, 0);
 
           // Beats
           const beats = qa<HTMLElement>("[data-beat]");
@@ -238,7 +118,10 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
           tl.call(() => qa<HTMLElement>("[data-panel] [data-count]").forEach((n) => countUp(n)), undefined, 91.5);
           tl.to({}, { duration: 3 }, 97);
 
-          return () => window.removeEventListener("resize", onResize);
+          return () => {
+            window.removeEventListener("resize", onResize);
+            player.dispose();
+          };
         },
       );
       revert = () => mm.revert();
@@ -276,8 +159,30 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
           className="sticky top-0 h-svh overflow-hidden bg-ink motion-reduce:relative motion-reduce:h-[70svh] motion-reduce:min-h-[420px]"
           style={{ "--w": -80, "--s": 33 } as React.CSSProperties}
         >
-          {scene}
+          {/* Opening frame until the film has loaded; a still for reduced motion */}
+          <picture className="absolute inset-0 motion-reduce:hidden">
+            <source media={DESKTOP} srcSet={frameSrc(FRAME_SETS.desktop, 0)} />
+            <img src={frameSrc(FRAME_SETS.mobile, 0)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+          </picture>
+          <picture className="absolute inset-0 hidden motion-reduce:block">
+            <source media={DESKTOP} srcSet={frameSrc(FRAME_SETS.desktop, STILL_FRAME)} />
+            <img
+              src={frameSrc(FRAME_SETS.mobile, STILL_FRAME)}
+              alt="Ein JARBOU-Sattelzug fährt in der Abenddämmerung über die Autobahn."
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
+          <canvas
+            data-film
+            role="img"
+            aria-label="Film: Ein JARBOU-Sattelzug verlässt das Lager, fährt über die Autobahn und erreicht den Logistik-Hub."
+            className="absolute inset-0 h-full w-full opacity-0 transition-opacity duration-500 data-[ready=true]:opacity-100 motion-reduce:hidden"
+          />
+          <div aria-hidden="true" className="film-grain pointer-events-none absolute inset-0 motion-reduce:hidden" />
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[55%] bg-gradient-to-b from-ink/80 via-ink/30 to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[30%] bg-gradient-to-t from-ink/70 to-transparent lg:hidden" />
 
           {/* Beats */}
           <ol className="pointer-events-none absolute inset-x-0 top-24 motion-reduce:hidden md:top-32">
