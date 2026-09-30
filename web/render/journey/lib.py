@@ -349,8 +349,8 @@ def asphalt(name="asphalt", wet=0.45, tint=(0.042, 0.042, 0.045)):
     wm.inputs["From Max"].default_value = 0.5 + 0.06 - wet * 0.12
     l.new(big.outputs["Fac"], wm.inputs["Value"])
     rough = n.new("ShaderNodeMapRange")
-    rough.inputs["To Min"].default_value = 0.72
-    rough.inputs["To Max"].default_value = 0.12
+    rough.inputs["To Min"].default_value = 0.74
+    rough.inputs["To Max"].default_value = 0.34
     l.new(wm.outputs["Result"], rough.inputs["Value"])
     l.new(rough.outputs["Result"], b.inputs["Roughness"])
     dark = n.new("ShaderNodeMix")
@@ -361,7 +361,7 @@ def asphalt(name="asphalt", wet=0.45, tint=(0.042, 0.042, 0.045)):
     dmul.data_type = "RGBA"
     dmul.blend_type = "MULTIPLY"
     dmul.inputs["Factor"].default_value = 1.0
-    dmul.inputs["B"].default_value = (0.55, 0.55, 0.55, 1)
+    dmul.inputs["B"].default_value = (0.72, 0.72, 0.72, 1)
     l.new(mul.outputs["Result"], dmul.inputs["A"])
     l.new(dmul.outputs["Result"], dark.inputs["B"])
     l.new(dark.outputs["Result"], b.inputs["Base Color"])

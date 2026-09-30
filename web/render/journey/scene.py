@@ -140,10 +140,10 @@ def setup_render(cam_name, samples):
     sc.cycles.blur_glossy = 1.0
     sc.cycles.sample_clamp_indirect = 8.0
     sc.render.use_motion_blur = True
-    sc.render.motion_blur_shutter = 0.3
+    sc.render.motion_blur_shutter = 0.15
     sc.view_settings.view_transform = "AgX"
     sc.view_settings.look = "AgX - Medium High Contrast"
-    sc.view_settings.exposure = 0.35
+    sc.view_settings.exposure = float(os.environ.get("EXPOSURE", 0.7))
     sc.render.resolution_x, sc.render.resolution_y = CAMS[cam_name]["res"]
     sc.render.resolution_percentage = 100
     sc.render.image_settings.file_format = "PNG"
@@ -222,7 +222,7 @@ def build(cam_name="desktop", samples=64):
         on = lambda start, dur=4: smoothstep((f - start) / dur)
         hl = [on(2 + i * 2.5, 2) for i in range(4)]
         for i, l in enumerate(hall["hall_lights"]):
-            l.data.energy = 1000 * hl[i // 3]
+            l.data.energy = 650 * hl[i // 3]
             l.data.keyframe_insert("energy", frame=f)
         key_emission(M["lamp_hall"], f, 14 * on(2, 8))
         key_emission(M["ribbon"], f, 3.0 * on(2, 8))

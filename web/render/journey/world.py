@@ -24,8 +24,8 @@ HUB_X0 = 350.0             # start of the hub site
 
 def materials():
     M = {}
-    M["asphalt"] = asphalt("asphalt", wet=0.35)
-    M["asphalt_yard"] = asphalt("asphalt_yard", wet=0.55, tint=(0.05, 0.05, 0.052))
+    M["asphalt"] = asphalt("asphalt", wet=0.12)
+    M["asphalt_yard"] = asphalt("asphalt_yard", wet=0.22, tint=(0.05, 0.05, 0.052))
     M["paint"] = noise_rough(pbr("marking", (0.72, 0.72, 0.7), rough=0.45), 0.35, 0.7, scale=3, bump=0.2)
     M["concrete"] = noise_rough(pbr("concrete", (0.36, 0.355, 0.34), rough=0.8), 0.7, 0.9, scale=2, bump=0.25, bump_scale=40)
     M["floor"] = noise_rough(pbr("hall_floor", (0.3, 0.3, 0.295), rough=0.25, coat=0.3), 0.12, 0.4, scale=0.4, bump=0.05)
@@ -46,6 +46,7 @@ def materials():
     M["foliage"] = noise_rough(pbr("foliage", (0.018, 0.03, 0.012), rough=0.75), 0.6, 0.85, scale=2, bump=0.5, bump_scale=8)
     M["bark"] = pbr("bark", (0.05, 0.04, 0.03), rough=0.9)
     M["leaves"] = leaves()
+    M["needles"] = leaves("needles", 6.0, (0.008, 0.018, 0.01), (0.02, 0.035, 0.018))
     M["blades"] = noise_rough(pbr("blades", (0.02, 0.03, 0.01), rough=0.7), 0.55, 0.85, scale=4)
     M["sign_blue"] = pbr("sign_blue", (0.0, 0.05, 0.3), rough=0.35)
     M["sign_white"] = emissive("sign_white", (1, 1, 1), 0.4, base=(0.8, 0.8, 0.8))
@@ -110,14 +111,14 @@ def cladding(name="cladding", color=(0.42, 0.44, 0.46)):
     return m
 
 
-def leaves():
+def leaves(name="leaves", scale=7.0, c0=(0.012, 0.022, 0.008), c1=(0.04, 0.05, 0.018)):
     """Leaf-card material: clustered leaf shapes cut out with alpha."""
-    m = pbr("leaves", (0.02, 0.034, 0.012), rough=0.7)
+    m = pbr(name, (0.02, 0.034, 0.012), rough=0.7)
     n, l = m.node_tree.nodes, m.node_tree.links
     b = n["Principled BSDF"]
     tc = n.new("ShaderNodeTexCoord")
     vor = n.new("ShaderNodeTexVoronoi")
-    vor.inputs["Scale"].default_value = 7.0
+    vor.inputs["Scale"].default_value = scale
     l.new(tc.outputs["UV"], vor.inputs["Vector"])
     edge = n.new("ShaderNodeMapRange")
     edge.inputs["From Min"].default_value = 0.2
@@ -150,11 +151,10 @@ def leaves():
     rnd.inputs["Scale"].default_value = 0.8
     l.new(tc.outputs["Object"], rnd.inputs["Vector"])
     ramp = n.new("ShaderNodeValToRGB")
-    ramp.color_ramp.elements[0].color = (0.012, 0.022, 0.008, 1)
-    ramp.color_ramp.elements[1].color = (0.04, 0.05, 0.018, 1)
+    ramp.color_ramp.elements[0].color = (*c0, 1)
+    ramp.color_ramp.elements[1].color = (*c1, 1)
     l.new(rnd.outputs["Fac"], ramp.inputs["Fac"])
     l.new(ramp.outputs["Color"], b.inputs["Base Color"])
-    b.inputs["Subsurface Weight"].default_value = 0.0
     return m
 
 
@@ -185,7 +185,7 @@ def ground(M):
     road = lambda nm, x0, x1, y0, y1, mat: box(nm, (x1 - x0, y1 - y0, 0.1), ((x0 + x1) / 2, (y0 + y1) / 2, -0.045), mat)
     road("hwy_main", 50, HWY_END + 60, -4.4, 5.9, M["asphalt"])
     road("hwy_opposite", 50, HWY_END - 5, 8.9, 19.2, M["asphalt"])
-    road("hub_yard", HUB_X0 - 30, HUB_X0 + 150, -4.4, 42, M["asphalt_yard"])
+    road("hub_yard", HUB_X0 - 60, HUB_X0 + 150, -16, 42, M["asphalt_yard"])
     # grass verges / fields
     bm = bmesh.new()
     bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=0.5)
@@ -281,32 +281,50 @@ def tree_proto(M, name, h, r, kind="broad"):
     """Irregular tree silhouettes: broadleaf crowns built from many small
     displaced clumps, or spruces from stacked ragged cones."""
     root = empty(name, (0, 0, -500))
-    cylinder(name + "_trunk", 0.1 * r, h * 0.6, (0, 0, h * 0.3), axis="Z", mat=M["bark"], parent=root, seg=8)
+    cylinder(name + "_trunk", 0.08 * r, h * 0.45, (0, 0, h * 0.22), axis="Z", mat=M["bark"], parent=root, seg=8)
     tex = bpy.data.textures.get("leaves") or bpy.data.textures.new("leaves", "CLOUDS")
     tex.noise_scale = 0.22
     tex.noise_depth = 4
+    def cards(nm, pts, mat):
+        bm = bmesh.new()
+        uv = bm.loops.layers.uv.new()
+        for c, ax, bx in pts:
+            cs = [c - ax - bx, c + ax - bx, c + ax + bx, c - ax + bx]
+            f = bm.faces.new([bm.verts.new(p) for p in cs])
+            for loop, (uu, vv) in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+                loop[uv].uv = (uu, vv)
+        return mesh_obj(nm, bm, mat, root)
+
     if kind == "spruce":
-        for i in range(7):
-            t = i / 7
-            bm = bmesh.new()
-            bmesh.ops.create_cone(bm, cap_ends=True, segments=14, radius1=r * (1 - t * 0.85), radius2=0.05,
-                                  depth=h * 0.28)
-            bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=2, use_grid_fill=True)
-            o = mesh_obj(f"{name}_tier{i}", bm, M["foliage"], root, (0, 0, h * (0.2 + t * 0.72)))
-            d = o.modifiers.new("disp", "DISPLACE")
-            d.texture = tex
-            d.strength = r * 0.35
+        # drooping branch cards arranged around a cone, denser near the trunk
+        pts = []
+        for i in range(2600):
+            t = RNG.random() ** 0.8
+            z = h * (0.12 + t * 0.86)
+            rad = r * (1 - t) ** 1.05 * RNG.uniform(0.35, 1.0)
+            a = RNG.uniform(0, 2 * math.pi)
+            c = Vector((math.cos(a) * rad, math.sin(a) * rad, z))
+            out = Vector((math.cos(a), math.sin(a), -0.35)).normalized()
+            side = Vector((-math.sin(a), math.cos(a), 0))
+            sz = RNG.uniform(0.5, 0.9) * (0.45 + (1 - t))
+            pts.append((c, out * sz, side * sz * 0.6))
+        cards(name + "_needles", pts, M["needles"])
+        bm = bmesh.new()
+        bmesh.ops.create_cone(bm, cap_ends=True, segments=10, radius1=r * 0.7, radius2=0.02, depth=h * 0.82)
+        mesh_obj(name + "_core", bm, M["foliage"], root, (0, 0, h * 0.52), smooth=True)
         return root
     # leaf cards: many small alpha-textured quads give airy, irregular edges
     bm = bmesh.new()
     uv = bm.loops.layers.uv.new()
-    for i in range(700):
-        # denser towards the crown surface
+    lobes = [Vector((RNG.uniform(-0.55, 0.55) * r, RNG.uniform(-0.55, 0.55) * r, h * 0.55 + RNG.uniform(-0.45, 0.5) * r))
+             for _ in range(7)]
+    for i in range(2200):
+        # denser towards the crown surface, clustered into irregular lobes
         u, v = RNG.uniform(0, 2 * math.pi), RNG.uniform(-1, 1)
-        rad = r * (RNG.random() ** 0.35)
-        c = Vector((math.cos(u) * math.sqrt(1 - v * v) * rad, math.sin(u) * math.sqrt(1 - v * v) * rad,
-                    h * 0.62 + v * rad * 0.8))
-        sz = RNG.uniform(0.5, 0.95) * (r / 3.0) ** 0.5
+        rad = r * 0.75 * (RNG.random() ** 0.35)
+        lobe = lobes[i % len(lobes)]
+        c = lobe + Vector((math.cos(u) * math.sqrt(1 - v * v) * rad, math.sin(u) * math.sqrt(1 - v * v) * rad, v * rad * 0.8))
+        sz = RNG.uniform(0.35, 0.7) * (r / 3.0) ** 0.5
         ax = Vector((RNG.uniform(-1, 1), RNG.uniform(-1, 1), RNG.uniform(-1, 1))).normalized()
         bx = ax.cross(Vector((0.3, 0.2, 1))).normalized()
         cs = [c - ax * sz - bx * sz, c + ax * sz - bx * sz, c + ax * sz + bx * sz, c - ax * sz + bx * sz]
@@ -316,8 +334,8 @@ def tree_proto(M, name, h, r, kind="broad"):
     mesh_obj(name + "_leaves", bm, M["leaves"], root)
     # a dark inner core so the crown is not see-through
     bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=r * 0.62)
-    mesh_obj(name + "_core", bm, M["foliage"], root, (0, 0, h * 0.62), smooth=True).scale = (1, 1, 0.85)
+    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=r * 0.7)
+    mesh_obj(name + "_core", bm, M["foliage"], root, (0, 0, h * 0.55), smooth=True).scale = (0.95, 0.95, 0.85)
     return root
 
 
@@ -543,7 +561,7 @@ def hub(M, TM):
     box("hub_office_win", (17, 0.05, 1.6), (x0 - 6, y0 + 0.97, 6.4), M["window_warm"])
     box("hub_office_win2", (17, 0.05, 1.6), (x0 - 6, y0 + 0.97, 3.2), M["window_warm"])
     # flood-light masts in the yard
-    for k, (x, y) in enumerate(((HUB_X0 + 5, 12), (HUB_X0 + 45, 16), (HUB_X0 + 90, 14), (HUB_X0 + 130, 16), (HUB_X0 + 25, -8))):
+    for k, (x, y) in enumerate(((HUB_X0 + 5, 12), (HUB_X0 + 62, 16), (HUB_X0 + 90, 14), (HUB_X0 + 130, 16), (HUB_X0 + 25, -8))):
         cylinder(f"hub_mast{k}", 0.2, 18, (x, y, 9), axis="Z", mat=M["steel"], seg=16, r2=0.12)
         for sy in (-1, 1):
             box(f"hub_flood{k}{sy}", (0.7, 0.2, 0.5), (x + sy * 0.5, y, 17.8), M["steel"], bev=0.04)

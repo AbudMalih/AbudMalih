@@ -23,6 +23,27 @@ TRAILER_REAR = -16.55
 LENGTH = -TRAILER_REAR
 
 
+def thin_glass():
+    """Thin automotive glass: tinted see-through plus Fresnel reflection
+    (no refraction offset, like a real laminated windscreen)."""
+    m = bpy.data.materials.new("glass_thin")
+    m.use_nodes = True
+    n, l = m.node_tree.nodes, m.node_tree.links
+    n.remove(n["Principled BSDF"])
+    tr = n.new("ShaderNodeBsdfTransparent")
+    tr.inputs["Color"].default_value = (0.3, 0.34, 0.34, 1)
+    gl = n.new("ShaderNodeBsdfGlossy")
+    gl.inputs["Roughness"].default_value = 0.015
+    lw = n.new("ShaderNodeLayerWeight")
+    lw.inputs["Blend"].default_value = 0.12
+    mix = n.new("ShaderNodeMixShader")
+    l.new(lw.outputs["Fresnel"], mix.inputs["Fac"])
+    l.new(tr.outputs[0], mix.inputs[1])
+    l.new(gl.outputs[0], mix.inputs[2])
+    l.new(mix.outputs[0], n["Material Output"].inputs["Surface"])
+    return m
+
+
 def materials():
     M = {}
     M["graphite"] = grime(pbr("paint_graphite", (0.016, 0.018, 0.021), rough=0.3, metal=0.6, coat=1.0, coat_rough=0.035),
@@ -37,7 +58,12 @@ def materials():
     M["alu_brushed"] = pbr("alu_brushed", (0.8, 0.81, 0.82), rough=0.28, metal=1.0, aniso=0.7)
     M["steel_dark"] = noise_rough(pbr("steel_dark", (0.05, 0.05, 0.05), rough=0.45, metal=0.9), 0.35, 0.6)
     M["chrome"] = pbr("chrome", (0.95, 0.95, 0.96), rough=0.04, metal=1.0)
-    M["glass"] = pbr("glass_tinted", (0.004, 0.005, 0.006), rough=0.02, spec=0.6, coat=1.0, coat_rough=0.0)
+    M["chrome_dark"] = pbr("chrome_dark", (0.3, 0.31, 0.32), rough=0.08, metal=1.0)
+    M["piano"] = pbr("piano_black", (0.006, 0.006, 0.007), rough=0.12, coat=1.0, coat_rough=0.02)
+    M["satin"] = pbr("satin_silver", (0.42, 0.43, 0.45), rough=0.24, metal=1.0, aniso=0.4)
+    M["glass"] = thin_glass()
+    M["fabric"] = noise_rough(pbr("fabric", (0.035, 0.036, 0.04), rough=0.9), 0.85, 0.95, scale=40, bump=0.3, bump_scale=200)
+    M["screen"] = emissive("screen", (0.55, 0.75, 1.0), 1.2, base=(0.01, 0.01, 0.01))
     M["hole"] = pbr("hole", (0.004, 0.004, 0.004), rough=0.9)
     M["lens"] = pbr("lens", (0.9, 0.9, 0.9), rough=0.03, transmission=1.0, ior=1.5)
     M["head"] = emissive("headlamp", (1.0, 0.96, 0.9), 0.0, base=(0.6, 0.6, 0.62))
@@ -86,12 +112,12 @@ def build(M=None, name="truck"):
     wheels = []
 
     # ------------------------------------------------------------ cab
-    cab = [(0.05, 1.15), (0.06, 1.5), (0.05, 1.85), (0.02, 2.1), (-0.02, 2.14), (-0.29, 3.2), (-0.36, 3.28),
-           (-0.52, 3.42), (-0.68, 3.72), (-0.86, 3.9), (-1.1, 3.96), (-2.27, 3.96), (-2.3, 3.92), (-2.3, 1.15)]
+    # modern cab-over: large raked screen, roof lip acting as integrated sun
+    # visor, slightly bulged front with generous corner radii
+    cab = [(0.07, 1.18), (0.1, 1.5), (0.09, 1.8), (0.05, 2.05), (0.0, 2.12), (-0.37, 3.12), (-0.26, 3.18),
+           (-0.27, 3.42), (-0.48, 3.58), (-0.78, 3.85), (-1.1, 3.96), (-2.27, 3.97), (-2.3, 3.92), (-2.3, 1.18)]
     c = extrude_profile("cab", cab, 2.49, M["graphite"], body)
-    bevel(c, 0.2, 7, angle=math.radians(35))
-    # gently crowned panels (real cabs are never flat): subdivide, then
-    # cast slightly towards a sphere around the cab centre
+    bevel(c, 0.22, 8, angle=math.radians(30))
     ctrl = empty("cab_centre", (-1.25, 0, 2.45), body)
 
     def raked_quad(nm, x0, z0, x1, z1, half, off, mat, r=0.1):
@@ -99,49 +125,49 @@ def build(M=None, name="truck"):
         o = Vector((d.z, 0, -d.x)) * off  # along the outward normal
         cs = [Vector(p) + o for p in ((x0, -half, z0), (x0, half, z0), (x1, half, z1), (x1, -half, z1))]
         return quad_grid(nm, cs, mat, body, 12, r)
-    # large panoramic windscreen with black ceramic border and wiper blades
-    raked_quad("windscreen_frit", -0.005, 2.13, -0.285, 3.2, 1.19, 0.01, M["plastic"], 0.16)
-    raked_quad("windscreen", -0.015, 2.19, -0.27, 3.14, 1.15, 0.016, M["glass"], 0.14)
+    # panoramic windscreen with black ceramic border and wiper blades
+    raked_quad("windscreen_frit", 0.0, 2.12, -0.362, 3.11, 1.2, 0.01, M["plastic"], 0.18)
+    raked_quad("windscreen", -0.012, 2.17, -0.345, 3.07, 1.16, 0.016, M["glass"], 0.16)
     for k, y in enumerate((-0.55, 0.45)):
-        w_ = box(f"wiper{k}", (0.02, 0.95, 0.018), (0.02, y, 2.24), M["plastic"], body)
-        w_.rotation_euler = (math.radians(4), math.radians(-14), 0)
-    # roof visor with the white JARBOU logo (fleet visor sign)
-    visor = box("visor", (0.3, 2.36, 0.2), (-0.3, 0, 3.33), M["graphite"], body, bev=0.06, seg=4)
-    visor.rotation_euler = (0, math.radians(-14), 0)
-    lg = plane("visor_logo", 1.0, 1.0 * 569 / 2048, (-0.13, 0, 3.36), M["logo_white"], body, facing="+X")
-    lg.rotation_euler = (0, math.radians(-14), 0)
-    for k in range(4):  # roof marker lamps
-        box(f"roof_lamp{k}", (0.05, 0.1, 0.04), (-0.62, -0.45 + k * 0.3, 3.73), M["amber"], body, bev=0.01)
-    # grille: black mesh insert with body-coloured bars, red accent line
-    box("grille", (0.05, 1.86, 0.66), (0.06, 0, 1.7), M["plastic"], body, bev=0.03)
-    mesh_bars = box("grille_mesh", (0.02, 1.8, 0.012), (0.08, 0, 1.4), M["steel_dark"], body)
-    array(mesh_bars, 16, (0, 0, 0.04))
-    for k, z in enumerate((1.46, 1.62, 1.78, 1.94)):
-        box(f"grille_bar{k}", (0.05, 1.92 - k * 0.03, 0.045), (0.1, 0, z), M["graphite"], body, bev=0.02)
-        box(f"grille_trim{k}", (0.02, 1.9 - k * 0.03, 0.008), (0.126, 0, z + 0.02), M["chrome"], body)
-    box("accent", (0.03, 1.5, 0.022), (0.1, 0, 2.06), M["red"], body, bev=0.008)
-    # bumper with integrated lamps and step
-    box("bumper", (0.4, 2.5, 0.64), (-0.14, 0, 0.84), M["graphite"], body, bev=0.1, seg=5)
-    box("bumper_lip", (0.34, 2.36, 0.16), (-0.1, 0, 0.47), M["plastic"], body, bev=0.04)
-    box("bumper_insert", (0.04, 1.2, 0.22), (0.07, 0, 0.8), M["plastic"], body, bev=0.02)
-    box("skid", (0.18, 1.2, 0.04), (0.04, 0, 0.42), M["alu_brushed"], body, bev=0.01)
-    # headlamps: angular units at the bumper corners
+        w_ = box(f"wiper{k}", (0.02, 0.95, 0.014), (0.03, y, 2.2), M["plastic"], body)
+        w_.rotation_euler = (math.radians(3), math.radians(-14), 0)
+    # white JARBOU logo on the visor lip
+    plane("visor_logo", 0.62, 0.62 * 569 / 2048, (-0.248, 0, 3.31), M["logo_white"], body, facing="+X")
+    # grille: piano-black trapezoid with two satin bars and fine chrome trims
+    quad_grid("grille", [(0.1, -0.82, 1.42), (0.1, 0.82, 1.42), (0.07, 0.99, 2.02), (0.07, -0.99, 2.02)],
+              M["piano"], body, 10, 0.06)
+    for k, z in enumerate((1.55, 1.72, 1.89)):
+        wdt = 1.66 + k * 0.1
+        box(f"grille_bar{k}", (0.035, wdt, 0.06), (0.108 - k * 0.01, 0, z), M["satin"], body, bev=0.022)
+    grille_mesh = box("grille_mesh", (0.01, 1.7, 0.01), (0.1, 0, 1.46), M["steel_dark"], body)
+    array(grille_mesh, 14, (0, 0, 0.038))
+    box("accent", (0.02, 1.56, 0.018), (0.07, 0, 2.075), M["red"], body, bev=0.006)
+    # sculpted bumper: body-colour upper, textured black lower, LED strips
+    box("bumper", (0.34, 2.48, 0.58), (-0.08, 0, 0.9), M["graphite"], body, bev=0.14, seg=6)
+    box("bumper_lip", (0.3, 2.3, 0.2), (-0.06, 0, 0.5), M["plastic"], body, bev=0.06, seg=4)
+    box("bumper_plate", (0.03, 0.9, 0.2), (0.085, 0, 0.84), M["plastic"], body, bev=0.02)
+    box("skid", (0.14, 1.0, 0.03), (0.03, 0, 0.41), M["satin"], body, bev=0.01)
     for sy in (-1, 1):
-        y = sy * 0.9
-        box(f"hl_housing{sy}", (0.1, 0.62, 0.25), (0.06, y, 1.2), M["plastic"], body, bev=0.05)
-        box(f"hl_reflector{sy}", (0.02, 0.56, 0.2), (0.1, y, 1.2), M["chrome"], body, bev=0.02)
-        for k, dy in enumerate((-0.18, -0.03, 0.12)):
-            cylinder(f"hl_ring{sy}{k}", 0.05, 0.03, (0.11, y + sy * dy, 1.19), axis="X", mat=M["plastic"], parent=body, seg=32)
-            cylinder(f"hl_lamp{sy}{k}", 0.036, 0.034, (0.118, y + sy * dy, 1.19), axis="X", mat=M["head"], parent=body, seg=32)
-        box(f"hl_drl{sy}", (0.02, 0.54, 0.016), (0.118, y, 1.295), M["drl"], body, bev=0.006)
-        box(f"hl_drl_v{sy}", (0.02, 0.016, 0.2), (0.118, y + sy * 0.265, 1.2), M["drl"], body, bev=0.006)
-        box(f"hl_lens{sy}", (0.02, 0.6, 0.235), (0.135, y, 1.2), M["lens"], body, bev=0.03)
-        cylinder(f"fog{sy}", 0.05, 0.03, (0.08, sy * 0.95, 0.8), axis="X", mat=M["head"], parent=body, seg=32)
-        # corner air deflectors
-        box(f"deflector{sy}", (0.34, 0.05, 1.55), (-0.2, sy * 1.265, 2.35), M["graphite"], body, bev=0.02)
+        box(f"fog{sy}", (0.02, 0.36, 0.028), (0.085, sy * 0.86, 0.66), M["head"], body, bev=0.008)
+        # slim angular LED headlamps wrapping the lower cab corners
+        inner, outer = 0.52, 1.14
+        quad_grid(f"hl_back{sy}", [(0.108, sy * inner, 1.2), (0.035, sy * outer, 1.23), (0.015, sy * outer, 1.46),
+                                   (0.095, sy * (inner + 0.07), 1.4)][:: -sy], M["chrome_dark"], body, 4)
+        quad_grid(f"hl_lens{sy}", [(0.13, sy * inner, 1.195), (0.058, sy * outer, 1.225), (0.036, sy * outer, 1.465),
+                                   (0.117, sy * (inner + 0.07), 1.405)][:: -sy], M["lens"], body, 4)
+        # LED signature: top strip + outer vertical strip
+        drl = box(f"hl_drl{sy}", (0.012, 0.52, 0.018), (0.105, sy * 0.86, 1.41), M["drl"], body, bev=0.006)
+        drl.rotation_euler = (math.radians(-sy * 5), 0, math.radians(sy * 8))
+        box(f"hl_drl_v{sy}", (0.012, 0.018, 0.2), (0.05, sy * 1.1, 1.33), M["drl"], body, bev=0.006)
+        for k, dy in enumerate((0.66, 0.8, 0.94)):
+            x = 0.1 - (dy - 0.66) * 0.12
+            cylinder(f"hl_ring{sy}{k}", 0.048, 0.02, (x, sy * dy, 1.3), axis="X", mat=M["chrome"], parent=body, seg=32)
+            cylinder(f"hl_lamp{sy}{k}", 0.034, 0.024, (x + 0.004, sy * dy, 1.3), axis="X", mat=M["head"], parent=body, seg=32)
+        # corner deflector seam
+        box(f"deflector{sy}", (0.012, 0.012, 1.5), (-0.06, sy * 1.19, 2.3), M["plastic"], body)
         # side windows, door seams, handle, logo
         ys = sy * 1.247
-        pts = [(-0.42, 2.2), (-1.32, 2.2), (-1.32, 3.08), (-0.56, 3.08)]
+        pts = [(-0.42, 2.02), (-1.32, 2.22), (-1.32, 3.08), (-0.52, 3.08)]
         cs = [(x, ys + sy * 0.004, z) for x, z in pts]
         quad_grid(f"sidewin{sy}", cs if sy < 0 else [cs[1], cs[0], cs[3], cs[2]], M["glass"], body, 8, 0.05)
         for nm, x, z, wx, hz in (("seam_f", -0.39, 2.2, 0.012, 1.95), ("seam_r", -1.42, 2.2, 0.012, 1.95),
@@ -151,12 +177,16 @@ def build(M=None, name="truck"):
         plane(f"door_logo{sy}", 0.8, 0.8 * 569 / 2048, (-0.8, ys + sy * 0.006, 1.8), M["logo_white"], body,
               facing="-Y" if sy < 0 else "+Y")
         box(f"door_stripe{sy}", (1.9, 0.01, 0.03), (-1.15, ys + sy * 0.004, 1.3), M["red"], body)
-        # mirror arm + main and wide-angle mirrors
-        box(f"mirror_arm{sy}", (0.05, 0.36, 0.04), (-0.18, sy * 1.42, 2.95), M["graphite_trim"], body, bev=0.012)
-        box(f"mirror_post{sy}", (0.04, 0.04, 0.72), (-0.15, sy * 1.59, 2.62), M["graphite_trim"], body, bev=0.012)
-        box(f"mirror_main{sy}", (0.14, 0.2, 0.46), (-0.12, sy * 1.6, 2.72), M["graphite"], body, bev=0.04)
-        box(f"mirror_glass{sy}", (0.01, 0.16, 0.41), (-0.195, sy * 1.6, 2.72), M["chrome"], body, bev=0.01)
-        box(f"mirror_wide{sy}", (0.13, 0.2, 0.2), (-0.12, sy * 1.6, 2.2), M["graphite"], body, bev=0.035)
+        # slim aero mirror arms with compact mirror heads
+        arm = box(f"mirror_arm{sy}", (0.12, 0.42, 0.05), (-0.3, sy * 1.43, 2.98), M["graphite"], body, bev=0.022)
+        arm.rotation_euler = (0, 0, math.radians(-sy * 12))
+        box(f"mirror_main{sy}", (0.16, 0.13, 0.36), (-0.2, sy * 1.64, 2.82), M["graphite"], body, bev=0.05)
+        box(f"mirror_glass{sy}", (0.008, 0.1, 0.31), (-0.282, sy * 1.64, 2.82), M["chrome"], body, bev=0.01)
+        box(f"mirror_wide{sy}", (0.14, 0.12, 0.16), (-0.2, sy * 1.64, 2.5), M["graphite"], body, bev=0.04)
+        box(f"mirror_wglass{sy}", (0.008, 0.09, 0.12), (-0.272, sy * 1.64, 2.5), M["chrome"], body)
+        # body-colour aero skirts over the chassis
+        box(f"side_skirt{sy}", (2.2, 0.035, 0.7), (-3.4, sy * 1.23, 0.8), M["graphite"], body, bev=0.04)
+        box(f"skirt_trim{sy}", (2.2, 0.02, 0.018), (-3.4, sy * 1.25, 0.7), M["red"], body)
         # steps
         for k, z in enumerate((0.62, 0.95)):
             box(f"step{sy}{k}", (0.5, 0.2, 0.05), (-2.05, sy * 1.12, z), M["alu_brushed"], body, bev=0.01)
@@ -175,10 +205,7 @@ def build(M=None, name="truck"):
         sol.thickness = 0.03
         # fuel tank / battery box
         if sy < 0:
-            t = cylinder("fuel_tank", 0.31, 1.35, (-3.3, -0.98, 0.78), axis="X", mat=M["alu_brushed"], parent=body, seg=48, bev=0.05)
-            for k in (-0.45, 0.45):
-                box(f"tank_strap{k}", (0.05, 0.66, 0.66), (-3.3 + k, -0.98, 0.78), M["steel_dark"], body, bev=0.01)
-            box("tank_step", (0.9, 0.18, 0.04), (-3.3, -1.2, 1.12), M["alu_brushed"], body, bev=0.01)
+            cylinder("fuel_tank", 0.31, 1.35, (-3.3, -0.9, 0.78), axis="X", mat=M["alu_brushed"], parent=body, seg=48, bev=0.05)
         else:
             box("battery_box", (1.2, 0.5, 0.55), (-3.3, 0.95, 0.8), M["plastic"], body, bev=0.03)
         # rear mudguards
@@ -190,13 +217,13 @@ def build(M=None, name="truck"):
     # gently crowned panels (real cabs are never flat): every cab-mounted
     # part gets the same deformation field so nothing sinks into the skin
     CAB_PARTS = ("cab", "windscreen", "wiper", "sidewin", "seam_", "handle", "door_logo", "door_stripe", "grille",
-                 "accent", "visor", "roof_lamp", "deflector")
+                 "accent", "visor", "deflector")
     for o in list(body.children):
         if o.type == "MESH" and o.name.startswith(CAB_PARTS):
             if not o.get("corner_radius"):  # grids are already dense
                 sd = o.modifiers.new("dense", "SUBSURF")
                 sd.subdivision_type = "SIMPLE"
-                sd.levels = sd.render_levels = 3 if o.name == "cab" else 2
+                sd.levels = sd.render_levels = 2
             cast = o.modifiers.new("crown", "CAST")
             cast.cast_type = "SPHERE"
             cast.factor = 0.05
@@ -204,6 +231,49 @@ def build(M=None, name="truck"):
             cast.use_radius_as_size = False
             cast.object = ctrl
             round_corners(o)
+
+    # hollow shell with window openings so the cab interior is visible
+    sol = c.modifiers.new("shell", "SOLIDIFY")
+    sol.thickness = 0.035
+    sol.offset = -1
+    cutters = []
+    for nm, size, loc in (("cut_ws", (1.0, 2.2, 0.84), (-0.15, 0, 2.63)),
+                          ("cut_sw_l", (0.8, 0.5, 0.78), (-0.9, 1.2, 2.66)),
+                          ("cut_sw_r", (0.8, 0.5, 0.78), (-0.9, -1.2, 2.66))):
+        k = box(nm, size, loc, None, body)
+        k.hide_render = True
+        k.display_type = "WIRE"
+        cutters.append(k)
+    for k in cutters:
+        bo = c.modifiers.new("open_" + k.name, "BOOLEAN")
+        bo.operation = "DIFFERENCE"
+        bo.solver = "EXACT"
+        bo.object = k
+    # bake the cab skin (booleans are static – avoids per-frame re-evaluation
+    # and keeps motion blur consistent)
+    dg = bpy.context.evaluated_depsgraph_get()
+    baked = bpy.data.meshes.new_from_object(c.evaluated_get(dg))
+    c.modifiers.clear()
+    old_me = c.data
+    c.data = baked
+    bpy.data.meshes.remove(old_me)
+    for k in cutters:
+        bpy.data.objects.remove(k)
+    # interior: dashboard, instrument screens, steering wheel, seats, lining
+    box("dash", (0.55, 2.3, 0.32), (-0.5, 0, 2.02), M["fabric"], body, bev=0.06)
+    box("dash_top", (0.35, 2.2, 0.06), (-0.42, 0, 2.2), M["plastic"], body, bev=0.02)
+    box("screen_drv", (0.02, 0.36, 0.14), (-0.58, 0.52, 2.3), M["screen"], body)
+    box("screen_mid", (0.02, 0.26, 0.16), (-0.52, 0.02, 2.28), M["screen"], body)
+    ring = lathe("steering", [(0.2 + 0.022 * math.cos(a / 8 * math.pi * 2), 0.022 * math.sin(a / 8 * math.pi * 2))
+                              for a in range(9)], 40, M["plastic"], body, (-0.72, 0.52, 2.35))
+    ring.rotation_euler = (0, math.radians(90 - 35), math.radians(90))
+    for sy in (-1, 1):
+        box(f"seat{sy}", (0.55, 0.55, 0.14), (-1.55, sy * 0.52, 1.72), M["fabric"], body, bev=0.05)
+        sb = box(f"seat_back{sy}", (0.14, 0.52, 0.85), (-1.85, sy * 0.52, 2.2), M["fabric"], body, bev=0.06)
+        sb.rotation_euler = (0, math.radians(-12), 0)
+        box(f"headrest{sy}", (0.1, 0.3, 0.2), (-1.94, sy * 0.52, 2.72), M["fabric"], body, bev=0.04)
+    box("lining", (0.04, 2.3, 2.6), (-2.2, 0, 2.6), M["fabric"], body)
+    box("bunk", (0.7, 2.3, 0.1), (-1.85, 0, 1.6), M["fabric"], body)
 
     # chassis, fifth wheel, cab back, exhaust
     for sy in (-1, 1):
