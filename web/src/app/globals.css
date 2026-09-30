@@ -72,6 +72,12 @@
   .display {
     @apply font-sans font-extrabold uppercase leading-[0.98] tracking-[-0.035em];
   }
+  /* Calm section headline – the big display size is reserved for the
+     cinematic moments (hero, finale, careers). */
+  .h-section {
+    @apply font-sans font-extrabold uppercase leading-[1] tracking-[-0.03em];
+    font-size: clamp(1.9rem, 3.9vw, 3.75rem);
+  }
   .eyebrow {
     @apply font-mono text-[0.72rem] font-medium uppercase tracking-[0.18em];
   }

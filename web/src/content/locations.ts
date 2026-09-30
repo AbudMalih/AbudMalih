@@ -5,8 +5,8 @@ import type { Location, LocationType } from "./types";
  *
  * Confirmed list of JARBOU locations. The exact classification of most sites
  * (logistics site, project site, operational area, office) has not been
- * confirmed yet, so `type` stays `null` and the UI shows the neutral label
- * "Standort". Edit `type` once JARBOU confirms it.
+ * confirmed yet, so `type` stays `null` and the UI shows the city name only –
+ * no label at all. Edit `type` once JARBOU confirms it.
  *
  * Coordinates are city centres for map placement only – they are not
  * addresses and must not be presented as such.
@@ -14,6 +14,7 @@ import type { Location, LocationType } from "./types";
 export const locations: Location[] = [
   { id: "bremen", name: "Bremen", state: "Bremen", lat: 53.0793, lng: 8.8017, type: null, projectNote: null, published: true },
   { id: "hannover", name: "Hannover", state: "Niedersachsen", lat: 52.3759, lng: 9.732, type: "project", projectNote: "DHL Express", published: true },
+  { id: "koeln", name: "Köln", state: "Nordrhein-Westfalen", lat: 50.9375, lng: 6.9603, type: null, projectNote: null, published: true },
   { id: "magdeburg", name: "Magdeburg", state: "Sachsen-Anhalt", lat: 52.1205, lng: 11.6276, type: null, projectNote: null, published: true },
   { id: "kassel", name: "Kassel", state: "Hessen", lat: 51.3127, lng: 9.4797, type: "project", projectNote: "DHL Express", published: true },
   { id: "haiger", name: "Haiger", state: "Hessen", lat: 50.7426, lng: 8.2066, type: null, projectNote: null, published: true },
@@ -31,8 +32,11 @@ export const locationTypeLabel: Record<LocationType, string> = {
   recruiting_location: "Recruiting-Standort",
 };
 
-export function labelFor(location: Location): string {
-  return location.type ? locationTypeLabel[location.type] : "Standort";
+/** Classification label, or `null` while the type is unconfirmed. */
+export function labelFor(location: Location): string | null {
+  if (!location.type) return null;
+  const label = locationTypeLabel[location.type];
+  return location.projectNote ? `${label} · ${location.projectNote}` : label;
 }
 
 export const publishedLocations = locations.filter((l) => l.published);

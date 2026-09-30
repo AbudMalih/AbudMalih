@@ -5,12 +5,19 @@ import { Slashes } from "@/components/brand/Slashes";
 import { StatRow } from "@/components/ui/StatRow";
 import { processSteps } from "@/content/services";
 import { countUp } from "@/motion/countUp";
-import { PARALLAX, TRUCK } from "./geometry";
+import { GROUND_Y, PARALLAX, TRUCK } from "./geometry";
 
-/** Per-breakpoint camera framing. `sx` = truck position on screen. */
+/**
+ * Framing. The viewBox is computed from the stage's real aspect ratio so the
+ * whole Sattelzug is composed deliberately on every screen instead of being
+ * cropped: desktop shows ~1600+ units (truck ≈ 65 % of the width), mobile a
+ * dedicated tall composition with ~1300 units (truck ≈ 82 %).
+ * `sx` = truck rear position in view units, `ground` = road line height (0–1).
+ */
 const FRAMING = {
-  desktop: { viewBox: "0 0 1600 900", aspect: "xMidYMax slice", cam0: 0, sx0: TRUCK.startX, sxDrive: 620, sxEnd: 300 },
-  mobile: { viewBox: "150 -420 1100 1500", aspect: "xMidYMid slice", cam0: 400, sx0: TRUCK.startX - 400, sxDrive: 420, sxEnd: 380 },
+  desktop: { minWidth: 1600, height: 1000, ground: 0.74, cam0: 0, sx0: TRUCK.startX, sxEnd: 200 },
+  // Mobile: truck ≈ 82 % of the width, door kept in frame at the start.
+  mobile: { minWidth: 1300, height: 0, ground: 0.56, cam0: 140, sx0: TRUCK.startX - 140, sxEnd: 50 },
 } as const;
 
 /** Beat windows on the 0–100 timeline. */
@@ -54,8 +61,10 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
       const layers = {
         far: q("[data-layer=far]"),
         mid: q("[data-layer=mid]"),
+        roadfar: q("[data-layer=roadfar]"),
         world: q("[data-layer=world]"),
         shade: q("[data-layer=shade]"),
+        lamps: q("[data-layer=lamps]"),
         fg: q("[data-layer=fg]"),
       };
       const truck = q("[data-truck]");
@@ -64,7 +73,8 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
       const trail = q("[data-trail]");
       const stage = q<HTMLElement>("[data-stage]");
 
-      const state: { cam: number; sx: number } = { cam: 0, sx: TRUCK.startX };
+      const state = { cam: 0, sx: TRUCK.startX as number, zoom: 1 };
+      let frame = { x: 0, y: 0, w: 1600, h: 1000, ground: 0.74 };
       const wheelCenters = wheels.map((w) => {
         const c = w.querySelector("circle");
         return { x: Number(c?.getAttribute("cx") ?? 0), y: Number(c?.getAttribute("cy") ?? 0) };
@@ -73,15 +83,24 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
       const trailEnd = Number(trail.getAttribute("x2"));
 
       const render = () => {
-        const { cam, sx } = state;
+        const { cam, sx, zoom } = state;
+        // Camera push: zoom around the road line at the horizontal centre.
+        const w = frame.w / zoom;
+        const h = frame.h / zoom;
+        svg.setAttribute(
+          "viewBox",
+          `${(frame.x + (frame.w - w) / 2).toFixed(1)} ${(frame.y + (frame.h - h) * frame.ground).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`,
+        );
         const tx = (f: number) => `translate(${(-cam * f).toFixed(2)} 0)`;
         layers.far.setAttribute("transform", tx(PARALLAX.far));
         layers.mid.setAttribute("transform", tx(PARALLAX.mid));
+        layers.roadfar.setAttribute("transform", tx(PARALLAX.roadFar));
         layers.world.setAttribute("transform", tx(1));
         layers.shade.setAttribute("transform", tx(1));
+        layers.lamps.setAttribute("transform", tx(1));
         layers.fg.setAttribute("transform", tx(PARALLAX.fg));
         const worldX = cam + sx;
-        const bob = Math.sin(worldX / 21) * 0.5;
+        const bob = Math.sin(worldX / 29) * 0.35;
         truck.setAttribute("transform", `translate(${sx.toFixed(2)} ${(740 + bob).toFixed(2)})`);
         const angle = ((worldX - TRUCK.startX) / TRUCK.wheelR) * (180 / Math.PI);
         wheels.forEach((w, i) => {
@@ -112,28 +131,50 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
         (ctx) => {
           const { desktop, reduce } = ctx.conditions as { desktop: boolean; reduce: boolean };
           const f = desktop ? FRAMING.desktop : FRAMING.mobile;
-          svg.setAttribute("viewBox", f.viewBox);
-          svg.setAttribute("preserveAspectRatio", f.aspect);
+          const measure = () => {
+            const r = stage.getBoundingClientRect();
+            const aspect = Math.max(0.3, r.width / Math.max(1, r.height));
+            let w = f.height ? f.height * aspect : f.minWidth;
+            if (w < f.minWidth) w = f.minWidth;
+            const h = w / aspect;
+            frame = { x: 0, y: GROUND_Y - h * f.ground, w, h, ground: f.ground };
+          };
+          measure();
+          svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
+          // Centre the Sattelzug in the frame while driving.
+          const sxDrive = (frame.w - TRUCK.length) / 2;
 
           if (reduce) {
-            // Static, low-motion frame: the truck on the Autobahn, lights on.
-            state.cam = 2900;
-            state.sx = f.sxDrive;
+            // Static, low-motion frame: the Sattelzug on the Autobahn, lights on.
+            state.cam = 3300;
+            state.sx = sxDrive;
+            state.zoom = 1;
             render();
             gsap.set("[data-lamp]", { opacity: 1 });
-            gsap.set("[data-beam], [data-headlight], [data-trail-start]", { opacity: 1 });
-            return;
+            gsap.set("[data-beam], [data-headlight], [data-trail-start], [data-marker]", { opacity: 1 });
+            const onResizeStatic = () => {
+              measure();
+              render();
+            };
+            window.addEventListener("resize", onResizeStatic);
+            return () => window.removeEventListener("resize", onResizeStatic);
           }
 
           state.cam = f.cam0;
           state.sx = f.sx0;
+          state.zoom = 1.08;
           render();
 
-          const camA = desktop ? 1100 : 1300;
-          const cam78 = 5600 - f.sxDrive;
+          // Rear of the trailer must clear the door (world x ≈ 1390) before the Autobahn.
+          const camA = 1560 - sxDrive;
+          const cam76 = TRUCK.endX - 900 - sxDrive;
           const camEnd = TRUCK.endX - f.sxEnd;
           const s = setSlant();
-          const onResize = () => setSlant();
+          const onResize = () => {
+            setSlant();
+            measure();
+            render();
+          };
           window.addEventListener("resize", onResize);
 
           const tl = gsap.timeline({
@@ -147,24 +188,28 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
             },
           });
 
-          // Scene 1 – lights, door
-          tl.to("[data-dark]", { opacity: 0.2, duration: 7 }, 0);
-          qa("[data-lamp]").forEach((lamp, i) => tl.to(lamp, { opacity: 1, duration: 1.2, ease: "power1.in" }, 0.5 + i * 1.4));
-          tl.to("[data-headlight], [data-beam]", { opacity: 1, duration: 2 }, 7);
-          tl.to("[data-door]", { y: -340, duration: 12, ease: "power1.inOut" }, 8);
+          // Scene 1 – hall lights, truck lights, door
+          tl.to("[data-dark]", { opacity: 0.18, duration: 7 }, 0);
+          qa("[data-lamp]").forEach((lamp) => tl.to(lamp, { opacity: 1, duration: 1.2, ease: "power1.in" }, 0.5 + Number(lamp.getAttribute("data-lamp")) * 1.4));
+          tl.to("[data-marker]", { opacity: 1, duration: 1.5 }, 6);
+          tl.to("[data-headlight], [data-beam]", { opacity: 1, duration: 2 }, 7.5);
+          tl.to("[data-door]", { y: -330, duration: 12, ease: "power1.inOut" }, 8);
           tl.to("[data-door-light]", { opacity: 1, duration: 7 }, 9);
 
-          // Scene 2 – depart
-          tl.to(state, { cam: camA, sx: f.sxDrive, duration: 14, ease: "power2.in", onUpdate: render }, 20);
-          tl.to("[data-trail-start]", { opacity: 1, duration: 2 }, 29);
+          // Scene 2 – departure: slow pull-away, camera eases back out
+          tl.to(state, { cam: camA, sx: sxDrive, duration: 16, ease: "power2.in", onUpdate: render }, 20);
+          tl.to(state, { zoom: 1, duration: 16, ease: "sine.inOut", onUpdate: render }, 18);
+          tl.to("[data-trail-start]", { opacity: 1, duration: 2 }, 30);
 
-          // Scene 3/4 – Autobahn
-          tl.to(state, { cam: cam78, duration: 44, onUpdate: render }, 34);
+          // Scene 3/4 – Autobahn at constant speed
+          tl.to(state, { cam: cam76, duration: 40, onUpdate: render }, 36);
 
-          // Scene 5 – arrival
-          tl.to(state, { cam: camEnd, sx: f.sxEnd, duration: 10, ease: "power2.out", onUpdate: render }, 78);
+          // Scene 5 – braking into the hub yard, brake lights, dock light
+          tl.to(state, { cam: camEnd, sx: f.sxEnd, duration: 12, ease: "power3.out", onUpdate: render }, 76);
+          tl.to(state, { zoom: 1.05, duration: 12, ease: "sine.inOut", onUpdate: render }, 76);
+          tl.to("[data-tail]", { opacity: 1, duration: 2 }, 78);
           tl.to("[data-dock]", { opacity: 1, duration: 6 }, 80);
-          tl.to("[data-beam]", { opacity: 0, duration: 4 }, 86);
+          tl.to("[data-beam]", { opacity: 0.35, duration: 4 }, 85);
 
           // Beats
           const beats = qa<HTMLElement>("[data-beat]");
@@ -245,7 +290,7 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
                   <span className="text-red">{step.index}</span> / 05
                 </p>
                 <p className="display mt-3 text-[clamp(2.75rem,9vw,8.5rem)] text-white">{step.title}</p>
-                <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-steel-200 max-md:hidden">{step.text}</p>
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-steel-200 md:mt-4 md:text-[0.95rem]">{step.text}</p>
               </li>
             ))}
           </ol>
@@ -254,7 +299,7 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
           <aside
             data-hud
             aria-label="Illustrative Tourübersicht"
-            className="absolute bottom-6 left-5 right-5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-steel-300 motion-reduce:hidden md:bottom-auto md:left-auto md:right-12 md:top-32 md:w-80"
+            className="absolute bottom-8 left-5 right-5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-steel-300 motion-reduce:hidden md:bottom-auto md:left-auto md:right-12 md:top-32 md:w-80"
           >
             <div className="flex items-center gap-3">
               <Slashes className="h-3 w-auto shrink-0 text-red" />
@@ -267,7 +312,7 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
                 </div>
               </div>
             </div>
-            <dl className="mt-5 grid grid-cols-2 gap-y-2 border-t border-white/10 pt-4 max-md:hidden">
+            <dl className="mt-5 grid grid-cols-2 gap-y-2 border-t border-white/10 pt-4">
               <dt>Fahrzeugstatus</dt>
               <dd className="relative text-right text-white">
                 {STATUS.map((st, i) => (
@@ -290,7 +335,7 @@ export function JourneySequence({ scene }: { scene: ReactNode }) {
                 </span>
               </dd>
             </dl>
-            <p className="mt-4 text-[0.62rem] text-steel-500 max-md:hidden">Illustrative Darstellung</p>
+            <p className="mt-4 text-[0.62rem] text-steel-500">Illustrative Darstellung</p>
           </aside>
 
           {/* Finale */}

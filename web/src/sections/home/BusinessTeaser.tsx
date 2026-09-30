@@ -17,7 +17,7 @@ export function BusinessTeaser() {
         <SectionLabel index="06">Für Unternehmen</SectionLabel>
         <div className="mt-6 grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <h2 id="business-title" className="display text-[clamp(2.2rem,6vw,5.75rem)]">
+            <h2 id="business-title" className="h-section">
               Operative Logistik. Zuverlässig skaliert.
             </h2>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-steel-300">

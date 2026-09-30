@@ -7,7 +7,7 @@ import { GERMANY_PATH, GERMANY_VIEWBOX, project } from "@/lib/geo/germany";
 
 /**
  * Operational map of Germany. Locations and their classification come from
- * /src/content/locations.ts. Unconfirmed types are shown as "Standort".
+ * /src/content/locations.ts. Unconfirmed types show the city name only.
  * Connecting lines illustrate the network – they are not actual routes.
  */
 /** Schematic network connections (illustrative, not driving routes). */
@@ -16,13 +16,14 @@ const NETWORK: [string, string][] = [
   ["hannover", "magdeburg"],
   ["hannover", "kassel"],
   ["kassel", "haiger"],
+  ["haiger", "koeln"],
   ["kassel", "erfurt"],
   ["erfurt", "suhl"],
   ["erfurt", "zwickau"],
 ];
 
 /** Label placement to avoid collisions. Default: right of the pin. */
-const LABEL: Record<string, "left" | "below"> = { haiger: "left", suhl: "below" };
+const LABEL: Record<string, "left" | "below"> = { koeln: "left", suhl: "below" };
 
 export function OperationsMap({ locations }: { locations: Location[] }) {
   const [active, setActive] = useState<string | null>(null);
@@ -98,10 +99,9 @@ export function OperationsMap({ locations }: { locations: Location[] }) {
                   <span className="text-lg font-semibold text-white">{p.name}</span>
                   <span className="text-sm text-steel-500">{p.state}</span>
                 </span>
-                <span className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-steel-400">
-                  {labelFor(p)}
-                  {p.projectNote ? ` · ${p.projectNote}` : ""}
-                </span>
+                {labelFor(p) && (
+                  <span className="text-right font-mono text-[0.68rem] uppercase tracking-[0.14em] text-steel-400">{labelFor(p)}</span>
+                )}
               </button>
             </li>
           ))}

@@ -122,19 +122,3 @@ export type Job = {
   featured: boolean;
   applicationQuestions: string[];
 };
-
-export type KpiDatum = { label: string; value: number };
-
-export type KpiSeries = {
-  id: string;
-  title: string;
-  description: string;
-  /**
-   * `demo` series are interface examples and are always rendered with a
-   * visible "Beispieldarstellung" label. Connect real data by providing a
-   * series with `source: "live"`.
-   */
-  source: "demo" | "live";
-  data: KpiDatum[];
-  target?: number;
-};

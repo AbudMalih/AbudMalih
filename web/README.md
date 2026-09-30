@@ -32,7 +32,7 @@ src/
     brand/                 Logo (offizielle Datei), Slashes (exakte Logo-Geometrie)
     layout/                Header, Footer, Cookie-Consent, Seitenübergang, PendingPage
     ui/                    Button, SectionLabel, StatRow
-    data/                  KPI-Diagramm, Deutschlandkarte
+    data/                  Deutschlandkarte
     illustrations/         Schematische Platzhalter-Grafiken für Leistungen
   sections/home/           Startseiten-Sektionen
     journey/               Scroll-Sequenz: geometry.ts, Truck.tsx, JourneyScene.tsx, JourneySequence.tsx
@@ -49,12 +49,12 @@ Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das M
 | Datei | Inhalt | Hinweis |
 |---|---|---|
 | `company.ts` | Firmendaten & Kennzahlen (2019, 160+, 180+, 25) | Nur bestätigte Zahlen eintragen |
-| `locations.ts` | Bremen, Hannover, Magdeburg, Kassel, Haiger, Erfurt, Suhl, Zwickau | `type: null` = noch nicht bestätigt → Anzeige „Standort“ |
+| `locations.ts` | Bremen, Hannover, Köln, Magdeburg, Kassel, Haiger, Erfurt, Suhl, Zwickau | `type: null` = noch nicht bestätigt → nur der Ortsname wird angezeigt |
 | `jobs.ts` | Fahrer DHL Express Hannover, Disponent Hannover | `status: "published"` + `validThrough` steuern Sichtbarkeit |
 | `services.ts` | 6 Leistungen + 5 Prozessschritte | |
 | `media.ts` | Bild-Slots für Leistungen | Alle `placeholder: true` – siehe unten |
 | `partners.ts` | Partnerlogos | Sektion erscheint erst mit `publicUseApproved: true` + Logo-Datei |
-| `kpis.ts` | KPI-Diagramm | Nur Demo-Daten, immer als „Beispieldarstellung“ gekennzeichnet |
+| `quality.ts` | Qualitäts-Regelkreis + „Was wir messen“ | Prozessbeschreibung, keine Kennzahlen. Echte KPIs erst nach Freigabe und Datenanbindung |
 | `navigation.ts`, `site.ts` | Navigation, SEO-Basis | |
 
 ### Standort-Typen
@@ -64,7 +64,7 @@ Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das M
 
 - **Logo:** `public/brand/jarbou-logo.svg` (dunkel), `jarbou-logo-white.svg` (hell) – vektorisiert aus der gelieferten Datei `jarbou-logo-original.jpg`. Liegt eine Original-Vektordatei der Agentur vor, bitte diese beiden Dateien ersetzen.
 - **Leistungsfotos:** In `src/content/media.ts` `src` setzen und `placeholder: false`. Bis dahin werden schematische Grafiken gezeigt (keine Fotos, keine erfundenen Standorte/Personen).
-- **LKW in der Scroll-Sequenz:** Vektor-Illustration in `journey/Truck.tsx`. Eine freigegebene Seitenansicht (transparente PNG/SVG, ca. 520 Einheiten lang) kann über `<JourneyScene truckAsset={…} />` eingesetzt werden; Räder, Licht und Scheinwerferkegel bleiben animierbar.
+- **Sattelzug in der Scroll-Sequenz:** 40-t-Sattelzug als maßstabsgetreue Vektor-Illustration (1 m = 64 Einheiten, ca. 16,7 m) in `journey/Truck.tsx` – bewusst keinem Hersteller nachempfunden. Eine freigegebene Seitenansicht (transparente PNG/SVG, ca. 1070 × 256 Einheiten) kann über `<JourneyScene truckAsset={…} />` eingesetzt werden; Räder und Lichter bleiben animierbar.
 - **Karte:** Natural Earth 1:10m (Public Domain), projiziert in `src/lib/geo/germany.ts`.
 
 ## Barrierefreiheit & Motion

@@ -24,7 +24,7 @@ export function OperatingModel() {
         <SectionLabel index="02" tone="dark">
           Betriebsmodell
         </SectionLabel>
-        <h2 id="model-title" className="display mt-6 max-w-4xl text-[clamp(2.2rem,6vw,5.75rem)]">
+        <h2 id="model-title" className="h-section mt-6 max-w-4xl">
           So funktioniert JARBOU.
         </h2>
 

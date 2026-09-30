@@ -34,18 +34,18 @@ export function Services() {
   };
 
   return (
-    <section id="leistungen" aria-labelledby="services-title" className="bg-paper py-24 text-ink lg:py-36 defer-render">
+    <section id="leistungen" aria-labelledby="services-title" className="bg-paper py-24 text-ink lg:py-32 defer-render">
       <div className="shell">
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <SectionLabel index="01" tone="dark">
               Leistungen
             </SectionLabel>
-            <h2 id="services-title" className="display mt-6 text-[clamp(2.2rem,6vw,5.75rem)]">
+            <h2 id="services-title" className="h-section mt-6">
               Ein Partner für den gesamten Ablauf.
             </h2>
           </div>
-          <p className="max-w-md self-end text-lg leading-relaxed text-graphite-600 lg:col-span-4 lg:col-start-9">
+          <p className="max-w-md self-end text-base leading-relaxed text-graphite-600 lg:col-span-4 lg:col-start-9">
             Von der Planung bis zur Qualitätskontrolle: Wir übernehmen die operative Verantwortung für Transport, Zustellung und Last Mile.
           </p>
         </div>
