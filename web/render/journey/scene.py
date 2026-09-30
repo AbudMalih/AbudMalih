@@ -141,12 +141,13 @@ def setup_render(cam_name, samples):
     sc.cycles.device = "CPU"
     sc.cycles.samples = samples
     sc.cycles.use_adaptive_sampling = True
-    sc.cycles.adaptive_threshold = 0.03
+    sc.cycles.adaptive_threshold = 0.05
     sc.cycles.use_denoising = True
     sc.cycles.denoiser = "OPENIMAGEDENOISE"
-    sc.cycles.max_bounces = 6
-    sc.cycles.glossy_bounces = 3
-    sc.cycles.transmission_bounces = 4
+    sc.cycles.max_bounces = 5
+    sc.cycles.glossy_bounces = 2
+    sc.cycles.transmission_bounces = 2
+    sc.cycles.transparent_max_bounces = 6
     sc.cycles.diffuse_bounces = 2
     sc.cycles.caustics_reflective = False
     sc.cycles.caustics_refractive = False
