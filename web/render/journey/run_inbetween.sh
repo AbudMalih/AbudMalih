@@ -5,7 +5,7 @@
 cd "$(dirname "$0")"
 OUT=${OUT:-/tmp/journey2}
 mkdir -p $OUT
-for cam in mobile desktop; do
+for cam in ${CAMS:-desktop mobile}; do
   /opt/bl/bin/python render.py --cam $cam --count 239 --frames 1-237:2 --samples ${SAMPLES:-16} \
     --out $OUT/raw/$cam --skip-existing >> $OUT/$cam.log 2>&1
 done
