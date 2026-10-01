@@ -16,7 +16,7 @@ python3 -m venv /opt/bl
 ## Ablauf
 
 ```sh
-# 1. Rendern (gerendert in 1440×810 und 720×1280; ausgeliefert verkleinert auf 1280×720 und 576×1024)
+# 1. Rendern (gerendert in 1440×810 und 720×1280; Desktop in voller Auflösung, Mobil verkleinert auf 576×1024)
 SAMPLES=24 OUT=/tmp/journey ./run_all.sh      # abbrechbar, setzt mit --skip-existing fort
 
 # 2. Fotografische Nachbearbeitung (Bloom, Vignette, Farbe; Korn kommt per CSS)
@@ -24,7 +24,7 @@ SAMPLES=24 OUT=/tmp/journey ./run_all.sh      # abbrechbar, setzt mit --skip-exi
 /opt/bl/bin/python post.py /tmp/journey/raw/mobile  /tmp/journey/post/mobile  --no-grain
 
 # 3. Web-Formate (AVIF + WebP)
-node encode.mjs /tmp/journey/post/desktop ../../public/journey/d 1280x720
+node encode.mjs /tmp/journey2/all/desktop ../../public/journey/d   # 239 Bilder (merge.py)
 node encode.mjs /tmp/journey/post/mobile  ../../public/journey/m 576x1024
 ```
 

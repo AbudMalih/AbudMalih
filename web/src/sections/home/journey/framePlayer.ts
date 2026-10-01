@@ -112,6 +112,7 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
     const w = set.width * s;
     const h = set.height * s;
     ctx.globalAlpha = alpha;
+    ctx.imageSmoothingQuality = "high";
     ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
   };
 
@@ -133,9 +134,10 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
     const b = source(Math.min(FRAME_COUNT - 1, i0 + 1));
     let key: string;
     if (a && b && !settled) {
-      // continuous dissolve across the whole step: neighbouring frames are
-      // close enough (239 frames) that this reads as motion, not a fade
-      const w = Math.round(t * LEVELS) / LEVELS;
+      // short dissolve in the middle of each step only: a sharp frame is on
+      // screen most of the time (no double image on the moving truck)
+      const ramp = Math.min(1, Math.max(0, (t - 0.38) / 0.24));
+      const w = Math.round(ramp * LEVELS) / LEVELS;
       key = `${i0}:${w}`;
       if (key === shownKey) return;
       if (w <= 0) blit(a, 1);

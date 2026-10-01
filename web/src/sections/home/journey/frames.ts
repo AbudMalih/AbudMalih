@@ -13,7 +13,7 @@ export const FILM_END = 88;
 export type FrameSet = { dir: string; width: number; height: number; count: number; still: number };
 
 export const FRAME_SETS: Record<"desktop" | "mobile", FrameSet> = {
-  desktop: { dir: "/journey/d", width: 1280, height: 720, count: 239, still: 120 },
+  desktop: { dir: "/journey/d", width: 1440, height: 810, count: 239, still: 120 },
   mobile: { dir: "/journey/m", width: 576, height: 1024, count: 120, still: 60 },
 };
 
