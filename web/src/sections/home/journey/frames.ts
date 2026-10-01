@@ -14,7 +14,7 @@ export type FrameSet = { dir: string; width: number; height: number; count: numb
 
 export const FRAME_SETS: Record<"desktop" | "mobile", FrameSet> = {
   desktop: { dir: "/journey/d", width: 1440, height: 810, count: 239, still: 120 },
-  mobile: { dir: "/journey/m", width: 576, height: 1024, count: 120, still: 60 },
+  mobile: { dir: "/journey/m", width: 576, height: 1024, count: 239, still: 120 },
 };
 
 export type FrameFormat = "avif" | "webp";
