@@ -18,8 +18,9 @@ export function supportsAvif() {
  *
  * - Download: frames near the playhead first, then progressively (every 8th,
  *   4th, 2nd, all) so the whole story is scrubbable early.
- * - Draw: only when the visible frame changes, one image per change and the
- *   canvas never larger than the frames themselves (cheap on phones).
+ * - Draw: neighbouring frames dissolve while scrolling (quantised, so the
+ *   canvas only redraws when the picture changes), one sharp frame at rest;
+ *   the canvas is never larger than the frames themselves.
  */
 export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, format: FrameFormat = "webp") {
   const ctx = canvas.getContext("2d", { alpha: false });
@@ -97,35 +98,59 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
-      shown = -1; // canvas was cleared
+      shownKey = ""; // canvas was cleared
     }
     schedule();
   };
 
-  const blit = (img: HTMLImageElement) => {
+  const blit = (img: HTMLImageElement, alpha: number) => {
     if (!ctx) return;
     const cw = canvas.width;
     const ch = canvas.height;
     const s = Math.max(cw / set.width, ch / set.height);
     const w = set.width * s;
     const h = set.height * s;
+    ctx.globalAlpha = alpha;
     ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
   };
 
   // Draw only when the visible frame changes – one image per change, no
   // per-tick redraws (keeps the main thread and compositor free).
-  let shown = -1;
-  let shownSource: HTMLImageElement | null = null;
+  // While scrolling, neighbouring frames are dissolved into each other (the
+  // blend weight is quantised so the canvas only redraws when the picture
+  // really changes); once scrolling pauses a single sharp frame is shown.
+  const LEVELS = 8;
+  let shownKey = "";
+  let settled = true;
+  let settleTimer = 0;
   const draw = () => {
     raf = 0;
     if (!ctx) return;
-    const i = Math.round(pos);
-    const img = source(i) ?? nearest(pos);
-    if (!img) return;
-    if (i === shown && img === shownSource) return;
-    blit(img);
-    shown = i;
-    shownSource = img;
+    const i0 = Math.floor(pos);
+    const t = pos - i0;
+    const a = source(i0);
+    const b = source(Math.min(FRAME_COUNT - 1, i0 + 1));
+    let key: string;
+    if (a && b && !settled) {
+      const ramp = Math.min(1, Math.max(0, (t - 0.2) / 0.6));
+      const w = Math.round(ramp * ramp * (3 - 2 * ramp) * LEVELS) / LEVELS;
+      key = `${i0}:${w}`;
+      if (key === shownKey) return;
+      if (w <= 0) blit(a, 1);
+      else if (w >= 1) blit(b, 1);
+      else {
+        blit(a, 1);
+        blit(b, w);
+      }
+    } else {
+      const img = (t < 0.5 ? a : b) ?? nearest(pos);
+      if (!img) return;
+      key = `s:${Math.round(pos)}:${img.src}`;
+      if (key === shownKey) return;
+      blit(img, 1);
+    }
+    ctx.globalAlpha = 1;
+    shownKey = key;
     canvas.dataset.ready = "true";
   };
 
@@ -139,13 +164,19 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
   return {
     seek(f: number) {
       const next = Math.min(FRAME_COUNT - 1, Math.max(0, f));
-      const moved = Math.round(next) !== Math.round(pos);
       pos = next;
-      if (moved) schedule();
+      settled = false;
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        settled = true;
+        schedule();
+      }, 150);
+      schedule();
     },
     dispose() {
       disposed = true;
       cancelAnimationFrame(raf);
+      window.clearTimeout(settleTimer);
       window.removeEventListener("resize", resize);
     },
   };
