@@ -11,8 +11,8 @@ export const FILM_END = 88;
 export type FrameSet = { dir: string; width: number; height: number };
 
 export const FRAME_SETS: Record<"desktop" | "mobile", FrameSet> = {
-  desktop: { dir: "/journey/d", width: 1440, height: 810 },
-  mobile: { dir: "/journey/m", width: 720, height: 1280 },
+  desktop: { dir: "/journey/d", width: 1280, height: 720 },
+  mobile: { dir: "/journey/m", width: 576, height: 1024 },
 };
 
 export type FrameFormat = "avif" | "webp";

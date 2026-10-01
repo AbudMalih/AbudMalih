@@ -16,7 +16,7 @@ python3 -m venv /opt/bl
 ## Ablauf
 
 ```sh
-# 1. Rendern (Desktop 1440×810 und Mobil 720×1280, je 120 Bilder)
+# 1. Rendern (gerendert in 1440×810 und 720×1280; ausgeliefert verkleinert auf 1280×720 und 576×1024)
 SAMPLES=24 OUT=/tmp/journey ./run_all.sh      # abbrechbar, setzt mit --skip-existing fort
 
 # 2. Fotografische Nachbearbeitung (Bloom, Vignette, Farbe; Korn kommt per CSS)
@@ -24,8 +24,8 @@ SAMPLES=24 OUT=/tmp/journey ./run_all.sh      # abbrechbar, setzt mit --skip-exi
 /opt/bl/bin/python post.py /tmp/journey/raw/mobile  /tmp/journey/post/mobile  --no-grain
 
 # 3. Web-Formate (AVIF + WebP)
-node encode.mjs /tmp/journey/post/desktop ../../public/journey/d
-node encode.mjs /tmp/journey/post/mobile  ../../public/journey/m
+node encode.mjs /tmp/journey/post/desktop ../../public/journey/d 1280x720
+node encode.mjs /tmp/journey/post/mobile  ../../public/journey/m 576x1024
 ```
 
 Einzelbilder zur Abstimmung: `stills.py --out /tmp/stills` (vier Motive).
