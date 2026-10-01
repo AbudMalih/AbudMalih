@@ -5,7 +5,7 @@ import { Slashes } from "@/components/brand/Slashes";
 import { StatRow } from "@/components/ui/StatRow";
 import { processSteps } from "@/content/services";
 import { countUp } from "@/motion/countUp";
-import { createFramePlayer, supportsAvif } from "./framePlayer";
+import { createFramePlayer } from "./framePlayer";
 import { FILM_END, FRAME_COUNT, FRAME_SETS, frameSrc, POSTER_FRAME, STILL_FRAME } from "./frames";
 
 /** Beat windows on the 0–100 timeline. */
@@ -41,7 +41,7 @@ export function JourneySequence() {
 
     // GSAP is only needed once the story is near – keep it off the critical path.
     const init = async () => {
-      const [{ gsap }, { ScrollTrigger }, avif] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger"), supportsAvif()]);
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
       if (cancelled) return;
       gsap.registerPlugin(ScrollTrigger);
 
@@ -70,7 +70,9 @@ export function JourneySequence() {
           const { desktop, reduce } = ctx.conditions as { desktop: boolean; reduce: boolean };
           if (reduce) return;
 
-          const player = createFramePlayer(canvas, desktop ? FRAME_SETS.desktop : FRAME_SETS.mobile, avif ? "avif" : "webp");
+          // WebP rather than AVIF for the film: slightly larger, but far cheaper to
+          // decode while scrubbing (AVIF decoding caused stutter on phones).
+          const player = createFramePlayer(canvas, desktop ? FRAME_SETS.desktop : FRAME_SETS.mobile, "webp");
           const film = { frame: 0 };
           player.seek(0);
 
