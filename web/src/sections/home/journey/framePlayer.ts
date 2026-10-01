@@ -14,37 +14,49 @@ export function supportsAvif() {
 
 /**
  * Draws a pre-rendered frame sequence onto a canvas, driven by a fractional
- * frame position. Frames load progressively (every 8th first, then 4th, 2nd,
- * all) so the story is scrubbable early; missing frames fall back to the
- * nearest loaded one and neighbours are cross-faded for smooth motion.
+ * frame position.
+ *
+ * - Download: frames near the playhead first, then progressively (every 8th,
+ *   4th, 2nd, all) so the whole story is scrubbable early.
+ * - Draw: only when the visible frame changes, one image per change and the
+ *   canvas never larger than the frames themselves (cheap on phones).
  */
 export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, format: FrameFormat = "webp") {
   const ctx = canvas.getContext("2d", { alpha: false });
-  const frames: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
+  const images: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
+  const requested = new Set<number>();
   let pos = 0;
   let disposed = false;
   let raf = 0;
 
   const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
   const lean = Boolean(conn?.saveData) || /(^|-)2g|3g/.test(conn?.effectiveType ?? "");
+  const step = lean ? 2 : 1;
 
   // progressive order without duplicates
   const order: number[] = [];
-  const seen = new Set<number>();
-  for (const step of lean ? [8, 4, 2] : [8, 4, 2, 1]) {
-    for (let i = 0; i < FRAME_COUNT; i += step) {
-      if (!seen.has(i)) {
-        seen.add(i);
-        order.push(i);
+  for (const s of lean ? [8, 4, 2] : [8, 4, 2, 1]) {
+    for (let i = 0; i < FRAME_COUNT; i += s) if (!order.includes(i)) order.push(i);
+  }
+  if (!order.includes(FRAME_COUNT - 1)) order.splice(1, 0, FRAME_COUNT - 1);
+
+  /** Next frame to download: anything missing right around the playhead wins. */
+  const pick = () => {
+    const c = Math.round(pos);
+    for (let d = 0; d <= 6; d++) {
+      for (const i of [c + d * step, c - d * step]) {
+        if (i >= 0 && i < FRAME_COUNT && !requested.has(i)) return i;
       }
     }
-  }
-  if (!seen.has(FRAME_COUNT - 1)) order.splice(1, 0, FRAME_COUNT - 1);
+    for (const i of order) if (!requested.has(i)) return i;
+    return -1;
+  };
 
-  let next = 0;
   const pump = () => {
-    if (disposed || next >= order.length) return;
-    const i = order[next++]!;
+    if (disposed) return;
+    const i = pick();
+    if (i < 0) return;
+    requested.add(i);
     const img = new Image();
     img.decoding = "async";
     // never compete with the rest of the page for bandwidth
@@ -54,8 +66,7 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
       .decode()
       .then(() => {
         if (disposed) return;
-        frames[i] = img;
-        // repaint if the new frame is closer to the current position
+        images[i] = img;
         if (Math.abs(i - pos) < 3) schedule();
       })
       .catch(() => {})
@@ -63,12 +74,14 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
   };
   for (let k = 0; k < (lean ? 3 : 6); k++) pump();
 
+  const source = (i: number): HTMLImageElement | null => images[i] ?? null;
+
   const nearest = (f: number) => {
     const c = Math.round(f);
     for (let d = 0; d < FRAME_COUNT; d++) {
-      const a = frames[c - d];
+      const a = source(c - d);
       if (a) return a;
-      const b = frames[c + d];
+      const b = source(c + d);
       if (b) return b;
     }
     return null;
@@ -77,51 +90,42 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
   const resize = () => {
     const r = canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    const w = Math.max(1, Math.round(r.width * dpr));
-    const h = Math.max(1, Math.round(r.height * dpr));
+    // never draw larger than the source frames – no quality gain, only cost
+    const scale = Math.min(dpr, Math.max(set.width / Math.max(1, r.width), set.height / Math.max(1, r.height), 1));
+    const w = Math.max(1, Math.round(r.width * scale));
+    const h = Math.max(1, Math.round(r.height * scale));
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w;
       canvas.height = h;
+      shown = -1; // canvas was cleared
     }
     schedule();
   };
 
-  const blit = (img: HTMLImageElement, alpha: number) => {
+  const blit = (img: HTMLImageElement) => {
     if (!ctx) return;
     const cw = canvas.width;
     const ch = canvas.height;
     const s = Math.max(cw / set.width, ch / set.height);
     const w = set.width * s;
     const h = set.height * s;
-    ctx.globalAlpha = alpha;
     ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
   };
 
-  // Blend only through the middle of a step (short dissolve) and show a
-  // clean frame once scrolling pauses – never a static double exposure.
-  let settled = true;
-  let settleTimer = 0;
+  // Draw only when the visible frame changes – one image per change, no
+  // per-tick redraws (keeps the main thread and compositor free).
+  let shown = -1;
+  let shownSource: HTMLImageElement | null = null;
   const draw = () => {
     raf = 0;
     if (!ctx) return;
-    const i0 = Math.floor(pos);
-    const t = pos - i0;
-    const a = frames[i0];
-    const b = frames[Math.min(FRAME_COUNT - 1, i0 + 1)];
-    if (a && b) {
-      const w = settled ? (t < 0.5 ? 0 : 1) : Math.min(1, Math.max(0, (t - 0.35) / 0.3));
-      if (w <= 0.001) blit(a, 1);
-      else if (w >= 0.999) blit(b, 1);
-      else {
-        blit(a, 1);
-        blit(b, w * w * (3 - 2 * w));
-      }
-    } else {
-      const n = nearest(pos);
-      if (!n) return;
-      blit(n, 1);
-    }
-    ctx.globalAlpha = 1;
+    const i = Math.round(pos);
+    const img = source(i) ?? nearest(pos);
+    if (!img) return;
+    if (i === shown && img === shownSource) return;
+    blit(img);
+    shown = i;
+    shownSource = img;
     canvas.dataset.ready = "true";
   };
 
@@ -134,19 +138,14 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
 
   return {
     seek(f: number) {
-      pos = Math.min(FRAME_COUNT - 1, Math.max(0, f));
-      settled = false;
-      window.clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(() => {
-        settled = true;
-        schedule();
-      }, 140);
-      schedule();
+      const next = Math.min(FRAME_COUNT - 1, Math.max(0, f));
+      const moved = Math.round(next) !== Math.round(pos);
+      pos = next;
+      if (moved) schedule();
     },
     dispose() {
       disposed = true;
       cancelAnimationFrame(raf);
-      window.clearTimeout(settleTimer);
       window.removeEventListener("resize", resize);
     },
   };

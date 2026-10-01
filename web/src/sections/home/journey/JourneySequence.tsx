@@ -84,7 +84,7 @@ export function JourneySequence() {
               trigger: q<HTMLElement>("[data-track]"),
               start: "top top",
               end: "bottom bottom",
-              scrub: 0.6,
+              scrub: 0.3,
               invalidateOnRefresh: true,
             },
           });

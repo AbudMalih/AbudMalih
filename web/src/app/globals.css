@@ -187,11 +187,11 @@
 
 /* Film grain over the pre-rendered journey (kept out of the frames so they compress well) */
 .film-grain {
+  /* transparent noise, normal blending: composited on the GPU, no repaints */
   background-image: url("/journey-grain.png");
   background-size: 128px 128px;
-  mix-blend-mode: overlay;
-  opacity: 0.22;
   inset: -80px;
+  will-change: transform;
   animation: grain 0.5s steps(4) infinite;
 }
 @keyframes grain {
