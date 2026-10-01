@@ -3,25 +3,24 @@
  * Source scene: /render/journey (Blender, path-traced). Regenerate with
  * `render/journey/run_all.sh`, `post.py` and `encode.mjs` (see README there).
  */
-export const FRAME_COUNT = 120;
-
 /** Scroll timeline span (0–100) covered by the film; the finale wipe follows. */
 export const FILM_END = 88;
 
-export type FrameSet = { dir: string; width: number; height: number };
+/**
+ * `count` frames per set; `still` is the reduced-motion image (the full
+ * Sattelzug on the Autobahn), frame 0 doubles as the opening poster.
+ */
+export type FrameSet = { dir: string; width: number; height: number; count: number; still: number };
 
 export const FRAME_SETS: Record<"desktop" | "mobile", FrameSet> = {
-  desktop: { dir: "/journey/d", width: 1280, height: 720 },
-  mobile: { dir: "/journey/m", width: 576, height: 1024 },
+  desktop: { dir: "/journey/d", width: 1280, height: 720, count: 239, still: 120 },
+  mobile: { dir: "/journey/m", width: 576, height: 1024, count: 120, still: 60 },
 };
 
 export type FrameFormat = "avif" | "webp";
 
 export const frameSrc = (set: FrameSet, i: number, format: FrameFormat = "webp") =>
   `${set.dir}/${String(i).padStart(3, "0")}.${format}`;
-
-/** Still used for reduced motion: the full Sattelzug on the Autobahn. */
-export const STILL_FRAME = 60;
 
 /** Opening frame shown until the film has loaded. */
 export const POSTER_FRAME = 0;

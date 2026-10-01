@@ -1,4 +1,4 @@
-import { AVIF_PROBE, FRAME_COUNT, frameSrc, type FrameFormat, type FrameSet } from "./frames";
+import { AVIF_PROBE, frameSrc, type FrameFormat, type FrameSet } from "./frames";
 
 let avif: Promise<boolean> | null = null;
 /** Resolves once whether the browser decodes AVIF (cached). */
@@ -24,6 +24,7 @@ export function supportsAvif() {
  */
 export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, format: FrameFormat = "webp") {
   const ctx = canvas.getContext("2d", { alpha: false });
+  const FRAME_COUNT = set.count;
   const images: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
   const requested = new Set<number>();
   let pos = 0;
@@ -119,7 +120,7 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
   // While scrolling, neighbouring frames are dissolved into each other (the
   // blend weight is quantised so the canvas only redraws when the picture
   // really changes); once scrolling pauses a single sharp frame is shown.
-  const LEVELS = 8;
+  const LEVELS = 16;
   let shownKey = "";
   let settled = true;
   let settleTimer = 0;
@@ -132,8 +133,9 @@ export function createFramePlayer(canvas: HTMLCanvasElement, set: FrameSet, form
     const b = source(Math.min(FRAME_COUNT - 1, i0 + 1));
     let key: string;
     if (a && b && !settled) {
-      const ramp = Math.min(1, Math.max(0, (t - 0.2) / 0.6));
-      const w = Math.round(ramp * ramp * (3 - 2 * ramp) * LEVELS) / LEVELS;
+      // continuous dissolve across the whole step: neighbouring frames are
+      // close enough (239 frames) that this reads as motion, not a fade
+      const w = Math.round(t * LEVELS) / LEVELS;
       key = `${i0}:${w}`;
       if (key === shownKey) return;
       if (w <= 0) blit(a, 1);

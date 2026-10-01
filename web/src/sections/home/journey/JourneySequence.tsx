@@ -6,7 +6,7 @@ import { StatRow } from "@/components/ui/StatRow";
 import { processSteps } from "@/content/services";
 import { countUp } from "@/motion/countUp";
 import { createFramePlayer } from "./framePlayer";
-import { FILM_END, FRAME_COUNT, FRAME_SETS, frameSrc, POSTER_FRAME, STILL_FRAME } from "./frames";
+import { FILM_END, FRAME_SETS, frameSrc, POSTER_FRAME } from "./frames";
 
 /** Beat windows on the 0–100 timeline. */
 const BEATS: [number, number][] = [
@@ -72,7 +72,8 @@ export function JourneySequence() {
 
           // WebP rather than AVIF for the film: slightly larger, but far cheaper to
           // decode while scrubbing (AVIF decoding caused stutter on phones).
-          const player = createFramePlayer(canvas, desktop ? FRAME_SETS.desktop : FRAME_SETS.mobile, "webp");
+          const set = desktop ? FRAME_SETS.desktop : FRAME_SETS.mobile;
+          const player = createFramePlayer(canvas, set, "webp");
           const film = { frame: 0 };
           player.seek(0);
 
@@ -92,7 +93,7 @@ export function JourneySequence() {
           });
 
           // The film: warehouse, door, pull-out, Autobahn, braking into the hub.
-          tl.to(film, { frame: FRAME_COUNT - 1, duration: FILM_END, onUpdate: () => player.seek(film.frame) }, 0);
+          tl.to(film, { frame: set.count - 1, duration: FILM_END, onUpdate: () => player.seek(film.frame) }, 0);
 
           // Beats
           const beats = qa<HTMLElement>("[data-beat]");
@@ -169,11 +170,11 @@ export function JourneySequence() {
             <img src={frameSrc(FRAME_SETS.mobile, POSTER_FRAME)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
           </picture>
           <picture className="absolute inset-0 hidden motion-reduce:block">
-            <source media={DESKTOP} type="image/avif" srcSet={frameSrc(FRAME_SETS.desktop, STILL_FRAME, "avif")} />
-            <source media={DESKTOP} srcSet={frameSrc(FRAME_SETS.desktop, STILL_FRAME)} />
-            <source type="image/avif" srcSet={frameSrc(FRAME_SETS.mobile, STILL_FRAME, "avif")} />
+            <source media={DESKTOP} type="image/avif" srcSet={frameSrc(FRAME_SETS.desktop, FRAME_SETS.desktop.still, "avif")} />
+            <source media={DESKTOP} srcSet={frameSrc(FRAME_SETS.desktop, FRAME_SETS.desktop.still)} />
+            <source type="image/avif" srcSet={frameSrc(FRAME_SETS.mobile, FRAME_SETS.mobile.still, "avif")} />
             <img
-              src={frameSrc(FRAME_SETS.mobile, STILL_FRAME)}
+              src={frameSrc(FRAME_SETS.mobile, FRAME_SETS.mobile.still)}
               alt="Ein JARBOU-Sattelzug fährt in der Abenddämmerung über die Autobahn."
               loading="lazy"
               decoding="async"
