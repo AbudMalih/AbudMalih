@@ -181,3 +181,95 @@
 :global(html[lang="ar"]) .title {
   font-size: clamp(3rem, min(11.5vw, 17.5svh), 13rem);
 }
+
+/* The red period: origin of the trade route */
+.period {
+  color: var(--luna-red);
+}
+.signal {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  visibility: hidden;
+}
+.signalSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.signalPath {
+  fill: none;
+  stroke: var(--luna-red);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-dasharray: 0 2;
+  vector-effect: non-scaling-stroke;
+}
+.signalPoint,
+.signalRing,
+.signalCross,
+.signalPulse {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  will-change: transform;
+}
+.signalPoint {
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--luna-red);
+}
+.signalRing {
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 1px solid var(--luna-red);
+}
+.signalPulse {
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 1px solid var(--luna-red);
+  transform: translate3d(var(--px), var(--py), 0) scale(var(--ps, 1));
+}
+.signal[data-pulse] .signalPulse {
+  animation: signalPulse 2.6s var(--ease-out) infinite;
+}
+@keyframes signalPulse {
+  0% { opacity: 0.4; scale: 1; }
+  80%, 100% { opacity: 0; scale: 2; }
+}
+/* coordinate crosshair: four hairline ticks around a gap */
+.signalCross {
+  --gap: 9px;
+  width: 0;
+  height: 0;
+}
+.signalCross i {
+  position: absolute;
+  background: var(--graphite-200);
+}
+.signalCross i:nth-child(1),
+.signalCross i:nth-child(2) {
+  top: -0.5px;
+  width: 9px;
+  height: 1px;
+}
+.signalCross i:nth-child(1) { right: var(--gap); }
+.signalCross i:nth-child(2) { left: var(--gap); }
+.signalCross i:nth-child(3),
+.signalCross i:nth-child(4) {
+  left: -0.5px;
+  width: 1px;
+  height: 9px;
+}
+.signalCross i:nth-child(3) { bottom: var(--gap); }
+.signalCross i:nth-child(4) { top: var(--gap); }

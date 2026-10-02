@@ -8,6 +8,7 @@ import { stage } from "@/lib/stage/store";
 import { onFrame, damp, markReady } from "@/lib/stage/ticker";
 import { COMPANY } from "@/content/site";
 import { isCine } from "@/lib/motion/env";
+import { globeAnchor } from "@/lib/globe/shared";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./GlobeLayer.module.css";
 
@@ -61,6 +62,13 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       const [olon, olat] = ROUTE_WAYPOINTS[0];
       const o = globe.project(olon, olat);
       place(originRef.current, o.x, o.y, vis && o.front && f.route > 0.002);
+      if (mode === "fixed") {
+        const r = wrap.getBoundingClientRect();
+        globeAnchor.x = r.left + o.x;
+        globeAnchor.y = r.top + o.y;
+        globeAnchor.front = o.front;
+        globeAnchor.ready = true;
+      }
       const hd = globe.routeHead();
       const hp = globe.project(hd.lon, hd.lat);
       place(headRef.current, hp.x, hp.y, vis && hp.front && f.route > 0.01 && f.route < 0.95 && f.labels > 0.5);

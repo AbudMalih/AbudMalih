@@ -65,14 +65,14 @@ void main() {
   vec3 col = base * (0.03 + 1.05 * diff);
 
   float lit = smoothstep(-0.05, 0.25, dot(N, L));
-  float specO = pow(max(dot(N, H), 0.0), 260.0) * (1.0 - land) * 0.22;
-  float specL = pow(max(dot(Np, H), 0.0), 24.0) * land * 0.05;
+  float specO = pow(max(dot(N, H), 0.0), 260.0) * (1.0 - land) * 0.25;
+  float specL = pow(max(dot(Np, H), 0.0), 24.0) * land * 0.056;
   col += vec3(0.80, 0.81, 0.84) * (specO + specL) * lit;
 
   col += vec3(0.55, 0.56, 0.6) * coast * 0.11 * (0.2 + diff);
 
   float fr = pow(1.0 - max(dot(N, V), 0.0), 3.2);
-  col += vec3(0.52, 0.53, 0.57) * fr * (0.05 + 0.55 * smoothstep(-0.35, 0.7, dot(N, L)));
+  col += vec3(0.52, 0.53, 0.57) * fr * (0.056 + 0.62 * smoothstep(-0.35, 0.7, dot(N, L)));
 
   // 15° graticule — barely there, a sense of measurement rather than a HUD
   vec2 g = vec2(vUv.x * 24.0, vUv.y * 12.0);
@@ -105,7 +105,7 @@ void main() {
   // visible annulus spans rim ≈ 0.71 (globe edge) → 1.0 (halo edge)
   float a = pow(clamp((1.0 - rim) / 0.29, 0.0, 1.0), 2.4);
   float side = 0.35 + 0.65 * smoothstep(-0.6, 0.8, dot(normalize(vN), normalize(uLight)));
-  gl_FragColor = vec4(vec3(0.62, 0.63, 0.67) * a * side * 0.42 * uReveal, 1.0);
+  gl_FragColor = vec4(vec3(0.62, 0.63, 0.67) * a * side * 0.48 * uReveal, 1.0);
 }`;
 
 export type GlobeFrame = {
