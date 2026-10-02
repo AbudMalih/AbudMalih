@@ -22,7 +22,7 @@ export default async function Page({ params }: P) {
         id="luviscent"
         style={{
           padding: "clamp(32px,6vw,80px)",
-          background: "radial-gradient(110% 80% at 22% 105%, #333a24, transparent 70%), linear-gradient(180deg,#0c130e,#070b08)",
+          background: "radial-gradient(110% 80% at 22% 105%, #17372d, transparent 70%), linear-gradient(180deg,#091a15,#05110d)",
           maxWidth: 1100,
         }}
       >

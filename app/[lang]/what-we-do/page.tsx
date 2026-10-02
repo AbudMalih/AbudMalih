@@ -27,10 +27,10 @@ export default async function Page({ params }: P) {
         ))}
       </ol>
       <h2>
-        {d.chain.commerce.h1} {d.chain.commerce.h2}
+        {d.commerce.h1} {d.commerce.h2}
       </h2>
-      <p>{d.chain.commerce.endpoints.join(" · ")}</p>
-      <p>{d.chain.commerce.support}</p>
+      <p>{d.commerce.body}</p>
+      <p>{d.commerce.destinations.join(" · ")}</p>
     </PageShell>
   );
 }

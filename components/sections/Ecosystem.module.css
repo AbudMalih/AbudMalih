@@ -8,45 +8,43 @@
   inset-inline-start: var(--margin);
   top: var(--safe-top);
 }
-.h {
+.headBlock {
   position: absolute;
   inset-inline-start: var(--margin);
   top: calc(var(--safe-top) + 40px);
-  font-size: clamp(1.8rem, 3.6vw, 4rem);
   z-index: 2;
+}
+.h {
+  font-size: clamp(1.8rem, 3.4vw, 3.8rem);
+}
+.caption {
+  margin-top: clamp(10px, 1.6vh, 18px);
+  max-width: 22em;
+  color: var(--graphite-200);
 }
 .svg {
   position: absolute;
-  left: var(--eco-x, 57%);
-  top: 55%;
-  width: min(104vh, 88vw);
+  left: var(--eco-x, 58%);
+  top: 54%;
+  width: min(100vh, 82vw);
   height: auto;
   transform: translate(-50%, -50%);
   overflow: visible;
 }
-.ticks line {
-  stroke: var(--graphite-600);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-.ticks .major {
-  stroke: var(--graphite-300);
-}
 .ring {
   fill: none;
-  stroke: var(--graphite-400);
+  stroke: var(--graphite-600);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 .inner {
   fill: none;
-  stroke: var(--graphite-700);
+  stroke: var(--graphite-750);
   stroke-width: 1;
-  stroke-dasharray: 2 6;
   vector-effect: non-scaling-stroke;
 }
 .spoke {
-  stroke: var(--graphite-500);
+  stroke: var(--graphite-600);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
   transition: stroke var(--dur-2);
@@ -54,75 +52,77 @@
 .spokeOn {
   stroke: var(--paper);
 }
+.chain {
+  fill: none;
+  stroke: var(--luna-red);
+  stroke-width: 3;
+  stroke-linecap: square;
+}
+.pulse {
+  fill: var(--paper);
+  opacity: 0;
+}
 .node {
   cursor: pointer;
   outline: none;
-  transition: opacity var(--dur-2);
+}
+.node .dot,
+.node .label {
+  transition: opacity var(--dur-2), fill var(--dur-2), stroke var(--dur-2);
 }
 .hit {
   fill: transparent;
 }
-.sq {
+.dot {
   fill: var(--ink-950);
   stroke: var(--paper);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-  transition: fill var(--dur-2), transform var(--dur-2);
-}
-.leader {
-  stroke: var(--graphite-400);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+  stroke-width: 2.5;
+  transition: fill var(--dur-2), stroke var(--dur-2);
 }
 .label {
   fill: var(--paper);
   font-family: var(--font-sans);
-  font-size: 21px;
+  font-size: 24px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
 .num {
-  fill: var(--graphite-300);
-  font-family: var(--font-mono);
+  fill: var(--graphite-400);
+  font-family: var(--font-data);
   font-size: 14px;
   font-weight: 400;
-}
-.dim {
-  opacity: 0.32;
+  letter-spacing: 0.16em;
 }
 .numMobile {
   display: none;
   fill: var(--graphite-200);
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-size: 30px;
 }
-.on .sq,
-.node:focus-visible .sq {
+.dim .dot,
+.dim .label {
+  opacity: 0.3;
+}
+.on .dot,
+.node:focus-visible .dot {
   fill: var(--luna-red);
   stroke: var(--luna-red);
 }
 .node:focus-visible .label {
   text-decoration: underline;
 }
-.brandArc {
-  fill: none;
-  stroke: var(--graphite-500);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-.arcLabel {
-  fill: var(--graphite-300);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.2em;
-}
 .brandLink {
   stroke: var(--luna-red);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
+  stroke-width: 2;
 }
 .brandSq {
   fill: var(--luna-red);
+}
+.arcLabel {
+  fill: var(--graphite-300);
+  font-family: var(--font-data);
+  font-size: 13px;
+  letter-spacing: 0.22em;
 }
 .brand image {
   transition: opacity var(--dur-2);
@@ -136,9 +136,9 @@
 }
 .originLabel {
   fill: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.24em;
+  font-family: var(--font-data);
+  font-size: 15px;
+  letter-spacing: 0.26em;
 }
 .legend {
   position: absolute;
@@ -163,11 +163,12 @@
     linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
 }
 .lgSq {
-  border: 1px solid var(--paper);
+  border-radius: 50%;
+  border: 1.5px solid var(--paper);
 }
 .lgRed {
   width: 18px;
-  height: 1.5px;
+  height: 2px;
   background: var(--luna-red);
 }
 .list {
@@ -177,8 +178,23 @@
   color: var(--paper);
 }
 
+:global([dir="rtl"]) .svg {
+  --eco-x: 42%;
+}
+:global(html[lang="ar"]) .label {
+  font-family: var(--font-arabic);
+  font-size: 26px;
+  letter-spacing: 0;
+}
+:global(html[lang="ar"]) .arcLabel,
+:global(html[lang="ar"]) .originLabel {
+  font-family: var(--font-arabic);
+  font-size: 17px;
+  letter-spacing: 0;
+}
+
 :global(html:not(.cine)) .tag,
-:global(html:not(.cine)) .h,
+:global(html:not(.cine)) .headBlock,
 :global(html:not(.cine)) .svg,
 :global(html:not(.cine)) .legend {
   position: relative;
@@ -194,14 +210,18 @@
 
 @media (max-width: 860px) {
   .svg {
+    left: 50%;
     top: 50%;
-    width: 160vw;
+    width: 150vw;
     max-width: none;
   }
-  .label {
+  :global([dir="rtl"]) .svg {
+    --eco-x: 50%;
+  }
+  .caption {
     display: none;
   }
-  .leader {
+  .label {
     display: none;
   }
   .numMobile {
@@ -227,25 +247,5 @@
   }
   .legend {
     bottom: 22px;
-  }
-}
-
-:global([dir="rtl"]) .svg {
-  --eco-x: 43%;
-}
-:global(html[lang="ar"]) .label {
-  font-family: var(--font-arabic);
-  font-size: 24px;
-  letter-spacing: 0;
-}
-:global(html[lang="ar"]) .arcLabel,
-:global(html[lang="ar"]) .originLabel {
-  font-family: var(--font-arabic);
-  font-size: 16px;
-  letter-spacing: 0;
-}
-@media (max-width: 860px) {
-  :global([dir="rtl"]) .svg {
-    --eco-x: 50%;
   }
 }

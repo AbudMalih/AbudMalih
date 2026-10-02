@@ -1,0 +1,313 @@
+/* Light chapter: ink on warm off-white / silver (see Atmosphere "light") */
+.stage {
+  color: var(--ink-950);
+}
+.wrap {
+  position: relative;
+  height: 100%;
+  min-height: inherit;
+  padding: 0 var(--margin);
+}
+.tag {
+  position: absolute;
+  inset-inline-start: var(--margin);
+  top: var(--safe-top);
+  color: var(--ink-950);
+}
+.tag :global([data-tag-rule]) {
+  background: var(--luna-red);
+}
+.head {
+  position: absolute;
+  inset-inline-start: var(--margin);
+  top: calc(var(--safe-top) + 34px);
+  font-size: clamp(2.1rem, min(5vw, 9svh), 6rem);
+  color: var(--ink-950);
+}
+.dim {
+  color: #7d7e83;
+}
+
+.route {
+  position: absolute;
+  inset-inline: 4.5%;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--luna-red);
+  transform-origin: left;
+}
+:global([dir="rtl"]) .route {
+  transform-origin: right;
+}
+
+.diagram {
+  position: absolute;
+  inset-inline: 4.5%;
+  top: calc(50% - 16vh);
+  height: 32vh;
+}
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+:global([dir="rtl"]) .svg {
+  transform: scaleX(-1);
+}
+.branch {
+  fill: none;
+  stroke: #9a9ba0;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.converge {
+  fill: none;
+  stroke: var(--lv-champagne);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.carton {
+  position: absolute;
+  top: 50%;
+  width: clamp(44px, 4.4vw, 68px);
+  translate: -50% -50%;
+}
+:global([dir="rtl"]) .carton {
+  translate: 50% -50%;
+}
+.cartonSvg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.cartonSvg path {
+  fill: #f6f5f2;
+  stroke: var(--ink-950);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.cartonSvg .tape {
+  fill: none;
+  stroke: var(--luna-red);
+  stroke-width: 2;
+}
+.originLabel,
+.platformLabel {
+  position: absolute;
+  color: #6b6c71;
+  white-space: nowrap;
+}
+.originLabel {
+  top: calc(50% + clamp(34px, 3.4vw, 50px));
+  translate: -50% 0;
+}
+:global([dir="rtl"]) .originLabel {
+  translate: 50% 0;
+}
+.platformLabel {
+  top: 0;
+  transform: translateY(-160%);
+}
+.trunk {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--luna-red);
+  transform-origin: left;
+}
+:global([dir="rtl"]) .trunk {
+  transform-origin: right;
+}
+.layer {
+  position: absolute;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--ink-950) 16%, var(--ink-950) 84%, transparent);
+  transform-origin: 50% 50%;
+}
+.layer:nth-of-type(odd) {
+  opacity: 0.45;
+}
+.dest {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  translate: 0 -50%;
+}
+.destSq {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-inline-start: -5px;
+  background: var(--ink-950);
+}
+.destText {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: clamp(1rem, 1.35vw, 1.4rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ink-950);
+  white-space: nowrap;
+}
+.destIdx {
+  color: #8d8e93;
+  font-size: 10px;
+  font-weight: 400;
+}
+.packet {
+  position: absolute;
+  width: 12px;
+  height: 3px;
+  margin-top: -1.5px;
+  margin-inline-start: -6px;
+  background: var(--luna-red);
+  opacity: 0;
+}
+.node {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
+  margin-inline-start: -13px;
+  border: 1px solid var(--lv-champagne);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.node i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lv-champagne);
+}
+.nodeLabel {
+  position: absolute;
+  top: calc(50% + 28px);
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #6b6c71;
+  white-space: nowrap;
+}
+:global([dir="rtl"]) .nodeLabel {
+  translate: 50% 0;
+}
+.nodeName {
+  font-weight: 300;
+  letter-spacing: 0.24em;
+  font-size: 0.95rem;
+  color: var(--ink-950);
+}
+.band {
+  position: absolute;
+  top: calc(100% + clamp(28px, 6vh, 64px));
+  width: 36%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+.bandTrack {
+  display: flex;
+  gap: 2.4em;
+  width: max-content;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #6b6c71;
+}
+.bandTrack span::before {
+  content: "+";
+  color: var(--luna-red);
+  margin-inline-end: 1.2em;
+}
+.horizon {
+  position: absolute;
+  inset-inline: 4.5%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(200, 144, 79, 0.5) 0%, var(--lv-champagne) 22%, var(--lv-champagne-soft) 50%, var(--lv-champagne) 78%, rgba(205, 182, 138, 0.35) 100%);
+  transform-origin: 50% 50%;
+  transform: scaleX(0);
+}
+.copy {
+  position: absolute;
+  inset-inline: var(--margin);
+  bottom: clamp(28px, 7vh, 80px);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: end;
+}
+.secondary {
+  grid-column: 1 / span 6;
+  font-size: clamp(1.6rem, 3vw, 3.2rem);
+  color: var(--ink-950);
+}
+.body {
+  grid-column: 8 / span 5;
+  color: #4a4b50;
+}
+.staticList {
+  display: none;
+}
+
+/* static / reduced motion */
+:global(html:not(.cine)) .wrap {
+  background: #efede8;
+  padding-block: var(--s-9);
+}
+:global(html:not(.cine)) .tag,
+:global(html:not(.cine)) .head,
+:global(html:not(.cine)) .copy {
+  position: relative;
+  inset: auto;
+  margin-bottom: var(--s-6);
+}
+:global(html:not(.cine)) .staticList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-6);
+  font-weight: 600;
+}
+
+@media (max-width: 767px) {
+  .diagram,
+  .route,
+  .horizon {
+    inset-inline: 6%;
+  }
+  .diagram {
+    top: calc(50% - 14vh);
+    height: 28vh;
+  }
+  .destText {
+    font-size: 0.8rem;
+    white-space: normal;
+    max-width: 24vw;
+    line-height: 1.15;
+  }
+  .destIdx {
+    display: none;
+  }
+  .band {
+    width: 70%;
+    inset-inline-start: 10% !important;
+  }
+  .secondary,
+  .body {
+    grid-column: 1 / -1;
+  }
+  .body {
+    margin-top: var(--s-3);
+    font-size: 0.95rem;
+  }
+}

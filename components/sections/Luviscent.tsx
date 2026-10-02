@@ -34,24 +34,23 @@ function Content() {
   useChapterTimeline(
     scope,
     (tl, q) => {
-      tl.fromTo(scope.current, { "--shift": 0 }, { "--shift": 1, duration: 0.22, ease: "power2.inOut" }, 0.08)
-        .fromTo(q("[data-glow]"), { opacity: 0, scaleX: 0.3 }, { opacity: 1, scaleX: 1, duration: 0.24, ease: "power2.out" }, 0.06)
-        .fromTo(q("[data-media-slot]"), { clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0% 0 0 0)", duration: 0.24, ease: "power2.out" }, 0.22)
-        .fromTo(q("[data-key]"), { yPercent: 30, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.32 }, 0.24)
-        .fromTo(q("[data-mist]"), { xPercent: -8 }, { xPercent: 10, duration: 0.6 }, 0.22)
-        .fromTo(q("[data-mist2]"), { xPercent: 8 }, { xPercent: -12, duration: 0.6 }, 0.22)
-        .fromTo(q("[data-owner]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06 }, 0.32)
-        .fromTo(q("[data-logo]"), { clipPath: "inset(0 50% 0 50%)", opacity: 0.4 }, { clipPath: "inset(0 0% 0 0%)", opacity: 1, duration: 0.16, ease: "power2.inOut" }, 0.34)
-        .fromTo(q("[data-claim]"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.08 }, 0.45)
-        .fromTo(q("[data-body], [data-cta]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.07, stagger: 0.03 }, 0.5)
-        .fromTo(q("[data-statement] > *"), { opacity: 0 }, { opacity: 1, duration: 0.06, stagger: 0.04 }, 0.55)
+      tl.fromTo(scope.current, { "--shift": 0 }, { "--shift": 1, duration: 0.2, ease: "power2.inOut" }, 0.02)
+        .fromTo(q("[data-glow]"), { opacity: 0, scaleX: 0.3 }, { opacity: 1, scaleX: 1, duration: 0.2, ease: "power2.out" }, 0)
+        .fromTo(q("[data-media-slot]"), { clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0% 0 0 0)", duration: 0.22, ease: "power2.out" }, 0.12)
+        .fromTo(q("[data-key]"), { yPercent: 30, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.3 }, 0.14)
+        .fromTo(q("[data-mist]"), { xPercent: -8 }, { xPercent: 10, duration: 0.8 }, 0.1)
+        .fromTo(q("[data-mist2]"), { xPercent: 8 }, { xPercent: -12, duration: 0.8 }, 0.1)
+        .fromTo(q("[data-owner]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06 }, 0.2)
+        .fromTo(q("[data-logo]"), { clipPath: "inset(0 50% 0 50%)", opacity: 0.4 }, { clipPath: "inset(0 0% 0 0%)", opacity: 1, duration: 0.16, ease: "power2.inOut" }, 0.22)
+        .fromTo(q("[data-claim]"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.08 }, 0.34)
+        .fromTo(q("[data-body], [data-cta]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.07, stagger: 0.03 }, 0.4)
         // exit: the world recedes, the horizon cools back to Luna red
-        .to(q("[data-owner], [data-logo], [data-claim], [data-body], [data-cta], [data-statement]"), { opacity: 0, duration: 0.07 }, 0.8)
-        .to(q("[data-media-slot]"), { clipPath: "inset(100% 0 0 0)", duration: 0.1, ease: "power2.in" }, 0.8)
-        .to(q("[data-glow]"), { opacity: 0, duration: 0.08 }, 0.82)
-        .to(scope.current, { "--shift": 0, duration: 0.12, ease: "power2.inOut" }, 0.84)
-        .fromTo(q("[data-red]"), { opacity: 0 }, { opacity: 1, duration: 0.08 }, 0.9)
-        .to(q("[data-horizon]"), { opacity: 0, duration: 0.05 }, 0.95);
+        .to(q("[data-owner], [data-logo], [data-claim], [data-body], [data-cta]"), { opacity: 0, duration: 0.07 }, 0.72)
+        .to(q("[data-media-slot]"), { clipPath: "inset(100% 0 0 0)", duration: 0.1, ease: "power2.in" }, 0.72)
+        .to(q("[data-glow]"), { opacity: 0, duration: 0.08 }, 0.76)
+        .to(scope.current, { "--shift": 0, duration: 0.12, ease: "power2.inOut" }, 0.78)
+        .fromTo(q("[data-red]"), { opacity: 0 }, { opacity: 1, duration: 0.08 }, 0.84)
+        .fromTo(q("[data-horizon]"), { opacity: 1 }, { opacity: 0, duration: 0.06 }, 0.92);
     },
     [locale]
   );
@@ -68,12 +67,12 @@ function Content() {
 
       <div className={s.copy}>
         <p className={`t-label ${s.owner}`} data-owner>
-          06 &nbsp;·&nbsp; {t.owner}
+          07 &nbsp;·&nbsp; {t.owner}
         </p>
         <h2 className={s.logo} data-logo>
           <LuviscentLogo />
         </h2>
-        <p className={`t-serif ${s.claim}`} data-claim lang="de" dir="ltr">
+        <p className={s.claim} data-claim lang="de" dir="ltr">
           {brand.claim}
         </p>
         <p className={s.body} data-body>
@@ -87,10 +86,6 @@ function Content() {
         </div>
       </div>
 
-      <div className={`t-label ${s.statement}`} data-statement>
-        <span>{t.statement[0]}</span>
-        <span>{t.statement[1]}</span>
-      </div>
       <Link href={href("/brands")} className="sr-only">
         {t.allBrands}
       </Link>

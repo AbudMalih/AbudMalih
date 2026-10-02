@@ -4,6 +4,7 @@ import Transport from "@/components/sections/Transport";
 import Warehouse from "@/components/sections/Warehouse";
 import BrandShift from "@/components/sections/BrandShift";
 import Chain from "@/components/sections/Chain";
+import Commerce from "@/components/sections/Commerce";
 import Luviscent from "@/components/sections/Luviscent";
 import Ecosystem from "@/components/sections/Ecosystem";
 import Closing from "@/components/sections/Closing";
@@ -17,7 +18,7 @@ import WorldLayer from "@/components/stage/WorldLayer";
 /**
  * HOME — one continuous story:
  * WORLD → TRADE → FREIGHT → TRANSPORT → WAREHOUSE → PRODUCT → BRAND →
- * LUVISCENT → ECOSYSTEM → WORLD
+ * E-COMMERCE → LUVISCENT → ECOSYSTEM → WORLD
  *
  * Fixed render layers (Atmosphere, Globe, World) sit behind chapter stages.
  * Three.js code for both layers is split into separate async chunks.
@@ -36,6 +37,7 @@ export default function HomePage() {
       <Warehouse />
       <BrandShift />
       <Chain />
+      <Commerce />
       <Luviscent />
       <Ecosystem />
       <Closing />

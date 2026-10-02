@@ -93,3 +93,9 @@
 :global([dir="rtl"]) .tick:focus-visible .label {
   transform: translate(0, -50%);
 }
+
+:global(html[data-tone="light"]) .rail {
+  --hairline: rgba(11, 11, 13, 0.18);
+  --paper: #0b0b0d;
+  --graphite-500: #a5a6aa;
+}

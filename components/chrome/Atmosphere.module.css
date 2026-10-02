@@ -7,36 +7,46 @@
   pointer-events: none;
   overflow: hidden;
 }
+.graphite,
+.light,
 .forest,
-.amber,
 .key,
-.haze {
+.haze,
+.dawn {
   position: absolute;
   opacity: 0;
 }
-/* deep forest with warm olive undertones: no emerald, no neon */
+/* graphite: brushed, lit from above */
+.graphite {
+  inset: 0;
+  background:
+    radial-gradient(90% 60% at 50% -10%, rgba(120, 122, 128, 0.16), transparent 70%),
+    linear-gradient(180deg, #17181b 0%, #111214 60%, #0d0e10 100%);
+}
+/* the light digital-commerce environment: warm off-white, soft silver */
+.light {
+  inset: 0;
+  background:
+    radial-gradient(70% 60% at 30% 40%, #f7f6f2 0%, transparent 70%),
+    radial-gradient(80% 70% at 85% 80%, #dfe0e2 0%, transparent 75%),
+    linear-gradient(180deg, #f1efea 0%, #e9e8e5 55%, #e1e2e3 100%);
+}
+/* LUVISCENT: very deep refined forest, desaturated emerald, clean */
 .forest {
   inset: 0;
   background:
-    radial-gradient(110% 80% at 22% 105%, rgba(51, 58, 36, 0.95) 0%, rgba(35, 42, 26, 0.6) 35%, transparent 70%),
-    radial-gradient(80% 70% at 88% 8%, rgba(18, 28, 21, 0.9) 0%, transparent 70%),
-    linear-gradient(180deg, #080c09 0%, #0d1510 52%, #090d0a 100%);
+    radial-gradient(110% 80% at 24% 110%, rgba(33, 72, 59, 0.85) 0%, rgba(23, 55, 45, 0.45) 40%, transparent 72%),
+    radial-gradient(80% 70% at 86% 6%, rgba(14, 37, 30, 0.9) 0%, transparent 70%),
+    linear-gradient(180deg, #06130f 0%, #0a1c16 52%, #06120e 100%);
 }
-/* the first warmth: an amber light leak entering from the far side */
-.amber {
-  inset: 0;
-  background:
-    radial-gradient(60% 55% at 92% 50%, rgba(200, 144, 79, 0.2) 0%, rgba(200, 144, 79, 0.07) 40%, transparent 72%),
-    radial-gradient(90% 40% at 50% 50%, rgba(205, 182, 138, 0.06) 0%, transparent 70%);
-}
-/* champagne key light over the brand */
+/* warm evening light over the brand: ivory into champagne */
 .key {
   left: 22%;
   top: 30%;
   width: 72vmax;
   height: 72vmax;
   margin: -36vmax 0 0 -36vmax;
-  background: radial-gradient(closest-side, rgba(239, 233, 220, 0.16), rgba(205, 182, 138, 0.09) 40%, rgba(200, 144, 79, 0.03) 62%, transparent 76%);
+  background: radial-gradient(closest-side, rgba(241, 236, 226, 0.15), rgba(212, 193, 155, 0.08) 40%, rgba(201, 154, 94, 0.025) 62%, transparent 76%);
   will-change: transform, opacity;
 }
 :global([dir="rtl"]) .key {
@@ -44,14 +54,24 @@
   right: 22%;
   margin: -36vmax -36vmax 0 0;
 }
-/* ivory haze low over the horizon */
 .haze {
   left: -10%;
   right: -10%;
   bottom: 6%;
   height: 34vh;
-  background: radial-gradient(50% 50% at 50% 60%, rgba(239, 233, 220, 0.08), transparent 75%);
+  background: radial-gradient(50% 50% at 50% 60%, rgba(241, 236, 226, 0.07), transparent 75%);
   filter: blur(20px);
+}
+/* brighter, calm closing: a silver dawn behind the world, leading to the paper footer */
+.dawn {
+  inset: 0;
+  background:
+    radial-gradient(60% 55% at 70% 62%, rgba(214, 216, 220, 0.22), transparent 70%),
+    radial-gradient(120% 60% at 50% 120%, rgba(242, 242, 240, 0.2), transparent 65%),
+    linear-gradient(180deg, #0c0d0f 0%, #1b1c1f 100%);
+}
+:global([dir="rtl"]) .dawn {
+  transform: scaleX(-1);
 }
 .grain {
   position: absolute;
@@ -62,7 +82,4 @@
 }
 :global(html:not(.cine)) .root {
   display: none;
-}
-:global([dir="rtl"]) .amber {
-  transform: scaleX(-1);
 }

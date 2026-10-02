@@ -29,6 +29,21 @@ import { ANCHOR_DEFS } from "./anchors";
  */
 
 const BG = 0x060607;
+/**
+ * Tonal rhythm of the journey (background = fog = occluder colour):
+ * terminal near-black → road graphite → warehouse industrial metallic →
+ * carton isolated in a lighter graphite (prepares the light chapters).
+ */
+const TONES: [number, number][] = [
+  [0.0, 0x060607],
+  [0.26, 0x08090a],
+  [0.4, 0x0f1012],
+  [0.6, 0x141518],
+  [0.68, 0x1c1d21],
+  [0.8, 0x202125],
+  [0.9, 0x18191c],
+  [1.0, 0x141518],
+];
 const COL = { dim: 0x2b2c30, mid: 0x5d5e63, hi: 0xd2d3d6, red: 0xc90216 };
 
 export type WorldAnchor = { id: string; x: number; y: number; visible: boolean };
@@ -570,7 +585,29 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     fog.far = a[2] + (b[2] - a[2]) * u;
   }
 
+  const dimLit = new THREE.Color(0x4c4d52);
+  const midLit = new THREE.Color(0x8a8b90);
+  const toneA = new THREE.Color();
+  const toneB = new THREE.Color();
+  const tone = new THREE.Color();
+  function placeTone(t: number) {
+    let i = 0;
+    while (i < TONES.length - 2 && TONES[i + 1][0] <= t) i++;
+    const [ta, ca] = TONES[i];
+    const [tb, cb] = TONES[i + 1];
+    const u = sm(cl((t - ta) / (tb - ta)));
+    tone.copy(toneA.setHex(ca)).lerp(toneB.setHex(cb), u);
+    renderer.setClearColor(tone, 1);
+    (scene.fog as THREE.Fog).color.copy(tone);
+    mats.occ.color.copy(tone);
+    // metallic warehouse: lines lift with the background
+    const metal = sm(cl((t - 0.58) / 0.12)) * (1 - sm(cl((t - 0.86) / 0.12)));
+    mats.dim.color.setHex(COL.dim).lerp(dimLit, metal);
+    mats.mid.color.setHex(COL.mid).lerp(midLit, metal);
+  }
+
   function render(t: number) {
+    placeTone(t);
     const s = placeTruck(t);
     placeContainer(t);
     placeCamera(t);

@@ -71,8 +71,10 @@ export default function Chapter({ id, title, className, stageClassName, children
 
     const st = ScrollTrigger.create({
       trigger: sectionRef.current,
+      // contiguous ranges: this chapter ends exactly where the next begins
+      // (bottom of this spacer meets the top of the viewport): no dead scroll
       start: "top top",
-      end: "bottom bottom",
+      end: "bottom top",
       onUpdate: apply,
       onRefresh: apply,
     });

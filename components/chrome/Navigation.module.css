@@ -24,8 +24,27 @@
 :global([dir="rtl"]) .brand {
   transform-origin: right center;
 }
+.brand {
+  position: relative;
+}
 .brand img {
   height: 100% !important;
+  transition: opacity var(--dur-3) var(--ease-out);
+}
+.logoLight {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  opacity: 0;
+}
+:global(html[data-tone="light"]) .logoDark {
+  opacity: 0;
+}
+:global(html[data-tone="light"]) .logoLight {
+  opacity: 1;
+}
+:global(html[data-tone="light"]) .bar:not(.isOpen) {
+  --paper: #0b0b0d;
 }
 .compact .brand {
   transform: scale(0.88);
@@ -55,6 +74,7 @@ html:global(.intro-pending) .brand {
 .links a {
   display: inline-block;
   color: var(--paper);
+  transition-property: transform, opacity, color;
   padding-block: 6px;
 }
 .lang {
@@ -88,7 +108,7 @@ html:global(.intro-pending) .brand {
   height: 44px;
   padding-inline-start: 12px;
   color: var(--paper);
-  transition: opacity var(--dur-2), transform var(--dur-3) var(--ease-out);
+  transition: opacity var(--dur-2), transform var(--dur-3) var(--ease-out), color var(--dur-3);
 }
 .bar:not(.compact):not(.isOpen) .toggle {
   opacity: 0;
