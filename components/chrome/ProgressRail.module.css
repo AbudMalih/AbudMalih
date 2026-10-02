@@ -1,0 +1,87 @@
+.rail {
+  position: fixed;
+  right: calc(var(--margin) * 0.5);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-chrome);
+  height: min(46vh, 420px);
+  width: 24px;
+  transition: opacity var(--dur-3);
+}
+.rail[data-hidden] {
+  opacity: 0;
+  pointer-events: none;
+}
+.track {
+  position: relative;
+  height: 100%;
+  container-type: size;
+}
+.track::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--hairline);
+}
+.tick {
+  position: absolute;
+  left: 0;
+  width: 24px;
+  height: 18px;
+  margin-top: -9px;
+}
+.tick::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 50%;
+  height: 1px;
+  background: var(--graphite-500);
+  transition: background var(--dur-2), left var(--dur-2), right var(--dur-2);
+}
+.tick[data-active]::before {
+  background: var(--paper);
+  left: 4px;
+  right: 4px;
+}
+.label {
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translate(6px, -50%);
+  white-space: nowrap;
+  opacity: 0;
+  color: var(--paper);
+  transition: opacity var(--dur-2), transform var(--dur-2) var(--ease-out);
+  pointer-events: none;
+}
+.idx {
+  color: var(--graphite-300);
+  margin-right: 0.6em;
+}
+.tick:hover .label,
+.tick:focus-visible .label {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.marker {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+}
+@media (max-width: 860px) {
+  .rail {
+    display: none;
+  }
+}

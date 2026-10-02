@@ -1,0 +1,59 @@
+.page {
+  min-height: 100svh;
+  padding-top: clamp(140px, 22vh, 240px);
+}
+.head {
+  padding-bottom: clamp(48px, 8vh, 96px);
+  border-bottom: 1px solid var(--hairline);
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: clamp(24px, 4vh, 48px);
+}
+.idx {
+  color: var(--graphite-300);
+}
+.rule {
+  width: 48px;
+  height: 1px;
+  background: var(--luna-red);
+}
+.title {
+  max-width: 14ch;
+}
+.lead {
+  margin-top: clamp(24px, 4vh, 40px);
+  max-width: 38em;
+}
+.body {
+  padding-block: clamp(48px, 8vh, 96px);
+}
+.body h2 {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 2.2em 0 0.6em;
+}
+.body p,
+.body li {
+  color: var(--fg-muted);
+  max-width: 44em;
+}
+.back {
+  padding-bottom: clamp(64px, 10vh, 120px);
+}
+.prep {
+  display: grid;
+  gap: var(--s-4);
+  color: var(--graphite-300);
+}
+.prep ul {
+  display: grid;
+  gap: 6px;
+}
+.prep li::before {
+  content: "+ ";
+  color: var(--luna-red);
+}

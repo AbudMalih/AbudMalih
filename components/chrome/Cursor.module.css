@@ -1,0 +1,54 @@
+.cursor {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  :global(html.has-cursor) .cursor {
+    display: block;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: var(--z-cursor);
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    mix-blend-mode: difference;
+  }
+}
+.cursor i {
+  position: absolute;
+  background: #fff;
+  transition: transform 0.35s var(--ease-out), background-color 0.25s;
+}
+.cursor i:first-child {
+  width: 15px;
+  height: 1.5px;
+  left: -7.5px;
+  top: -0.75px;
+}
+.cursor i:last-child {
+  width: 1.5px;
+  height: 15px;
+  left: -0.75px;
+  top: -7.5px;
+}
+.cursor[data-visible="false"] {
+  opacity: 0;
+}
+.cursor[data-state="link"] {
+  mix-blend-mode: normal;
+}
+.cursor[data-state="link"] i {
+  background: var(--luna-red);
+}
+.cursor[data-state="link"] i:first-child {
+  transform: rotate(45deg) scaleX(1.5);
+}
+.cursor[data-state="link"] i:last-child {
+  transform: rotate(45deg) scaleY(1.5);
+}
+.cursor[data-state="text"] i:first-child {
+  transform: scaleX(0.4);
+}
+.cursor[data-down="true"] i {
+  transform: scale(0.7);
+}

@@ -1,0 +1,80 @@
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-loader);
+  background: rgb(6, 6, 7);
+  display: grid;
+  place-items: center;
+}
+:global(html:not(.cine)) .loader {
+  display: none;
+}
+.center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+.plus {
+  position: absolute;
+  left: -11px;
+  top: -11px;
+  width: 22px;
+  height: 22px;
+  transform: scale(0);
+}
+.plus i {
+  position: absolute;
+  background: var(--luna-red);
+}
+.plus i:first-child {
+  left: 0;
+  right: 0;
+  top: 9px;
+  height: 4px;
+}
+.plus i:last-child {
+  top: 0;
+  bottom: 0;
+  left: 9px;
+  width: 4px;
+}
+.line {
+  position: absolute;
+  top: -0.5px;
+  height: 1px;
+  width: min(30vw, 420px);
+  background: var(--graphite-400);
+  transform: scaleX(0);
+}
+.left {
+  right: 22px;
+  transform-origin: right;
+}
+.right {
+  left: 22px;
+  transform-origin: left;
+}
+.count {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  transform: translateX(-50%);
+  color: var(--graphite-300);
+}
+.plate {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: clamp(56px, 7vw, 96px);
+  font-size: clamp(17.7px, 2.21vw, 30.3px); /* = height × 0.316, same ratio as the nav plate */
+  clip-path: inset(50% 50% 50% 50%);
+  will-change: transform, clip-path;
+}
+.plate :global(.luna-plate) {
+  height: 100%;
+}
+.plate img {
+  height: 100% !important;
+}

@@ -1,0 +1,112 @@
+/* Shared layout for the journey chapters (text over the line-world) */
+.wrap {
+  position: relative;
+  height: 100%;
+  min-height: inherit;
+  padding: 0 var(--margin);
+}
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(0deg, rgba(6, 6, 7, 0.78) 0%, rgba(6, 6, 7, 0) 46%),
+    linear-gradient(90deg, rgba(6, 6, 7, 0.55) 0%, rgba(6, 6, 7, 0) 50%);
+}
+.tag {
+  position: absolute;
+  left: var(--margin);
+  top: clamp(96px, 15vh, 150px);
+}
+.block {
+  position: absolute;
+  left: var(--margin);
+  right: var(--margin);
+  bottom: clamp(40px, 9vh, 110px);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: end;
+}
+.headline {
+  grid-column: 1 / span 9;
+}
+.lead {
+  grid-column: 10 / span 3;
+  max-width: 26em;
+  padding-bottom: 0.6em;
+}
+.lead strong {
+  color: var(--paper);
+  font-weight: 500;
+}
+.supporting {
+  margin-top: var(--s-5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 1.4em;
+}
+.supporting span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+}
+.supporting span::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100% no-repeat;
+}
+.topRight {
+  position: absolute;
+  right: calc(var(--margin) + 40px);
+  top: clamp(96px, 15vh, 150px);
+  text-align: right;
+  color: var(--graphite-300);
+}
+
+:global(html:not(.cine)) .wrap {
+  min-height: 0;
+}
+:global(html:not(.cine)) .tag,
+:global(html:not(.cine)) .block,
+:global(html:not(.cine)) .topRight {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
+  margin-bottom: var(--s-6);
+}
+:global(html:not(.cine)) .scrim {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .headline,
+  .lead {
+    grid-column: 1 / -1;
+  }
+  .lead {
+    margin-top: var(--s-5);
+  }
+  .topRight {
+    display: none;
+  }
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-6);
+  color: var(--paper);
+}
+:global(html.cine) .facts {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}

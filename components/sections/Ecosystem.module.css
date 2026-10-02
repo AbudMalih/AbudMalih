@@ -1,0 +1,232 @@
+.wrap {
+  position: relative;
+  height: 100%;
+  min-height: inherit;
+}
+.tag {
+  position: absolute;
+  left: var(--margin);
+  top: clamp(96px, 15vh, 150px);
+}
+.h {
+  position: absolute;
+  left: var(--margin);
+  top: calc(clamp(96px, 15vh, 150px) + 40px);
+  font-size: clamp(1.8rem, 3.6vw, 4rem);
+  z-index: 2;
+}
+.svg {
+  position: absolute;
+  left: 57%;
+  top: 55%;
+  width: min(104vh, 88vw);
+  height: auto;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+}
+.ticks line {
+  stroke: var(--graphite-600);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.ticks .major {
+  stroke: var(--graphite-300);
+}
+.ring {
+  fill: none;
+  stroke: var(--graphite-400);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.inner {
+  fill: none;
+  stroke: var(--graphite-700);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+  vector-effect: non-scaling-stroke;
+}
+.spoke {
+  stroke: var(--graphite-500);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition: stroke var(--dur-2);
+}
+.spokeOn {
+  stroke: var(--paper);
+}
+.node {
+  cursor: pointer;
+  outline: none;
+  transition: opacity var(--dur-2);
+}
+.hit {
+  fill: transparent;
+}
+.sq {
+  fill: var(--ink-950);
+  stroke: var(--paper);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  transition: fill var(--dur-2), transform var(--dur-2);
+}
+.leader {
+  stroke: var(--graphite-400);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.label {
+  fill: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.num {
+  fill: var(--graphite-300);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 400;
+}
+.dim {
+  opacity: 0.32;
+}
+.numMobile {
+  display: none;
+  fill: var(--graphite-200);
+  font-family: var(--font-mono);
+  font-size: 30px;
+}
+.on .sq,
+.node:focus-visible .sq {
+  fill: var(--luna-red);
+  stroke: var(--luna-red);
+}
+.node:focus-visible .label {
+  text-decoration: underline;
+}
+.brandArc {
+  fill: none;
+  stroke: var(--graphite-500);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.arcLabel {
+  fill: var(--graphite-300);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.2em;
+}
+.brandLink {
+  stroke: var(--luna-red);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.brandSq {
+  fill: var(--luna-red);
+}
+.brand image {
+  transition: opacity var(--dur-2);
+}
+.brand:hover image,
+.brand:focus-visible image {
+  opacity: 0.75;
+}
+.origin rect {
+  fill: var(--luna-red);
+}
+.originLabel {
+  fill: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.24em;
+}
+.legend {
+  position: absolute;
+  left: var(--margin);
+  bottom: clamp(24px, 5vh, 48px);
+  color: var(--graphite-300);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lgPlus,
+.lgSq,
+.lgRed {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+}
+.lgPlus {
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+}
+.lgSq {
+  border: 1px solid var(--paper);
+}
+.lgRed {
+  width: 18px;
+  height: 1.5px;
+  background: var(--luna-red);
+}
+.list {
+  display: none;
+}
+.listOn {
+  color: var(--paper);
+}
+
+:global(html:not(.cine)) .tag,
+:global(html:not(.cine)) .h,
+:global(html:not(.cine)) .svg,
+:global(html:not(.cine)) .legend {
+  position: relative;
+  left: auto;
+  top: auto;
+  bottom: auto;
+  transform: none;
+  margin: 0 var(--margin) var(--s-6);
+}
+:global(html:not(.cine)) .svg {
+  width: calc(100% - 2 * var(--margin));
+}
+
+@media (max-width: 860px) {
+  .svg {
+    top: 50%;
+    width: 160vw;
+    max-width: none;
+  }
+  .label {
+    display: none;
+  }
+  .leader {
+    display: none;
+  }
+  .numMobile {
+    display: block;
+  }
+  .arcLabel {
+    display: none;
+  }
+  .list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    position: absolute;
+    left: var(--margin);
+    right: var(--margin);
+    bottom: clamp(56px, 9vh, 90px);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--graphite-200);
+  }
+  .list span {
+    color: var(--graphite-400);
+    margin-right: 6px;
+  }
+  .legend {
+    bottom: 22px;
+  }
+}
