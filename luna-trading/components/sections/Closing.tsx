@@ -26,11 +26,11 @@ function Content() {
   useChapterTimeline(
     scope,
     (tl, q) => {
-      tl.fromTo(q("[data-origin]"), { scale: 0.55, opacity: 1 }, { scale: 0, opacity: 0, duration: 0.14, ease: "power2.in" }, 0.06)
-        .fromTo(q("[data-c] > span > span"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, stagger: 0.06, ease: "power3.out" }, 0.24)
-        .fromTo(q("[data-cta]"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.08 }, 0.56)
-        .fromTo(q("[data-cta-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.14, ease: "power2.inOut" }, 0.56)
-        .fromTo(q("[data-sign]"), { opacity: 0 }, { opacity: 1, duration: 0.08 }, 0.64);
+      tl.fromTo(q("[data-origin]"), { scale: 0.55, opacity: 1 }, { scale: 0, opacity: 0, duration: 0.1, ease: "power2.in" }, 0)
+        .fromTo(q("[data-c] > span > span"), { yPercent: 135 }, { yPercent: 0, duration: 0.09, stagger: 0.05, ease: "power3.out" }, 0.06)
+        .fromTo(q("[data-cta]"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.08 }, 0.32)
+        .fromTo(q("[data-cta-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.14, ease: "power2.inOut" }, 0.3)
+        .fromTo(q("[data-sign]"), { opacity: 0 }, { opacity: 1, duration: 0.08 }, 0.4);
     },
     [locale]
   );

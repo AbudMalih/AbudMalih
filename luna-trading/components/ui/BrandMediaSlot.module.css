@@ -2,7 +2,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 999px 999px 0 0;
-  background: linear-gradient(180deg, #232818 0%, #151b13 48%, #0a0f0b 100%);
+  background: linear-gradient(180deg, #1b3a30 0%, #10261f 50%, #07140f 100%);
   isolation: isolate;
 }
 .media {
@@ -47,7 +47,7 @@
   right: 0;
   bottom: 0;
   height: 30%;
-  background: linear-gradient(0deg, rgba(8, 11, 8, 0.92), transparent);
+  background: linear-gradient(0deg, rgba(5, 17, 13, 0.92), transparent);
 }
 .edge {
   position: absolute;

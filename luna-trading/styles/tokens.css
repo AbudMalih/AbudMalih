@@ -43,16 +43,16 @@
   --signal: var(--luna-red);
 
   /* ---- LUVISCENT world (owned brand — never mixed with Luna red) ------ */
-  /* deep forest + warm olive, champagne, ivory, amber light */
-  --lv-forest-950: #070b08;
-  --lv-forest-900: #0c130e;
-  --lv-forest-800: #121c15;
-  --lv-olive-700: #232a1a;
-  --lv-olive-600: #333a24;
-  --lv-champagne: #cdb68a;
-  --lv-champagne-soft: #e4d5b3;
-  --lv-ivory: #efe9dc;
-  --lv-amber: #c8904f;
+  /* very deep refined forest, desaturated emerald, ivory, champagne, warm light */
+  --lv-forest-950: #05110d;
+  --lv-forest-900: #091a15;
+  --lv-forest-800: #0e251e;
+  --lv-emerald-700: #17372d;
+  --lv-emerald-600: #21483b;
+  --lv-champagne: #d4c19b;
+  --lv-champagne-soft: #e8dcc0;
+  --lv-ivory: #f1ece2;
+  --lv-amber: #c99a5e;
   --lv-mist: #f2f2f2;
   /* legacy aliases */
   --lv-gold: var(--lv-champagne);

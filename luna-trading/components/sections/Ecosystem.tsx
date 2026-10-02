@@ -5,44 +5,22 @@ import Chapter, { useChapterTimeline } from "@/components/stage/Chapter";
 import ChapterTag from "@/components/ui/ChapterTag";
 import { CAPABILITIES, OWNED_BRANDS } from "@/content/ecosystem";
 import { useI18n } from "@/content/i18n/I18nProvider";
-import type { Dictionary } from "@/content/i18n";
 import s from "./Ecosystem.module.css";
 
 /**
- * 07 — THE LUNA INSTRUMENT
- * A precision dial instead of an org chart: the red "+" is the origin;
- * capabilities sit on the measured ring; owned brands are bound to the
- * origin by red lines on an outer arc. Fully data-driven — adding a
- * capability or a brand re-lays the instrument.
+ * 08 · LUNA CONNECTS THE ENTIRE COMMERCIAL CHAIN
+ * Centre: the Luna "+". Around it the six capabilities in operating order,
+ * joined clockwise by one red arc (the chain). The gap at the bottom carries
+ * the owned-brand line down to LUVISCENT®.
+ * Every tween is an explicit fromTo, so forward and reverse entry resolve to
+ * the identical state. No SVG <title>: the accessible name comes from
+ * aria-labelledby on visually hidden HTML (no native tooltip).
  */
-const R = 300;
-const BRAND_R = 410;
+const R = 270;
+const START_DEG = 120; // first capability (lower left), then clockwise
+const STEP_DEG = 60;
 const deg = (d: number) => (d * Math.PI) / 180;
-
-function layoutCapabilities(dict: Dictionary) {
-  const n = CAPABILITIES.length;
-  // distribute around the ring, keeping the bottom (owned brands) and top clear
-  return CAPABILITIES.map((id, i) => {
-    const c = { id, label: dict.ecosystem.capabilities[id] };
-    const a = -60 + (i * 360) / n;
-    const x = Math.cos(deg(a)) * R;
-    const y = Math.sin(deg(a)) * R;
-    const cos = Math.cos(deg(a));
-    const anchor = cos > 0.25 ? "start" : cos < -0.25 ? "end" : "middle";
-    const lx = Math.cos(deg(a)) * (R + 56);
-    const ly = Math.sin(deg(a)) * (R + 56);
-    return { ...c, a, x, y, lx, ly, anchor, i };
-  });
-}
-
-function layoutBrands() {
-  const n = OWNED_BRANDS.length;
-  const span = Math.min(60, 26 * n);
-  return OWNED_BRANDS.map((b, i) => {
-    const a = 90 + (n === 1 ? 0 : -span / 2 + (i * span) / (n - 1));
-    return { ...b, a, x: Math.cos(deg(a)) * BRAND_R, y: Math.sin(deg(a)) * BRAND_R };
-  });
-}
+const pt = (a: number, r = R): [number, number] => [Math.cos(deg(a)) * r, Math.sin(deg(a)) * r];
 
 export default function Ecosystem() {
   return (
@@ -55,38 +33,90 @@ export default function Ecosystem() {
 function Content() {
   const { dict, locale, href } = useI18n();
   const t = dict.ecosystem;
-  const rtlText = locale === "ar";
+  const ar = locale === "ar";
   const scope = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<string | null>(null);
-  const caps = layoutCapabilities(dict);
-  const brands = layoutBrands();
-  const ticks = Array.from({ length: 120 }, (_, i) => i * 3);
 
-  useChapterTimeline(scope, (tl, q) => {
-    tl.fromTo(q("[data-tag]"), { opacity: 0 }, { opacity: 1, duration: 0.04 }, 0.03)
-      .fromTo(q("[data-tag-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.06 }, 0.03)
-      .fromTo(q("[data-h] > span > span"), { yPercent: 135 }, { yPercent: 0, duration: 0.08, stagger: 0.03, ease: "power3.out" }, 0.05)
-      .fromTo(q("[data-origin]"), { attr: { transform: "scale(0) rotate(-90)" } }, { attr: { transform: "scale(1) rotate(0)" }, duration: 0.08, ease: "back.out(2)" }, 0.1)
-      .fromTo(q("[data-ring]"), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.2, ease: "power2.inOut" }, 0.12)
-      .fromTo(q("[data-ticks]"), { opacity: 0, attr: { transform: "rotate(-30)" } }, { opacity: 1, attr: { transform: "rotate(0)" }, duration: 0.24, ease: "power2.out" }, 0.14)
-      .fromTo(q("[data-spoke]"), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.07, stagger: 0.025 }, 0.26)
-      .fromTo(q("[data-node]"), { opacity: 0 }, { opacity: 1, duration: 0.05, stagger: 0.025 }, 0.3)
-      .fromTo(q("[data-brand-arc]"), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.1 }, 0.46)
-      .fromTo(q("[data-brand-link]"), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.08 }, 0.48)
-      .fromTo(q("[data-brand]"), { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.54)
-      .fromTo(q("[data-legend]"), { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.56)
-      .to(q("[data-ticks]"), { attr: { transform: "rotate(12)" }, duration: 0.4, ease: "none" }, 0.38)
-      // converge into the origin
-      .fromTo(q("[data-converge]"), { attr: { transform: "scale(1)" } }, { attr: { transform: "scale(0.02)" }, opacity: 0, duration: 0.14, ease: "power3.in", immediateRender: false }, 0.8)
-      .to(q("[data-h] > span > span"), { yPercent: -135, duration: 0.08, ease: "power2.in", stagger: 0.02 }, 0.8)
-      .to(q("[data-tag], [data-legend], [data-list]"), { opacity: 0, duration: 0.05 }, 0.8)
-      .to(q("[data-origin]"), { attr: { transform: "scale(0.55) rotate(0)" }, duration: 0.1 }, 0.88);
-  }, [locale]);
+  const caps = CAPABILITIES.map((id, i) => {
+    const a = START_DEG + i * STEP_DEG;
+    const [x, y] = pt(a);
+    const cos = Math.cos(deg(a));
+    const sin = Math.sin(deg(a));
+    const anchor = cos > 0.3 ? "start" : cos < -0.3 ? "end" : "middle";
+    const [lx, ly] = pt(a, R + (Math.abs(cos) > 0.3 ? 44 : 56));
+    return { id, i, a, x, y, lx, ly: ly + (sin < -0.3 ? -14 : sin > 0.3 ? 14 : 0), anchor, label: t.capabilities[id] };
+  });
+  const [ax, ay] = pt(START_DEG);
+  const [bx, by] = pt(START_DEG + (CAPABILITIES.length - 1) * STEP_DEG);
+  const chainArc = `M ${ax} ${ay} A ${R} ${R} 0 1 1 ${bx} ${by}`;
+  const brand = OWNED_BRANDS[0];
+
+  useChapterTimeline(
+    scope,
+    (tl, q) => {
+      // HTML typography: ordinary scrubbed tweens
+      tl.fromTo(q("[data-tag]"), { opacity: 0 }, { opacity: 1, duration: 0.04 }, 0)
+        .fromTo(q("[data-tag-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.06 }, 0)
+        .fromTo(q("[data-h] > span > span"), { yPercent: 135 }, { yPercent: 0, duration: 0.07, stagger: 0.025, ease: "power3.out" }, 0.01)
+        .fromTo(q("[data-caption]"), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.05 }, 0.07)
+        .fromTo(q("[data-legend]"), { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.46)
+        .to(q("[data-h] > span > span"), { yPercent: -135, duration: 0.07, ease: "power2.in", stagger: 0.02 }, 0.78)
+        .to(q("[data-tag], [data-legend], [data-list], [data-caption]"), { opacity: 0, duration: 0.05 }, 0.78);
+
+      // SVG instrument: a pure function of timeline time (direction-independent)
+      const el = <T extends Element>(sel: string) => q(sel) as T[];
+      const converge = el<SVGElement>("[data-converge]");
+      const origin = el<SVGGElement>("[data-origin]")[0];
+      const rings = el<SVGElement>("[data-ring]");
+      const spokes = el<SVGElement>("[data-spoke]");
+      const nodes = el<SVGElement>("[data-node]");
+      const chain = el<SVGPathElement>("[data-chain]")[0];
+      const brandLink = el<SVGLineElement>("[data-brand-link]")[0];
+      const brandEls = el<SVGElement>("[data-brand]");
+      const centerLabel = el<SVGElement>("[data-center-label]")[0];
+      const pulse = el<SVGCircleElement>("[data-pulse]")[0];
+      const span = (CAPABILITIES.length - 1) * STEP_DEG;
+      const r = (x: number, a: number, b: number) => Math.min(1, Math.max(0, (x - a) / (b - a)));
+      const ease = (x: number) => 1 - Math.pow(1 - x, 3);
+      const back = (x: number) => {
+        const c1 = 1.70158 * 1.4, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+      };
+
+      const render = (p: number) => {
+        const conv = Math.pow(r(p, 0.78, 0.91), 3);
+        const k = 1 - conv * 0.98;
+        converge.forEach((e) => {
+          e.setAttribute("transform", `scale(${k.toFixed(4)})`);
+          e.style.opacity = (1 - conv).toFixed(3);
+        });
+        const oIn = r(p, 0.03, 0.11);
+        const oScale = (oIn < 1 ? back(oIn) : 1) * (1 - r(p, 0.88, 0.96) * 0.4);
+        origin.setAttribute("transform", `scale(${Math.max(0, oScale).toFixed(4)}) rotate(${(-90 * (1 - ease(oIn))).toFixed(2)})`);
+        centerLabel.style.opacity = (r(p, 0.08, 0.13) * (1 - conv)).toFixed(3);
+        rings.forEach((e) => (e.style.opacity = r(p, 0.08, 0.16).toFixed(3)));
+        spokes.forEach((e, i) => (e.style.opacity = r(p, 0.1 + i * 0.015, 0.14 + i * 0.015).toFixed(3)));
+        nodes.forEach((e, i) => (e.style.opacity = r(p, 0.13 + i * 0.025, 0.18 + i * 0.025).toFixed(3)));
+        chain.style.strokeDashoffset = (1 - r(p, 0.22, 0.42)).toFixed(4);
+        brandLink.style.strokeDashoffset = (1 - r(p, 0.38, 0.46)).toFixed(4);
+        brandEls.forEach((e) => (e.style.opacity = r(p, 0.44, 0.5).toFixed(3)));
+        const u = r(p, 0.42, 0.76);
+        const [x, y] = pt(START_DEG + span * u);
+        pulse.setAttribute("cx", x.toFixed(1));
+        pulse.setAttribute("cy", y.toFixed(1));
+        pulse.style.opacity = u > 0.001 && u < 0.999 ? "1" : "0";
+      };
+      tl.eventCallback("onUpdate", () => render(tl.time()));
+      render(0);
+    },
+    [locale]
+  );
 
   return (
     <div ref={scope} className={s.wrap}>
-      <ChapterTag index="07" label={t.tag} className={s.tag} />
-      <h2 className={`t-headline ${s.h}`} data-h>
+      <ChapterTag index="08" label={t.tag} className={s.tag} />
+      <div className={s.headBlock}>
+      <h2 className={`t-headline ${s.h}`} data-h id="eco-title">
         <span className="mask">
           <span>{t.h1}</span>
         </span>
@@ -94,44 +124,30 @@ function Content() {
           <span>{t.h2}</span>
         </span>
       </h2>
+      <p className={`t-lead ${s.caption}`} data-caption id="eco-desc">
+        {t.caption}
+      </p>
+      </div>
 
-      <svg className={`${s.svg} interactive`} viewBox="-760 -540 1520 1080" direction="ltr" role="img" aria-labelledby="eco-title eco-desc">
-        <title id="eco-title">{t.title}</title>
-        <desc id="eco-desc">{t.desc}</desc>
-
+      <svg
+        className={`${s.svg} interactive`}
+        viewBox="-760 -560 1520 1120"
+        direction="ltr"
+        role="img"
+        aria-labelledby="eco-title"
+        aria-describedby="eco-desc eco-list"
+      >
         <g data-converge>
-          <g data-ticks className={s.ticks}>
-            {ticks.map((t) => {
-              const major = t % 30 === 0;
-              const r0 = R + 8, r1 = R + (major ? 26 : 14);
-              return (
-                <line
-                  key={t}
-                  x1={Math.cos(deg(t)) * r0}
-                  y1={Math.sin(deg(t)) * r0}
-                  x2={Math.cos(deg(t)) * r1}
-                  y2={Math.sin(deg(t)) * r1}
-                  className={major ? s.major : undefined}
-                />
-              );
-            })}
-          </g>
-          <circle r={R} className={s.ring} data-ring pathLength={1} strokeDasharray="1 1" />
-          <circle r={R * 0.42} className={s.inner} />
+          <circle r={R} className={s.ring} data-ring />
+          <circle r={R * 0.5} className={s.inner} data-ring />
 
           {caps.map((c) => (
-            <line
-              key={`sp-${c.id}`}
-              x1={0}
-              y1={0}
-              x2={c.x}
-              y2={c.y}
-              className={`${s.spoke} ${active === c.id ? s.spokeOn : ""}`}
-              data-spoke
-              pathLength={1}
-              strokeDasharray="1 1"
-            />
+            <line key={`sp-${c.id}`} x1={0} y1={0} x2={c.x} y2={c.y} className={`${s.spoke} ${active === c.id ? s.spokeOn : ""}`} data-spoke />
           ))}
+
+          {/* the commercial chain: one red arc through all capabilities */}
+          <path d={chainArc} className={s.chain} data-chain pathLength={1} strokeDasharray="1 1" />
+          <circle r={7} className={s.pulse} data-pulse />
 
           {caps.map((c) => (
             <g
@@ -147,59 +163,51 @@ function Content() {
               onBlur={() => setActive(null)}
               data-cursor="link"
             >
-              <circle cx={c.x} cy={c.y} r={34} className={s.hit} />
-              <rect x={c.x - 5} y={c.y - 5} width={10} height={10} className={s.sq} />
-              <line x1={Math.cos(deg(c.a)) * (R + 10)} y1={Math.sin(deg(c.a)) * (R + 10)} x2={Math.cos(deg(c.a)) * (R + 42)} y2={Math.sin(deg(c.a)) * (R + 42)} className={s.leader} />
-              <text x={Math.cos(deg(c.a)) * (R + 44)} y={Math.sin(deg(c.a)) * (R + 44)} textAnchor="middle" dominantBaseline="middle" className={s.numMobile}>
+              <circle cx={c.x} cy={c.y} r={46} className={s.hit} />
+              <circle cx={c.x} cy={c.y} r={9} className={s.dot} />
+              <text x={c.lx} y={c.ly} textAnchor={c.anchor as "start" | "end" | "middle"} className={s.label}>
+                <tspan x={c.lx} dy="-0.55em" className={s.num}>
+                  {String(c.i + 1).padStart(2, "0")}
+                </tspan>
+                <tspan x={c.lx} dy="1.25em">
+                  {ar ? c.label : c.label.toUpperCase()}
+                </tspan>
+              </text>
+              <text x={pt(c.a, R + 36)[0]} y={pt(c.a, R + 36)[1]} textAnchor="middle" dominantBaseline="middle" className={s.numMobile}>
                 {String(c.i + 1).padStart(2, "0")}
               </text>
-              <text x={c.lx} y={c.ly} textAnchor={c.anchor as "start" | "end" | "middle"} dominantBaseline="middle" className={s.label}>
-                {!rtlText && <tspan className={s.num}>{String(c.i + 1).padStart(2, "0")}&#8194;</tspan>}
-                {rtlText ? c.label : c.label.toUpperCase()}
-              </text>
             </g>
           ))}
 
-          {/* owned brands */}
-          <path
-            d={`M ${Math.cos(deg(62)) * BRAND_R} ${Math.sin(deg(62)) * BRAND_R} A ${BRAND_R} ${BRAND_R} 0 0 1 ${Math.cos(deg(118)) * BRAND_R} ${Math.sin(deg(118)) * BRAND_R}`}
-            className={s.brandArc}
-            data-brand-arc
-            pathLength={1}
-            strokeDasharray="1 1"
-          />
-          <text x={Math.cos(deg(118)) * BRAND_R - 14} y={Math.sin(deg(118)) * BRAND_R} textAnchor="end" dominantBaseline="middle" className={s.arcLabel} data-brand>
-            {rtlText ? t.ownedBrands : t.ownedBrands.toUpperCase()}
-          </text>
-          {brands.map((b) => (
-            <g key={b.id}>
-              <line x1={0} y1={0} x2={b.x} y2={b.y} className={s.brandLink} data-brand-link pathLength={1} strokeDasharray="1 1" />
-              <a href={href(b.href)} data-brand className={s.brand} data-cursor="link" aria-label={`${b.name}, ${t.legend.brand}`}>
-                <rect x={b.x - 5} y={b.y - 5} width={10} height={10} className={s.brandSq} />
-                <image href={b.logo} x={b.x - 120} y={b.y + 26} width={240} height={240 / b.logoRatio} preserveAspectRatio="xMidYMid meet" />
-              </a>
-            </g>
-          ))}
+          {/* owned brand, through the gap in the chain */}
+          <line x1={0} y1={0} x2={0} y2={R + 118} className={s.brandLink} data-brand-link pathLength={1} strokeDasharray="1 1" />
+          <a href={href(brand.href)} data-brand className={s.brand} data-cursor="link" aria-label={`${brand.name}, ${t.legend.brand}`}>
+            <rect x={-6} y={R + 112} width={12} height={12} className={s.brandSq} />
+            <image href={brand.logo} x={-140} y={R + 146} width={280} height={280 / brand.logoRatio} preserveAspectRatio="xMidYMid meet" />
+            <text y={R + 212} textAnchor="middle" className={s.arcLabel}>
+              {ar ? t.ownedBrands : t.ownedBrands.toUpperCase()}
+            </text>
+          </a>
         </g>
 
-        {/* the origin: the Luna "+" */}
         <g data-origin className={s.origin}>
-          <rect x={-18} y={-4} width={36} height={8} />
-          <rect x={-4} y={-18} width={8} height={36} />
+          <rect x={-26} y={-6} width={52} height={12} />
+          <rect x={-6} y={-26} width={12} height={52} />
         </g>
-        <text y={44} textAnchor="middle" className={s.originLabel} data-converge>
-          {rtlText ? t.center : t.center.toUpperCase()}
+        <text y={64} textAnchor="middle" className={s.originLabel} data-converge data-center-label>
+          {ar ? t.center : t.center.toUpperCase()}
         </text>
       </svg>
 
       <p className={`t-label ${s.legend}`} data-legend>
-        <span className={s.lgPlus} /> {t.legend.origin} &nbsp;&nbsp; <span className={s.lgSq} /> {t.legend.capability} &nbsp;&nbsp; <span className={s.lgRed} /> {t.legend.brand}
+        <span className={s.lgPlus} /> {t.legend.origin} &nbsp;&nbsp; <span className={s.lgSq} /> {t.legend.capability} &nbsp;&nbsp;{" "}
+        <span className={s.lgRed} /> {t.legend.brand}
       </p>
 
-      <ol className={s.list} data-list>
-        {caps.map((c, i) => (
+      <ol className={s.list} data-list id="eco-list">
+        {caps.map((c) => (
           <li key={c.id} className={active === c.id ? s.listOn : ""}>
-            <span className="t-label t-mono">{String(i + 1).padStart(2, "0")}</span> {c.label}
+            <span className="t-label t-mono">{String(c.i + 1).padStart(2, "0")}</span> {c.label}
           </li>
         ))}
       </ol>

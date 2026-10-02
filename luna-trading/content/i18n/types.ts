@@ -32,14 +32,27 @@ export type Dictionary = {
     h1: string;
     h2: string;
     steps: Record<StepId, { label: string; line: string }>;
-    commerce: { h1: string; h2: string; origin: string; platform: string; endpoints: string[]; support: string };
   };
-  luviscent: { owner: string; category: string; body: string; cta: string; statement: [string, string]; allBrands: string };
+  commerce: {
+    tag: string;
+    h1: string;
+    h2: string;
+    secondary: string;
+    body: string;
+    origin: string;
+    platform: string;
+    /** typographic platform layer: technologies/channels, never partner claims */
+    platforms: string[];
+    destinations: [string, string, string, string];
+    owned: string;
+  };
+  luviscent: { owner: string; category: string; body: string; cta: string; allBrands: string };
   ecosystem: {
     tag: string;
     h1: string;
     h2: string;
     capabilities: Record<CapabilityId, string>;
+    caption: string;
     ownedBrands: string;
     center: string;
     legend: { origin: string; capability: string; brand: string };

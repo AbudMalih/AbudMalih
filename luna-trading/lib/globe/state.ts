@@ -26,17 +26,17 @@ function globeStateLtr(): GlobeDerived {
   const distScale = portrait ? 1.75 : m ? 1.35 : 1;
 
   if (c > 0) {
-    const k = easeOut(range(c, 0.2, 1));
+    const k = easeOut(range(c, 0.0, 1));
     return {
       lon: lerp(30, 14, k),
       lat: lerp(30, 38, k),
       dist: lerp(7.2, 4.9, k) * distScale,
       ox: m ? 0 : 0.2,
       oy: m ? -0.12 : 0.04,
-      reveal: smooth(range(c, 0.15, 0.55)) * 0.85,
+      reveal: smooth(range(c, 0.02, 0.36)) * 0.95,
       route: 1,
-      opacity: smooth(range(c, 0.15, 0.5)) * (m ? 0.55 : 0.8),
-      labels: range(c, 0.45, 0.6),
+      opacity: smooth(range(c, 0.02, 0.3)) * (m ? 0.6 : 0.9),
+      labels: range(c, 0.3, 0.4),
     };
   }
 

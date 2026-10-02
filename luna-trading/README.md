@@ -1,7 +1,7 @@
 # Luna Trading GmbH · Website (Phase 1)
 
 A cinematic, scroll-driven corporate homepage for Luna Trading GmbH, Cologne.
-Design system and architecture: **[docs/PHASE1.md](docs/PHASE1.md)**. Phase 2 changes (i18n, commerce, LUVISCENT, reverse logo): **[docs/PHASE2.md](docs/PHASE2.md)**.
+Design system and architecture: **[docs/PHASE1.md](docs/PHASE1.md)**. Phase 2 changes (i18n, commerce, LUVISCENT, reverse logo): **[docs/PHASE2.md](docs/PHASE2.md)**. Phase 2.1 (tonal rhythm, pacing, E-Commerce chapter, ecosystem, favicon): **[docs/PHASE2_1.md](docs/PHASE2_1.md)**.
 
 ## Run
 

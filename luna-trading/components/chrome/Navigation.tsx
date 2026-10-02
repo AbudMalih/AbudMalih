@@ -63,7 +63,9 @@ export default function Navigation() {
     <>
       <header className={`${styles.bar} ${compact ? styles.compact : ""} ${open ? styles.isOpen : ""}`}>
         <Link href={href("/")} className={styles.brand} aria-label={dict.a11y.home} data-cursor="link" id="nav-brand">
-          <LunaLogo height="100%" priority />
+          <LunaLogo height="100%" priority className={styles.logoDark} />
+          {/* light chapters use the master wordmark (its native ground) */}
+          <LunaLogo height="100%" variant="master" className={styles.logoLight} />
         </Link>
 
         <div className={styles.right}>

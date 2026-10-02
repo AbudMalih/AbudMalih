@@ -4,10 +4,6 @@
   min-height: inherit;
   padding: 0 var(--margin);
 }
-.dimGroup {
-  position: absolute;
-  inset: 0;
-}
 .tag {
   position: absolute;
   inset-inline-start: var(--margin);
@@ -57,15 +53,6 @@
 }
 :global([dir="rtl"]) .fill {
   transform-origin: right;
-}
-.champagne {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background: linear-gradient(90deg, var(--luna-red) 0%, var(--lv-amber) 30%, var(--lv-champagne) 65%, var(--lv-champagne-soft) 100%);
-}
-:global([dir="rtl"]) .champagne {
-  background: linear-gradient(270deg, var(--luna-red) 0%, var(--lv-amber) 30%, var(--lv-champagne) 65%, var(--lv-champagne-soft) 100%);
 }
 .ticks li {
   position: absolute;
@@ -157,139 +144,9 @@
   letter-spacing: -0.015em;
 }
 
-/* ---- digital commerce moment ---- */
-.commerce {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.cHead {
-  position: absolute;
-  inset-inline-start: var(--margin);
-  top: var(--safe-top);
-  font-size: clamp(2.2rem, min(6vw, 10.5svh), 7.2rem);
-}
-.diagram {
-  position: absolute;
-  inset-inline: 4.5%;
-  top: calc(50% - 17vh);
-  height: 34vh;
-}
-.svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-:global([dir="rtl"]) .svg {
-  transform: scaleX(-1);
-}
-.trunk {
-  position: absolute;
-  top: 50%;
-  height: 2px;
-  margin-top: -1px;
-  background: var(--luna-red);
-  transform-origin: left;
-}
-:global([dir="rtl"]) .trunk {
-  transform-origin: right;
-}
-.branch {
-  fill: none;
-  stroke: var(--graphite-400);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-.pulse {
-  /* a packet of data moving with the scroll */
-  position: absolute;
-  width: 14px;
-  height: 2px;
-  margin-top: -1px;
-  margin-inline-start: -7px;
-  background: var(--paper);
-  box-shadow: 0 0 0 1px rgba(201, 2, 22, 0.35);
-  opacity: 0;
-}
-.origin {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  margin-top: -10px;
-  margin-inline-start: -10px;
-  background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 4px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 4px 100% no-repeat;
-}
-.originLabel,
-.platformLabel {
-  position: absolute;
-  color: var(--graphite-300);
-  white-space: nowrap;
-}
-.originLabel {
-  top: calc(50% + 22px);
-  margin-inline-start: -4px;
-}
-.platformLabel {
-  top: 0;
-  transform: translateY(-140%);
-}
-.layer {
-  position: absolute;
-  width: 1px;
-  background: linear-gradient(180deg, transparent, var(--paper) 18%, var(--paper) 82%, transparent);
-  transform-origin: 50% 50%;
-  opacity: 0.8;
-}
-.layer:nth-of-type(odd) {
-  opacity: 0.45;
-}
-.end {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  translate: 0 -50%;
-}
-.endSq {
-  flex: none;
-  width: 9px;
-  height: 9px;
-  margin-inline-start: -4.5px;
-  border: 1px solid var(--paper);
-  background: var(--ink-950);
-}
-.endText {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-size: clamp(0.95rem, 1.25vw, 1.25rem);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--paper);
-  white-space: nowrap;
-}
-.endIdx {
-  color: var(--graphite-400);
-  font-size: 10px;
-}
-.cSupport {
-  position: absolute;
-  inset-inline-start: var(--margin);
-  bottom: clamp(32px, 8vh, 90px);
-  max-width: 34em;
-}
-
 /* ---- static / accessible ---- */
-.list,
-.commerceStatic {
+.list {
   display: none;
-}
-:global(html:not(.cine)) .dimGroup {
-  position: relative;
 }
 :global(html:not(.cine)) .tag,
 :global(html:not(.cine)) .intro {
@@ -298,18 +155,8 @@
   text-align: start;
   margin-bottom: var(--s-6);
 }
-:global(html:not(.cine)) .list,
-:global(html:not(.cine)) .commerceStatic {
+:global(html:not(.cine)) .list {
   display: grid;
-}
-.commerceStatic {
-  gap: var(--s-4);
-  margin-top: var(--s-8);
-}
-.commerceStatic ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3) var(--s-6);
 }
 .list li {
   display: grid;
@@ -328,8 +175,7 @@
 .list span:last-child {
   color: var(--fg-muted);
 }
-:global(html.cine) .list,
-:global(html.cine) .commerceStatic {
+:global(html.cine) .list {
   display: block;
   position: absolute;
   width: 1px;
@@ -341,8 +187,7 @@
 @media (max-width: 767px) {
   .stageWords,
   .line,
-  .descs,
-  .diagram {
+  .descs {
     inset-inline: 6%;
   }
   .intro {
@@ -361,19 +206,6 @@
   .desc {
     grid-column: 1 / -1;
     grid-row: 2;
-  }
-  .diagram {
-    top: calc(50% - 14vh);
-    height: 28vh;
-  }
-  .endText {
-    font-size: 0.78rem;
-    white-space: normal;
-    max-width: 22vw;
-    line-height: 1.2;
-  }
-  .endIdx {
-    display: none;
   }
   .list li {
     grid-template-columns: 4ch 1fr;

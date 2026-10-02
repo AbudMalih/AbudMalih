@@ -6,8 +6,8 @@
 }
 .origin {
   position: absolute;
-  left: var(--eco-x, 57%);
-  top: 55%;
+  left: var(--eco-x, 58%);
+  top: 54%;
   width: 36px;
   height: 36px;
   margin: -18px 0 0 -18px;
@@ -105,7 +105,7 @@
 }
 
 :global([dir="rtl"]) .origin {
-  --eco-x: 43%;
+  --eco-x: 42%;
 }
 @media (max-width: 860px) {
   :global([dir="rtl"]) .origin {
