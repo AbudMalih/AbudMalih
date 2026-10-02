@@ -1,4 +1,6 @@
 .wrap {
+  --chain-tick: var(--graphite-500);
+  --chain-tick-on: var(--paper);
   position: relative;
   height: 100%;
   min-height: inherit;
@@ -213,4 +215,33 @@
   .list span:last-child {
     grid-column: 2;
   }
+}
+
+/* Cinematic: the chain lives in the warm ivory brand light (Atmosphere
+   "brand"), between the physical world and the cooler digital commerce. */
+:global(html.cine) .wrap {
+  --chain-tick: #a29d93;
+  --chain-tick-on: var(--ink-950);
+  color: var(--ink-950);
+}
+:global(html.cine) .tag {
+  color: var(--ink-950);
+}
+:global(html.cine) .tag :global([data-tag-rule]) {
+  background: #a29d93;
+}
+:global(html.cine) .intro :global(.tone-graphite) {
+  color: #8a857c;
+}
+:global(html.cine) .rest {
+  background: #cfc9bd;
+}
+:global(html.cine) .ticks li {
+  color: var(--chain-tick);
+}
+:global(html.cine) .count {
+  color: #8a857c;
+}
+:global(html.cine) .desc {
+  color: #2a2b2e;
 }

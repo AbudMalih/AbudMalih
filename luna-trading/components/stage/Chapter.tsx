@@ -55,10 +55,7 @@ export default function Chapter({ id, title, className, stageClassName, children
     const el = stageRef.current;
     let active = false;
 
-    const apply = (self: ScrollTrigger) => {
-      const p = self.progress;
-      setProgress(id, p);
-      timelines.current.forEach((tl) => tl.progress(p));
+    const visibility = (self: ScrollTrigger) => {
       const y = self.scroll();
       const on = (isFirst || y >= self.start) && (isLast || y < self.end);
       if (on !== active) {
@@ -67,6 +64,12 @@ export default function Chapter({ id, title, className, stageClassName, children
         el.toggleAttribute("inert", !on);
         el.setAttribute("aria-hidden", on ? "false" : "true");
       }
+    };
+    const apply = (self: ScrollTrigger) => {
+      const p = self.progress;
+      setProgress(id, p);
+      timelines.current.forEach((tl) => tl.progress(p));
+      visibility(self);
     };
 
     const st = ScrollTrigger.create({
@@ -79,7 +82,14 @@ export default function Chapter({ id, title, className, stageClassName, children
       onRefresh: apply,
     });
     apply(st);
-    return () => st.kill();
+    // Progress does not change when leaving from exactly 0 or 1, so no
+    // update fires; visibility is re-checked on every scroll instead.
+    const onScroll = () => visibility(st);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      st.kill();
+    };
   }, [id, isFirst, isLast]);
 
   return (

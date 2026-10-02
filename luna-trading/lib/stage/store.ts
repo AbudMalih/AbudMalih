@@ -26,6 +26,8 @@ type StageState = {
   intro: number;
   /** Assets the loader waits for (globe texture, fonts, …). */
   ready: Record<string, boolean>;
+  /** QA only: freezes slow ambient drift (seconds) so frames are comparable. */
+  ambientClock?: number;
 };
 
 export const stage: StageState = {

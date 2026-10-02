@@ -7,37 +7,91 @@
   pointer-events: none;
   overflow: hidden;
 }
-.graphite,
+.brand,
 .light,
+.warm,
 .forest,
+.veil,
 .key,
 .haze,
 .dawn {
   position: absolute;
   opacity: 0;
+  visibility: hidden;
 }
-/* graphite: brushed, lit from above */
-.graphite {
+
+/* 04–05 · BRAND: the carton's world brightened to warm ivory. Colour is the
+   line-world's own tone (set per frame); the texture is a room, not a page:
+   daylight from the upper left, a soft architectural light plane, and a
+   tactile paper / plaster grain. */
+.brand {
   inset: 0;
-  background:
-    radial-gradient(90% 60% at 50% -10%, rgba(120, 122, 128, 0.16), transparent 70%),
-    linear-gradient(180deg, #17181b 0%, #111214 60%, #0d0e10 100%);
 }
-/* the light digital-commerce environment: warm off-white, soft silver */
+.brandTex {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(90% 80% at 14% 0%, rgba(255, 253, 248, 0.32), transparent 75%),
+    radial-gradient(90% 70% at 92% 104%, rgba(176, 168, 152, 0.28), transparent 70%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 70%, rgba(150, 142, 128, 0.12) 100%);
+}
+/* a soft plane of daylight, as through a tall window; it travels with the scroll */
+.shaft {
+  position: absolute;
+  inset: 0 -30%;
+  background: linear-gradient(112deg, transparent 30%, rgba(255, 252, 245, 0.24) 45%, rgba(255, 252, 245, 0.1) 54%, transparent 66%);
+  will-change: transform;
+}
+.brandTex::after {
+  /* plaster / paper tooth */
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' seed='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.41  0 0 0 0 0.35  0 0 0 0.16 0'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
+}
+
+/* 06 · DIGITAL COMMERCE: cooler, cleaner off-white and silver, a fine grid */
 .light {
   inset: 0;
   background:
-    radial-gradient(70% 60% at 30% 40%, #f7f6f2 0%, transparent 70%),
-    radial-gradient(80% 70% at 85% 80%, #dfe0e2 0%, transparent 75%),
-    linear-gradient(180deg, #f1efea 0%, #e9e8e5 55%, #e1e2e3 100%);
+    radial-gradient(70% 60% at 30% 40%, #fbfbfa 0%, transparent 70%),
+    radial-gradient(80% 70% at 85% 80%, #dadde0 0%, transparent 75%),
+    linear-gradient(180deg, #f3f4f3 0%, #eceeee 55%, #e2e5e7 100%);
 }
-/* LUVISCENT: very deep refined forest, desaturated emerald, clean */
+.grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-image:
+    linear-gradient(rgba(20, 21, 24, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 21, 24, 0.045) 1px, transparent 1px);
+  background-size: 72px 72px;
+  background-position: center center;
+  mask-image: radial-gradient(70% 70% at 50% 50%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 50%, #000 30%, transparent 85%);
+}
+/* the transition: silver warms before the emerald arrives */
+.warm {
+  inset: 0;
+  background:
+    radial-gradient(60% 50% at 50% 50%, rgba(246, 239, 224, 0.9), transparent 75%),
+    linear-gradient(180deg, #efe8da 0%, #e8dfcc 100%);
+}
+
+/* LUVISCENT: very deep refined forest, desaturated emerald */
 .forest {
   inset: 0;
   background:
     radial-gradient(110% 80% at 24% 110%, rgba(33, 72, 59, 0.85) 0%, rgba(23, 55, 45, 0.45) 40%, transparent 72%),
     radial-gradient(80% 70% at 86% 6%, rgba(14, 37, 30, 0.9) 0%, transparent 70%),
     linear-gradient(180deg, #06130f 0%, #0a1c16 52%, #06120e 100%);
+}
+/* the warm ivory wave front of the bloom (gradient set per frame) */
+.veil {
+  inset: 0;
 }
 /* warm evening light over the brand: ivory into champagne */
 .key {
@@ -73,6 +127,37 @@
 :global([dir="rtl"]) .dawn {
   transform: scaleX(-1);
 }
+
+/* the air: one precise line that becomes light (no particles, no smoke) */
+.air,
+.airGlow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  visibility: hidden;
+}
+.air path,
+.airGlow path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+.air path {
+  stroke-width: 1;
+}
+.airGlow {
+  filter: blur(22px);
+}
+.airGlow path {
+  stroke-width: 44;
+}
+.airGlow path:last-child {
+  stroke-width: 14;
+}
+
 .grain {
   position: absolute;
   inset: -50%;

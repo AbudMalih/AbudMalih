@@ -9,10 +9,13 @@ import { useI18n } from "@/content/i18n/I18nProvider";
 import s from "./BrandShift.module.css";
 
 /**
- * 04 — LOGISTICS → PRODUCT → BRAND
- * The camera isolates one carton; the world falls away into fog. The
- * carton's outline is handed to a DOM frame, which opens into the frame
- * of the statement — then collapses into the red line of the chain.
+ * 04 · LOGISTICS → PRODUCT → BRAND: the first light moment of the film.
+ * The camera isolates one carton while the world brightens metallic →
+ * silver → warm ivory (lib/world/tones.ts) and the hall dissolves into the
+ * light; the carton is drawn in ink. Its outline is handed to a DOM frame,
+ * which opens into an editorial frame with crop marks; the carton unfolds
+ * into its packaging net (brand construction) behind the statement, then
+ * the frame collapses into the red line of the chain.
  */
 export default function BrandShift() {
   return (
@@ -71,7 +74,12 @@ function Content() {
       .fromTo(q("[data-b2]"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.69)
       .fromTo(q("[data-corner]"), { opacity: 0 }, { opacity: 1, duration: 0.05 }, 0.6)
       .to(q("[data-b1], [data-b2]"), { yPercent: -135, duration: 0.07, ease: "power2.in", stagger: 0.015 }, 0.82)
-      .to(q("[data-corner]"), { opacity: 0, duration: 0.04 }, 0.84);
+      .to(q("[data-corner]"), { opacity: 0, duration: 0.04 }, 0.84)
+      // the carton unfolds into its packaging net: product → construction → brand
+      .fromTo(q("[data-net]"), { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0.52)
+      .fromTo(q("[data-net] path"), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.2, stagger: 0.012, ease: "power1.inOut" }, 0.53)
+      .fromTo(q("[data-net]"), { scale: 0.86 }, { scale: 1, duration: 0.3, ease: "none" }, 0.52)
+      .to(q("[data-net]"), { opacity: 0, duration: 0.06 }, 0.8);
   }, [locale]);
 
   return (
@@ -97,6 +105,16 @@ function Content() {
           </span>
         </span>
       </h2>
+
+      <svg className={s.net} data-net data-cine-only viewBox="0 0 400 300" aria-hidden="true">
+        {/* packaging net of the carton: panels, flaps, glue tab (fold lines dashed) */}
+        <path pathLength={1} d="M70 105 H330 V195 H70 Z" />
+        <path pathLength={1} d="M135 105 V195 M200 105 V195 M265 105 V195" className={s.fold} />
+        <path pathLength={1} d="M70 105 L76 72 H129 L135 105 M135 105 V60 H200 V105 M200 105 L206 72 H259 L265 105 M265 105 V60 H330 V105" />
+        <path pathLength={1} d="M70 195 L76 228 H129 L135 195 M135 195 V240 H200 V195 M200 195 L206 228 H259 L265 195 M265 195 V240 H330 V195" />
+        <path pathLength={1} d="M330 112 L348 118 V182 L330 188" />
+        <path pathLength={1} d="M135 150 H200 M200 150 H265" className={s.fold} />
+      </svg>
 
       <div ref={frame} className={s.frame} data-cine-only aria-hidden="true">
         <i className={s.c} data-corner data-pos="tl" />

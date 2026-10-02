@@ -15,8 +15,10 @@ import s from "./Commerce.module.css";
  *  3. layers → store technology (Shopify, WooCommerce) and marketplaces
  *     (Amazon, eBay, OTTO) → customers (D2C) and European markets; order
  *     signals travel both hops with the scroll
- *  4. the network converges on one owned-brand node that opens into the
- *     champagne horizon of LUVISCENT (07)
+ *  4. the network simplifies channel by channel; the red connection reaches
+ *     one owned-brand node, LUVISCENT, which opens into air: the line
+ *     becomes champagne light and the emerald world blooms from the node
+ *     (components/chrome/Atmosphere.tsx)
  * Platforms are technologies and channels, never presented as partners.
  * Every value is a function of chapter progress (direction-independent).
  */
@@ -135,22 +137,29 @@ function Content() {
         )
         .fromTo(q("[data-secondary]"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.05 }, 0.44)
         .fromTo(q("[data-body]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.05 }, 0.48)
-        // 4 · converge on one owned-brand node
-        .to(q("[data-dest], [data-platform], [data-group], [data-channels]"), { opacity: 0, duration: 0.05, stagger: 0.004 }, 0.68)
-        .to(q("[data-hop1], [data-hop2]"), { opacity: 0, duration: 0.06 }, 0.68)
-        .to(q("[data-h] > span > span"), { yPercent: -135, duration: 0.05, ease: "power2.in", stagger: 0.015 }, 0.68)
-        .to(q("[data-secondary], [data-body], [data-tag]"), { opacity: 0, duration: 0.05 }, 0.68)
-        .to(q("[data-carton], [data-origin-label]"), { opacity: 0, duration: 0.05 }, 0.7)
-        .to(q("[data-layer]"), { scaleY: 0, duration: 0.05, stagger: 0.01 }, 0.71)
-        .to(q("[data-trunk], [data-route]"), { opacity: 0, duration: 0.05 }, 0.72)
-        .fromTo(q("[data-converge]"), { opacity: 0 }, { opacity: 1, duration: 0.05 }, 0.68)
-        .to(q("[data-converge]"), { opacity: 0, duration: 0.05 }, 0.8)
+        // 4 · the network simplifies, channel by channel, until one owned-brand node remains
+        .to(q("[data-channels], [data-group]"), { opacity: 0, duration: 0.04 }, 0.6)
+        .to(q("[data-dest]"), { opacity: 0, duration: 0.04, stagger: 0.02 }, 0.61)
+        .to(q("[data-h] > span > span"), { yPercent: -135, duration: 0.05, ease: "power2.in", stagger: 0.015 }, 0.66)
+        .to(q("[data-secondary], [data-body], [data-tag]"), { opacity: 0, duration: 0.05 }, 0.66)
+        .to(q("[data-origin-label]"), { opacity: 0, duration: 0.04 }, 0.7)
+        .to(q("[data-layer]"), { scaleY: 0, duration: 0.05, stagger: 0.01 }, 0.72)
+        // 5 · the red connection reaches LUVISCENT (drawn by the atmosphere's air line)
         .fromTo(q("[data-node]"), { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.05, ease: "back.out(2)" }, 0.75)
         .fromTo(q("[data-node-label]"), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.04 }, 0.78)
-        // 5 · the node opens into the LUVISCENT horizon
-        .to(q("[data-node-label]"), { opacity: 0, duration: 0.03 }, 0.88)
-        .to(q("[data-node]"), { scale: 0.4, opacity: 0, duration: 0.05 }, 0.9)
-        .fromTo(q("[data-horizon]"), { scaleX: 0, opacity: 1 }, { scaleX: 1, duration: 0.12, ease: "power2.inOut" }, 0.86);
+        .to(q("[data-trunk], [data-route]"), { opacity: 0, duration: 0.04 }, 0.79)
+        // 6 · digital commerce becomes atmosphere: the node opens into air
+        .to(q("[data-node] i"), { backgroundColor: "#d4c19b", duration: 0.06 }, 0.8)
+        .to(q("[data-carton]"), { opacity: 0, duration: 0.06 }, 0.82)
+        .to(q("[data-node-label]"), { opacity: 0, duration: 0.05 }, 0.87)
+        .to(q("[data-node]"), { scale: 2.4, opacity: 0, duration: 0.08, ease: "power1.in" }, 0.86);
+      // channels leave one by one: each mark with its own two routes
+      NODES.forEach((_, i) => {
+        const at = 0.62 + (NODES.length - 1 - i) * 0.022;
+        tl.to(q("[data-platform]")[i], { opacity: 0, y: -4, duration: 0.035 }, at)
+          .to(q("[data-hop2]")[i], { opacity: 0, duration: 0.035 }, at - 0.008)
+          .to(q("[data-hop1]")[i], { opacity: 0, duration: 0.035 }, at + 0.01);
+      });
       placePackets(0);
     },
     [locale]
@@ -180,11 +189,6 @@ function Content() {
           ))}
           {NODES.map((n) => (
             <path key={`h2-${n.id}`} d={pathOf(n.at, n.end)} className={`${s.branch} ${s.hop2}`} data-hop2 />
-          ))}
-        </svg>
-        <svg className={s.svg} viewBox="0 0 100 100" preserveAspectRatio="none" data-converge aria-hidden="true">
-          {END_Y.map((y) => (
-            <path key={y} d={pathOf([END_X, y], [NODE.x, NODE.y])} className={s.converge} />
           ))}
         </svg>
 
@@ -255,8 +259,6 @@ function Content() {
           </span>
         </div>
       </div>
-
-      <span className={s.horizon} data-horizon data-cine-only aria-hidden="true" />
 
       <div className={s.copy}>
         <p className={`t-headline ${s.secondary}`} data-secondary>
