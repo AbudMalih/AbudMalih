@@ -6,6 +6,7 @@ import { gsap } from "@/lib/motion/gsap";
 import { COMPANY } from "@/content/site";
 import { formatLat, formatLon } from "@/lib/globe/geo";
 import GlobeLayer from "@/components/stage/GlobeLayer";
+import HeroSignal from "./HeroSignal";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./Hero.module.css";
 
@@ -20,6 +21,8 @@ export default function Hero() {
 function HeroContent() {
   const { dict, locale } = useI18n();
   const scope = useRef<HTMLDivElement>(null);
+  const period = useRef<HTMLSpanElement>(null);
+  const lines = dict.hero.lines;
   const index = dict.hero.index;
 
   // Time-based entrance (after the loader hands over)
@@ -70,15 +73,26 @@ function HeroContent() {
   return (
     <div ref={scope} className={styles.hero}>
       <h1 className={`t-mega ${styles.title}`}>
-        {dict.hero.lines.map((w, i) => (
-          <span key={i} className={`${styles.line} ${i === 1 ? `${styles.indent} tone-graphite` : ""}`} data-line={i + 1}>
-            <span className="mask">
-              <span data-move>
-                <span data-word>{w}</span>
+        {lines.map((w, i) => {
+          // only the closing period carries the red: it is the route's origin
+          const last = i === lines.length - 1 && w.endsWith(".");
+          return (
+            <span key={i} className={`${styles.line} ${i === 1 ? `${styles.indent} tone-graphite` : ""}`} data-line={i + 1}>
+              <span className="mask">
+                <span data-move>
+                  <span data-word>
+                    {last ? w.slice(0, -1) : w}
+                    {last && (
+                      <span ref={period} className={styles.period} data-period>
+                        .
+                      </span>
+                    )}
+                  </span>
+                </span>
               </span>
             </span>
-          </span>
-        ))}
+          );
+        })}
       </h1>
 
       <div className={styles.foot}>
@@ -108,6 +122,8 @@ function HeroContent() {
           ))}
         </ol>
       </div>
+
+      <HeroSignal period={period} />
 
       <div data-static-only className={styles.staticGlobe}>
         <GlobeLayer mode="static" />

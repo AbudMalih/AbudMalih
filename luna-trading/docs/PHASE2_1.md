@@ -52,12 +52,26 @@ Chapter 06 reads **Product → Digital commerce → Platforms → Marketplaces �
 - **Marketplaces:** Amazon, eBay, OTTO. These connect to *Europäische Märkte*.
 - **Captions:** neutral only: "Plattformen & Vertriebskanäle" / "Commerce platforms & channels" / "منصات وقنوات التجارة الإلكترونية". There is no partner, endorsement or "powered by" wording anywhere.
 - **Registry:** `content/platforms.ts` holds, for each platform, the mark (Simple Icons data, shape unmodified, monochrome ink), its source and its guideline note.
-- **`useMark` switch:**
-  - `true` for **Shopify** and **WooCommerce**. Both publish brand / trademark guidance that permits reference use.
-  - `false` (typographic identity) for **Amazon**, **eBay** and **OTTO**. Their logo use requires permission or is licensed to programme participants. The marks are prepared, and flipping `useMark` enables them once usage is cleared.
+- **`useMark` switch:** all five marks are now enabled (`true`) at the client's instruction.
+  - **Shopify** and **WooCommerce** publish brand / trademark guidance that permits reference use.
+  - **Amazon**, **eBay** and **OTTO** restrict logo use (permission, or licensed to programme participants). Clearance for these rests with Luna Trading. Setting `useMark: false` falls back to the typographic identity.
+  - Amazon's mark is a square glyph, so it is sized like Shopify's glyph rather than like the flat wordmarks.
 
 ## Favicon (LT micro-mark)
 - **Design:** graphite tile `#141518`. "L" in the wordmark's luna grey, "T" in its trading light, and a small Luna-red "+" as a secondary accent. Checked at 16 / 32 / 48 px.
 - **Files:** `favicon.ico` (16/32/48), `favicon-lt.svg`, `apple-touch-icon.png` + `apple-touch-icon-lt.png`, and `icon-lt-192.png`, `icon-lt-512.png`, `icon-lt-maskable-512.png` (in `site.webmanifest`).
 - **Cache busting:** metadata links are versioned (`?v=lt1`, `ICON_V` in `app/[lang]/layout.tsx`), and icon files are served with `must-revalidate`.
 - **Old icons removed:** the old `icon.svg` / `icon-*.png` files (the Phase 1 "+" and the Phase 2.1 "t+") are deleted, so `/icon.svg` now returns 404.
+
+## Hero micro-refinement
+- **Red period.** Only the period after GRENZEN / BORDERS / حدود is Luna red. TRADE and BORDERS stay white, WITHOUT stays graphite.
+- **The period is the route's origin** (`components/sections/HeroSignal.tsx`). It is a pure function of hero progress, so forward and reverse scrolling are identical:
+  - `.004–.07`: the period locks as a coordinate. A hairline graphite crosshair frames it, one red ring opens, and a subtle red pulse runs while it is active.
+  - `.035–.20`: a thin red route draws from the period to the globe's route origin (East Asia).
+  - `.195–.27`: the glyph hands over to a red point, which contracts from the glyph's size.
+  - `.23–.32`: the point travels the route and the line retracts behind it. The crosshair tightens and settles on the origin.
+  - `.31–.345`: the globe's own red route and red + take over.
+- **Globe anchor.** `lib/globe/shared.ts` publishes the globe's projected origin each render, so the hand-over is exact at any viewport size and in RTL.
+- **The white "+".** No static "+" exists in the hero. The floating plus was the custom cursor, left at rest while the page scrolled under a still mouse. It is now a pointer only: it fades on wheel scrolling and after 1.4 s without movement, and returns on movement. The crosshair role in the story now belongs to the route's coordinate lock.
+- **Globe:** ocean and land specular, fresnel rim and halo are each about 12 % stronger. The globe stays dark.
+- **Unchanged:** the right progress rail and its red marker. Static and reduced-motion modes show the red period without animation.

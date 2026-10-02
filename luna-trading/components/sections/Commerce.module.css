@@ -295,10 +295,13 @@
 .m_shopify {
   --mb: clamp(24px, 2.4vw, 34px);
 }
+/* Amazon's mark is a square glyph (a + smile): glyph size, a touch above Shopify's */
+.m_amazon {
+  --mb: clamp(28px, 2.8vw, 38px);
+}
 .m_woocommerce,
 .m_ebay,
-.m_otto,
-.m_amazon {
+.m_otto {
   --mb: clamp(60px, 6vw, 84px);
   margin-block: calc(var(--mb) * -0.3);
 }
@@ -383,10 +386,12 @@
   .m_shopify {
     --mb: 15px;
   }
+  .m_amazon {
+    --mb: 18px;
+  }
   .m_woocommerce,
   .m_ebay,
-  .m_otto,
-  .m_amazon {
+  .m_otto {
     --mb: 36px;
   }
   .channels {

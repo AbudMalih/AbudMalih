@@ -12,6 +12,7 @@
     height: 0;
     pointer-events: none;
     mix-blend-mode: difference;
+    transition: opacity 0.5s var(--ease-out);
   }
 }
 .cursor i {
