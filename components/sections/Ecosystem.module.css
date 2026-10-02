@@ -5,19 +5,19 @@
 }
 .tag {
   position: absolute;
-  left: var(--margin);
-  top: clamp(96px, 15vh, 150px);
+  inset-inline-start: var(--margin);
+  top: var(--safe-top);
 }
 .h {
   position: absolute;
-  left: var(--margin);
-  top: calc(clamp(96px, 15vh, 150px) + 40px);
+  inset-inline-start: var(--margin);
+  top: calc(var(--safe-top) + 40px);
   font-size: clamp(1.8rem, 3.6vw, 4rem);
   z-index: 2;
 }
 .svg {
   position: absolute;
-  left: 57%;
+  left: var(--eco-x, 57%);
   top: 55%;
   width: min(104vh, 88vw);
   height: auto;
@@ -142,7 +142,7 @@
 }
 .legend {
   position: absolute;
-  left: var(--margin);
+  inset-inline-start: var(--margin);
   bottom: clamp(24px, 5vh, 48px);
   color: var(--graphite-300);
   display: flex;
@@ -215,8 +215,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px 16px;
     position: absolute;
-    left: var(--margin);
-    right: var(--margin);
+    inset-inline: var(--margin);
     bottom: clamp(56px, 9vh, 90px);
     font-size: 0.95rem;
     font-weight: 500;
@@ -224,9 +223,29 @@
   }
   .list span {
     color: var(--graphite-400);
-    margin-right: 6px;
+    margin-inline-end: 6px;
   }
   .legend {
     bottom: 22px;
+  }
+}
+
+:global([dir="rtl"]) .svg {
+  --eco-x: 43%;
+}
+:global(html[lang="ar"]) .label {
+  font-family: var(--font-arabic);
+  font-size: 24px;
+  letter-spacing: 0;
+}
+:global(html[lang="ar"]) .arcLabel,
+:global(html[lang="ar"]) .originLabel {
+  font-family: var(--font-arabic);
+  font-size: 16px;
+  letter-spacing: 0;
+}
+@media (max-width: 860px) {
+  :global([dir="rtl"]) .svg {
+    --eco-x: 50%;
   }
 }

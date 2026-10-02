@@ -1,34 +1,32 @@
+"use client";
+
 import Link from "next/link";
 import { COMPANY, NAV, LEGAL_NAV, BRANDS } from "@/content/site";
-import { LunaLogo, Plus } from "@/components/brand/Logos";
+import { LunaLogo } from "@/components/brand/Logos";
 import { formatLat, formatLon } from "@/lib/globe/geo";
+import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./Footer.module.css";
 
 /**
- * Calm, paper-white corporate footer — the one surface where the official
+ * Calm, paper-white corporate footer: the one surface where the master
  * logo sits natively on its intended light ground.
  */
 export default function Footer() {
+  const { dict, href } = useI18n();
   const year = new Date().getFullYear();
   return (
     <footer className={styles.footer}>
       <div className={`frame ${styles.inner}`}>
         <div className={styles.top}>
-          <Link href="/" aria-label="Luna Trading — Home" className={styles.logo} data-cursor="link">
-            <LunaLogo height="100%" />
+          <Link href={href("/")} aria-label={dict.a11y.home} className={styles.logo} data-cursor="link">
+            <LunaLogo variant="master" height="100%" />
           </Link>
-          <p className={styles.statement}>
-            Global sourcing, import &amp; export, product and brand development, e-commerce and distribution — from {COMPANY.cityEn}
-            <span className={styles.plusInline}>
-              <Plus size={10} />
-            </span>
-            for Europe.
-          </p>
+          <p className={styles.statement}>{dict.footer.statement}</p>
         </div>
 
         <div className={styles.cols}>
           <div>
-            <h2 className={`t-label ${styles.h}`}>Company</h2>
+            <h2 className={`t-label ${styles.h}`}>{dict.footer.company}</h2>
             <address className={styles.addr}>
               {COMPANY.legalName}
               <br />
@@ -39,7 +37,7 @@ export default function Footer() {
                 </>
               )}
               {COMPANY.postalCode ? `${COMPANY.postalCode} ` : ""}
-              {COMPANY.city}, {COMPANY.country}
+              {dict.company.place}
               {COMPANY.email && (
                 <>
                   <br />
@@ -48,23 +46,23 @@ export default function Footer() {
               )}
             </address>
           </div>
-          <nav aria-label="Footer">
-            <h2 className={`t-label ${styles.h}`}>Navigate</h2>
+          <nav aria-label={dict.a11y.footerNav}>
+            <h2 className={`t-label ${styles.h}`}>{dict.footer.navigate}</h2>
             <ul className={styles.list}>
               {NAV.map((n) => (
                 <li key={n.href}>
-                  <Link href={n.href} className="link-line" data-cursor="link">
-                    {n.label}
+                  <Link href={href(n.href)} className="link-line" data-cursor="link">
+                    {dict.nav[n.key]}
                   </Link>
                 </li>
               ))}
             </ul>
           </nav>
           <div>
-            <h2 className={`t-label ${styles.h}`}>Owned brands</h2>
+            <h2 className={`t-label ${styles.h}`}>{dict.footer.owned}</h2>
             <ul className={styles.list}>
               <li>
-                <Link href={BRANDS.luviscent.internal} className="link-line" data-cursor="link">
+                <Link href={href(BRANDS.luviscent.internal)} className="link-line" data-cursor="link" lang="en">
                   {BRANDS.luviscent.name}
                   {BRANDS.luviscent.mark}
                 </Link>
@@ -72,12 +70,12 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h2 className={`t-label ${styles.h}`}>Legal</h2>
+            <h2 className={`t-label ${styles.h}`}>{dict.footer.legal}</h2>
             <ul className={styles.list}>
               {LEGAL_NAV.map((n) => (
                 <li key={n.href}>
-                  <Link href={n.href} className="link-line" data-cursor="link">
-                    {n.label}
+                  <Link href={href(n.href)} className="link-line" data-cursor="link">
+                    {dict.legal[n.key]}
                   </Link>
                 </li>
               ))}
@@ -86,8 +84,10 @@ export default function Footer() {
         </div>
 
         <div className={styles.bottom}>
-          <span className="t-label">© {year} {COMPANY.legalName}</span>
-          <span className="t-label t-mono">
+          <span className="t-label">
+            © {year} {COMPANY.legalName}
+          </span>
+          <span className="t-label t-mono" dir="ltr">
             {formatLat(COMPANY.coordinates.lat)} &nbsp;{formatLon(COMPANY.coordinates.lon)}
           </span>
         </div>

@@ -8,6 +8,7 @@ import { stage } from "@/lib/stage/store";
 import { onFrame, damp, markReady } from "@/lib/stage/ticker";
 import { COMPANY } from "@/content/site";
 import { isCine } from "@/lib/motion/env";
+import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./GlobeLayer.module.css";
 
 const KEYS: (keyof GlobeFrame)[] = ["lon", "lat", "dist", "ox", "oy", "reveal", "route"];
@@ -18,6 +19,7 @@ const KEYS: (keyof GlobeFrame)[] = ["lon", "lat", "dist", "ox", "oy", "reveal", 
  * `mode="static"` renders a single composed frame (reduced motion / review).
  */
 export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "static" }) {
+  const { dict } = useI18n();
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const originRef = useRef<HTMLDivElement>(null);
@@ -133,6 +135,7 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       ref={wrapRef}
       className={mode === "fixed" ? `stage-layer ${styles.fixed}` : styles.static}
       aria-hidden="true"
+      dir="ltr"
     >
       <canvas ref={canvasRef} className={styles.canvas} />
       <div ref={originRef} className={styles.marker}>
@@ -145,7 +148,7 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       <div ref={homeRef} className={`${styles.marker} ${styles.home}`}>
         <i className={styles.plus} />
         <span className={`t-label ${styles.coord}`}>
-          {COMPANY.city} &nbsp;{formatLat(COMPANY.coordinates.lat)} {formatLon(COMPANY.coordinates.lon)}
+          {dict.company.city} &nbsp;{formatLat(COMPANY.coordinates.lat)} {formatLon(COMPANY.coordinates.lon)}
         </span>
       </div>
     </div>

@@ -4,39 +4,42 @@
   min-height: inherit;
   padding: 0 var(--margin);
 }
+.dimGroup {
+  position: absolute;
+  inset: 0;
+}
 .tag {
   position: absolute;
-  left: var(--margin);
-  top: clamp(96px, 15vh, 150px);
+  inset-inline-start: var(--margin);
+  top: var(--safe-top);
 }
 .intro {
   position: absolute;
-  right: calc(var(--margin) + 40px);
-  top: clamp(90px, 14vh, 140px);
-  text-align: right;
-  font-size: clamp(1.6rem, 2.8vw, 3rem);
+  inset-inline-end: calc(var(--margin) + 40px);
+  top: calc(var(--safe-top) - 8px);
+  text-align: end;
+  font-size: clamp(1.5rem, 2.6vw, 2.8rem);
 }
 .stageWords {
   position: absolute;
-  left: 4.5%;
-  right: 4.5%;
+  inset-inline: 4.5%;
   bottom: calc(50% + clamp(18px, 3vh, 36px));
 }
 .stageWords > :global(.mask) {
   position: absolute;
-  left: 0;
+  inset-inline: 0;
   bottom: 0;
-  right: 0;
 }
 .word {
   display: block;
   white-space: nowrap;
-  font-size: clamp(2.6rem, 9.4vw, 11rem);
+  font-size: clamp(2.6rem, min(8.6vw, 16svh), 10rem);
 }
+
+/* ---- the line ---- */
 .line {
   position: absolute;
-  left: 4.5%;
-  right: 4.5%;
+  inset-inline: 4.5%;
   top: 50%;
   height: 2px;
   margin-top: -1px;
@@ -52,12 +55,27 @@
   background: var(--luna-red);
   transform-origin: left;
 }
+:global([dir="rtl"]) .fill {
+  transform-origin: right;
+}
+.champagne {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(90deg, var(--luna-red) 0%, var(--lv-amber) 30%, var(--lv-champagne) 65%, var(--lv-champagne-soft) 100%);
+}
+:global([dir="rtl"]) .champagne {
+  background: linear-gradient(270deg, var(--luna-red) 0%, var(--lv-amber) 30%, var(--lv-champagne) 65%, var(--lv-champagne-soft) 100%);
+}
 .ticks li {
   position: absolute;
   top: 18px;
   transform: translateX(-50%);
   color: var(--graphite-500);
   font-size: 10px;
+}
+:global([dir="rtl"]) .ticks li {
+  transform: translateX(50%);
 }
 .ticks li::before {
   content: "";
@@ -68,33 +86,58 @@
   height: 9px;
   background: currentColor;
 }
-.ticks li:first-child {
+.ticks li:first-child,
+:global([dir="rtl"]) .ticks li:first-child {
   transform: none;
 }
 .ticks li:first-child::before {
   left: 0;
 }
+:global([dir="rtl"]) .ticks li:first-child::before {
+  left: auto;
+  right: 0;
+}
 .ticks li:last-child {
   transform: translateX(-100%);
+}
+:global([dir="rtl"]) .ticks li:last-child {
+  transform: translateX(100%);
 }
 .ticks li:last-child::before {
   left: auto;
   right: 0;
 }
+:global([dir="rtl"]) .ticks li:last-child::before {
+  right: auto;
+  left: 0;
+}
+.tickKey::after {
+  /* the e-commerce tick carries a second, longer mark: the branch point */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -27px;
+  width: 1px;
+  height: 7px;
+  background: currentColor;
+  opacity: 0.6;
+}
 .marker {
+  --m: 0;
   position: absolute;
   top: 1px;
+  inset-inline-start: calc(var(--m) * 100%);
   width: 22px;
   height: 22px;
-  margin: -11px 0 0 -11px;
+  margin-top: -11px;
+  margin-inline-start: -11px;
   background:
     linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 4px no-repeat,
     linear-gradient(var(--luna-red), var(--luna-red)) center / 4px 100% no-repeat;
 }
 .descs {
   position: absolute;
-  left: 4.5%;
-  right: 4.5%;
+  inset-inline: 4.5%;
   top: calc(50% + 72px);
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -103,31 +146,170 @@
 .count {
   grid-column: 1 / span 3;
   color: var(--graphite-300);
+  justify-self: start;
 }
 .desc {
   grid-column: 7 / span 5;
   grid-row: 1;
   color: var(--paper);
-  font-size: clamp(1.1rem, 1.6vw, 1.6rem);
-  line-height: 1.35;
+  font-size: clamp(1.1rem, 1.5vw, 1.55rem);
+  line-height: 1.38;
   letter-spacing: -0.015em;
 }
-.list {
-  display: none;
+
+/* ---- digital commerce moment ---- */
+.commerce {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cHead {
+  position: absolute;
+  inset-inline-start: var(--margin);
+  top: var(--safe-top);
+  font-size: clamp(2.2rem, min(6vw, 10.5svh), 7.2rem);
+}
+.diagram {
+  position: absolute;
+  inset-inline: 4.5%;
+  top: calc(50% - 17vh);
+  height: 34vh;
+}
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+:global([dir="rtl"]) .svg {
+  transform: scaleX(-1);
+}
+.trunk {
+  position: absolute;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--luna-red);
+  transform-origin: left;
+}
+:global([dir="rtl"]) .trunk {
+  transform-origin: right;
+}
+.branch {
+  fill: none;
+  stroke: var(--graphite-400);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.pulse {
+  /* a packet of data moving with the scroll */
+  position: absolute;
+  width: 14px;
+  height: 2px;
+  margin-top: -1px;
+  margin-inline-start: -7px;
+  background: var(--paper);
+  box-shadow: 0 0 0 1px rgba(201, 2, 22, 0.35);
+  opacity: 0;
+}
+.origin {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  margin-inline-start: -10px;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 4px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 4px 100% no-repeat;
+}
+.originLabel,
+.platformLabel {
+  position: absolute;
+  color: var(--graphite-300);
+  white-space: nowrap;
+}
+.originLabel {
+  top: calc(50% + 22px);
+  margin-inline-start: -4px;
+}
+.platformLabel {
+  top: 0;
+  transform: translateY(-140%);
+}
+.layer {
+  position: absolute;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--paper) 18%, var(--paper) 82%, transparent);
+  transform-origin: 50% 50%;
+  opacity: 0.8;
+}
+.layer:nth-of-type(odd) {
+  opacity: 0.45;
+}
+.end {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  translate: 0 -50%;
+}
+.endSq {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-inline-start: -4.5px;
+  border: 1px solid var(--paper);
+  background: var(--ink-950);
+}
+.endText {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: clamp(0.95rem, 1.25vw, 1.25rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+  white-space: nowrap;
+}
+.endIdx {
+  color: var(--graphite-400);
+  font-size: 10px;
+}
+.cSupport {
+  position: absolute;
+  inset-inline-start: var(--margin);
+  bottom: clamp(32px, 8vh, 90px);
+  max-width: 34em;
 }
 
+/* ---- static / accessible ---- */
+.list,
+.commerceStatic {
+  display: none;
+}
+:global(html:not(.cine)) .dimGroup {
+  position: relative;
+}
 :global(html:not(.cine)) .tag,
 :global(html:not(.cine)) .intro {
   position: relative;
-  left: auto;
-  right: auto;
-  top: auto;
-  text-align: left;
+  inset: auto;
+  text-align: start;
   margin-bottom: var(--s-6);
 }
-:global(html:not(.cine)) .list {
+:global(html:not(.cine)) .list,
+:global(html:not(.cine)) .commerceStatic {
   display: grid;
-  gap: 0;
+}
+.commerceStatic {
+  gap: var(--s-4);
+  margin-top: var(--s-8);
+}
+.commerceStatic ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3) var(--s-6);
 }
 .list li {
   display: grid;
@@ -146,7 +328,8 @@
 .list span:last-child {
   color: var(--fg-muted);
 }
-:global(html.cine) .list {
+:global(html.cine) .list,
+:global(html.cine) .commerceStatic {
   display: block;
   position: absolute;
   width: 1px;
@@ -158,18 +341,17 @@
 @media (max-width: 767px) {
   .stageWords,
   .line,
-  .descs {
-    left: 6%;
-    right: 6%;
+  .descs,
+  .diagram {
+    inset-inline: 6%;
   }
   .intro {
-    left: var(--margin);
-    right: auto;
-    text-align: left;
-    top: calc(clamp(96px, 15vh, 150px) + 36px);
+    inset-inline: var(--margin) auto;
+    text-align: start;
+    top: calc(var(--safe-top) + 34px);
   }
   .word {
-    font-size: clamp(2.1rem, 11.4vw, 4rem);
+    font-size: clamp(2rem, 10.6vw, 3.8rem);
     white-space: normal;
   }
   .count {
@@ -179,6 +361,19 @@
   .desc {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+  .diagram {
+    top: calc(50% - 14vh);
+    height: 28vh;
+  }
+  .endText {
+    font-size: 0.78rem;
+    white-space: normal;
+    max-width: 22vw;
+    line-height: 1.2;
+  }
+  .endIdx {
+    display: none;
   }
   .list li {
     grid-template-columns: 4ch 1fr;

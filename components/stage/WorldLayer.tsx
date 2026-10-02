@@ -9,14 +9,10 @@ import { worldShared } from "@/lib/world/shared";
 import { SEQUENCES, type SequenceManifest, type SequenceTier } from "@/content/sequences";
 import { FrameSequence } from "@/lib/sequence/FrameSequence";
 import { isCine } from "@/lib/motion/env";
+import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./WorldLayer.module.css";
 
-const LABELS: Record<string, { idx: string; text: string }> = {
-  germany: { idx: "03.1", text: "Germany" },
-  eu: { idx: "03.2", text: "EU distribution" },
-  ecommerce: { idx: "03.3", text: "E-commerce" },
-  b2b: { idx: "03.4", text: "B2B" },
-};
+const LABEL_IDX: Record<string, string> = { germany: "03.1", eu: "03.2", ecommerce: "03.3", b2b: "03.4" };
 
 /** World visibility as a pure function of chapter progress. */
 function worldOpacity() {
@@ -30,6 +26,8 @@ function worldOpacity() {
  * sequence when a manifest exists in content/sequences.ts.
  */
 export default function WorldLayer() {
+  const { dict } = useI18n();
+  const labels = dict.warehouse.labels as Record<string, string>;
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const seqRef = useRef<HTMLCanvasElement>(null);
@@ -145,7 +143,7 @@ export default function WorldLayer() {
   }, []);
 
   return (
-    <div ref={wrapRef} className={`stage-layer ${styles.layer}`} aria-hidden="true">
+    <div ref={wrapRef} className={`stage-layer ${styles.layer}`} aria-hidden="true" dir="ltr">
       <canvas ref={canvasRef} className={styles.canvas} />
       <canvas ref={seqRef} className={`${styles.canvas} ${styles.seq}`} />
       <div className={styles.labels}>
@@ -154,8 +152,8 @@ export default function WorldLayer() {
             <i className={styles.pin} />
             <span className={styles.stem} />
             <span className={styles.text}>
-              <span className={`t-label ${styles.idx}`}>{LABELS[a.id].idx}</span>
-              <span className={styles.name}>{LABELS[a.id].text}</span>
+              <span className={`t-label ${styles.idx}`}>{LABEL_IDX[a.id]}</span>
+              <span className={styles.name}>{labels[a.id]}</span>
             </span>
           </div>
         ))}

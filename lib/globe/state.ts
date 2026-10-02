@@ -13,6 +13,13 @@ const KOELN = COMPANY.coordinates;
  *   closing   — the world returns, calm, the + at Cologne
  */
 export function globeState(): GlobeDerived {
+  const f = globeStateLtr();
+  // In RTL the text sits on the right, so the globe composes to the left.
+  if (stage.rtl) f.ox = -f.ox;
+  return f;
+}
+
+function globeStateLtr(): GlobeDerived {
   const { hero: h, source: s, closing: c } = stage.p;
   const m = stage.mobile;
   const portrait = stage.vw / Math.max(1, stage.vh) < 0.8;

@@ -5,7 +5,8 @@
   position: relative;
   height: 100%;
   min-height: inherit;
-  padding: 0 var(--margin);
+  /* protected header zone: the headline never enters it */
+  padding: var(--safe-top) var(--margin) 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -15,15 +16,15 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: clamp(88px, 13vh, 150px);
-  margin-left: -0.04em;
+  padding-bottom: clamp(96px, 15vh, 170px);
+  margin-inline-start: -0.04em;
 }
 .line {
   display: block;
   will-change: transform;
 }
 .indent {
-  padding-left: 1.06em;
+  padding-inline-start: 1.06em;
 }
 .foot {
   position: absolute;
@@ -44,6 +45,10 @@
   height: 1px;
   background: var(--hairline-strong);
   transform-origin: left;
+}
+:global([dir="rtl"]) .hrule,
+:global([dir="rtl"]) .routeRule {
+  transform-origin: right;
 }
 .metaL {
   color: var(--paper);
@@ -83,7 +88,7 @@
 
 .route {
   position: absolute;
-  left: var(--margin);
+  inset-inline-start: var(--margin);
   bottom: clamp(40px, 8vh, 96px);
   width: min(360px, 70vw);
 }
@@ -120,7 +125,7 @@
   font-weight: 400;
   letter-spacing: 0.1em;
   vertical-align: 0.6em;
-  margin-right: 0.6em;
+  margin-inline-end: 0.6em;
 }
 
 .staticGlobe {
@@ -140,7 +145,7 @@
 
 @media (max-width: 767px) {
   .indent {
-    padding-left: 0.5em;
+    padding-inline-start: 0.5em;
   }
   .title {
     padding-bottom: 120px;
@@ -159,4 +164,20 @@
     top: 10vh;
     width: 110vw;
   }
+}
+
+:global([dir="rtl"]) .staticGlobe {
+  right: auto;
+  left: -10vw;
+}
+:global(html[lang="ar"]) .title {
+  margin-inline-start: 0;
+}
+:global(html[lang="ar"]) .indexItem {
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+/* Arabic glyphs are taller (ascenders, dots): own height-aware size keeps the header zone clear */
+:global(html[lang="ar"]) .title {
+  font-size: clamp(3rem, min(11.5vw, 17.5svh), 13rem);
 }

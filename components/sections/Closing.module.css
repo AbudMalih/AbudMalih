@@ -6,7 +6,7 @@
 }
 .origin {
   position: absolute;
-  left: 57%;
+  left: var(--eco-x, 57%);
   top: 55%;
   width: 36px;
   height: 36px;
@@ -17,12 +17,11 @@
 }
 .block {
   position: absolute;
-  left: var(--margin);
-  right: var(--margin);
+  inset-inline: var(--margin);
   bottom: clamp(40px, 8vh, 96px);
 }
 .statement {
-  font-size: clamp(2.8rem, 8.6vw, 10rem);
+  font-size: clamp(2.6rem, min(7.6vw, 13.5svh), 9rem);
 }
 .ctaRow {
   position: relative;
@@ -42,6 +41,9 @@
   height: 1px;
   background: var(--hairline-strong);
   transform-origin: left;
+}
+:global([dir="rtl"]) .ctaRule {
+  transform-origin: right;
 }
 .cta {
   display: inline-flex;
@@ -99,5 +101,14 @@
   .origin {
     left: 50%;
     top: 50%;
+  }
+}
+
+:global([dir="rtl"]) .origin {
+  --eco-x: 43%;
+}
+@media (max-width: 860px) {
+  :global([dir="rtl"]) .origin {
+    --eco-x: 50%;
   }
 }

@@ -8,9 +8,10 @@
 }
 .first {
   position: absolute;
-  left: var(--margin);
-  top: clamp(110px, 17vh, 170px);
+  inset-inline-start: var(--margin);
+  top: var(--safe-top);
   display: block;
+  font-size: clamp(2.3rem, min(7.4vw, 13svh), 8.6rem);
 }
 .second {
   position: absolute;
@@ -20,7 +21,7 @@
   transform: translateY(-50%);
   display: block;
   text-align: center;
-  font-size: clamp(3rem, 12.6vw, 15.5rem);
+  font-size: clamp(3rem, min(11vw, 20svh), 13rem);
   z-index: 2;
 }
 .dot {

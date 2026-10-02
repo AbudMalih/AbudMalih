@@ -133,7 +133,7 @@ export default function Loader() {
         <span ref={count} className={`t-label t-mono ${styles.count}`}>000</span>
       </div>
       <div ref={plate} className={styles.plate}>
-        <LunaLogo plate height="100%" />
+        <LunaLogo height="100%" />
       </div>
     </div>
   );

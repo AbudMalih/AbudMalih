@@ -13,3 +13,4 @@
   background: var(--graphite-500);
   transform-origin: left;
 }
+:global([dir="rtl"]) .rule { transform-origin: right; }

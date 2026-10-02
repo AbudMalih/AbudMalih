@@ -5,6 +5,7 @@ import { CHAPTERS } from "@/content/chapters";
 import { stage } from "@/lib/stage/store";
 import { onFrame } from "@/lib/stage/ticker";
 import { scrollToTarget } from "@/lib/motion/SmoothScroll";
+import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./ProgressRail.module.css";
 
 /**
@@ -12,6 +13,7 @@ import styles from "./ProgressRail.module.css";
  * the reader's position. Ticks are real buttons (keyboard + screen reader).
  */
 export default function ProgressRail() {
+  const { dict } = useI18n();
   const markerRef = useRef<HTMLSpanElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
 
@@ -34,7 +36,7 @@ export default function ProgressRail() {
   }, []);
 
   return (
-    <div ref={railRef} className={styles.rail} data-cine-only aria-label="Story chapters" role="navigation">
+    <div ref={railRef} className={styles.rail} data-cine-only aria-label={dict.a11y.chapters} role="navigation">
       <div className={styles.track}>
         {CHAPTERS.map((c, i) => (
           <button
@@ -49,9 +51,9 @@ export default function ProgressRail() {
             data-cursor="link"
           >
             <span className={`t-label ${styles.label}`}>
-              <span className={styles.idx}>{c.index}</span> {c.label}
+              <span className={styles.idx}>{c.index}</span> {dict.chapters[c.id]}
             </span>
-            <span className="sr-only">Go to chapter {c.index}: {c.label}</span>
+            <span className="sr-only">{dict.a11y.goTo} {c.index}: {dict.chapters[c.id]}</span>
           </button>
         ))}
         <span ref={markerRef} className={styles.marker} aria-hidden="true" />

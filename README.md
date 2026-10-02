@@ -1,7 +1,7 @@
-# Luna Trading GmbH — Website (Phase 1)
+# Luna Trading GmbH · Website (Phase 1)
 
 A cinematic, scroll-driven corporate homepage for Luna Trading GmbH, Cologne.
-Design system and architecture: **[docs/PHASE1.md](docs/PHASE1.md)**.
+Design system and architecture: **[docs/PHASE1.md](docs/PHASE1.md)**. Phase 2 changes (i18n, commerce, LUVISCENT, reverse logo): **[docs/PHASE2.md](docs/PHASE2.md)**.
 
 ## Run
 
@@ -20,7 +20,7 @@ npm run lint
 
 | URL | Purpose |
 |---|---|
-| `/` | Cinematic experience (WebGL + scroll choreography) |
+| `/` · `/en` · `/ar` | Cinematic experience in German (default), English, Arabic (RTL) |
 | `/?static` | Accessible static presentation. The same presentation is served automatically for `prefers-reduced-motion` or when WebGL is unavailable |
 | `/?debug` | Exposes `window.__luna` (Lenis, stage store, ScrollTrigger) for automated capture |
 
@@ -30,7 +30,8 @@ The intro plays once per session. Clear `sessionStorage` key `luna:intro` to see
 
 | Change… | Edit |
 |---|---|
-| Copy, company facts, nav | `content/site.ts`, section components |
+| Copy (DE / EN / AR) | `content/i18n/{de,en,ar}.ts` |
+| Company facts, nav structure | `content/site.ts` |
 | Chapter order / scroll lengths | `content/chapters.ts` |
 | Capabilities, owned brands, value chain | `content/ecosystem.ts` (the dial re-lays itself out) |
 | Production image sequences | `content/sequences.ts` + `public/sequences/` |

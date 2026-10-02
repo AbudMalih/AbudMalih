@@ -43,22 +43,31 @@
   --signal: var(--luna-red);
 
   /* ---- LUVISCENT world (owned brand — never mixed with Luna red) ------ */
-  --lv-forest-950: #04100c;
-  --lv-forest-900: #071a14;
-  --lv-forest-800: #0c271e;
-  --lv-emerald-700: #12392c;
-  --lv-emerald-600: #1a4a39;
-  --lv-gold: #c6a465;
-  --lv-gold-soft: #e3cfa2;
+  /* deep forest + warm olive, champagne, ivory, amber light */
+  --lv-forest-950: #070b08;
+  --lv-forest-900: #0c130e;
+  --lv-forest-800: #121c15;
+  --lv-olive-700: #232a1a;
+  --lv-olive-600: #333a24;
+  --lv-champagne: #cdb68a;
+  --lv-champagne-soft: #e4d5b3;
+  --lv-ivory: #efe9dc;
+  --lv-amber: #c8904f;
   --lv-mist: #f2f2f2;
+  /* legacy aliases */
+  --lv-gold: var(--lv-champagne);
+  --lv-gold-soft: var(--lv-champagne-soft);
 
   /* ---- Typography ------------------------------------------------------- */
   --font-sans: "Inter Tight Variable", "Inter Tight", "Helvetica Neue", Arial, sans-serif;
   --font-serif: "Instrument Serif", "Times New Roman", serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* coordinates and figures: always Latin mono, in every language */
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-arabic: "IBM Plex Sans Arabic", "Geeza Pro", "Noto Sans Arabic", sans-serif;
 
-  --fs-mega: clamp(3.4rem, 16.2vw, 19.5rem);     /* hero words */
-  --fs-display: clamp(2.9rem, 10.4vw, 12rem);    /* chapter statements */
+  --fs-mega: clamp(3.2rem, min(13.2vw, 23.5svh), 16rem); /* hero words (−18 % vs Phase 1, height-aware) */
+  --fs-display: clamp(2.6rem, min(8.8vw, 15.5svh), 10.5rem); /* chapter statements */
   --fs-headline: clamp(2.1rem, 5.4vw, 6rem);
   --fs-title: clamp(1.35rem, 2.1vw, 2rem);
   --fs-lead: clamp(1.05rem, 1.2vw, 1.3rem);
@@ -75,6 +84,12 @@
   --tr-display: -0.048em;
   --tr-headline: -0.035em;
   --tr-label: 0.2em;
+
+  /* ---- Header protection zone ----------------------------------------- */
+  --header-h: clamp(76px, 10.5vh, 112px);
+  --logo-h: clamp(22px, 1.85vw, 30px);
+  /* nothing editorial may enter this band at the top of a stage */
+  --safe-top: calc(var(--header-h) + clamp(16px, 3vh, 40px));
 
   /* ---- Space (8pt base) ------------------------------------------------ */
   --s-1: 0.25rem;
@@ -116,8 +131,10 @@
 @media (max-width: 767px) {
   :root {
     --grid-cols: 4;
-    --fs-mega: clamp(3.1rem, 17.4vw, 6rem);
-    --fs-display: clamp(2.6rem, 13vw, 5rem);
+    --fs-mega: clamp(3rem, 15.6vw, 5.4rem);
+    --header-h: 68px;
+    --logo-h: 21px;
+    --fs-display: clamp(2.3rem, 11vw, 4.4rem);
     --fs-headline: clamp(2rem, 9.4vw, 3.4rem);
   }
 }
