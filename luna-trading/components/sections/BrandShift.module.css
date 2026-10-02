@@ -1,0 +1,94 @@
+.wrap {
+  position: relative;
+  height: 100%;
+  min-height: inherit;
+}
+.h {
+  font-weight: inherit;
+}
+.first {
+  position: absolute;
+  left: var(--margin);
+  top: clamp(110px, 17vh, 170px);
+  display: block;
+}
+.second {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: block;
+  text-align: center;
+  font-size: clamp(3rem, 12.6vw, 15.5rem);
+  z-index: 2;
+}
+.dot {
+  color: var(--luna-red);
+}
+.frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  border: 1px solid rgba(242, 242, 240, calc(0.38 * (1 - var(--collapse, 0))));
+  box-shadow: 0 1px 0 0 rgba(201, 2, 22, var(--collapse, 0));
+  will-change: transform, width, height;
+}
+.frame::after {
+  /* the red line the frame collapses into */
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--luna-red);
+  opacity: var(--collapse, 0);
+}
+.c {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+}
+.c::before,
+.c::after {
+  content: "";
+  position: absolute;
+  background: var(--luna-red);
+}
+.c::before {
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 2px;
+}
+.c::after {
+  top: 0;
+  bottom: 0;
+  left: 6px;
+  width: 2px;
+}
+.c[data-pos="tl"] { left: -7px; top: -7px; }
+.c[data-pos="tr"] { right: -7px; top: -7px; }
+.c[data-pos="bl"] { left: -7px; bottom: -7px; }
+.c[data-pos="br"] { right: -7px; bottom: -7px; }
+
+:global(html:not(.cine)) .first,
+:global(html:not(.cine)) .second {
+  position: relative;
+  top: auto;
+  transform: none;
+  text-align: left;
+  padding: 0 var(--margin);
+  margin-bottom: var(--s-6);
+}
+
+@media (max-width: 767px) {
+  .second {
+    font-size: clamp(2.8rem, 15vw, 5rem);
+  }
+}

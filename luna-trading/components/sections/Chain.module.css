@@ -1,0 +1,189 @@
+.wrap {
+  position: relative;
+  height: 100%;
+  min-height: inherit;
+  padding: 0 var(--margin);
+}
+.tag {
+  position: absolute;
+  left: var(--margin);
+  top: clamp(96px, 15vh, 150px);
+}
+.intro {
+  position: absolute;
+  right: calc(var(--margin) + 40px);
+  top: clamp(90px, 14vh, 140px);
+  text-align: right;
+  font-size: clamp(1.6rem, 2.8vw, 3rem);
+}
+.stageWords {
+  position: absolute;
+  left: 4.5%;
+  right: 4.5%;
+  bottom: calc(50% + clamp(18px, 3vh, 36px));
+}
+.stageWords > :global(.mask) {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+.word {
+  display: block;
+  white-space: nowrap;
+  font-size: clamp(2.6rem, 9.4vw, 11rem);
+}
+.line {
+  position: absolute;
+  left: 4.5%;
+  right: 4.5%;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+}
+.rest {
+  position: absolute;
+  inset: 0.5px 0;
+  background: var(--graphite-600);
+}
+.fill {
+  position: absolute;
+  inset: 0;
+  background: var(--luna-red);
+  transform-origin: left;
+}
+.ticks li {
+  position: absolute;
+  top: 18px;
+  transform: translateX(-50%);
+  color: var(--graphite-500);
+  font-size: 10px;
+}
+.ticks li::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -18px;
+  width: 1px;
+  height: 9px;
+  background: currentColor;
+}
+.ticks li:first-child {
+  transform: none;
+}
+.ticks li:first-child::before {
+  left: 0;
+}
+.ticks li:last-child {
+  transform: translateX(-100%);
+}
+.ticks li:last-child::before {
+  left: auto;
+  right: 0;
+}
+.marker {
+  position: absolute;
+  top: 1px;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 4px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 4px 100% no-repeat;
+}
+.descs {
+  position: absolute;
+  left: 4.5%;
+  right: 4.5%;
+  top: calc(50% + 72px);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+.count {
+  grid-column: 1 / span 3;
+  color: var(--graphite-300);
+}
+.desc {
+  grid-column: 7 / span 5;
+  grid-row: 1;
+  color: var(--paper);
+  font-size: clamp(1.1rem, 1.6vw, 1.6rem);
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+.list {
+  display: none;
+}
+
+:global(html:not(.cine)) .tag,
+:global(html:not(.cine)) .intro {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  text-align: left;
+  margin-bottom: var(--s-6);
+}
+:global(html:not(.cine)) .list {
+  display: grid;
+  gap: 0;
+}
+.list li {
+  display: grid;
+  grid-template-columns: 4ch minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--gutter);
+  padding-block: var(--s-4);
+  border-top: 1px solid var(--hairline);
+  align-items: baseline;
+}
+.list strong {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+.list span:last-child {
+  color: var(--fg-muted);
+}
+:global(html.cine) .list {
+  display: block;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+@media (max-width: 767px) {
+  .stageWords,
+  .line,
+  .descs {
+    left: 6%;
+    right: 6%;
+  }
+  .intro {
+    left: var(--margin);
+    right: auto;
+    text-align: left;
+    top: calc(clamp(96px, 15vh, 150px) + 36px);
+  }
+  .word {
+    font-size: clamp(2.1rem, 11.4vw, 4rem);
+    white-space: normal;
+  }
+  .count {
+    grid-column: 1 / -1;
+    margin-bottom: var(--s-3);
+  }
+  .desc {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .list li {
+    grid-template-columns: 4ch 1fr;
+  }
+  .list span:last-child {
+    grid-column: 2;
+  }
+}

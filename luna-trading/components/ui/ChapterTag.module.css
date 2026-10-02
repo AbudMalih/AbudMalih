@@ -1,0 +1,15 @@
+.tag {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--paper);
+}
+.idx {
+  color: var(--graphite-300);
+}
+.rule {
+  width: 48px;
+  height: 1px;
+  background: var(--graphite-500);
+  transform-origin: left;
+}

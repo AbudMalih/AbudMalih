@@ -1,0 +1,123 @@
+/* ==========================================================================
+   LUNA TRADING — DESIGN TOKENS
+   All colour values are sampled from the official logo file
+   (public/brand/luna-trading-logo.webp):
+     red      rgb(201, 2, 22)    #C90216   — the "+"
+     graphite rgb(107,108,113)   #6B6C71   — "luna"
+     ink      rgb(0, 0, 0)       #000000   — "trading"
+   LUVISCENT mist sampled from its logo: #F2F2F2
+   ========================================================================== */
+
+:root {
+  /* ---- Core: derived from the logo ---------------------------------- */
+  --luna-red: #c90216;
+  --luna-red-deep: #8f0110;      /* pressed / shadow side of red only */
+  --luna-graphite: #6b6c71;
+  --luna-ink: #000000;
+
+  /* ---- Neutral scale (graphite axis, slightly cool like the logo grey) */
+  --ink-1000: #000000;
+  --ink-950: #060607;            /* page background */
+  --ink-900: #0b0b0d;
+  --ink-850: #111113;
+  --ink-800: #18181b;
+  --graphite-750: #202024;
+  --graphite-700: #2a2b2f;
+  --graphite-600: #393a3f;
+  --graphite-500: #505156;
+  --graphite-400: #6b6c71;       /* = logo grey */
+  --graphite-300: #8d8e93;
+  --graphite-200: #b4b5b9;
+  --graphite-100: #d9d9dc;
+  --paper: #f2f2f0;              /* off-white surface */
+  --paper-dim: #e6e6e3;
+  --white: #fafaf8;
+
+  /* ---- Semantic --------------------------------------------------------- */
+  --bg: var(--ink-950);
+  --fg: var(--paper);
+  --fg-muted: var(--graphite-300);
+  --fg-subtle: var(--graphite-400);
+  --hairline: rgba(242, 242, 240, 0.12);
+  --hairline-strong: rgba(242, 242, 240, 0.24);
+  --signal: var(--luna-red);
+
+  /* ---- LUVISCENT world (owned brand — never mixed with Luna red) ------ */
+  --lv-forest-950: #04100c;
+  --lv-forest-900: #071a14;
+  --lv-forest-800: #0c271e;
+  --lv-emerald-700: #12392c;
+  --lv-emerald-600: #1a4a39;
+  --lv-gold: #c6a465;
+  --lv-gold-soft: #e3cfa2;
+  --lv-mist: #f2f2f2;
+
+  /* ---- Typography ------------------------------------------------------- */
+  --font-sans: "Inter Tight Variable", "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Instrument Serif", "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --fs-mega: clamp(3.4rem, 16.2vw, 19.5rem);     /* hero words */
+  --fs-display: clamp(2.9rem, 10.4vw, 12rem);    /* chapter statements */
+  --fs-headline: clamp(2.1rem, 5.4vw, 6rem);
+  --fs-title: clamp(1.35rem, 2.1vw, 2rem);
+  --fs-lead: clamp(1.05rem, 1.2vw, 1.3rem);
+  --fs-body: 1rem;
+  --fs-small: 0.8125rem;
+  --fs-label: 0.6875rem;
+
+  --lh-mega: 0.8;
+  --lh-display: 0.84;
+  --lh-headline: 0.92;
+  --lh-body: 1.55;
+
+  --tr-mega: -0.055em;
+  --tr-display: -0.048em;
+  --tr-headline: -0.035em;
+  --tr-label: 0.2em;
+
+  /* ---- Space (8pt base) ------------------------------------------------ */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+  --s-10: 8rem;
+  --s-11: 12rem;
+
+  /* ---- Grid -------------------------------------------------------------- */
+  --grid-cols: 12;
+  --gutter: clamp(16px, 1.6vw, 28px);
+  --margin: clamp(20px, 4.2vw, 72px);
+  --max: 1760px;
+
+  /* ---- Motion ----------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);       /* "luna-out" — arrivals */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);   /* "luna-inout" — transforms */
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);       /* departures */
+  --dur-1: 160ms;   /* micro feedback */
+  --dur-2: 420ms;   /* ui state */
+  --dur-3: 900ms;   /* reveals */
+  --dur-4: 1400ms;  /* scene moments */
+
+  --z-stage: 0;
+  --z-chapter: 10;
+  --z-labels: 20;
+  --z-chrome: 50;
+  --z-menu: 80;
+  --z-cursor: 100;
+  --z-loader: 120;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --grid-cols: 4;
+    --fs-mega: clamp(3.1rem, 17.4vw, 6rem);
+    --fs-display: clamp(2.6rem, 13vw, 5rem);
+    --fs-headline: clamp(2rem, 9.4vw, 3.4rem);
+  }
+}

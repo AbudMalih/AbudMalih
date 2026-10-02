@@ -1,0 +1,77 @@
+.layer {
+  visibility: hidden;
+  opacity: 0;
+  background: var(--ink-950);
+}
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+.seq {
+  opacity: 0;
+}
+.labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.pin {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+}
+.pin::before,
+.pin::after {
+  content: "";
+  position: absolute;
+  background: var(--paper);
+}
+.pin::before {
+  left: 0;
+  right: 0;
+  top: 4.5px;
+  height: 1px;
+}
+.pin::after {
+  top: 0;
+  bottom: 0;
+  left: 4.5px;
+  width: 1px;
+}
+.stem {
+  position: absolute;
+  left: 0;
+  bottom: 10px;
+  width: 1px;
+  height: 64px;
+  background: linear-gradient(to top, rgba(242, 242, 240, 0.5), rgba(242, 242, 240, 0));
+}
+.text {
+  position: absolute;
+  left: 12px;
+  bottom: 54px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: nowrap;
+}
+.idx {
+  color: var(--graphite-300);
+  font-size: 10px;
+}
+.name {
+  font-size: clamp(0.95rem, 1.25vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--paper);
+}

@@ -1,0 +1,70 @@
+.fixed {
+  visibility: hidden;
+  opacity: 0;
+}
+.static {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 80svh;
+}
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+.marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-out);
+  will-change: transform;
+}
+.plus {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+}
+.plus::before,
+.plus::after {
+  content: "";
+  position: absolute;
+  background: var(--luna-red);
+}
+.plus::before {
+  left: 0;
+  right: 0;
+  top: 5px;
+  height: 2px;
+}
+.plus::after {
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+}
+.coord {
+  position: absolute;
+  left: 18px;
+  top: -7px;
+  white-space: pre;
+  color: var(--graphite-200);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+.head .coord::before {
+  content: "";
+  position: absolute;
+  right: calc(100% + 4px);
+  top: 50%;
+  width: 0;
+  height: 1px;
+}
+.home .coord {
+  color: var(--paper);
+}
+.home[data-quiet] .coord {
+  display: none;
+}

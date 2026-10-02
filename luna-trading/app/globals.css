@@ -1,0 +1,386 @@
+@import "../styles/tokens.css";
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--bg);
+  color-scheme: dark;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+
+img,
+svg,
+canvas,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+  padding: 0;
+}
+ul,
+ol {
+  list-style: none;
+}
+
+::selection {
+  background: var(--luna-red);
+  color: var(--white);
+}
+
+:focus-visible {
+  outline: 1px solid var(--luna-red);
+  outline-offset: 4px;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  left: var(--margin);
+  top: var(--s-4);
+  z-index: 200;
+  padding: var(--s-3) var(--s-4);
+  background: var(--paper);
+  color: var(--ink-950);
+  font-size: var(--fs-small);
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: none;
+}
+
+/* ==========================================================================
+   Typography system
+   ========================================================================== */
+
+.t-mega,
+.t-display,
+.t-headline {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-variation-settings: "wght" 720;
+}
+.t-mega {
+  font-size: var(--fs-mega);
+  line-height: var(--lh-mega);
+  letter-spacing: var(--tr-mega);
+}
+.t-display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+}
+.t-headline {
+  font-size: var(--fs-headline);
+  line-height: var(--lh-headline);
+  letter-spacing: var(--tr-headline);
+}
+.t-title {
+  font-size: var(--fs-title);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+.t-lead {
+  font-size: var(--fs-lead);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--fg-muted);
+  font-weight: 400;
+}
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.4;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.t-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.t-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Two-tone wordmark logic borrowed from the logo: luna (graphite) + trading (ink) */
+.tone-graphite {
+  color: var(--graphite-400);
+}
+.tone-paper {
+  color: var(--paper);
+}
+.tone-red {
+  color: var(--luna-red);
+}
+
+/* Line masks for typographic choreography */
+.mask {
+  display: block;
+  overflow: hidden;
+  /* extra room so descenders / overshoot are not clipped */
+  padding-block: 0.04em 0.06em;
+  margin-block: -0.04em -0.06em;
+}
+.mask > * {
+  display: block;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+.frame {
+  width: 100%;
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--margin);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+
+/* ==========================================================================
+   Chapter architecture
+   --------------------------------------------------------------------------
+   Static (default / reduced motion / no-JS):
+     chapters flow as normal full-height sections.
+   Cinematic (html.cine — set before first paint):
+     each <section.chapter> becomes a scroll spacer of --len viewport heights;
+     its .chapter-stage is a fixed overlay whose visibility is driven by
+     the chapter's ScrollTrigger. Global WebGL layers live behind.
+   ========================================================================== */
+
+.chapter {
+  position: relative;
+}
+.chapter-stage {
+  position: relative;
+  min-height: 100svh;
+  width: 100%;
+  overflow: hidden;
+}
+
+html.cine .chapter {
+  height: calc(var(--len, 3) * 100svh);
+}
+@media (max-width: 767px) {
+  html.cine .chapter {
+    height: calc(var(--len-m, var(--len, 3)) * 100svh);
+  }
+}
+html.cine .chapter-stage {
+  position: fixed;
+  inset: 0;
+  height: 100lvh;
+  min-height: 0;
+  z-index: var(--z-chapter);
+  visibility: hidden;
+  pointer-events: none;
+}
+html.cine .chapter-stage.is-active {
+  visibility: visible;
+}
+html.cine .chapter-stage.is-active .interactive {
+  pointer-events: auto;
+}
+
+/* Static fallback presentation of chapter stages */
+html:not(.cine) .chapter-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: var(--s-10);
+  border-top: 1px solid var(--hairline);
+}
+html:not(.cine) [data-cine-only] {
+  display: none !important;
+}
+html.cine [data-static-only] {
+  display: none !important;
+}
+
+/* Global fixed stage layers */
+.stage-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100lvh;
+  pointer-events: none;
+  z-index: var(--z-stage);
+}
+.stage-layer canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ==========================================================================
+   Shared UI
+   ========================================================================== */
+
+.plus-glyph {
+  position: relative;
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  flex: none;
+}
+.plus-glyph::before,
+.plus-glyph::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.plus-glyph::before {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0.2em;
+  transform: translateY(-50%);
+}
+.plus-glyph::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0.2em;
+  transform: translateX(-50%);
+}
+
+.link-line {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75em;
+}
+.link-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.35em;
+  height: 1px;
+  background: currentColor;
+  transform-origin: right;
+  transform: scaleX(0);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.link-line:hover::after,
+.link-line:focus-visible::after {
+  transform-origin: left;
+  transform: scaleX(1);
+}
+
+/* Desktop custom cursor: hide native pointer only where ours is active */
+@media (hover: hover) and (pointer: fine) {
+  html.has-cursor,
+  html.has-cursor a,
+  html.has-cursor button {
+    cursor: none;
+  }
+  html.has-cursor input,
+  html.has-cursor textarea {
+    cursor: text;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+html.cine body {
+  background: transparent;
+}
+
+/* Paper plate for the official (light-ground) Luna Trading logo */
+.luna-plate {
+  display: inline-flex;
+  align-items: center;
+  background: var(--paper);
+  padding: 0.62em 0.85em 0.68em;
+  line-height: 0;
+}
+
+html:not(.cine) .stage-layer {
+  display: none;
+}
