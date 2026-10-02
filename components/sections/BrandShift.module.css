@@ -27,6 +27,32 @@
 .dot {
   color: var(--luna-red);
 }
+/* the statement resolves in the light: ink on warm ivory */
+:global(html.cine) .second {
+  color: var(--ink-950);
+}
+.net {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(74vw, 118vh);
+  translate: -50% -50%;
+  opacity: 0;
+  overflow: visible;
+  z-index: 1;
+  pointer-events: none;
+}
+.net path {
+  fill: none;
+  stroke: rgba(27, 28, 31, 0.2);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.net .fold {
+  stroke: rgba(27, 28, 31, 0.14);
+}
 .frame {
   position: absolute;
   left: 0;
@@ -34,7 +60,7 @@
   width: 0;
   height: 0;
   opacity: 0;
-  border: 1px solid rgba(242, 242, 240, calc(0.38 * (1 - var(--collapse, 0))));
+  border: 1px solid rgba(27, 28, 31, calc(0.3 * (1 - var(--collapse, 0))));
   box-shadow: 0 1px 0 0 rgba(201, 2, 22, var(--collapse, 0));
   will-change: transform, width, height;
 }
@@ -49,34 +75,39 @@
   background: var(--luna-red);
   opacity: var(--collapse, 0);
 }
+/* editorial crop marks (graphite): print, packaging, construction */
 .c {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 22px;
+  height: 22px;
   opacity: 0;
 }
 .c::before,
 .c::after {
   content: "";
   position: absolute;
-  background: var(--luna-red);
+  background: rgba(27, 28, 31, 0.55);
 }
 .c::before {
-  left: 0;
-  right: 0;
-  top: 6px;
-  height: 2px;
+  width: 16px;
+  height: 1px;
 }
 .c::after {
-  top: 0;
-  bottom: 0;
-  left: 6px;
-  width: 2px;
+  width: 1px;
+  height: 16px;
 }
-.c[data-pos="tl"] { left: -7px; top: -7px; }
-.c[data-pos="tr"] { right: -7px; top: -7px; }
-.c[data-pos="bl"] { left: -7px; bottom: -7px; }
-.c[data-pos="br"] { right: -7px; bottom: -7px; }
+.c[data-pos="tl"] { left: -28px; top: -28px; }
+.c[data-pos="tl"]::before { right: 0; bottom: 6px; }
+.c[data-pos="tl"]::after { right: 6px; bottom: 0; }
+.c[data-pos="tr"] { right: -28px; top: -28px; }
+.c[data-pos="tr"]::before { left: 0; bottom: 6px; }
+.c[data-pos="tr"]::after { left: 6px; bottom: 0; }
+.c[data-pos="bl"] { left: -28px; bottom: -28px; }
+.c[data-pos="bl"]::before { right: 0; top: 6px; }
+.c[data-pos="bl"]::after { right: 6px; top: 0; }
+.c[data-pos="br"] { right: -28px; bottom: -28px; }
+.c[data-pos="br"]::before { left: 0; top: 6px; }
+.c[data-pos="br"]::after { left: 6px; top: 0; }
 
 :global(html:not(.cine)) .first,
 :global(html:not(.cine)) .second {

@@ -39,6 +39,36 @@
   filter: blur(8px);
   opacity: 0;
 }
+.room {
+  position: absolute;
+  inset: 0;
+}
+/* plaster wall: deep emerald, washed from above, with a fine mineral tooth */
+.wall {
+  position: absolute;
+  inset-inline-start: 0;
+  width: min(46vw, 78vh);
+  top: 0;
+  bottom: calc(50% - var(--drop));
+  opacity: 0;
+  background:
+    radial-gradient(46% 44% at 50% 14%, rgba(241, 236, 226, 0.075), transparent 72%),
+    linear-gradient(180deg, rgba(27, 60, 49, 0.42) 0%, rgba(20, 48, 39, 0.3) 55%, rgba(12, 32, 26, 0.12) 100%);
+  mask-image: linear-gradient(90deg, #000 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 62%, transparent 100%);
+}
+:global([dir="rtl"]) .wall {
+  mask-image: linear-gradient(270deg, #000 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(270deg, #000 62%, transparent 100%);
+}
+.wall::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' seed='9' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.93  0 0 0 0 0.9  0 0 0 0 0.84  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>");
+}
 .arch {
   position: absolute;
   inset-inline-start: 9%;
@@ -52,14 +82,28 @@
   inset-inline-start: 46%;
   inset-inline-end: calc(var(--margin) + 40px);
   top: 50%;
-  transform: translateY(-52%);
+  translate: 0 -52%;
   max-width: 760px;
 }
 .owner {
   color: var(--lv-champagne-soft);
   margin-bottom: clamp(24px, 4vh, 44px);
 }
+/* the official mark is never altered: only its visibility is revealed by a
+   soft wipe of light travelling with the air (left → right; RTL mirrored) */
+.logo,
+.claim {
+  --rv: 0;
+  --wipe: linear-gradient(90deg, #000 calc(var(--rv) * 150% - 50%), transparent calc(var(--rv) * 150%));
+  mask-image: var(--wipe);
+  -webkit-mask-image: var(--wipe);
+}
+:global([dir="rtl"]) .logo,
+:global([dir="rtl"]) .claim {
+  --wipe: linear-gradient(270deg, #000 calc(var(--rv) * 150% - 50%), transparent calc(var(--rv) * 150%));
+}
 .logo {
+  position: relative;
   width: 100%;
   margin-bottom: clamp(20px, 3.4vh, 40px);
 }
@@ -143,6 +187,7 @@
   top: auto;
   bottom: auto;
   transform: none;
+  translate: none;
   width: auto;
   height: auto;
 }
@@ -156,7 +201,7 @@
   }
   .arch {
     inset-inline-start: 50%;
-    transform: translateX(-50%);
+    translate: -50% 0;
     width: min(46vw, 260px);
     bottom: calc(50% + 2vh);
     height: 30vh;
@@ -164,7 +209,7 @@
   .copy {
     inset-inline: var(--margin);
     top: calc(50% + 4vh);
-    transform: none;
+    translate: none;
   }
   .owner {
     margin-bottom: 18px;
@@ -176,7 +221,7 @@
     grid-template-columns: 1fr;
   }
   :global(html:not(.cine)) .arch {
-    transform: none;
+    translate: none;
     max-width: 320px;
   }
   :global(html:not(.cine)) .body {
@@ -186,7 +231,7 @@
 
 @media (max-width: 860px) {
   :global([dir="rtl"]) .arch {
-    transform: translateX(50%);
+    translate: 50% 0;
   }
 }
 :global(html[lang="ar"]) .owner {
@@ -200,4 +245,32 @@
   font-family: var(--font-sans);
   font-size: 0.98rem;
   letter-spacing: 0;
+}
+
+/* static / reduced motion: everything present, no reveal */
+:global(html:not(.cine)) .logo,
+:global(html:not(.cine)) .claim {
+  --rv: 1;
+}
+:global(html:not(.cine)) .wall {
+  display: none;
+}
+@media (max-width: 860px) {
+  .wall {
+    inset-inline-start: 50%;
+    width: 78vw;
+    translate: -50% 0;
+    bottom: calc(50% + 2vh);
+    mask-image: radial-gradient(60% 70% at 50% 60%, #000 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(60% 70% at 50% 60%, #000 40%, transparent 100%);
+  }
+  :global([dir="rtl"]) .wall {
+    translate: 50% 0;
+    mask-image: radial-gradient(60% 70% at 50% 60%, #000 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(60% 70% at 50% 60%, #000 40%, transparent 100%);
+  }
+}
+
+:global(html:not(.cine)) .room {
+  display: contents;
 }

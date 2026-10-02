@@ -63,12 +63,6 @@
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
-.converge {
-  fill: none;
-  stroke: var(--lv-champagne);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
 .carton {
   position: absolute;
   top: 50%;
@@ -170,7 +164,7 @@
   height: 26px;
   margin-top: -13px;
   margin-inline-start: -13px;
-  border: 1px solid var(--lv-champagne);
+  border: 1px solid rgba(27, 28, 31, 0.55);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -179,7 +173,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--lv-champagne);
+  background: var(--luna-red);
 }
 .nodeLabel {
   position: absolute;
@@ -200,15 +194,6 @@
   letter-spacing: 0.24em;
   font-size: 0.95rem;
   color: var(--ink-950);
-}
-.horizon {
-  position: absolute;
-  inset-inline: 4.5%;
-  top: 50%;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(200, 144, 79, 0.5) 0%, var(--lv-champagne) 22%, var(--lv-champagne-soft) 50%, var(--lv-champagne) 78%, rgba(205, 182, 138, 0.35) 100%);
-  transform-origin: 50% 50%;
-  transform: scaleX(0);
 }
 .copy {
   position: absolute;
@@ -242,6 +227,12 @@
   margin-top: clamp(14px, 2.6vh, 26px);
   color: #4a4b50;
   white-space: nowrap;
+}
+/* narrower laptops: the caption takes its own line below the group labels */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .channels {
+    margin-top: calc(clamp(14px, 2.6vh, 26px) + 24px);
+  }
 }
 .channels::before {
   content: "";
@@ -366,8 +357,7 @@
 
 @media (max-width: 767px) {
   .diagram,
-  .route,
-  .horizon {
+  .route {
     inset-inline: 6%;
   }
   .diagram {

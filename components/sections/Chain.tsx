@@ -8,7 +8,7 @@ import { useI18n } from "@/content/i18n/I18nProvider";
 import s from "./Chain.module.css";
 
 /**
- * 05 · THE OPERATING MODEL (graphite)
+ * 05 · THE OPERATING MODEL (warm ivory brand light, ink type)
  * SOURCE → IMPORT → DEVELOP → BRAND → E-COMMERCE → DISTRIBUTE on one red
  * line. The line stays alive to the last frame and is handed to the light
  * E-Commerce chapter (06), where it reaches the product.
@@ -58,7 +58,7 @@ function Content() {
         }
         tl.fromTo(words[i], { yPercent: 135 }, { yPercent: 0, duration: 0.035, ease: "power3.out" }, a);
         tl.fromTo(lines[i], { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.03 }, a + 0.01);
-        tl.fromTo(ticks[i], { color: "var(--graphite-500)" }, { color: "var(--paper)", duration: 0.01, immediateRender: false }, a);
+        tl.fromTo(ticks[i], { color: "var(--chain-tick)" }, { color: "var(--chain-tick-on)", duration: 0.01, immediateRender: false }, a);
         const end = i < N - 1 ? slotStart(i + 1) - 0.01 : 0.93;
         tl.to(words[i], { yPercent: -135, duration: 0.03, ease: "power2.in" }, end - 0.02);
         tl.to(lines[i], { opacity: 0, duration: 0.02 }, end - 0.02);
@@ -74,7 +74,7 @@ function Content() {
         if (countEl.textContent !== txt) countEl.textContent = txt;
       });
 
-      // hand-off: graphite details fall away, the red line remains for chapter 06
+      // hand-off: the details fall away, the red line remains for chapter 06
       tl.to(q("[data-intro], [data-tag], [data-ticks], [data-count], [data-rest]"), { opacity: 0, duration: 0.05 }, 0.9)
         .to(marker, { opacity: 0, duration: 0.04 }, 0.92);
     },

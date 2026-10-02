@@ -6,9 +6,9 @@
 | 00 | Hero: Handel ohne Grenzen | deep black |
 | 01–02 | Terminal → truck → road | near-black → graphite |
 | 03 | Warehouse | **industrial metallic** (lighter background, brighter lines) |
-| 04 | Wir bauen Marken | graphite |
-| 05 | The chain (six steps) | graphite, lit from above |
-| **06** | **E-Commerce: Vom Produkt zur Plattform** | **light: warm off-white / silver** |
+| **04** | **Wir bauen Marken** | **first light moment:** metallic grey → silver → warm ivory |
+| 05 | The chain (six steps) | warm ivory, tactile, ink type |
+| 06 | E-Commerce: Vom Produkt zur Plattform | cooler, cleaner off-white / silver, fine digital grid |
 | 07 | LUVISCENT® | deep refined forest, ivory, champagne, warm light |
 | 08 | Ecosystem | dark Luna |
 | 09 | Closing | **brighter, calm** (silver dawn) → paper footer |
@@ -75,3 +75,50 @@ Chapter 06 reads **Product → Digital commerce → Platforms → Marketplaces �
 - **The white "+".** No static "+" exists in the hero. The floating plus was the custom cursor, left at rest while the page scrolled under a still mouse. It is now a pointer only: it fades on wheel scrolling and after 1.4 s without movement, and returns on movement. The crosshair role in the story now belongs to the route's coordinate lock.
 - **Globe:** ocean and land specular, fresnel rim and halo are each about 12 % stronger. The globe stays dark.
 - **Unchanged:** the right progress rail and its red marker. Static and reduced-motion modes show the red period without animation.
+
+## Final addendum: brand light and the LUVISCENT transition
+
+### Colour rhythm
+Black hero → dark trade → dark / metallic logistics → **light brand development** → **light digital commerce** → deep emerald / ivory LUVISCENT → dark Luna ecosystem → calmer closing. The hero stays dark.
+
+### 04 · "Wir bauen Marken": the first light moment
+- **The world brightens.** While the camera isolates the carton, the line-world brightens from metallic grey through silver to warm ivory. Background, fog and occluders share one tone table (`lib/world/tones.ts`), so there is no cut. The hall's lines dissolve into the light, and the carton is drawn in ink: it becomes isolated and intentional.
+- **Atmosphere.** Behind the world, the atmosphere uses the same tone, so the world can fade out without a seam. The light is tactile, not a flat page: daylight from the upper left, a soft plane of window light that travels slowly with the scroll, and a fine paper / plaster grain.
+- **Packaging net.** The carton's outline opens into an editorial frame with graphite crop marks. Behind the statement, the carton unfolds into its packaging net (panels, flaps, dashed fold lines). It suggests product development, packaging and brand construction without cards or diagrams.
+- **Type.** The statement is ink on warm ivory. The only red is the period.
+- **Into the chain.** The frame collapses into the red line of the chain. The chain (05) stays in the warm ivory light, with ink type.
+
+### 06 · E-Commerce: digital, cooler and more precise
+- **Reveal.** The cooler off-white / silver environment spreads outward from the product over the warm ivory, carrying a barely visible digital grid. Brand reads as warm, tactile and physical; commerce reads as cool, precise and networked.
+- **The network simplifies.**
+  - The channel caption, group labels and destinations leave first.
+  - Then each platform leaves one by one, each taking its own two routes with it.
+  - Finally the layers collapse.
+- **The node.** The red connection runs from the product to the one remaining node, LUVISCENT (ink ring, red point).
+
+### 06 → 07 · Digital commerce becomes atmosphere
+All of this runs in `components/chrome/Atmosphere.tsx` and is a pure function of `0.58 × commerce(0.8–1) + 0.42 × luviscent(0–0.22)`. It spans the chapter boundary, so there is no dead scroll.
+1. The red line opens across the viewport and stops being rigid. It becomes an organic, slowly moving strand, pinned at the node.
+2. The red warms to champagne.
+3. Translucent, softly diffused light strands appear. These are blurred light, not particles, smoke or sparkles.
+4. The digital grid disappears first, and the silver warms to ivory.
+5. A warm ivory wave front opens from the node. Deep emerald emerges behind it as a wide, soft band along the air (a dusk, not a disc), closing to full cover before the light layers are removed.
+6. The main strand flattens into the champagne horizon of LUVISCENT. In LUVISCENT, faint, very slow air remains.
+
+### 07 · LUVISCENT
+- **The room emerges first.** A plastered emerald wall, washed from above, with a mineral tooth, and one arched niche. The niche has:
+  - a warm evening downlight from the crown
+  - the niche's depth (crown and jamb shadows, a lit edge)
+  - a stone ledge with pooled light
+  - a single olive sprig seen only as a soft cast shadow (nearly still)
+  - a champagne hairline on the lit edge
+- **Ready for the real product.** No product is invented. `BrandMediaSlot` takes `media`: an image stands on the ledge (contain, bottom centre, with a contact shadow), and a video fills the niche. Light, ledge and shadow stay, so the scene needs no redesign.
+- **The mark.** The official mark is revealed by a soft wipe of light that travels with the air (mirrored in RTL). Only its visibility changes. The image is never redrawn or restyled.
+- **The slogan.** "Eleganz liegt in der Luft." follows with the same, slower wipe. Modern sans, no blur, no per-character animation.
+- **Motion is calm.** Once established, the room and the words drift apart by a few pixels, the downlight swells very slightly, and the air moves slowly. There is no network-style motion.
+
+### Reverse and continuity
+- **Pure functions.** Every value is a function of scroll progress. The verification script compares forward, reverse, fast, rapidly reversed and partial-then-reverse captures from warehouse 0.8 to LUVISCENT 0.7. The frames match. The only residual differences are sub-pixel text anti-aliasing after smooth-scroll landings.
+- **Visibility fix.** A chapter stage left visible when scrolling up from exactly its first frame (its progress does not change, so no update fired) is fixed in `components/stage/Chapter.tsx`: visibility is re-checked on every scroll.
+- **No dead scroll.** Consecutive forward frames change throughout. Quiet holds still progress through the moving window light (chain) and the LUVISCENT depth drift.
+- **Unchanged:** hero, trade, truck, warehouse, ecosystem, navigation, footer and the language system. A small fix: on 768–1199 px laptops the commerce channel caption now sits on its own line.
