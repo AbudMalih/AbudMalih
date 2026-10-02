@@ -84,8 +84,9 @@ const en: Dictionary = {
     body: "We develop products and brands for digital commerce, and take them to online stores, marketplaces and directly to the customer.",
     origin: "Product",
     platform: "Platform",
-    platforms: ["Shopify", "WooCommerce", "Marketplaces", "D2C"],
-    destinations: ["Online store", "Marketplace", "Customer", "European market"],
+    channels: "Commerce platforms & channels",
+    groups: { store: "Store technology", marketplace: "Marketplaces" },
+    destinations: ["Customers · D2C", "European markets"],
     owned: "Owned brand",
   },
   luviscent: {

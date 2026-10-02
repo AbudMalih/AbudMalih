@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Luna Trading micro-mark: LT monogram (L in the wordmark's "luna" grey,
+       T in its "trading" light), the Luna "+" as a small secondary accent. -->
+  <rect width="32" height="32" rx="7" fill="#141518"/>
+  <path d="M5.5 7H10.5V20H15.5V25H5.5Z" fill="#A7A8AD"/>
+  <path d="M14 7H27V12H22.75V25H17.75V12H14Z" fill="#F2F2F0"/>
+  <path d="M24.4 19.3H26.1V17.6H27.9V19.3H29.6V21.1H27.9V22.8H26.1V21.1H24.4Z" fill="#C90216"/>
+</svg>

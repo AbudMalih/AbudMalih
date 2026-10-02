@@ -84,8 +84,9 @@ const de: Dictionary = {
     body: "Wir entwickeln Produkte und Marken für den digitalen Handel und bringen sie in Onlineshops, auf Marktplätze und direkt zum Kunden.",
     origin: "Produkt",
     platform: "Plattform",
-    platforms: ["Shopify", "WooCommerce", "Marktplätze", "D2C"],
-    destinations: ["Onlineshop", "Marktplatz", "Kunde", "Europäischer Markt"],
+    channels: "Plattformen & Vertriebskanäle",
+    groups: { store: "Store-Technologie", marketplace: "Marktplätze" },
+    destinations: ["Endkunden · D2C", "Europäische Märkte"],
     owned: "Eigenmarke",
   },
   luviscent: {
