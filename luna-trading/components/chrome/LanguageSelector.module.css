@@ -1,0 +1,35 @@
+.list {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  direction: ltr; /* DE EN AR keeps its order in every language */
+}
+.item {
+  position: relative;
+  display: inline-block;
+  padding: 8px 7px;
+  color: var(--graphite-400);
+  font-family: var(--font-mono);
+  letter-spacing: 0.16em;
+  transition: color var(--dur-2);
+}
+.item:hover,
+.item:focus-visible {
+  color: var(--paper);
+}
+.item[aria-current="true"] {
+  color: var(--paper);
+}
+.item[aria-current="true"]::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  right: calc(7px + 0.16em);
+  bottom: 3px;
+  height: 1px;
+  background: var(--luna-red);
+}
+.large .item {
+  font-size: 0.85rem;
+  padding: 10px 12px;
+}

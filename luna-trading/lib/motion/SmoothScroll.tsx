@@ -29,6 +29,7 @@ export function scrollToTarget(target: string | number | HTMLElement, immediate 
 export default function SmoothScroll() {
   useEffect(() => {
     stage.cine = isCine();
+    stage.rtl = document.documentElement.dir === "rtl";
     stage.tier = detectTier();
     updateViewport();
 

@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import Chapter, { useChapterTimeline } from "@/components/stage/Chapter";
 import ChapterTag from "@/components/ui/ChapterTag";
 import { CAPABILITIES, OWNED_BRANDS } from "@/content/ecosystem";
+import { useI18n } from "@/content/i18n/I18nProvider";
+import type { Dictionary } from "@/content/i18n";
 import s from "./Ecosystem.module.css";
 
 /**
@@ -17,10 +19,11 @@ const R = 300;
 const BRAND_R = 410;
 const deg = (d: number) => (d * Math.PI) / 180;
 
-function layoutCapabilities() {
+function layoutCapabilities(dict: Dictionary) {
   const n = CAPABILITIES.length;
   // distribute around the ring, keeping the bottom (owned brands) and top clear
-  return CAPABILITIES.map((c, i) => {
+  return CAPABILITIES.map((id, i) => {
+    const c = { id, label: dict.ecosystem.capabilities[id] };
     const a = -60 + (i * 360) / n;
     const x = Math.cos(deg(a)) * R;
     const y = Math.sin(deg(a)) * R;
@@ -43,23 +46,26 @@ function layoutBrands() {
 
 export default function Ecosystem() {
   return (
-    <Chapter id="ecosystem" title="One company. Multiple markets.">
+    <Chapter id="ecosystem">
       <Content />
     </Chapter>
   );
 }
 
 function Content() {
+  const { dict, locale, href } = useI18n();
+  const t = dict.ecosystem;
+  const rtlText = locale === "ar";
   const scope = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<string | null>(null);
-  const caps = layoutCapabilities();
+  const caps = layoutCapabilities(dict);
   const brands = layoutBrands();
   const ticks = Array.from({ length: 120 }, (_, i) => i * 3);
 
   useChapterTimeline(scope, (tl, q) => {
     tl.fromTo(q("[data-tag]"), { opacity: 0 }, { opacity: 1, duration: 0.04 }, 0.03)
       .fromTo(q("[data-tag-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.06 }, 0.03)
-      .fromTo(q("[data-h] > span > span"), { yPercent: 110 }, { yPercent: 0, duration: 0.08, stagger: 0.03, ease: "power3.out" }, 0.05)
+      .fromTo(q("[data-h] > span > span"), { yPercent: 135 }, { yPercent: 0, duration: 0.08, stagger: 0.03, ease: "power3.out" }, 0.05)
       .fromTo(q("[data-origin]"), { attr: { transform: "scale(0) rotate(-90)" } }, { attr: { transform: "scale(1) rotate(0)" }, duration: 0.08, ease: "back.out(2)" }, 0.1)
       .fromTo(q("[data-ring]"), { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.2, ease: "power2.inOut" }, 0.12)
       .fromTo(q("[data-ticks]"), { opacity: 0, attr: { transform: "rotate(-30)" } }, { opacity: 1, attr: { transform: "rotate(0)" }, duration: 0.24, ease: "power2.out" }, 0.14)
@@ -72,29 +78,26 @@ function Content() {
       .to(q("[data-ticks]"), { attr: { transform: "rotate(12)" }, duration: 0.4, ease: "none" }, 0.38)
       // converge into the origin
       .fromTo(q("[data-converge]"), { attr: { transform: "scale(1)" } }, { attr: { transform: "scale(0.02)" }, opacity: 0, duration: 0.14, ease: "power3.in", immediateRender: false }, 0.8)
-      .to(q("[data-h] > span > span"), { yPercent: -110, duration: 0.08, ease: "power2.in", stagger: 0.02 }, 0.8)
+      .to(q("[data-h] > span > span"), { yPercent: -135, duration: 0.08, ease: "power2.in", stagger: 0.02 }, 0.8)
       .to(q("[data-tag], [data-legend], [data-list]"), { opacity: 0, duration: 0.05 }, 0.8)
       .to(q("[data-origin]"), { attr: { transform: "scale(0.55) rotate(0)" }, duration: 0.1 }, 0.88);
-  });
+  }, [locale]);
 
   return (
     <div ref={scope} className={s.wrap}>
-      <ChapterTag index="07" label="Ecosystem" className={s.tag} />
+      <ChapterTag index="07" label={t.tag} className={s.tag} />
       <h2 className={`t-headline ${s.h}`} data-h>
         <span className="mask">
-          <span>One company.</span>
+          <span>{t.h1}</span>
         </span>
         <span className="mask tone-graphite">
-          <span>Multiple markets.</span>
+          <span>{t.h2}</span>
         </span>
       </h2>
 
-      <svg className={`${s.svg} interactive`} viewBox="-760 -540 1520 1080" role="img" aria-labelledby="eco-title eco-desc">
-        <title id="eco-title">Luna Trading ecosystem</title>
-        <desc id="eco-desc">
-          Luna Trading at the centre, connected to six capabilities: {CAPABILITIES.map((c) => c.label).join(", ")}; and to its owned
-          brands: {OWNED_BRANDS.map((b) => b.name).join(", ")}.
-        </desc>
+      <svg className={`${s.svg} interactive`} viewBox="-760 -540 1520 1080" direction="ltr" role="img" aria-labelledby="eco-title eco-desc">
+        <title id="eco-title">{t.title}</title>
+        <desc id="eco-desc">{t.desc}</desc>
 
         <g data-converge>
           <g data-ticks className={s.ticks}>
@@ -151,8 +154,8 @@ function Content() {
                 {String(c.i + 1).padStart(2, "0")}
               </text>
               <text x={c.lx} y={c.ly} textAnchor={c.anchor as "start" | "end" | "middle"} dominantBaseline="middle" className={s.label}>
-                <tspan className={s.num}>{String(c.i + 1).padStart(2, "0")}&#8194;</tspan>
-                {c.label.toUpperCase()}
+                {!rtlText && <tspan className={s.num}>{String(c.i + 1).padStart(2, "0")}&#8194;</tspan>}
+                {rtlText ? c.label : c.label.toUpperCase()}
               </text>
             </g>
           ))}
@@ -166,12 +169,12 @@ function Content() {
             strokeDasharray="1 1"
           />
           <text x={Math.cos(deg(118)) * BRAND_R - 14} y={Math.sin(deg(118)) * BRAND_R} textAnchor="end" dominantBaseline="middle" className={s.arcLabel} data-brand>
-            OWNED BRANDS
+            {rtlText ? t.ownedBrands : t.ownedBrands.toUpperCase()}
           </text>
           {brands.map((b) => (
             <g key={b.id}>
               <line x1={0} y1={0} x2={b.x} y2={b.y} className={s.brandLink} data-brand-link pathLength={1} strokeDasharray="1 1" />
-              <a href={b.href} data-brand className={s.brand} data-cursor="link" aria-label={`${b.name} — owned brand`}>
+              <a href={href(b.href)} data-brand className={s.brand} data-cursor="link" aria-label={`${b.name}, ${t.legend.brand}`}>
                 <rect x={b.x - 5} y={b.y - 5} width={10} height={10} className={s.brandSq} />
                 <image href={b.logo} x={b.x - 120} y={b.y + 26} width={240} height={240 / b.logoRatio} preserveAspectRatio="xMidYMid meet" />
               </a>
@@ -185,16 +188,16 @@ function Content() {
           <rect x={-4} y={-18} width={8} height={36} />
         </g>
         <text y={44} textAnchor="middle" className={s.originLabel} data-converge>
-          LUNA TRADING
+          {rtlText ? t.center : t.center.toUpperCase()}
         </text>
       </svg>
 
       <p className={`t-label ${s.legend}`} data-legend>
-        <span className={s.lgPlus} /> Origin &nbsp;&nbsp; <span className={s.lgSq} /> Capability &nbsp;&nbsp; <span className={s.lgRed} /> Owned brand
+        <span className={s.lgPlus} /> {t.legend.origin} &nbsp;&nbsp; <span className={s.lgSq} /> {t.legend.capability} &nbsp;&nbsp; <span className={s.lgRed} /> {t.legend.brand}
       </p>
 
       <ol className={s.list} data-list>
-        {CAPABILITIES.map((c, i) => (
+        {caps.map((c, i) => (
           <li key={c.id} className={active === c.id ? s.listOn : ""}>
             <span className="t-label t-mono">{String(i + 1).padStart(2, "0")}</span> {c.label}
           </li>

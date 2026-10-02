@@ -165,7 +165,7 @@ ol {
   font-weight: 400;
 }
 .t-mono {
-  font-family: var(--font-mono);
+  font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
 }
 .t-serif {
@@ -372,15 +372,49 @@ html.cine body {
   background: transparent;
 }
 
-/* Paper plate for the official (light-ground) Luna Trading logo */
-.luna-plate {
-  display: inline-flex;
-  align-items: center;
-  background: var(--paper);
-  padding: 0.62em 0.85em 0.68em;
-  line-height: 0;
-}
 
 html:not(.cine) .stage-layer {
   display: none;
+}
+
+/* ==========================================================================
+   Arabic (RTL)
+   Latin fonts first so brand names / figures keep the Latin system; Arabic
+   glyphs fall through to IBM Plex Sans Arabic. Arabic is never tracked or
+   cased, and needs more vertical room than Latin capitals.
+   ========================================================================== */
+html[lang="ar"] {
+  --font-sans: "Inter Tight Variable", var(--font-arabic);
+  --font-mono: "IBM Plex Mono", var(--font-arabic);
+  --lh-mega: 1.12;
+  --lh-display: 1.14;
+  --lh-headline: 1.2;
+  --tr-mega: 0;
+  --tr-display: 0;
+  --tr-headline: 0;
+  --tr-label: 0.02em;
+}
+html[lang="ar"] body {
+  line-height: 1.75;
+}
+html[lang="ar"] .t-label {
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+}
+html[lang="ar"] .t-mega,
+html[lang="ar"] .t-display,
+html[lang="ar"] .t-headline {
+  font-variation-settings: normal;
+  font-weight: 700;
+}
+html[lang="ar"] .mask {
+  padding-block: 0.12em 0.22em;
+  margin-block: -0.12em -0.22em;
+}
+html[lang="ar"] .t-mono {
+  letter-spacing: 0.08em;
+}
+/* Arabic letters connect: never track them (figures and Latin LTR runs excepted) */
+html[lang="ar"] body :not(.t-mono):not(.t-mono *) {
+  letter-spacing: 0 !important;
 }

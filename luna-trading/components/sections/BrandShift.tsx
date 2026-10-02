@@ -5,6 +5,7 @@ import Chapter, { useChapterTimeline } from "@/components/stage/Chapter";
 import { stage, range, easeInOut, lerp } from "@/lib/stage/store";
 import { onFrame } from "@/lib/stage/ticker";
 import { worldShared } from "@/lib/world/shared";
+import { useI18n } from "@/content/i18n/I18nProvider";
 import s from "./BrandShift.module.css";
 
 /**
@@ -15,13 +16,15 @@ import s from "./BrandShift.module.css";
  */
 export default function BrandShift() {
   return (
-    <Chapter id="brands" title="We don't just move products. We build brands.">
+    <Chapter id="brands">
       <Content />
     </Chapter>
   );
 }
 
 function Content() {
+  const { dict, locale } = useI18n();
+  const t = dict.brands;
   const scope = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
 
@@ -61,34 +64,35 @@ function Content() {
   }, []);
 
   useChapterTimeline(scope, (tl, q) => {
-    tl.fromTo(q("[data-a1]"), { yPercent: 110 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.06)
-      .fromTo(q("[data-a2]"), { yPercent: 110 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.12)
-      .to(q("[data-a1], [data-a2]"), { yPercent: -110, duration: 0.08, ease: "power2.in", stagger: 0.02 }, 0.36)
-      .fromTo(q("[data-b1]"), { yPercent: 110 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.64)
-      .fromTo(q("[data-b2]"), { yPercent: 110 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.69)
+    tl.fromTo(q("[data-a1]"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.06)
+      .fromTo(q("[data-a2]"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.12)
+      .to(q("[data-a1], [data-a2]"), { yPercent: -135, duration: 0.08, ease: "power2.in", stagger: 0.02 }, 0.36)
+      .fromTo(q("[data-b1]"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.64)
+      .fromTo(q("[data-b2]"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.69)
       .fromTo(q("[data-corner]"), { opacity: 0 }, { opacity: 1, duration: 0.05 }, 0.6)
-      .to(q("[data-b1], [data-b2]"), { yPercent: -110, duration: 0.07, ease: "power2.in", stagger: 0.015 }, 0.82)
+      .to(q("[data-b1], [data-b2]"), { yPercent: -135, duration: 0.07, ease: "power2.in", stagger: 0.015 }, 0.82)
       .to(q("[data-corner]"), { opacity: 0, duration: 0.04 }, 0.84);
-  });
+  }, [locale]);
 
   return (
     <div ref={scope} className={s.wrap}>
       <h2 className={s.h}>
         <span className={`t-display ${s.first}`}>
           <span className="mask">
-            <span data-a1>We don&rsquo;t just</span>
+            <span data-a1>{t.a1}</span>
           </span>
           <span className="mask tone-graphite">
-            <span data-a2>move products.</span>
+            <span data-a2>{t.a2}</span>
           </span>
         </span>
         <span className={`t-mega ${s.second}`}>
           <span className="mask">
-            <span data-b1>We build</span>
+            <span data-b1>{t.b1}</span>
           </span>
           <span className="mask">
             <span data-b2>
-              brands<span className={s.dot}>.</span>
+              {t.b2}
+              <span className={s.dot}>.</span>
             </span>
           </span>
         </span>

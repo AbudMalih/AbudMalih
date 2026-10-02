@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
 import PageShell from "@/components/ui/PageShell";
 import { COMPANY } from "@/content/site";
+import { getDictionary, type Locale } from "@/content/i18n";
 
 export const metadata: Metadata = { title: "Impressum", robots: { index: false } };
 
-const TBD = "— wird ergänzt —";
+const TBD = "wird ergänzt";
 
-/** Legal notice structure (§ 5 DDG). Values come only from content/site.ts. */
-export default function Page() {
+/** Legal notice (§ 5 DDG): German in every locale. Values come only from content/site.ts. */
+export default async function Page({ params }: { params: Promise<{ lang: string }> }) {
+  const locale = (await params).lang as Locale;
+  const d = getDictionary(locale);
   return (
-    <PageShell index="§" eyebrow="Legal" title="Impressum">
-      <div lang="de">
+    <PageShell locale={locale} index="§" eyebrow={d.pages.legalEyebrow} title="Impressum" lead={d.pages.legalNote || undefined}>
+      <div lang="de" dir="ltr" style={{ textAlign: "start" }}>
         <h2>Angaben gemäß § 5 DDG</h2>
         <p>
           {COMPANY.legalName}
           <br />
-          {COMPANY.street ?? TBD}
+          {COMPANY.street ?? `Anschrift: ${TBD}`}
           <br />
           {COMPANY.postalCode ?? ""} {COMPANY.city}, Deutschland
         </p>

@@ -57,3 +57,11 @@
   content: "+ ";
   color: var(--luna-red);
 }
+.backLink {
+  gap: 0.8em;
+}
+/* directional arrow mirrors in RTL */
+:global([dir="rtl"]) .arrow {
+  display: inline-block;
+  transform: scaleX(-1);
+}

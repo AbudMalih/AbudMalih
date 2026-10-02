@@ -1,6 +1,6 @@
 .rail {
   position: fixed;
-  right: calc(var(--margin) * 0.5);
+  inset-inline-end: calc(var(--margin) * 0.5);
   top: 50%;
   transform: translateY(-50%);
   z-index: var(--z-chrome);
@@ -50,7 +50,7 @@
 }
 .label {
   position: absolute;
-  right: 32px;
+  inset-inline-end: 32px;
   top: 50%;
   transform: translate(6px, -50%);
   white-space: nowrap;
@@ -84,4 +84,12 @@
   .rail {
     display: none;
   }
+}
+
+:global([dir="rtl"]) .label {
+  transform: translate(-6px, -50%);
+}
+:global([dir="rtl"]) .tick:hover .label,
+:global([dir="rtl"]) .tick:focus-visible .label {
+  transform: translate(0, -50%);
 }

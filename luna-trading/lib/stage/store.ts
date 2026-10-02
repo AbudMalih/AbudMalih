@@ -20,6 +20,8 @@ type StageState = {
   mobile: boolean;
   tier: Tier;
   cine: boolean;
+  /** Right-to-left document (Arabic): mirrors compositional offsets only. */
+  rtl: boolean;
   /** 0..1 — time-based intro after the loader (hero entrance). */
   intro: number;
   /** Assets the loader waits for (globe texture, fonts, …). */
@@ -34,6 +36,7 @@ export const stage: StageState = {
   mobile: false,
   tier: "high",
   cine: false,
+  rtl: false,
   intro: 0,
   ready: {},
 };

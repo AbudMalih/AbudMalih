@@ -1,5 +1,5 @@
 .stage {
-  color: var(--lv-mist);
+  color: var(--lv-ivory);
 }
 .wrap {
   --shift: 0;
@@ -10,28 +10,38 @@
 }
 .horizon {
   position: absolute;
-  left: 4.5%;
-  right: 4.5%;
+  inset-inline: 4.5%;
   top: calc(50% + var(--shift) * var(--drop));
   height: 2px;
   margin-top: -1px;
 }
 .red,
-.gold {
+.gold,
+.glow {
   position: absolute;
   inset: 0;
 }
 .red {
   background: var(--luna-red);
+  opacity: 0;
 }
+/* arrives from the chain already warmed: red edge → amber → champagne */
 .gold {
-  background: linear-gradient(90deg, rgba(198, 164, 101, 0) 0%, var(--lv-gold) 18%, var(--lv-gold-soft) 50%, var(--lv-gold) 82%, rgba(198, 164, 101, 0) 100%);
+  background: linear-gradient(90deg, rgba(200, 144, 79, 0.5) 0%, var(--lv-champagne) 22%, var(--lv-champagne-soft) 50%, var(--lv-champagne) 78%, rgba(205, 182, 138, 0.35) 100%);
   height: 1px;
   top: 0.5px;
 }
+/* warm light breathing along the horizon */
+.glow {
+  top: -40px;
+  bottom: -40px;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(228, 213, 179, 0.16), rgba(200, 144, 79, 0.05) 45%, transparent 70%);
+  filter: blur(8px);
+  opacity: 0;
+}
 .arch {
   position: absolute;
-  left: 9%;
+  inset-inline-start: 9%;
   width: min(29vw, 46vh);
   bottom: calc(50% - var(--drop));
   height: calc(var(--drop) + 34vh);
@@ -39,14 +49,14 @@
 }
 .copy {
   position: absolute;
-  left: 46%;
-  right: calc(var(--margin) + 40px);
+  inset-inline-start: 46%;
+  inset-inline-end: calc(var(--margin) + 40px);
   top: 50%;
   transform: translateY(-52%);
   max-width: 760px;
 }
 .owner {
-  color: var(--lv-gold-soft);
+  color: var(--lv-champagne-soft);
   margin-bottom: clamp(24px, 4vh, 44px);
 }
 .logo {
@@ -57,12 +67,13 @@
   font-style: italic;
   font-size: clamp(1.8rem, 3.4vw, 3.6rem);
   line-height: 1.05;
-  color: var(--lv-mist);
+  color: var(--lv-ivory);
+  text-align: start;
   margin-bottom: clamp(18px, 3vh, 32px);
 }
 .body {
   max-width: 30em;
-  color: rgba(242, 242, 242, 0.68);
+  color: rgba(239, 233, 220, 0.7);
   font-size: var(--fs-lead);
   line-height: 1.5;
   margin-bottom: clamp(26px, 4vh, 44px);
@@ -71,13 +82,14 @@
   display: inline-flex;
   align-items: center;
   gap: 18px;
-  padding: 18px 26px 18px 0;
+  padding-block: 18px;
+  padding-inline: 0 26px;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--lv-mist);
-  border-bottom: 1px solid rgba(198, 164, 101, 0.6);
+  color: var(--lv-ivory);
+  border-bottom: 1px solid rgba(205, 182, 138, 0.6);
 }
 .ctaPlus {
   position: relative;
@@ -109,13 +121,13 @@
 }
 .statement {
   position: absolute;
-  left: 46%;
-  right: var(--margin);
+  inset-inline-start: 46%;
+  inset-inline-end: var(--margin);
   bottom: clamp(20px, 4.5vh, 44px);
   display: flex;
   gap: var(--s-6);
   flex-wrap: wrap;
-  color: rgba(242, 242, 242, 0.55);
+  color: rgba(239, 233, 220, 0.5);
 }
 
 :global(html:not(.cine)) .wrap {
@@ -125,7 +137,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
   gap: var(--s-8);
   padding: var(--s-9) var(--margin);
-  background: linear-gradient(180deg, var(--lv-forest-950), var(--lv-forest-900));
+  background: radial-gradient(110% 80% at 22% 105%, var(--lv-olive-600), transparent 70%), linear-gradient(180deg, var(--lv-forest-950), var(--lv-forest-900));
 }
 :global(html:not(.cine)) .horizon {
   display: none;
@@ -154,15 +166,14 @@
     --drop: -2vh;
   }
   .arch {
-    left: 50%;
+    inset-inline-start: 50%;
     transform: translateX(-50%);
     width: min(46vw, 260px);
     bottom: calc(50% + 2vh);
     height: 30vh;
   }
   .copy {
-    left: var(--margin);
-    right: var(--margin);
+    inset-inline: var(--margin);
     top: calc(50% + 4vh);
     transform: none;
   }
@@ -173,7 +184,7 @@
     display: none;
   }
   .statement {
-    left: var(--margin);
+    inset-inline-start: var(--margin);
     flex-direction: column;
     gap: 4px;
   }
@@ -187,4 +198,23 @@
   :global(html:not(.cine)) .body {
     display: block;
   }
+}
+
+@media (max-width: 860px) {
+  :global([dir="rtl"]) .arch {
+    transform: translateX(50%);
+  }
+}
+:global(html[lang="ar"]) .owner,
+:global(html[lang="ar"]) .statement {
+  letter-spacing: 0;
+}
+
+:global([dir="rtl"]) .claim {
+  text-align: right;
+}
+:global(html[lang="ar"]) .ctaLink {
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  letter-spacing: 0;
 }

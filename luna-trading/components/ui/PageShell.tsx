@@ -1,24 +1,28 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { getDictionary, localePath, type Locale } from "@/content/i18n";
 import styles from "./PageShell.module.css";
 
 /**
- * Template for secondary pages (Phase 2 will give each its own choreography).
+ * Template for secondary pages (each gets its own choreography later).
  * Same typographic system as the homepage; no cinematic layers.
  */
 export default function PageShell({
+  locale,
   index,
   eyebrow,
   title,
   lead,
   children,
 }: {
+  locale: Locale;
   index: string;
   eyebrow: string;
   title: ReactNode;
   lead?: ReactNode;
   children?: ReactNode;
 }) {
+  const dict = getDictionary(locale);
   return (
     <article className={styles.page}>
       <header className={`frame ${styles.head}`}>
@@ -32,18 +36,21 @@ export default function PageShell({
       </header>
       <div className={`frame ${styles.body}`}>{children}</div>
       <div className={`frame ${styles.back}`}>
-        <Link href="/" className="link-line t-label" data-cursor="link">
-          ← Back to the story
+        <Link href={localePath(locale, "/")} className={`link-line t-label ${styles.backLink}`} data-cursor="link">
+          <span className={styles.arrow} aria-hidden="true">
+            ←
+          </span>
+          {dict.pages.back}
         </Link>
       </div>
     </article>
   );
 }
 
-export function InPreparation({ items }: { items?: string[] }) {
+export function InPreparation({ label, items }: { label: string; items?: string[] }) {
   return (
     <div className={styles.prep}>
-      <p className="t-label">Phase 2 · In preparation</p>
+      <p className="t-label">{label}</p>
       {items && (
         <ul>
           {items.map((i) => (

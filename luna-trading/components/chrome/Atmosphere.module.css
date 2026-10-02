@@ -7,25 +7,51 @@
   pointer-events: none;
   overflow: hidden;
 }
-.forest {
+.forest,
+.amber,
+.key,
+.haze {
   position: absolute;
-  inset: 0;
   opacity: 0;
-  background:
-    radial-gradient(120% 90% at 30% 110%, var(--lv-emerald-600) 0%, transparent 60%),
-    radial-gradient(90% 70% at 85% 0%, var(--lv-forest-800) 0%, transparent 70%),
-    linear-gradient(180deg, var(--lv-forest-950) 0%, var(--lv-forest-900) 55%, var(--lv-forest-950) 100%);
 }
-.gold {
-  position: absolute;
-  left: 18%;
-  top: 22%;
-  width: 70vmax;
-  height: 70vmax;
-  margin: -35vmax 0 0 -35vmax;
-  opacity: 0;
-  background: radial-gradient(closest-side, rgba(227, 207, 162, 0.2), rgba(198, 164, 101, 0.08) 45%, transparent 75%);
+/* deep forest with warm olive undertones: no emerald, no neon */
+.forest {
+  inset: 0;
+  background:
+    radial-gradient(110% 80% at 22% 105%, rgba(51, 58, 36, 0.95) 0%, rgba(35, 42, 26, 0.6) 35%, transparent 70%),
+    radial-gradient(80% 70% at 88% 8%, rgba(18, 28, 21, 0.9) 0%, transparent 70%),
+    linear-gradient(180deg, #080c09 0%, #0d1510 52%, #090d0a 100%);
+}
+/* the first warmth: an amber light leak entering from the far side */
+.amber {
+  inset: 0;
+  background:
+    radial-gradient(60% 55% at 92% 50%, rgba(200, 144, 79, 0.2) 0%, rgba(200, 144, 79, 0.07) 40%, transparent 72%),
+    radial-gradient(90% 40% at 50% 50%, rgba(205, 182, 138, 0.06) 0%, transparent 70%);
+}
+/* champagne key light over the brand */
+.key {
+  left: 22%;
+  top: 30%;
+  width: 72vmax;
+  height: 72vmax;
+  margin: -36vmax 0 0 -36vmax;
+  background: radial-gradient(closest-side, rgba(239, 233, 220, 0.16), rgba(205, 182, 138, 0.09) 40%, rgba(200, 144, 79, 0.03) 62%, transparent 76%);
   will-change: transform, opacity;
+}
+:global([dir="rtl"]) .key {
+  left: auto;
+  right: 22%;
+  margin: -36vmax -36vmax 0 0;
+}
+/* ivory haze low over the horizon */
+.haze {
+  left: -10%;
+  right: -10%;
+  bottom: 6%;
+  height: 34vh;
+  background: radial-gradient(50% 50% at 50% 60%, rgba(239, 233, 220, 0.08), transparent 75%);
+  filter: blur(20px);
 }
 .grain {
   position: absolute;
@@ -36,4 +62,7 @@
 }
 :global(html:not(.cine)) .root {
   display: none;
+}
+:global([dir="rtl"]) .amber {
+  transform: scaleX(-1);
 }

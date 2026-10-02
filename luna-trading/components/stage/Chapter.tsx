@@ -5,6 +5,7 @@ import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { setProgress, stage } from "@/lib/stage/store";
 import { CHAPTERS, type ChapterId } from "@/content/chapters";
 import { isCine } from "@/lib/motion/env";
+import { useI18n } from "@/content/i18n/I18nProvider";
 
 const useIso = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -16,8 +17,8 @@ const ChapterCtx = createContext<Ctx | null>(null);
 
 type Props = {
   id: ChapterId;
-  /** Accessible name of the chapter (visually the headline usually carries it). */
-  title: string;
+  /** Accessible name of the chapter (defaults to the localized chapter name). */
+  title?: string;
   className?: string;
   stageClassName?: string;
   children: ReactNode;
@@ -32,6 +33,7 @@ type Props = {
  *      chapter stage is visible at any scroll position.
  */
 export default function Chapter({ id, title, className, stageClassName, children }: Props) {
+  const { dict } = useI18n();
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const timelines = useRef(new Set<gsap.core.Timeline>());
@@ -84,7 +86,7 @@ export default function Chapter({ id, title, className, stageClassName, children
         ref={sectionRef}
         id={id}
         data-chapter={id}
-        aria-label={title}
+        aria-label={title ?? dict.chapters[id]}
         className={`chapter ${className ?? ""}`}
         style={{ ["--len" as string]: meta.len, ["--len-m" as string]: meta.lenM }}
       >
