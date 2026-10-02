@@ -44,8 +44,8 @@
 .diagram {
   position: absolute;
   inset-inline: 4.5%;
-  top: calc(50% - 16vh);
-  height: 32vh;
+  top: calc(50% - 19vh);
+  height: 38vh;
 }
 .svg {
   position: absolute;
@@ -94,8 +94,7 @@
   stroke: var(--luna-red);
   stroke-width: 2;
 }
-.originLabel,
-.platformLabel {
+.originLabel {
   position: absolute;
   color: #6b6c71;
   white-space: nowrap;
@@ -106,10 +105,6 @@
 }
 :global([dir="rtl"]) .originLabel {
   translate: 50% 0;
-}
-.platformLabel {
-  top: 0;
-  transform: translateY(-160%);
 }
 .trunk {
   position: absolute;
@@ -206,29 +201,6 @@
   font-size: 0.95rem;
   color: var(--ink-950);
 }
-.band {
-  position: absolute;
-  top: calc(100% + clamp(28px, 6vh, 64px));
-  width: 36%;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-}
-.bandTrack {
-  display: flex;
-  gap: 2.4em;
-  width: max-content;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: #6b6c71;
-}
-.bandTrack span::before {
-  content: "+";
-  color: var(--luna-red);
-  margin-inline-end: 1.2em;
-}
 .horizon {
   position: absolute;
   inset-inline: 4.5%;
@@ -259,6 +231,105 @@
 .staticList {
   display: none;
 }
+.hop2 {
+  stroke: #b4b5b9;
+}
+
+/* ---- platforms & channels (secondary to Luna) ---- */
+.channels {
+  position: absolute;
+  top: 100%;
+  margin-top: clamp(14px, 2.6vh, 26px);
+  color: #4a4b50;
+  white-space: nowrap;
+}
+.channels::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-inline-end: 10px;
+  vertical-align: 0.05em;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100% no-repeat;
+}
+.platforms {
+  position: absolute;
+  inset: 0;
+}
+.platform {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.pSq {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  background: var(--ink-950);
+}
+.mark {
+  position: absolute;
+  left: 0;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(18px, 1.9vw, 26px);
+  color: #2a2b2f;
+  opacity: 0.82;
+}
+.markSvg {
+  /* Simple Icons glyphs live in a square 24×24 box */
+  flex: none;
+  width: var(--mb, 26px);
+  height: var(--mb, 26px);
+  fill: currentColor;
+  overflow: visible;
+}
+/* optical sizes: a glyph mark vs. flat wordmarks in the same square box */
+.m_shopify {
+  --mb: clamp(24px, 2.4vw, 34px);
+}
+.m_woocommerce,
+.m_ebay,
+.m_otto,
+.m_amazon {
+  --mb: clamp(60px, 6vw, 84px);
+  margin-block: calc(var(--mb) * -0.3);
+}
+.markText {
+  font-family: var(--font-sans);
+  font-size: clamp(0.95rem, 1.15vw, 1.2rem);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: #2a2b2f;
+}
+.group {
+  position: absolute;
+  top: 100%;
+  margin-top: clamp(14px, 2.6vh, 26px);
+  translate: -50% 0;
+  color: #6b6c71;
+  white-space: nowrap;
+}
+:global([dir="rtl"]) .group {
+  translate: 50% 0;
+}
+:global([dir="rtl"]) .pSq {
+  left: auto;
+  right: -4px;
+}
+:global([dir="rtl"]) .mark {
+  left: auto;
+  right: 0;
+  transform: translateX(50%);
+}
 
 /* static / reduced motion */
 :global(html:not(.cine)) .wrap {
@@ -273,10 +344,21 @@
   margin-bottom: var(--s-6);
 }
 :global(html:not(.cine)) .staticList {
+  display: grid;
+  gap: var(--s-4);
+  color: var(--ink-950);
+  font-weight: 600;
+}
+.staticList ul {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--s-3) var(--s-6);
-  font-weight: 600;
+  align-items: center;
+  gap: var(--s-4) var(--s-7);
+}
+.staticList svg {
+  height: 24px;
+  width: auto;
+  fill: currentColor;
 }
 
 @media (max-width: 767px) {
@@ -290,17 +372,41 @@
     height: 28vh;
   }
   .destText {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     white-space: normal;
-    max-width: 24vw;
+    max-width: 16vw;
     line-height: 1.15;
   }
-  .destIdx {
+  .mark {
+    height: 13px;
+  }
+  .m_shopify {
+    --mb: 15px;
+  }
+  .m_woocommerce,
+  .m_ebay,
+  .m_otto,
+  .m_amazon {
+    --mb: 36px;
+  }
+  .channels {
     display: none;
   }
-  .band {
-    width: 70%;
-    inset-inline-start: 10% !important;
+  .markText {
+    font-size: 0.7rem;
+  }
+  .group {
+    display: none;
+  }
+  .dest {
+    gap: 6px;
+  }
+  .destText {
+    font-size: 0.66rem !important;
+    max-width: 12vw !important;
+  }
+  .channels {
+    font-size: 9px;
   }
   .secondary,
   .body {

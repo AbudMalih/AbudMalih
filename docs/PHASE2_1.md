@@ -45,7 +45,19 @@ The tones are one continuous set of values in `components/chrome/Atmosphere.tsx`
 - **Slogan:** Inter Tight 300, tracked 0.08em, the same system as the wordmark. The italic serif is removed.
 - **Bottom statements:** removed, and the composition rebalanced.
 
-## Favicon
-`public/icon.svg`, `favicon.ico` (16/32/48), `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` and `site.webmanifest`.
+## Platforms & channels (addendum)
+Chapter 06 reads **Product → Digital commerce → Platforms → Marketplaces → Customers / Markets**.
 
-The monogram is the "t" of the wordmark with the Luna "+" as its crossbar, traced from the official logo geometry: an ivory "t" body with a red "+" on near-black. It reads as a letterform, not a medical cross. The full logo is unchanged.
+- **Store technology:** Shopify, WooCommerce. These connect to *Endkunden · D2C*.
+- **Marketplaces:** Amazon, eBay, OTTO. These connect to *Europäische Märkte*.
+- **Captions:** neutral only: "Plattformen & Vertriebskanäle" / "Commerce platforms & channels" / "منصات وقنوات التجارة الإلكترونية". There is no partner, endorsement or "powered by" wording anywhere.
+- **Registry:** `content/platforms.ts` holds, for each platform, the mark (Simple Icons data, shape unmodified, monochrome ink), its source and its guideline note.
+- **`useMark` switch:**
+  - `true` for **Shopify** and **WooCommerce**. Both publish brand / trademark guidance that permits reference use.
+  - `false` (typographic identity) for **Amazon**, **eBay** and **OTTO**. Their logo use requires permission or is licensed to programme participants. The marks are prepared, and flipping `useMark` enables them once usage is cleared.
+
+## Favicon (LT micro-mark)
+- **Design:** graphite tile `#141518`. "L" in the wordmark's luna grey, "T" in its trading light, and a small Luna-red "+" as a secondary accent. Checked at 16 / 32 / 48 px.
+- **Files:** `favicon.ico` (16/32/48), `favicon-lt.svg`, `apple-touch-icon.png` + `apple-touch-icon-lt.png`, and `icon-lt-192.png`, `icon-lt-512.png`, `icon-lt-maskable-512.png` (in `site.webmanifest`).
+- **Cache busting:** metadata links are versioned (`?v=lt1`, `ICON_V` in `app/[lang]/layout.tsx`), and icon files are served with `must-revalidate`.
+- **Old icons removed:** the old `icon.svg` / `icon-*.png` files (the Phase 1 "+" and the Phase 2.1 "t+") are deleted, so `/icon.svg` now returns 404.

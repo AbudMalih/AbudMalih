@@ -17,6 +17,7 @@ import { I18nProvider } from "@/content/i18n/I18nProvider";
 import { LOCALES, LOCALE_META, getDictionary, isLocale, localePath, type Locale } from "@/content/i18n";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3100";
+const ICON_V = "lt1";
 
 export function generateStaticParams() {
   return LOCALES.map((lang) => ({ lang }));
@@ -41,14 +42,16 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
       description: d.meta.ogDescription,
       locale: LOCALE_META[lang].og,
     },
+    // LT micro-mark. Versioned URLs bust the aggressively cached Phase 1 "+".
     icons: {
       icon: [
-        { url: "/favicon.ico", sizes: "48x48" },
-        { url: "/icon.svg", type: "image/svg+xml" },
+        { url: `/favicon.ico?v=${ICON_V}`, sizes: "16x16 32x32 48x48" },
+        { url: `/favicon-lt.svg?v=${ICON_V}`, type: "image/svg+xml" },
       ],
-      apple: "/apple-touch-icon.png",
+      shortcut: `/favicon.ico?v=${ICON_V}`,
+      apple: { url: `/apple-touch-icon-lt.png?v=${ICON_V}`, sizes: "180x180" },
     },
-    manifest: "/site.webmanifest",
+    manifest: `/site.webmanifest?v=${ICON_V}`,
   };
 }
 

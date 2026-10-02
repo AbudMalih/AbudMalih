@@ -41,9 +41,11 @@ export type Dictionary = {
     body: string;
     origin: string;
     platform: string;
-    /** typographic platform layer: technologies/channels, never partner claims */
-    platforms: string[];
-    destinations: [string, string, string, string];
+    /** neutral caption for the platform layer: never partner/endorsement wording */
+    channels: string;
+    groups: { store: string; marketplace: string };
+    /** final endpoints: customers / markets */
+    destinations: [string, string];
     owned: string;
   };
   luviscent: { owner: string; category: string; body: string; cta: string; allBrands: string };

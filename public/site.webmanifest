@@ -3,12 +3,12 @@
   "short_name": "Luna Trading",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#060607",
+  "background_color": "#141518",
   "theme_color": "#060607",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "/icon-lt-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-lt-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-lt-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon-lt.svg", "sizes": "any", "type": "image/svg+xml" }
   ]
 }

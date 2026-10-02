@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Luna Trading monogram: the "t" of trading with the Luna "+" as its crossbar,
-       traced from the official wordmark geometry (scale 0.166). -->
-  <rect width="64" height="64" rx="10" fill="#060607"/>
-  <path d="M26 30.1H38.1V45.4H43.4V54H32.6Q26 54 26 47.4Z" fill="#F2F2F0"/>
-  <rect x="25.6" y="10" width="12.45" height="20.1" fill="#C90216"/>
-  <rect x="19.5" y="20.5" width="24.9" height="9.6" fill="#C90216"/>
-</svg>
