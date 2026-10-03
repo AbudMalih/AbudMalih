@@ -82,7 +82,6 @@
   inset-inline-start: 46%;
   inset-inline-end: calc(var(--margin) + 40px);
   top: 50%;
-  translate: 0 -52%;
   max-width: 760px;
 }
 .owner {
@@ -123,7 +122,8 @@
   color: rgba(239, 233, 220, 0.7);
   font-size: var(--fs-lead);
   line-height: 1.5;
-  margin-bottom: clamp(26px, 4vh, 44px);
+  /* breathing space above the horizon divider (placed in this gap) */
+  margin-bottom: clamp(48px, 8vh, 84px);
 }
 .ctaLink {
   display: inline-flex;

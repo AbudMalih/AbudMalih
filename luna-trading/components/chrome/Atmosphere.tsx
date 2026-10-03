@@ -94,42 +94,6 @@ export default function Atmosphere() {
       return d;
     };
 
-    // ---- protected text zone (LUVISCENT copy) ------------------------------
-    // Horizontal light lines fade out softly as they reach the copy and
-    // resume after it. Two soft gradients (outside the text columns OR
-    // outside the text rows) are united, so only the text area is cleared.
-    const FADE_X = 72;
-    const FADE_Y = 18;
-    const PAD_Y = 14;
-    const copySel = ["owner", "logo", "claim", "body", "cta"].map((k) => `[data-chapter="luviscent"] [data-${k}]`).join(",");
-    let horizonEl: HTMLElement | null = null;
-    const copyRect = () => {
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      document.querySelectorAll(copySel).forEach((el) => {
-        const r = el.getBoundingClientRect();
-        if (r.width < 1 || r.height < 1) return;
-        x0 = Math.min(x0, r.left); y0 = Math.min(y0, r.top);
-        x1 = Math.max(x1, r.right); y1 = Math.max(y1, r.bottom);
-      });
-      return x1 > x0 ? { x0, y0: y0 - PAD_Y, x1, y1: y1 + PAD_Y } : null;
-    };
-    /** mask in the element's own coordinates (ox, oy = its viewport offset) */
-    const zoneMask = (z: { x0: number; y0: number; x1: number; y1: number }, ox: number, oy: number, depth: number) => {
-      const a = (1 - depth).toFixed(3);
-      const x0 = z.x0 - ox, x1 = z.x1 - ox, y0 = z.y0 - oy, y1 = z.y1 - oy;
-      const cols = `linear-gradient(90deg, #000 ${(x0 - FADE_X).toFixed(1)}px, rgba(0,0,0,${a}) ${x0.toFixed(1)}px, rgba(0,0,0,${a}) ${x1.toFixed(1)}px, #000 ${(x1 + FADE_X).toFixed(1)}px)`;
-      const rows = `linear-gradient(180deg, #000 ${(y0 - FADE_Y).toFixed(1)}px, rgba(0,0,0,${a}) ${y0.toFixed(1)}px, rgba(0,0,0,${a}) ${y1.toFixed(1)}px, #000 ${(y1 + FADE_Y).toFixed(1)}px)`;
-      return `${cols}, ${rows}`;
-    };
-    const applyMask = (el: HTMLElement | SVGElement, m: string) => {
-      if (el.style.maskImage === m) return;
-      el.style.maskImage = m;
-      el.style.webkitMaskImage = m;
-      const comp = m === "none" ? "" : "add";
-      el.style.maskComposite = comp;
-      (el.style as CSSStyleDeclaration & { webkitMaskComposite: string }).webkitMaskComposite = m === "none" ? "" : "source-over";
-    };
-
     return onFrame(() => {
       const { brands: b, chain: ch, commerce: cm, luviscent: lv, closing: cl } = stage.p;
       const W = stage.vw;
@@ -212,8 +176,9 @@ export default function Atmosphere() {
 
       // ---- the air: red connection → organic champagne light ----------------
       const connect = smooth(range(cm, 0.71, 0.79));
-      const calm = smooth(range(lv, 0.22, 0.36)) * (1 - smooth(range(lv, 0.66, 0.8)));
-      const airOn = connect > 0 && (X < 1 || calm > 0) && lv < 0.8;
+      // the air lives only in the transition; once LUVISCENT is established no
+      // line other than its horizon may cross the scene (it would cross the copy)
+      const airOn = connect > 0 && X < 1;
       if (!airOn) {
         if (air.style.visibility !== "hidden") {
           air.style.visibility = "hidden";
@@ -244,15 +209,14 @@ export default function Atmosphere() {
 
         // secondary strands: translucent light, air
         const strands = smooth(range(X, 0.14, 0.4)) * (1 - smooth(range(X, 0.74, 1)));
-        const sOp = Math.max(strands, calm * 0.45);
-        const calmPh = t * 0.05;
+        const sOp = strands;
         const lines = [
           { off: -0.05, f: 0.7, p: 1.7, amp: 1.1 },
           { off: 0.04, f: 1.15, p: 3.1, amp: 0.8 },
           { off: 0.1, f: 0.55, p: 4.4, amp: 1.3 },
         ];
         lines.forEach((l, i) => {
-          const d = strand(-24, W + 24, node.y + H * l.off * (strands + calm * 0.6), H * 0.05 * l.amp * Math.max(wave, calm * 0.35), ph * (0.8 + i * 0.15) + l.p + calmPh, l.f, node, pinR * 0.6);
+          const d = strand(-24, W + 24, node.y + H * l.off * strands, H * 0.05 * l.amp * wave, ph * (0.8 + i * 0.15) + l.p, l.f, node, pinR * 0.6);
           const c = mix(CHAMPAGNE, IVORY, i / 3);
           crisp[i + 1].setAttribute("d", d);
           crisp[i + 1].style.stroke = rgba(c, 1);
@@ -265,23 +229,6 @@ export default function Atmosphere() {
         soft[3].setAttribute("d", main);
         soft[3].style.stroke = rgba(mix(color, IVORY, 0.4), 1);
         soft[3].style.opacity = (mainO * smooth(range(X, 0.12, 0.4)) * 0.55).toFixed(3);
-      }
-
-      // protect the LUVISCENT copy from every horizontal line, while it is legible
-      const textOn = smooth(range(lv, 0.2, 0.27)) * (1 - smooth(range(lv, 0.795, 0.83)));
-      horizonEl ??= document.querySelector('[data-chapter="luviscent"] [data-horizon]');
-      const zone = textOn > 0.001 && lv > 0 && lv < 1 ? copyRect() : null;
-      if (zone) {
-        applyMask(air, zoneMask(zone, 0, 0, textOn));
-        applyMask(glow, zoneMask(zone, 0, 0, textOn));
-        if (horizonEl) {
-          const hr = horizonEl.getBoundingClientRect();
-          applyMask(horizonEl, zoneMask(zone, hr.left, hr.top, textOn));
-        }
-      } else {
-        applyMask(air, "none");
-        applyMask(glow, "none");
-        if (horizonEl) applyMask(horizonEl, "none");
       }
 
       const lightTone = (lit > 0.5 && b > 0 && X < 0.72 && lv < 0.3) || (lightO > 0.45 && X < 0.72);
