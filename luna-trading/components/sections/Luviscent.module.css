@@ -77,12 +77,23 @@
   height: calc(var(--drop) + 34vh);
   max-height: 72vh;
 }
+/* the copy is centred vertically in the right half (flex, not a translate:
+   GSAP owns this element's transform), clear of the header zone, so the
+   CTA stays on screen on short laptop windows and at 90–100 % zoom */
 .copy {
   position: absolute;
   inset-inline-start: 46%;
   inset-inline-end: calc(var(--margin) + 40px);
-  top: 50%;
+  top: 0;
+  bottom: 0;
   max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: calc(var(--safe-top) - 8px) clamp(20px, 4vh, 40px);
+}
+.copy > * {
+  flex: none;
 }
 .owner {
   color: var(--lv-champagne-soft);
@@ -190,6 +201,7 @@
   translate: none;
   width: auto;
   height: auto;
+  padding-block: 0;
 }
 :global(html:not(.cine)) .arch {
   aspect-ratio: 3 / 4.4;
@@ -209,6 +221,9 @@
   .copy {
     inset-inline: var(--margin);
     top: calc(50% + 4vh);
+    bottom: auto;
+    display: block;
+    padding-block: 0;
     translate: none;
   }
   .owner {
