@@ -16,6 +16,7 @@
     linear-gradient(var(--luna-red), var(--luna-red)) center / 8px 100% no-repeat;
 }
 .block {
+  will-change: transform, opacity;
   position: absolute;
   inset-inline: var(--margin);
   bottom: clamp(40px, 8vh, 96px);
@@ -55,6 +56,23 @@
   text-transform: uppercase;
   line-height: 1;
   padding-block: 0.2em;
+}
+.ctaText {
+  position: relative;
+}
+/* the CTA's red underline: completes while the CTA is held */
+.ctaLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.12em;
+  height: 2px;
+  background: var(--luna-red);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+:global([dir="rtl"]) .ctaLine {
+  transform-origin: right;
 }
 .plus {
   position: relative;
