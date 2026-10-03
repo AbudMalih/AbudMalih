@@ -123,10 +123,11 @@ All of this runs in `components/chrome/Atmosphere.tsx` and is a pure function of
 - **No dead scroll.** Consecutive forward frames change throughout. Quiet holds still progress through the moving window light (chain) and the LUVISCENT depth drift.
 - **Unchanged:** hero, trade, truck, warehouse, ecosystem, navigation, footer and the language system. A small fix: on 768–1199 px laptops the commerce channel caption now sits on its own line.
 
-## LUVISCENT text zone
-- **Protected zone.** The champagne horizon and the faint air strands fade out softly as they reach the LUVISCENT copy (owner line, mark, slogan, paragraph, CTA) and resume after it. The zone is two soft gradients united: outside the text columns OR outside the text rows. It is not a hard cutout.
-- **Follows the copy.** The zone tracks the copy's live position. It holds at every breakpoint, in both scroll directions, and for as long as any copy is visible, including the exit, when the horizon rises.
-- **Verified.** A pixel check renders each frame with and without the lines (text hidden) and compares the text area: German and Arabic, 8 viewports from 360×640 to 1920×1080, LUVISCENT 0.20–0.80, forward and reverse. A control run with the masks disabled flags the original problem.
+## LUVISCENT horizon below the copy
+- **One continuous line.** The champagne horizon is one continuous line, with no mask and no gap.
+- **Resting position.** On desktop and tablet it rests as a divider below the paragraph (with breathing space) and above the CTA. Its height is measured from the layout, so it holds at every size, and the niche keeps standing on it. On narrow screens (≤ 860 px), where the paragraph is hidden, it stays the niche's floor above the copy.
+- **Never through the text while moving.** It settles before any text appears (0.13–0.23) and rises only after the copy has faded (from 0.80). The faint air strands end with the transition (by 0.21).
+- **Verified.** A geometry check confirms the line never crosses visible text, is never masked, and that no air strand shows over the copy. It covers German and Arabic, 9 viewports from 360×640 to 1920×1080, and LUVISCENT 0.10–0.95, forward and reverse.
 
 ## Closing CTA pacing
 - **Longer closing chapter.** It is now 2.6 screens (mobile 2.2). The statement and "Sprechen wir über Ihr Geschäft +" arrive over the same scroll distance as before (the globe's return was rescaled to match). The CTA is then held.

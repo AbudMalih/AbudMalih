@@ -201,7 +201,7 @@ export default function Atmosphere() {
         const pinR = W * 0.22;
         const main = strand(Math.min(a, z), Math.max(a, z), node.y, amp, ph, 1.05, node, pinR);
         // main strand settles into the LUVISCENT horizon, then hands over
-        const mainO = (1 - smooth(range(lv, 0.16, 0.26))) * (X < 1 ? 1 : 0);
+        const mainO = (1 - smooth(range(lv, 0.13, 0.21))) * (X < 1 ? 1 : 0);
         crisp[0].setAttribute("d", main);
         crisp[0].style.stroke = rgba(color, 1);
         crisp[0].style.strokeWidth = (1.6 - 0.6 * smooth(range(X, 0.1, 0.4))).toFixed(2);
