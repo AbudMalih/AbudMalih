@@ -122,3 +122,24 @@ All of this runs in `components/chrome/Atmosphere.tsx` and is a pure function of
 - **Visibility fix.** A chapter stage left visible when scrolling up from exactly its first frame (its progress does not change, so no update fired) is fixed in `components/stage/Chapter.tsx`: visibility is re-checked on every scroll.
 - **No dead scroll.** Consecutive forward frames change throughout. Quiet holds still progress through the moving window light (chain) and the LUVISCENT depth drift.
 - **Unchanged:** hero, trade, truck, warehouse, ecosystem, navigation, footer and the language system. A small fix: on 768–1199 px laptops the commerce channel caption now sits on its own line.
+
+## LUVISCENT text zone
+- **Protected zone.** The champagne horizon and the faint air strands fade out softly as they reach the LUVISCENT copy (owner line, mark, slogan, paragraph, CTA) and resume after it. The zone is two soft gradients united: outside the text columns OR outside the text rows. It is not a hard cutout.
+- **Follows the copy.** The zone tracks the copy's live position. It holds at every breakpoint, in both scroll directions, and for as long as any copy is visible, including the exit, when the horizon rises.
+- **Verified.** A pixel check renders each frame with and without the lines (text hidden) and compares the text area: German and Arabic, 8 viewports from 360×640 to 1920×1080, LUVISCENT 0.20–0.80, forward and reverse. A control run with the masks disabled flags the original problem.
+
+## Closing CTA pacing
+- **Longer closing chapter.** It is now 2.6 screens (mobile 2.2). The statement and "Sprechen wir über Ihr Geschäft +" arrive over the same scroll distance as before (the globe's return was rescaled to match). The CTA is then held.
+- **The hold keeps moving.**
+  - The globe camera keeps drifting.
+  - The silver dawn light lifts.
+  - The CTA's red underline completes.
+- **Footer hand-over.** This is evaluated in the chapter's own scroll update, so it is never a frame behind.
+  - The closing block rides just above the rising footer's edge, so the footer never overlaps it.
+  - The statement fades as it nears the navigation zone, and the CTA fades last.
+  - Everything is a function of the footer's position, so reverse scrolling brings the CTA straight back.
+- **Measured.**
+  - **Fully visible and clickable:** about 1.6 screens of scroll on desktop, tablet and Arabic, and 1.2 on mobile.
+  - **Wheel inputs:** 16 of 29 mouse-wheel notches (100px), 54 of 92 trackpad deltas (30px), and 6 of 11 fast-wheel inputs (300px).
+  - **Scrolling back up:** the CTA returns after 3 wheel notches.
+  - **Checks:** no footer overlap, forward and reverse match, and consecutive frames keep changing through the hold.

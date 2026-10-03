@@ -268,7 +268,7 @@ export default function Atmosphere() {
       }
 
       // protect the LUVISCENT copy from every horizontal line, while it is legible
-      const textOn = smooth(range(lv, 0.2, 0.27)) * (1 - smooth(range(lv, 0.72, 0.8)));
+      const textOn = smooth(range(lv, 0.2, 0.27)) * (1 - smooth(range(lv, 0.795, 0.83)));
       horizonEl ??= document.querySelector('[data-chapter="luviscent"] [data-horizon]');
       const zone = textOn > 0.001 && lv > 0 && lv < 1 ? copyRect() : null;
       if (zone) {

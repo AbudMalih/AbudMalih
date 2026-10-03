@@ -31,5 +31,5 @@ export const CHAPTERS: Chapter[] = [
   { id: "commerce", index: "06", len: 3.4, lenM: 2.8 },
   { id: "luviscent", index: "07", len: 2.3, lenM: 1.9 },
   { id: "ecosystem", index: "08", len: 2.1, lenM: 1.7 },
-  { id: "closing", index: "09", len: 1.4, lenM: 1.2 },
+  { id: "closing", index: "09", len: 2.6, lenM: 2.2 },
 ];
