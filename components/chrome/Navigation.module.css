@@ -15,6 +15,10 @@
 .bar > * {
   pointer-events: auto;
 }
+/* dark grounds: inactive languages stay legible on graphite */
+.bar {
+  --graphite-400: #9a9ba0;
+}
 .brand {
   display: block;
   height: var(--logo-h);

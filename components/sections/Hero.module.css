@@ -281,9 +281,8 @@
 .signalCross i:nth-child(3) { bottom: var(--gap); }
 .signalCross i:nth-child(4) { top: var(--gap); }
 
-/* WITHOUT carries the Luna red, one controlled step deeper for its large
-   surface so it stays corporate rather than loud; the brighter period keeps
+/* WITHOUT carries the Luna red on the graphite ground; the period keeps
    its own signal (period → coordinate → route → globe) */
 .title :global(.tone-graphite) {
-  color: #a8101c;
+  color: var(--luna-red);
 }
