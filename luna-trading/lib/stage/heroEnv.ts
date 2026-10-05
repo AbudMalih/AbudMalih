@@ -5,21 +5,16 @@ import { stage, range, smooth } from "./store";
  * One scroll value u = hero + source progress drives everything, so the
  * background, type, header, rail and globe always agree (forward = reverse):
  *
- *   brushed steel in daylight (silver plate, light from the upper left)
- *   → medium graphite (global trade) → the near-black of the port, where
+ *   graphite steel with a silver daylight sheen (light from the upper left)
+ *   → deeper graphite (global trade) → the near-black of the port, where
  *   the line-world takes over (its first tone is 0x060607).
  */
 const KEYS: [number, number][] = [
-  // brushed steel in daylight
-  [0.0, 0xb3b5b7],
-  [0.38, 0xadafb1],
-  [0.55, 0xa2a4a6],
-  [0.62, 0x97999b],
-  [0.66, 0x8b8d8f],
-  // a short pass through mid-grey: type and header flip inside it
-  [0.674, 0x67686b],
-  [0.71, 0x4d4e52],
-  [0.86, 0x2c2d30],
+  // graphite steel with a silver daylight sheen (texture in Atmosphere)
+  [0.0, 0x46484c],
+  [0.38, 0x414347],
+  [0.6, 0x36383b],
+  [0.8, 0x27282b],
   [1.0, 0x1a1b1e],
   [1.1, 0x0e0f11],
   [1.2, 0x070708],
@@ -32,6 +27,8 @@ export type HeroEnv = {
   rgb: [number, number, number];
   /** 1 = light environment (dark type, ink header) → 0 = dark environment */
   light: number;
+  /** the steel's daylight sheen and brushing: present on the opening, gone in the port */
+  sheen: number;
   /** globe material: 1 = smoked graphite for daylight → 0 = the dark-world globe */
   globe: number;
   /** the opening is on screen at all (hero or the start of the dive) */
@@ -49,10 +46,11 @@ export function heroEnv(): HeroEnv {
   const rgb = [16, 8, 0].map((sh) => Math.round(lerp((ca >> sh) & 255, (cb >> sh) & 255, t))) as [number, number, number];
   return {
     rgb,
-    // type and header flip decisively while the ground passes mid-grey,
-    // so they never sit at the same luminance as the background
-    light: 1 - smooth(range(u, 0.663, 0.673)),
-    globe: 1 - smooth(range(u, 0.5, 0.95)),
+    // a dark ground from the first frame: light type and header throughout
+    light: 0,
+    sheen: 1 - smooth(range(u, 0.55, 1.0)),
+    // the globe stays a lit, metallic graphite on the opening, then joins the dark world
+    globe: 0.45 * (1 - smooth(range(u, 0.5, 0.95))),
     active: s < 0.3,
   };
 }

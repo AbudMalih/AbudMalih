@@ -117,13 +117,13 @@ export default function Atmosphere() {
       // ---- 00 · the opening: mineral daylight → graphite → port --------------
       const env = heroEnv();
       const dark = 1 - env.light;
-      const envKey = `${env.rgb.join(",")}|${env.light.toFixed(3)}|${env.active}`;
+      const envKey = `${env.rgb.join(",")}|${env.light.toFixed(3)}|${env.sheen.toFixed(3)}|${env.active}`;
       if (envKey !== lastEnv) {
         lastEnv = envKey;
         const m = mineralRef.current!;
         m.style.backgroundColor = `rgb(${env.rgb.join(",")})`;
         set(m, env.active ? 1 : 0);
-        mineralTexRef.current!.style.opacity = env.light.toFixed(3);
+        mineralTexRef.current!.style.opacity = env.sheen.toFixed(3);
         root.setProperty("--env-fg", mixHex(INK, PAPER, dark));
         root.setProperty("--env-fg-mid", mixHex(MID_L, MID_D, dark));
         root.setProperty("--env-fg-dim", mixHex(DIM_L, DIM_D, dark));

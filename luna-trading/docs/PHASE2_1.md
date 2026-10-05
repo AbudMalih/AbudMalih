@@ -163,3 +163,9 @@ All of this runs in `components/chrome/Atmosphere.tsx` and is a pure function of
 
 ### Not changed
 Logistics, truck, warehouse, "Wir bauen Marken", E-Commerce, LUVISCENT, ecosystem, closing CTA, footer, language architecture and the scroll choreography. Static / reduced-motion mode keeps its dark opening.
+
+### Opening ground (final): graphite steel
+- **Ground.** The opening is graphite steel (`heroEnv`: #46484c, darkening to the port's near-black), with a fine horizontal brushing, a silver daylight sheen from the upper left and deeper shadow behind the globe.
+- **Type.** Light type throughout: TRADE / BORDERS in paper, WITHOUT in Luna red, the red period unchanged. The header uses its dark-ground treatment from the first frame. Because the opening only darkens from here, there is no light-to-dark flip.
+- **Globe.** It keeps a lit, metallic graphite material (`uEnv` 0.45) on the opening and joins the dark-world globe as the route reaches Europe.
+- **Header.** Inactive languages are lifted for legibility on graphite.
