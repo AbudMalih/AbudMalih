@@ -1,6 +1,7 @@
 import { stage, range, lerp, smooth, easeInOut, easeIn, easeOut } from "@/lib/stage/store";
 import { COMPANY } from "@/content/site";
 import type { GlobeFrame } from "./createGlobe";
+import { heroEnv } from "@/lib/stage/heroEnv";
 
 export type GlobeDerived = GlobeFrame & { opacity: number; labels: number };
 
@@ -37,6 +38,7 @@ function globeStateLtr(): GlobeDerived {
       // on through the held CTA
       reveal: smooth(range(c, 0.01, 0.2)) * 0.95,
       route: 1,
+      env: 0,
       opacity: smooth(range(c, 0.01, 0.16)) * (m ? 0.6 : 0.9),
       labels: range(c, 0.16, 0.22),
     };
@@ -72,6 +74,7 @@ function globeStateLtr(): GlobeDerived {
     oy,
     reveal: emerge,
     route,
+    env: heroEnv().globe,
     opacity,
     labels: range(h, 0.3, 0.36) * (1 - range(s, 0.04, 0.1)),
   };

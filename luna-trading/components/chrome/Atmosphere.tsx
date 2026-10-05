@@ -4,13 +4,16 @@ import { useEffect, useRef } from "react";
 import { stage, range, smooth, journeyT } from "@/lib/stage/store";
 import { onFrame } from "@/lib/stage/ticker";
 import { toneAt, lightness } from "@/lib/world/tones";
+import { heroEnv } from "@/lib/stage/heroEnv";
 import styles from "./Atmosphere.module.css";
 
 /**
  * The tonal score of the film. One continuous set of light values, every one
  * a pure function of chapter progress (forward and reverse are identical):
  *
- *   black hero → dark trade → dark / metallic logistics
+ *   OPENING: daylight entering the Luna Trading world — warm mineral
+ *     off-white and soft silver, darkening through graphite into the port
+ *     (lib/stage/heroEnv.ts) → dark / metallic logistics
  *   → BRAND (04–05): the carton's world brightens metallic → silver → warm
  *     ivory; tactile, physical, lit like a room (first light moment)
  *   → E-COMMERCE (06): cooler, cleaner off-white and silver with a fine
@@ -38,6 +41,8 @@ const rgba = (c: number[], a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a.toFix
 type Pt = { x: number; y: number };
 
 export default function Atmosphere() {
+  const mineralRef = useRef<HTMLDivElement>(null);
+  const mineralTexRef = useRef<HTMLDivElement>(null);
   const brandRef = useRef<HTMLDivElement>(null);
   const brandTexRef = useRef<HTMLDivElement>(null);
   const shaftRef = useRef<HTMLDivElement>(null);
@@ -94,8 +99,36 @@ export default function Atmosphere() {
       return d;
     };
 
+    let lastEnv = "";
+    const root = document.documentElement.style;
+    // type on the opening follows its light: dark graphite → light (a short,
+    // decisive crossover where the ground passes mid-grey)
+    const mixHex = (a: number[], b: number[], t: number) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
+    const INK = [31, 32, 35];
+    const PAPER = [242, 242, 240];
+    const MID_L = [118, 120, 125];
+    const MID_D = [150, 152, 157];
+    const DIM_L = [96, 98, 103];
+    const DIM_D = [150, 152, 157];
+
     return onFrame(() => {
       const { brands: b, chain: ch, commerce: cm, luviscent: lv, closing: cl } = stage.p;
+
+      // ---- 00 · the opening: mineral daylight → graphite → port --------------
+      const env = heroEnv();
+      const dark = 1 - env.light;
+      const envKey = `${env.rgb.join(",")}|${env.light.toFixed(3)}|${env.active}`;
+      if (envKey !== lastEnv) {
+        lastEnv = envKey;
+        const m = mineralRef.current!;
+        m.style.backgroundColor = `rgb(${env.rgb.join(",")})`;
+        set(m, env.active ? 1 : 0);
+        mineralTexRef.current!.style.opacity = env.light.toFixed(3);
+        root.setProperty("--env-fg", mixHex(INK, PAPER, dark));
+        root.setProperty("--env-fg-mid", mixHex(MID_L, MID_D, dark));
+        root.setProperty("--env-fg-dim", mixHex(DIM_L, DIM_D, dark));
+        root.setProperty("--env-rule", `rgba(${mixHex(INK, PAPER, dark).slice(4, -1)},${(0.22 - 0.04 * dark).toFixed(3)})`);
+      }
       const W = stage.vw;
       const H = stage.vh;
       const rtl = stage.rtl;
@@ -231,7 +264,8 @@ export default function Atmosphere() {
         soft[3].style.opacity = (mainO * smooth(range(X, 0.12, 0.4)) * 0.55).toFixed(3);
       }
 
-      const lightTone = (lit > 0.5 && b > 0 && X < 0.72 && lv < 0.3) || (lightO > 0.45 && X < 0.72);
+      const lightTone =
+        (env.active && env.light > 0.5 && b === 0) || (lit > 0.5 && b > 0 && X < 0.72 && lv < 0.3) || (lightO > 0.45 && X < 0.72);
       const tn = lightTone ? "light" : "dark";
       if (tn !== tone) {
         tone = tn;
@@ -242,6 +276,9 @@ export default function Atmosphere() {
 
   return (
     <div className={styles.root} aria-hidden="true">
+      <div ref={mineralRef} className={styles.mineral}>
+        <div ref={mineralTexRef} className={styles.mineralTex} />
+      </div>
       <div ref={brandRef} className={styles.brand}>
         <div ref={brandTexRef} className={styles.brandTex}>
           <div ref={shaftRef} className={styles.shaft} />

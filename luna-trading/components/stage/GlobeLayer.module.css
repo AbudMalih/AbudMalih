@@ -50,7 +50,7 @@
   left: 18px;
   top: -7px;
   white-space: pre;
-  color: var(--graphite-200);
+  color: var(--env-fg-dim, var(--graphite-200));
   font-size: 10px;
   letter-spacing: 0.14em;
 }
@@ -63,7 +63,7 @@
   height: 1px;
 }
 .home .coord {
-  color: var(--paper);
+  color: var(--env-fg, var(--paper));
 }
 .home[data-quiet] .coord {
   display: none;

@@ -37,14 +37,17 @@
   top: 0;
   opacity: 0;
 }
-:global(html[data-tone="light"]) .logoDark {
+/* light grounds: the master wordmark; the open index is always dark */
+:global(html[data-tone="light"]) .bar:not(.isOpen) .logoDark {
   opacity: 0;
 }
-:global(html[data-tone="light"]) .logoLight {
+:global(html[data-tone="light"]) .bar:not(.isOpen) .logoLight {
   opacity: 1;
 }
 :global(html[data-tone="light"]) .bar:not(.isOpen) {
   --paper: #0b0b0d;
+  --graphite-400: #5d5e63;
+  --hairline-strong: rgba(11, 11, 13, 0.22);
 }
 .compact .brand {
   transform: scale(0.88);
@@ -54,6 +57,15 @@ html:global(.intro-pending) .brand {
 }
 
 .right {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2vw, 32px);
+  min-height: 44px;
+}
+/* links + languages + the compact "+" (absolute at this group's end, so in
+   the compact state it sits right before the CTA) */
+.group {
   position: relative;
   display: flex;
   align-items: center;
@@ -86,6 +98,7 @@ html:global(.intro-pending) .brand {
   width: 1px;
   height: 14px;
   background: var(--hairline-strong);
+  transition: background var(--dur-3);
 }
 .compact .links a,
 .compact .lang {
@@ -100,6 +113,7 @@ html:global(.intro-pending) .brand {
 .toggle {
   position: absolute;
   inset-inline-end: 0;
+  margin-inline-end: 0;
   top: 50%;
   translate: 0 -50%;
   display: inline-flex;
@@ -193,7 +207,8 @@ html:global(.intro-pending) .brand {
   width: 3ch;
 }
 .word {
-  font-size: clamp(2.4rem, 7.2vh, 6.2rem);
+  /* long German words must fit narrow screens */
+  font-size: min(clamp(2.4rem, 7.2vh, 6.2rem), 10.5vw);
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.045em;
@@ -233,4 +248,109 @@ html:global(.intro-pending) .brand {
   .legal {
     margin-inline-start: 0;
   }
+}
+
+/* ---------------- Commercial CTA ----------------
+   Compact, architectural: Luna red, square corners, label-sized type, a
+   small "+". Hover: the "+" turns a quarter, the label opens by a hair. */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding-inline: 16px 14px;
+  background: var(--luna-red);
+  color: #fbfaf8;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 1px;
+  transition: background-color var(--dur-2) var(--ease-out), opacity var(--dur-3) var(--ease-out);
+}
+.ctaLabel {
+  transition: letter-spacing var(--dur-3) var(--ease-out);
+}
+.ctaPlus {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  flex: none;
+  transition: transform var(--dur-3) var(--ease-out);
+}
+.ctaPlus::before,
+.ctaPlus::after {
+  content: "";
+  position: absolute;
+  background: currentColor;
+}
+.ctaPlus::before {
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 1.5px;
+}
+.ctaPlus::after {
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 1.5px;
+}
+.cta:hover,
+.cta:focus-visible {
+  background: #b30214;
+}
+.cta:hover .ctaPlus,
+.cta:focus-visible .ctaPlus {
+  transform: rotate(90deg);
+}
+.cta:hover .ctaLabel,
+.cta:focus-visible .ctaLabel {
+  letter-spacing: 0.19em;
+}
+.cta:focus-visible {
+  outline: 1px solid var(--paper);
+  outline-offset: 3px;
+}
+:global(html[lang="ar"]) .cta {
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+:global(html[lang="ar"]) .cta:hover .ctaLabel,
+:global(html[lang="ar"]) .cta:focus-visible .ctaLabel {
+  letter-spacing: 0.01em;
+}
+/* inside the index (all sizes, the only CTA on mobile) */
+.ctaPanel {
+  align-self: flex-start;
+  height: 52px;
+  padding-inline: 22px 20px;
+  margin-top: clamp(20px, 4vh, 40px);
+  font-size: 0.8rem;
+}
+.ctaPanel .ctaPlus {
+  width: 11px;
+  height: 11px;
+}
+.ctaPanel .ctaPlus::before {
+  top: 5px;
+}
+.ctaPanel .ctaPlus::after {
+  left: 5px;
+}
+@media (max-width: 860px) {
+  .bar .cta:not(.ctaPanel) {
+    display: none;
+  }
+  .ctaPanel {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+}
+html:global(.intro-pending) .cta:not(.ctaPanel) {
+  opacity: 0;
 }

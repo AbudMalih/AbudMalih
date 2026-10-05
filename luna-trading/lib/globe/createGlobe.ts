@@ -32,6 +32,7 @@ uniform vec3 uNorth;
 uniform vec2 uTexel;
 uniform float uReveal;
 uniform float uGrat;
+uniform float uEnv;
 varying vec2 vUv;
 varying vec3 vN;
 varying vec3 vP;
@@ -57,22 +58,27 @@ void main() {
   float ndl = dot(Np, L);
   float diff = smoothstep(-0.18, 1.0, ndl);
 
-  vec3 ocean = vec3(0.016, 0.017, 0.019);
-  vec3 landLo = vec3(0.085, 0.087, 0.095);
-  vec3 landHi = vec3(0.165, 0.168, 0.18);
+  // uEnv: 0 = the dark-world globe, 1 = smoked graphite / silver for daylight
+  vec3 ocean = mix(vec3(0.016, 0.017, 0.019), vec3(0.085, 0.089, 0.098), uEnv);
+  vec3 landLo = mix(vec3(0.085, 0.087, 0.095), vec3(0.22, 0.226, 0.24), uEnv);
+  vec3 landHi = mix(vec3(0.165, 0.168, 0.18), vec3(0.4, 0.408, 0.43), uEnv);
   vec3 base = mix(ocean, mix(landLo, landHi, smoothstep(0.5, 1.0, h)), land);
 
-  vec3 col = base * (0.03 + 1.05 * diff);
+  vec3 col = base * (mix(0.03, 0.07, uEnv) + 1.05 * diff);
+  // daylight bounce: the shadow side becomes smoked graphite, never a black hole
+  col += vec3(0.15, 0.155, 0.168) * uEnv * (1.0 - diff) * (0.75 + 0.25 * land);
 
   float lit = smoothstep(-0.05, 0.25, dot(N, L));
   float specO = pow(max(dot(N, H), 0.0), 260.0) * (1.0 - land) * 0.25;
   float specL = pow(max(dot(Np, H), 0.0), 24.0) * land * 0.056;
-  col += vec3(0.80, 0.81, 0.84) * (specO + specL) * lit;
+  col += vec3(0.80, 0.81, 0.84) * (specO * (1.0 + 1.4 * uEnv) + specL * (1.0 + 2.2 * uEnv)) * lit;
 
   col += vec3(0.55, 0.56, 0.6) * coast * 0.11 * (0.2 + diff);
 
   float fr = pow(1.0 - max(dot(N, V), 0.0), 3.2);
-  col += vec3(0.52, 0.53, 0.57) * fr * (0.056 + 0.62 * smoothstep(-0.35, 0.7, dot(N, L)));
+  // metallic edge: bright on the lit side, falling away into shadow (dimensional on light grounds)
+  float rimSide = smoothstep(-0.35, 0.7, dot(N, L));
+  col += vec3(0.52, 0.53, 0.57) * fr * (mix(0.056, 0.02, uEnv) + mix(0.62, 0.78, uEnv) * rimSide);
 
   // 15° graticule — barely there, a sense of measurement rather than a HUD
   vec2 g = vec2(vUv.x * 24.0, vUv.y * 12.0);
@@ -81,7 +87,8 @@ void main() {
   float line = 1.0 - min(min(gl.x, gl.y), 1.0);
   col += vec3(0.62) * line * uGrat * (0.15 + diff);
 
-  gl_FragColor = vec4(col * uReveal, 1.0);
+  // revealed by opacity (not from black), so it emerges cleanly on any ground
+  gl_FragColor = vec4(col, uReveal);
 }`;
 
 const haloVert = /* glsl */ `
@@ -97,6 +104,7 @@ const haloFrag = /* glsl */ `
 uniform vec3 uCam;
 uniform vec3 uLight;
 uniform float uReveal;
+uniform float uEnv;
 varying vec3 vN;
 varying vec3 vP;
 void main() {
@@ -105,7 +113,11 @@ void main() {
   // visible annulus spans rim ≈ 0.71 (globe edge) → 1.0 (halo edge)
   float a = pow(clamp((1.0 - rim) / 0.29, 0.0, 1.0), 2.4);
   float side = 0.35 + 0.65 * smoothstep(-0.6, 0.8, dot(normalize(vN), normalize(uLight)));
-  gl_FragColor = vec4(vec3(0.62, 0.63, 0.67) * a * side * 0.48 * uReveal, 1.0);
+  // dark grounds: a silver atmosphere; daylight: a soft contact shadow on the side away from the light
+  float glow = a * side * 0.48;
+  float shade = a * (1.0 - side) * 0.3;
+  vec3 c = mix(vec3(0.62, 0.63, 0.67), vec3(0.16, 0.165, 0.18), uEnv);
+  gl_FragColor = vec4(c, mix(glow, shade, uEnv) * uReveal);
 }`;
 
 export type GlobeFrame = {
@@ -117,6 +129,8 @@ export type GlobeFrame = {
   oy: number;
   reveal: number;
   route: number;
+  /** 0 = dark world, 1 = daylight (opening) */
+  env: number;
 };
 
 export type GlobeHandle = {
@@ -155,10 +169,11 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
     uTexel: { value: new THREE.Vector2(1 / 4096, 1 / 2048) },
     uReveal: { value: 0 },
     uGrat: { value: 0.03 },
+    uEnv: { value: 0 },
   };
 
   const sphereGeo = new THREE.SphereGeometry(1, opts.hiRes ? 160 : 96, opts.hiRes ? 120 : 72);
-  const globeMat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms });
+  const globeMat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms, transparent: true });
   const globe = new THREE.Mesh(sphereGeo, globeMat);
   spin.add(globe);
 
@@ -166,13 +181,15 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
   const haloMat = new THREE.ShaderMaterial({
     vertexShader: haloVert,
     fragmentShader: haloFrag,
-    uniforms: { uCam: uniforms.uCam, uLight: uniforms.uLight, uReveal: uniforms.uReveal },
+    uniforms: { uCam: uniforms.uCam, uLight: uniforms.uLight, uReveal: uniforms.uReveal, uEnv: uniforms.uEnv },
     side: THREE.BackSide,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.NormalBlending,
     transparent: true,
     depthWrite: false,
   });
-  scene.add(new THREE.Mesh(haloGeo, haloMat));
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  halo.renderOrder = -1; // behind the (transparent) globe body
+  scene.add(halo);
 
   // --- Route ---------------------------------------------------------------
   const route = buildRoute(1.0035);
@@ -239,6 +256,7 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
     camera.updateMatrixWorld();
     uniforms.uCam.value.copy(camera.position);
     uniforms.uReveal.value = f.reveal;
+    uniforms.uEnv.value = f.env;
     uniforms.uNorth.value.set(0, 1, 0).applyQuaternion(tilt.quaternion);
 
     // route progress (instanced segments)

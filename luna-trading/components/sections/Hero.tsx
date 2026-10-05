@@ -62,8 +62,9 @@ function HeroContent() {
       items.forEach((item, i) => {
         const at = 0.37 + i * step;
         tl.fromTo(item, { opacity: 0, x: 0 }, { opacity: 1, duration: 0.04 }, at);
-        tl.to(item, { color: "var(--paper)", duration: 0.03 }, at);
-        if (i > 0) tl.to(items[i - 1], { color: "var(--graphite-400)", duration: 0.03 }, at);
+        // colours come from the environment (light → dark); only the emphasis is tweened
+        tl.fromTo(item, { "--on": 0 }, { "--on": 1, duration: 0.03, immediateRender: false }, at);
+        if (i > 0) tl.to(items[i - 1], { "--on": 0, duration: 0.03 }, at);
       });
       tl.to(q("[data-route]"), { opacity: 0, y: -16, duration: 0.07, ease: "power2.in" }, 0.91);
     },

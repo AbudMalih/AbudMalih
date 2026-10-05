@@ -17,9 +17,15 @@ import styles from "./Navigation.module.css";
  *  - After the first viewport: links and languages retract into the "+".
  *  - The "+" opens a full-screen index; it rotates 45° into the close "×".
  *  - Mobile uses the "+" from the start; languages live in the index.
+ *  - One commercial action, always at the far right: a compact Luna-red
+ *    "Let's talk +" (contact). In the compact state the menu "+" sits just
+ *    before it. On mobile it lives inside the index instead.
+ *  - Light / dark treatment follows <html data-tone> (set from the page's
+ *    scroll state by Atmosphere), with crossfades rather than switches.
  */
 export default function Navigation() {
   const { dict, href } = useI18n();
+  const contactHref = href(NAV.find((n) => n.key === "contact")?.href ?? "/contact");
   const [compact, setCompact] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -69,6 +75,7 @@ export default function Navigation() {
         </Link>
 
         <div className={styles.right}>
+          <div className={styles.group}>
           <nav className={styles.links} aria-label={dict.a11y.primaryNav}>
             <ul>
               {NAV.slice(1).map((n) => (
@@ -100,6 +107,12 @@ export default function Navigation() {
               <i />
             </span>
           </button>
+          </div>
+
+          <Link href={contactHref} className={styles.cta} data-cursor="invert">
+            <span className={styles.ctaLabel}>{dict.nav.cta}</span>
+            <span className={styles.ctaPlus} aria-hidden="true" />
+          </Link>
         </div>
       </header>
 
@@ -123,6 +136,10 @@ export default function Navigation() {
               </li>
             ))}
           </ol>
+          <Link href={contactHref} onClick={close} className={`${styles.cta} ${styles.ctaPanel}`} data-cursor="invert">
+            <span className={styles.ctaLabel}>{dict.nav.cta}</span>
+            <span className={styles.ctaPlus} aria-hidden="true" />
+          </Link>
           <div className={styles.panelFoot}>
             <LanguageSelector size="l" />
             <p className="t-label">
