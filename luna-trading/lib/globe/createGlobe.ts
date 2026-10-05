@@ -59,14 +59,14 @@ void main() {
   float diff = smoothstep(-0.18, 1.0, ndl);
 
   // uEnv: 0 = the dark-world globe, 1 = smoked graphite / silver for daylight
-  vec3 ocean = mix(vec3(0.016, 0.017, 0.019), vec3(0.085, 0.089, 0.098), uEnv);
+  vec3 ocean = mix(vec3(0.016, 0.017, 0.019), vec3(0.072, 0.076, 0.085), uEnv);
   vec3 landLo = mix(vec3(0.085, 0.087, 0.095), vec3(0.22, 0.226, 0.24), uEnv);
-  vec3 landHi = mix(vec3(0.165, 0.168, 0.18), vec3(0.4, 0.408, 0.43), uEnv);
+  vec3 landHi = mix(vec3(0.165, 0.168, 0.18), vec3(0.44, 0.449, 0.472), uEnv);
   vec3 base = mix(ocean, mix(landLo, landHi, smoothstep(0.5, 1.0, h)), land);
 
   vec3 col = base * (mix(0.03, 0.07, uEnv) + 1.05 * diff);
   // daylight bounce: the shadow side becomes smoked graphite, never a black hole
-  col += vec3(0.15, 0.155, 0.168) * uEnv * (1.0 - diff) * (0.75 + 0.25 * land);
+  col += vec3(0.135, 0.14, 0.152) * uEnv * (1.0 - diff) * (0.75 + 0.25 * land);
 
   float lit = smoothstep(-0.05, 0.25, dot(N, L));
   float specO = pow(max(dot(N, H), 0.0), 260.0) * (1.0 - land) * 0.25;
@@ -115,7 +115,7 @@ void main() {
   float side = 0.35 + 0.65 * smoothstep(-0.6, 0.8, dot(normalize(vN), normalize(uLight)));
   // dark grounds: a silver atmosphere; daylight: a soft contact shadow on the side away from the light
   float glow = a * side * 0.48;
-  float shade = a * (1.0 - side) * 0.3;
+  float shade = a * (1.0 - side) * 0.4;
   vec3 c = mix(vec3(0.62, 0.63, 0.67), vec3(0.16, 0.165, 0.18), uEnv);
   gl_FragColor = vec4(c, mix(glow, shade, uEnv) * uReveal);
 }`;

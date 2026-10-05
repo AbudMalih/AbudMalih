@@ -56,8 +56,10 @@
 .metaL {
   color: var(--env-fg, var(--paper));
 }
+/* technical information sits over the globe: strong graphite for contrast,
+   kept technical by its wide-tracked mono setting */
 .metaC {
-  color: var(--env-fg-dim, var(--graphite-300));
+  color: var(--env-fg, var(--graphite-300));
   text-align: center;
 }
 .metaR {
@@ -65,7 +67,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  color: var(--env-fg-dim, var(--graphite-300));
+  color: var(--env-fg, var(--graphite-300));
 }
 .scrollCue {
   position: relative;
