@@ -97,9 +97,12 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
     probe();
     window.addEventListener("scroll", probe, { passive: true });
     window.addEventListener("resize", probe);
+    // a section that changes its own tone while in view (a brand passage) says so
+    window.addEventListener("luna:tone", probe);
     return () => {
       window.removeEventListener("scroll", probe);
       window.removeEventListener("resize", probe);
+      window.removeEventListener("luna:tone", probe);
       delete html.dataset.tone;
     };
   }, [root]);

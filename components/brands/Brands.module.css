@@ -1,0 +1,1063 @@
+/* MARKEN / BRANDS
+   Section shell, tones, seams, reveals and the CTA come from the approved
+   Leistungen system (Services.module.css). This file holds what is specific
+   to the brands page: the editorial Luna hero, the principle, the passage
+   between Luna Trading and a brand world, and the brand's own scenes. */
+
+.page {
+  --ease-soft: cubic-bezier(0.45, 0, 0.2, 1);
+  /* LUVISCENT's own display face */
+  --font-lv: "Panchang", var(--font-sans);
+}
+.dim {
+  color: #6b6c71;
+}
+.period {
+  color: var(--luna-red);
+}
+
+/* ------------------------------------------------------------------ HERO */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: var(--safe-top);
+  padding-bottom: clamp(36px, 6vh, 72px);
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
+    radial-gradient(80% 70% at 12% 6%, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(50% 50% at 84% 40%, rgba(255, 250, 238, 0.4), transparent 70%);
+}
+.heroGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: end;
+}
+.heroFigure {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  margin: 0 0 clamp(30px, 6vh, 72px);
+}
+.heroSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 44svh;
+  overflow: visible;
+}
+.heroSvgCompact {
+  display: none;
+}
+.heroCopy {
+  grid-column: 1 / span 9;
+  grid-row: 2;
+}
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+  margin-bottom: clamp(22px, 3.6vh, 40px);
+}
+.idx {
+  color: var(--ink);
+}
+.redRule {
+  width: 48px;
+  height: 1px;
+  background: var(--luna-red);
+}
+.heroTitle {
+  font-size: clamp(3rem, min(6vw, 11.5svh), 7.8rem);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-weight: 700;
+  font-variation-settings: "wght" 720;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.heroTitle :global(.mask) {
+  padding-top: 0.14em;
+  margin-top: -0.14em;
+}
+:global(html[lang="ar"]) .heroTitle {
+  letter-spacing: 0;
+  line-height: 1.14;
+  text-transform: none;
+}
+.heroLead {
+  grid-column: 10 / span 3;
+  grid-row: 2;
+  color: var(--muted);
+  padding-bottom: 0.5em;
+}
+
+/* hero drawing: Luna + → route → an arched brand space */
+.hvDraw {
+  fill: none;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.8s var(--ease-in-out);
+}
+.heroFigure[data-in] .hvDraw {
+  stroke-dashoffset: 0;
+}
+.hvRoute {
+  stroke-width: 2;
+  transition-duration: 2.2s;
+  transition-delay: 0.35s;
+}
+.hvArch {
+  stroke: #2a2b2f;
+  stroke-width: 1.3;
+  transition-delay: 1.3s;
+}
+.hvArchInner {
+  stroke: rgba(20, 21, 24, 0.22);
+  stroke-width: 1;
+  transition-delay: 1.5s;
+}
+.hvFloor {
+  stroke: rgba(20, 21, 24, 0.32);
+  stroke-width: 1;
+  transition-delay: 1.1s;
+}
+.hvGlow {
+  opacity: 0;
+  transition: opacity 1.8s var(--ease-out) 1.8s;
+}
+.heroFigure[data-in] .hvGlow {
+  opacity: 1;
+}
+.hvTick {
+  stroke: rgba(20, 21, 24, 0.28);
+  stroke-width: 1;
+  fill: none;
+}
+.hvEnd {
+  fill: #a8875a;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-out) 2.4s;
+}
+.heroFigure[data-in] .hvEnd {
+  opacity: 1;
+}
+.hvPlus rect {
+  fill: var(--luna-red);
+}
+.hvLabel {
+  font-family: var(--font-data);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  fill: #26272b;
+}
+.hvData {
+  font-family: var(--font-data);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  fill: #6a6c71;
+}
+:global(html[lang="ar"]) .hvLabel {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+/* ------------------------------------------------------------- PRINCIPLE */
+.principle {
+  padding-block: clamp(120px, 18vh, 200px) clamp(110px, 16vh, 180px);
+}
+.principleTitle {
+  margin-bottom: clamp(56px, 10vh, 120px);
+}
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+.pillar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: clamp(220px, 32vh, 340px);
+  padding: 0 0 clamp(30px, 5vh, 56px);
+  padding-inline-start: 22px;
+  border-inline-start: 1px solid var(--line-strong);
+  transform: translateY(28px);
+  opacity: 0;
+  transition:
+    transform 1s var(--ease-out),
+    opacity 1s var(--ease-out);
+  transition-delay: calc(var(--i) * 120ms + 250ms);
+}
+.plinth[data-in] .pillar {
+  transform: none;
+  opacity: 1;
+}
+.pillarIdx {
+  font-family: var(--font-data);
+  font-size: var(--fs-label);
+  letter-spacing: 0.16em;
+  color: var(--soft);
+  margin-bottom: auto;
+}
+.pillarName {
+  font-size: clamp(1.9rem, 3.2vw, 3.3rem);
+  font-weight: 650;
+  font-variation-settings: "wght" 650;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+.pillarLine {
+  color: var(--muted);
+  font-size: 0.98rem;
+  max-width: 16em;
+}
+.base {
+  position: relative;
+  height: 2px;
+}
+.baseLine {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 1.6s var(--ease-in-out) 0.1s;
+}
+:global([dir="rtl"]) .baseLine {
+  transform-origin: right center;
+}
+.plinth[data-in] .baseLine {
+  transform: scaleX(1);
+}
+.basePlus {
+  position: absolute;
+  inset-inline-start: -7px;
+  top: -6px;
+  width: 14px;
+  height: 14px;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+}
+.foundation {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px 40px;
+  margin-top: 22px;
+}
+.foundationName {
+  color: var(--ink);
+}
+.services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  font-family: var(--font-data);
+  font-size: var(--fs-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+:global(html[lang="ar"]) .services {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  letter-spacing: 0;
+}
+
+/* --------------------------------------------------------------- PASSAGE */
+/* Luna mineral → (red travels, geometry softens, red gives way to
+   champagne, warm light enters) → the brand's own ground. Scrubbed by
+   scroll through --p (usePassage); the "out" passage runs it backwards. */
+.passage {
+  --p: 0;
+  height: 250vh;
+  background: var(--min);
+}
+.stage {
+  /* derived phases of the passage */
+  --travel: clamp(0, calc(var(--p) / 0.42), 1);
+  --soften: clamp(0, calc((var(--p) - 0.1) / 0.4), 1);
+  --turn: clamp(0, calc((var(--p) - 0.3) / 0.4), 1);
+  --warm: clamp(0, calc((var(--p) - 0.38) / 0.3), 1);
+  --rise: clamp(0, calc((var(--p) - 0.55) / 0.33), 1);
+  --fromOut: clamp(0, calc((var(--p) - 0.2) / 0.22), 1);
+  --toIn: clamp(0, calc((var(--p) - 0.72) / 0.2), 1);
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+.pMineral,
+.pGrid,
+.pEmerald,
+.pLight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pMineral {
+  background:
+    radial-gradient(80% 70% at 18% 0%, rgba(255, 255, 255, 0.42), transparent 70%),
+    var(--min);
+}
+/* survey grid: the technical geometry that softens away */
+.pGrid {
+  opacity: calc(1 - var(--soften));
+  background-image:
+    linear-gradient(90deg, rgba(20, 21, 24, 0.07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(20, 21, 24, 0.05) 1px, transparent 1px);
+  background-size: calc(100% / 12) calc(100% / 8);
+  background-position: var(--margin) 0;
+  mask-image: radial-gradient(70% 70% at 50% 58%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 58%, #000 30%, transparent 85%);
+}
+/* the brand ground opens out of the route like a horizon: a band that
+   widens up and down from the line, with a narrow soft edge (no wide
+   grey blend between mineral and emerald) */
+.pEmerald {
+  --r: calc(var(--turn) * 66%);
+  background: radial-gradient(70% 60% at 50% 58%, #193b30 0%, var(--em) 72%);
+  mask-image: linear-gradient(180deg, transparent calc(58% - var(--r) - 7%), #000 calc(58% - var(--r)), #000 calc(58% + var(--r)), transparent calc(58% + var(--r) + 7%));
+  -webkit-mask-image: linear-gradient(180deg, transparent calc(58% - var(--r) - 7%), #000 calc(58% - var(--r)), #000 calc(58% + var(--r)), transparent calc(58% + var(--r) + 7%));
+}
+/* warm architectural light from a concealed source above */
+.pLight {
+  opacity: var(--warm);
+  mix-blend-mode: screen;
+  mask-image: linear-gradient(180deg, transparent 0, #000 24%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 24%);
+  background:
+    radial-gradient(24% 58% at 50% -8%, rgba(246, 238, 220, 0.34), rgba(201, 154, 94, 0.07) 55%, transparent 76%),
+    radial-gradient(60% 40% at 50% 60%, rgba(232, 220, 192, 0.07), transparent 70%);
+}
+.pRoute {
+  position: absolute;
+  inset-inline: var(--margin);
+  top: 58%;
+  height: 2px;
+}
+.pTicks {
+  position: absolute;
+  inset-inline: 0;
+  top: 8px;
+  height: 9px;
+  opacity: calc((1 - var(--soften)) * 0.9);
+  background: repeating-linear-gradient(90deg, rgba(20, 21, 24, 0.34) 0 1px, transparent 1px calc(100% / 24));
+}
+.pRed,
+.pGold,
+.pGlow {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+}
+.pRed {
+  inset-inline-end: 50%;
+  background: var(--luna-red);
+  transform-origin: left center;
+  transform: scaleX(var(--travel));
+  opacity: calc(1 - var(--turn));
+}
+:global([dir="rtl"]) .pRed {
+  transform-origin: right center;
+}
+.pGold {
+  height: 1px;
+  top: 0.5px;
+  opacity: var(--turn);
+  background: linear-gradient(90deg, rgba(200, 144, 79, 0.15), var(--accent) 30%, var(--light) 50%, var(--accent) 70%, rgba(200, 144, 79, 0.15));
+  transform: scaleX(calc(0.2 + var(--turn) * 0.8));
+}
+.pGlow {
+  top: -44px;
+  height: 90px;
+  opacity: calc(var(--rise) * 0.9);
+  background: radial-gradient(50% 50% at 50% 50%, rgba(228, 213, 179, 0.18), rgba(200, 144, 79, 0.05) 45%, transparent 70%);
+  filter: blur(8px);
+}
+.pTraveler {
+  position: absolute;
+  top: 1px;
+  inset-inline-start: calc(var(--travel) * 50%);
+  width: 24px;
+  height: 24px;
+  translate: -50% -50%;
+}
+:global([dir="rtl"]) .pTraveler {
+  translate: 50% -50%;
+}
+.pPlus,
+.pDot {
+  position: absolute;
+  inset: 0;
+}
+.pPlus {
+  opacity: calc(1 - var(--turn));
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 3px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 3px 100% no-repeat;
+}
+.pDot {
+  opacity: var(--turn);
+  margin: 7px;
+  border-radius: 50%;
+  background: var(--light);
+  box-shadow:
+    0 0 18px 4px rgba(232, 220, 192, 0.35),
+    0 0 2px rgba(255, 255, 255, 0.8);
+}
+/* the brand's arch rises out of the line */
+.pArch {
+  position: absolute;
+  left: 50%;
+  bottom: 42%;
+  width: min(18vw, 28vh);
+  height: auto;
+  translate: -50% 0;
+  overflow: visible;
+  opacity: var(--rise);
+}
+.pArch path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.1;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: calc(1 - var(--rise));
+}
+.pLabel {
+  position: absolute;
+  top: calc(58% + 34px);
+  margin: 0;
+}
+.pFrom {
+  inset-inline-start: var(--margin);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-data);
+  font-size: var(--fs-label);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #26272b;
+  opacity: calc(1 - var(--fromOut));
+}
+.pCoord {
+  color: #6a6c71;
+}
+.pTo {
+  inset-inline-end: var(--margin);
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--light);
+  opacity: var(--toIn);
+}
+:global(html[lang="ar"]) .pFrom,
+:global(html[lang="ar"]) .pTo {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  letter-spacing: 0;
+}
+
+/* ------------------------------------------------------- BRAND SCENE */
+/* Inside the brand: its own type (wide-tracked light sans, Instrument
+   Serif), its own light and spacing. Luna Trading stays only as the owner
+   line and one champagne route at the floor. */
+.scene {
+  --ink: var(--lv-i);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  padding-top: clamp(110px, 15vh, 170px);
+  color: var(--lv-i);
+}
+.sceneLight {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(34% 56% at 25% -4%, rgba(232, 220, 192, 0.11), transparent 72%),
+    radial-gradient(90% 70% at 22% 104%, rgba(33, 72, 59, 0.62), transparent 70%),
+    radial-gradient(50% 50% at 80% 40%, rgba(241, 236, 226, 0.035), transparent 70%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 22%, #000 78%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22%, #000 78%, transparent 100%);
+}
+.sceneGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: center;
+}
+.sceneRoom {
+  grid-column: 1 / span 5;
+  display: flex;
+  justify-content: center;
+  height: min(70vh, 700px);
+  translate: 0 calc((var(--q, 0.5) - 0.5) * -56px);
+}
+.sceneNiche {
+  width: min(100%, 44vh);
+  height: 100%;
+}
+.sceneCopy {
+  grid-column: 7 / span 6;
+}
+.owner {
+  font-family: var(--font-lv);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lv-a);
+  margin-bottom: clamp(26px, 4vh, 42px);
+}
+.sceneLogo {
+  width: min(100%, 560px);
+  margin: 0;
+}
+.category {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: clamp(20px, 3vh, 30px);
+  font-family: var(--font-lv);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(241, 236, 226, 0.62);
+}
+.category::before {
+  content: "";
+  width: 34px;
+  height: 1px;
+  background: var(--lv-a);
+}
+.claim {
+  margin-top: clamp(30px, 5vh, 52px);
+  font-weight: 300;
+  font-variation-settings: "wght" 300;
+  font-size: clamp(1.15rem, 1.6vw, 1.65rem);
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  color: var(--lv-i);
+  text-align: start;
+}
+:global([dir="rtl"]) .claim {
+  text-align: right;
+}
+.statement {
+  margin-top: clamp(18px, 2.6vh, 28px);
+  max-width: 31em;
+  font-weight: 300;
+  font-variation-settings: "wght" 300;
+  font-size: clamp(1.02rem, 1.15vw, 1.16rem);
+  line-height: 1.7;
+  color: rgba(241, 236, 226, 0.68);
+}
+:global(html[lang="ar"]) .statement {
+  font-family: var(--font-sans);
+  font-size: clamp(1.05rem, 1.3vw, 1.3rem);
+  line-height: 1.8;
+}
+.lvCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: clamp(34px, 5vh, 54px);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(212, 193, 155, 0.45);
+  font-family: var(--font-lv);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--lv-i);
+  transition: border-color 0.5s var(--ease-out);
+}
+.lvCta:hover {
+  border-color: var(--lv-a);
+}
+.lvPlus {
+  width: 11px;
+  height: 11px;
+  background:
+    linear-gradient(var(--lv-a), var(--lv-a)) center / 100% 1px no-repeat,
+    linear-gradient(var(--lv-a), var(--lv-a)) center / 1px 100% no-repeat;
+  transition: transform 0.6s var(--ease-out);
+}
+.lvCta:hover .lvPlus {
+  transform: rotate(90deg);
+}
+:global(html[lang="ar"]) .owner,
+:global(html[lang="ar"]) .category,
+:global(html[lang="ar"]) .lvCta {
+  letter-spacing: 0;
+  font-size: 0.9rem;
+}
+.thread {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-block: clamp(40px, 7vh, 72px) clamp(28px, 4vh, 40px);
+}
+.threadLine {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(212, 193, 155, 0.7), rgba(212, 193, 155, 0.12));
+}
+:global([dir="rtl"]) .threadLine {
+  background: linear-gradient(270deg, rgba(212, 193, 155, 0.7), rgba(212, 193, 155, 0.12));
+}
+.threadNode {
+  order: -1;
+  width: 9px;
+  height: 9px;
+  background:
+    linear-gradient(var(--lv-a), var(--lv-a)) center / 100% 1px no-repeat,
+    linear-gradient(var(--lv-a), var(--lv-a)) center / 1px 100% no-repeat;
+}
+.threadLabel {
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  letter-spacing: 0.18em;
+  color: rgba(212, 193, 155, 0.66);
+  direction: ltr;
+}
+
+/* ------------------------------------------------------- BRAND WORLD */
+.world {
+  --ink: var(--lv-i);
+  padding-block: clamp(120px, 18vh, 200px) clamp(120px, 18vh, 200px);
+  color: var(--lv-i);
+}
+.worldHead {
+  max-width: none;
+}
+.worldTitle {
+  margin-top: 6px;
+  font-family: var(--font-lv);
+  font-weight: 500;
+  font-size: clamp(2rem, 3.9vw, 4.2rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  max-width: 14em;
+}
+.worldTitle em {
+  display: block;
+  font-style: normal;
+  font-weight: 300;
+  color: var(--lv-l);
+}
+:global(html[lang="ar"]) .worldTitle {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  line-height: 1.25;
+}
+:global(html[lang="ar"]) .worldTitle {
+  text-transform: none;
+}
+.worldIntro {
+  margin-top: clamp(20px, 3vh, 30px);
+  max-width: 30em;
+  font-weight: 300;
+  font-variation-settings: "wght" 300;
+  font-size: clamp(1rem, 1.1vw, 1.12rem);
+  line-height: 1.65;
+  color: rgba(241, 236, 226, 0.64);
+}
+/* product gallery: approved photography on warm ivory plates */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: clamp(340px, 50vh, 540px);
+  gap: var(--gutter);
+  margin-top: clamp(56px, 10vh, 120px);
+}
+.tile {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(180deg, #efe9dd 0%, #e9e2d4 72%, #ddd5c4 100%);
+}
+.tile_box {
+  grid-column: 1 / span 7;
+}
+.tile_lamp {
+  grid-column: 8 / span 5;
+}
+.tile_ribbed {
+  grid-column: 1 / span 4;
+}
+.tile_cylinder {
+  grid-column: 5 / span 4;
+}
+/* warm daylight from above and a soft floor the product stands on */
+.tileLight {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 46% at 50% 0%, rgba(255, 252, 244, 0.85), transparent 72%),
+    radial-gradient(50% 60% at 50% 60%, rgba(212, 193, 155, 0.08), transparent 70%);
+}
+.tileFloor {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 13%;
+  background: linear-gradient(180deg, rgba(196, 184, 156, 0.26), rgba(170, 158, 132, 0.14));
+  border-top: 1px solid rgba(160, 146, 116, 0.22);
+}
+.tileFloor::before {
+  /* contact shadow under the product */
+  content: "";
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  top: -7px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(40, 34, 24, 0.28), transparent 72%);
+  filter: blur(3px);
+}
+.tileImg {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 11%;
+  bottom: 12%;
+  width: 80%;
+  height: 77%;
+  object-fit: contain;
+  object-position: 50% 100%;
+  mix-blend-mode: multiply;
+  transition: transform 1.2s var(--ease-out);
+}
+.tile:hover .tileImg {
+  transform: translateY(-6px);
+}
+.tile_box .tileImg {
+  top: 18%;
+  height: 70%;
+}
+.tileIdx {
+  position: absolute;
+  top: 18px;
+  inset-inline-start: 20px;
+  font-family: var(--font-lv);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: rgba(60, 54, 42, 0.62);
+  direction: ltr;
+}
+.collection {
+  grid-column: 9 / span 4;
+  align-self: end;
+  padding-bottom: 6px;
+}
+.collectionName {
+  font-family: var(--font-lv);
+  font-size: clamp(1.4rem, 2.1vw, 2.2rem);
+  font-weight: 500;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--lv-i);
+  margin-top: -14px;
+}
+.areasTag {
+  margin-top: clamp(36px, 6vh, 64px);
+  margin-bottom: 14px;
+}
+.areas {
+  border-top: 1px solid rgba(212, 193, 155, 0.22);
+}
+.areas li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 12px;
+  border-bottom: 1px solid rgba(212, 193, 155, 0.22);
+  font-weight: 300;
+  font-variation-settings: "wght" 300;
+  color: rgba(241, 236, 226, 0.55);
+}
+.areas li::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgba(212, 193, 155, 0.6);
+  border-radius: 50%;
+}
+.areas li[data-on] {
+  color: var(--lv-i);
+}
+.areas li[data-on]::before {
+  background: var(--lv-a);
+  border-color: var(--lv-a);
+}
+:global(html[lang="ar"]) .collectionName {
+  font-family: var(--font-sans);
+  text-transform: none;
+}
+
+/* ----------------------------------------------------------- SYSTEM */
+.system {
+  padding-block: clamp(120px, 18vh, 200px);
+}
+.systemGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: end;
+}
+.systemGrid > :first-child {
+  grid-column: 1 / span 7;
+}
+.systemSide {
+  grid-column: 8 / span 5;
+  color: var(--muted);
+}
+.systemLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: clamp(26px, 4vh, 40px);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.systemRoute {
+  width: 64px;
+  height: 2px;
+  background: var(--luna-red);
+  transform-origin: left center;
+  transform: scaleX(0.55);
+  transition: transform 0.6s var(--ease-out);
+}
+:global([dir="rtl"]) .systemRoute {
+  transform-origin: right center;
+}
+.systemLink:hover .systemRoute {
+  transform: scaleX(1);
+}
+:global(html[lang="ar"]) .systemLink {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  letter-spacing: 0;
+}
+
+/* ------------------------------------------------------- RESPONSIVE */
+@media (max-width: 1100px) {
+  .heroCopy {
+    grid-column: 1 / -1;
+  }
+  .heroTitle {
+    font-size: clamp(3rem, min(9vw, 11svh), 6.6rem);
+  }
+  .heroLead {
+    grid-column: 1 / span 8;
+    grid-row: 3;
+    margin-top: clamp(20px, 3vh, 32px);
+  }
+  .pillars {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 40px;
+  }
+  .sceneRoom {
+    grid-column: 1 / span 5;
+    height: min(62vh, 620px);
+  }
+  .sceneCopy {
+    grid-column: 6 / span 7;
+  }
+  .gallery {
+    grid-auto-rows: clamp(300px, 40vh, 440px);
+  }
+  .tile_box {
+    grid-column: 1 / -1;
+  }
+  .tile_lamp {
+    grid-column: 1 / span 6;
+  }
+  .tile_ribbed {
+    grid-column: 7 / span 3;
+  }
+  .tile_cylinder {
+    grid-column: 10 / span 3;
+  }
+  .collection {
+    grid-column: 1 / -1;
+    margin-top: 24px;
+  }
+  .systemGrid > :first-child,
+  .systemSide {
+    grid-column: 1 / -1;
+  }
+  .systemSide {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero {
+    padding-bottom: 40px;
+  }
+  .heroFigure {
+    grid-column: 1 / -1;
+    margin-bottom: 40px;
+  }
+  .heroSvgWide {
+    display: none;
+  }
+  .heroSvgCompact {
+    display: block;
+    max-height: 40svh;
+  }
+  .collection {
+    margin-top: 28px;
+  }
+  .heroTitle {
+    font-size: clamp(2.5rem, 11.4vw, 4.4rem);
+    white-space: normal;
+  }
+  .heroLead {
+    grid-column: 1 / -1;
+  }
+  .principle {
+    padding-block: 150px 80px;
+  }
+  .pillar {
+    min-height: 180px;
+  }
+  .foundation {
+    flex-direction: column;
+  }
+  .passage {
+    height: 210vh;
+  }
+  .pArch {
+    width: 34vw;
+  }
+  .pGlow {
+    filter: none;
+  }
+  .pLabel {
+    top: calc(58% + 26px);
+  }
+  .pTo {
+    max-width: 52%;
+    text-align: end;
+    line-height: 1.8;
+  }
+  .scene {
+    padding-top: 120px;
+  }
+  .sceneRoom,
+  .sceneCopy {
+    grid-column: 1 / -1;
+  }
+  .sceneRoom {
+    height: 54vh;
+    translate: none;
+  }
+  .sceneNiche {
+    width: min(78%, 40vh);
+  }
+  .sceneCopy {
+    margin-top: 44px;
+  }
+  .sceneLogo {
+    width: min(100%, 360px);
+  }
+  .world {
+    padding-block: 150px 96px;
+  }
+  .gallery {
+    grid-auto-rows: 64vw;
+    gap: 12px;
+  }
+  .tile_box {
+    grid-column: 1 / -1;
+  }
+  .tile_lamp {
+    grid-column: 1 / -1;
+  }
+  .tile_ribbed {
+    grid-column: 1 / span 6;
+  }
+  .tile_cylinder {
+    grid-column: 7 / span 6;
+  }
+  .system {
+    padding-block: 150px 96px;
+  }
+}
+
+/* ------------------------------------------- REDUCED MOTION / STATIC */
+:global(html.static) .hvDraw {
+  stroke-dashoffset: 0;
+  transition: none;
+}
+:global(html.static) .hvGlow,
+:global(html.static) .hvEnd,
+:global(html.static) .pillar {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+:global(html.static) .baseLine {
+  transform: none;
+  transition: none;
+}
+/* the passage becomes a short, still band: ground turning into the brand's */
+:global(html.static) .passage {
+  --p: 1;
+  height: 56vh;
+}
+:global(html.static) .stage {
+  position: relative;
+  height: 100%;
+}
+:global(html.static) .pEmerald,
+:global(html.static) .pLight {
+  opacity: 1;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 70%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 70%);
+}
+:global(html.static) .passage[data-passage="out"] .pEmerald,
+:global(html.static) .passage[data-passage="out"] .pLight {
+  mask-image: linear-gradient(0deg, transparent 0%, #000 70%);
+  -webkit-mask-image: linear-gradient(0deg, transparent 0%, #000 70%);
+}
+:global(html.static) .passage[data-passage="out"] .pRoute,
+:global(html.static) .passage[data-passage="out"] .pArch,
+:global(html.static) .passage[data-passage="out"] .pTo {
+  display: none;
+}
+:global(html.static) .pFrom {
+  display: none;
+}
+:global(html.static) .tileImg {
+  transition: none;
+}
