@@ -46,8 +46,8 @@
 }
 :global(html[data-tone="light"]) .bar:not(.isOpen) {
   --paper: #0b0b0d;
-  --graphite-400: #5d5e63;
-  --hairline-strong: rgba(11, 11, 13, 0.22);
+  --graphite-400: #47484d;
+  --hairline-strong: rgba(11, 11, 13, 0.26);
 }
 .compact .brand {
   transform: scale(0.88);

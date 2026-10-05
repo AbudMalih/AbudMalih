@@ -106,9 +106,9 @@ export default function Atmosphere() {
     const mixHex = (a: number[], b: number[], t: number) => `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",")})`;
     const INK = [31, 32, 35];
     const PAPER = [242, 242, 240];
-    const MID_L = [118, 120, 125];
+    const MID_L = [80, 82, 87];
     const MID_D = [150, 152, 157];
-    const DIM_L = [96, 98, 103];
+    const DIM_L = [66, 68, 73];
     const DIM_D = [150, 152, 157];
 
     return onFrame(() => {
