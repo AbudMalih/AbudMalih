@@ -260,9 +260,9 @@ html:global(.intro-pending) .brand {
 
 /* ---------------- Commercial CTA ----------------
    An architectural control, not a block of colour: a graphite hairline
-   frame on the hero ground, graphite label, one Luna-red edge (the base
-   line) and a red "+". On interaction the red fills across from the
-   leading edge and the label turns white. */
+   frame on the hero ground, graphite label and a small red "+" (the red
+   WITHOUT carries the opening's colour). On interaction the red fills
+   across from the leading edge and the label turns white. */
 .cta {
   --cta-line: rgba(242, 242, 240, 0.3);
   position: relative;
@@ -282,22 +282,13 @@ html:global(.intro-pending) .brand {
   line-height: 1;
   white-space: nowrap;
   border: 1px solid var(--cta-line);
-  border-bottom-color: transparent;
   overflow: hidden;
   transition: color 0.28s var(--ease-out), border-color 0.28s var(--ease-out), opacity var(--dur-3) var(--ease-out);
 }
 :global(html[data-tone="light"]) .bar:not(.isOpen) .cta {
   --cta-line: rgba(11, 11, 13, 0.28);
 }
-/* the one red edge */
-.cta::after {
-  content: "";
-  position: absolute;
-  inset-inline: -1px;
-  bottom: 0;
-  height: 2px;
-  background: var(--luna-red);
-}
+
 /* the red fill, revealed from the leading edge on interaction */
 .cta::before {
   content: "";
