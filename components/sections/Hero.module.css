@@ -11,7 +11,10 @@
   flex-direction: column;
   justify-content: flex-end;
 }
+/* type follows the opening's light (vars set by Atmosphere from heroEnv):
+   TRADE / BORDERS strong graphite, WITHOUT a softer metallic graphite */
 .title {
+  color: var(--env-fg, var(--paper));
   position: relative;
   z-index: 1;
   display: flex;
@@ -43,7 +46,7 @@
   right: 0;
   top: 0;
   height: 1px;
-  background: var(--hairline-strong);
+  background: var(--env-rule, var(--hairline-strong));
   transform-origin: left;
 }
 :global([dir="rtl"]) .hrule,
@@ -51,10 +54,10 @@
   transform-origin: right;
 }
 .metaL {
-  color: var(--paper);
+  color: var(--env-fg, var(--paper));
 }
 .metaC {
-  color: var(--graphite-300);
+  color: var(--env-fg-dim, var(--graphite-300));
   text-align: center;
 }
 .metaR {
@@ -62,13 +65,13 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  color: var(--graphite-300);
+  color: var(--env-fg-dim, var(--graphite-300));
 }
 .scrollCue {
   position: relative;
   width: 1px;
   height: 28px;
-  background: var(--hairline-strong);
+  background: var(--env-rule, var(--hairline-strong));
   overflow: hidden;
 }
 .scrollCue::after {
@@ -93,11 +96,11 @@
   width: min(360px, 70vw);
 }
 .routeHead {
-  color: var(--paper);
+  color: var(--env-fg, var(--paper));
   margin-bottom: 14px;
 }
 .dim {
-  color: var(--graphite-400);
+  color: var(--env-fg-dim, var(--graphite-400));
 }
 .routeRule {
   display: block;
@@ -117,7 +120,9 @@
   letter-spacing: -0.03em;
   text-transform: uppercase;
   line-height: 1.05;
-  color: var(--graphite-400);
+  /* --on: 0 waiting → 1 the current stop (scroll-driven) */
+  --on: 0;
+  color: color-mix(in srgb, var(--env-fg, var(--paper)) calc(var(--on) * 100%), var(--env-fg-dim, var(--graphite-400)));
 }
 .indexItem .dim {
   font-family: var(--font-mono);
@@ -255,7 +260,7 @@
 }
 .signalCross i {
   position: absolute;
-  background: var(--graphite-200);
+  background: var(--env-fg-dim, var(--graphite-200));
 }
 .signalCross i:nth-child(1),
 .signalCross i:nth-child(2) {
@@ -273,3 +278,7 @@
 }
 .signalCross i:nth-child(3) { bottom: var(--gap); }
 .signalCross i:nth-child(4) { top: var(--gap); }
+
+.title :global(.tone-graphite) {
+  color: var(--env-fg-mid, var(--graphite-400));
+}

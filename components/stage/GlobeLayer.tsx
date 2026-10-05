@@ -12,7 +12,7 @@ import { globeAnchor } from "@/lib/globe/shared";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./GlobeLayer.module.css";
 
-const KEYS: (keyof GlobeFrame)[] = ["lon", "lat", "dist", "ox", "oy", "reveal", "route"];
+const KEYS: (keyof GlobeFrame)[] = ["lon", "lat", "dist", "ox", "oy", "reveal", "route", "env"];
 
 /**
  * Fixed WebGL layer for the Earth (hero + closing). The renderer only draws
@@ -94,7 +94,7 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       markReady("globe");
 
       if (mode === "static") {
-        const f: GlobeDerived = { lon: 62, lat: 26, dist: stage.mobile ? 6 : 4.4, ox: 0, oy: 0, reveal: 1, route: 1, opacity: 1, labels: 1 };
+        const f: GlobeDerived = { lon: 62, lat: 26, dist: stage.mobile ? 6 : 4.4, ox: 0, oy: 0, reveal: 1, route: 1, env: 0, opacity: 1, labels: 1 };
         globe.render(f);
         drawMarkers(f);
         return;

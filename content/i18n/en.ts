@@ -22,7 +22,7 @@ const en: Dictionary = {
     language: "Language",
     scroll: "Scroll",
   },
-  nav: { home: "Home", whatWeDo: "What we do", brands: "Brands", company: "Company", contact: "Contact" },
+  nav: { home: "Home", whatWeDo: "What we do", brands: "Brands", company: "Company", contact: "Contact", cta: "Let’s talk" },
   legal: { impressum: "Impressum", datenschutz: "Datenschutz" },
   company: { place: "Cologne, Germany", city: "Cologne" },
   chapters: {

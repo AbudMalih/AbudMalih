@@ -144,3 +144,22 @@ All of this runs in `components/chrome/Atmosphere.tsx` and is a pure function of
   - **Wheel inputs:** 16 of 29 mouse-wheel notches (100px), 54 of 92 trackpad deltas (30px), and 6 of 11 fast-wheel inputs (300px).
   - **Scrolling back up:** the CTA returns after 3 wheel notches.
   - **Checks:** no footer overlap, forward and reverse match, and consecutive frames keep changing through the hold.
+
+## Final refinement: lighter opening + commercial header CTA
+
+### Opening: daylight entering the Luna Trading world
+- **One scroll value.** `lib/stage/heroEnv.ts` derives everything on the opening from u = hero + source progress: background, type, header tone and globe material. Forward and reverse are identical.
+- **Ground.** Warm mineral off-white → soft silver (globe established) → a short pass through mid-grey → medium graphite (global trade) → the near-black of the port, where the line-world takes over (its first tone). The Atmosphere layer adds daylight from the upper left, a soft window-light plane, a cooler graphite shade low right and a fine mineral grain. It is darker and more metallic than the E-Commerce light, which stays the brightest, cleanest chapter.
+- **Type.** TRADE / BORDERS in strong graphite, WITHOUT in a softer metallic graphite, and the period in Luna red. Meta, route index and the coordinate crosshair use `--env-fg`, `--env-fg-mid`, `--env-fg-dim` and `--env-rule`. These flip from dark to light inside the short mid-grey pass, so type never sits at the background's luminance. Route-index emphasis is a scroll-driven `--on` mix; the colours themselves stay environmental.
+- **Globe.** A daylight material (`uEnv`): smoked-graphite oceans, silver/graphite land, a daylight bounce on the shadow side, stronger metallic specular and a silver edge on the lit side. The halo becomes a soft contact shadow on light grounds and the silver atmosphere on dark ones. The globe is revealed by opacity, not from black. Contrast evolves back to the dark-world globe as the route travels. The red route is unchanged.
+
+### Header
+- **One commercial CTA** at the far right: Luna red, square corners, 36 px tall, label type with a small "+". Labels: DE "Kontakt", EN "Let's talk", AR "تواصل معنا". It links to the contact page.
+  - **Hover / focus:** the "+" turns a quarter, the tracking opens by a hair and the red deepens slightly. Focus adds a 1 px outline.
+  - **Cursor:** the custom cursor turns light on the CTA.
+- **Layout.** The CTA stays visible in every chapter. In the compact state the menu "+" sits just before it. On mobile it lives inside the index as a full-width red bar. The bar CTA is hidden on mobile.
+- **Tone.** The light / dark treatment follows `html[data-tone]`, set from scroll state, with colour transitions and a logo crossfade. On light grounds: master wordmark, dark graphite links, medium-graphite inactive languages, a dark divider. The open index always uses the dark treatment.
+- **Fixes.** The master logo no longer shows on the open (dark) menu, and long German words fit the mobile index.
+
+### Not changed
+Logistics, truck, warehouse, "Wir bauen Marken", E-Commerce, LUVISCENT, ecosystem, closing CTA, footer, language architecture and the scroll choreography. Static / reduced-motion mode keeps its dark opening.

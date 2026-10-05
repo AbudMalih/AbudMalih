@@ -53,3 +53,16 @@
 .cursor[data-down="true"] i {
   transform: scale(0.7);
 }
+/* on the Luna-red CTA the pointer turns light, so it stays precise and visible */
+.cursor[data-state="invert"] {
+  mix-blend-mode: normal;
+}
+.cursor[data-state="invert"] i {
+  background: #fbfaf8;
+}
+.cursor[data-state="invert"] i:first-child {
+  transform: rotate(45deg) scaleX(1.2);
+}
+.cursor[data-state="invert"] i:last-child {
+  transform: rotate(45deg) scaleY(1.2);
+}

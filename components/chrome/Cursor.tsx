@@ -36,7 +36,13 @@ export default function Cursor() {
       arm(1400);
       if (!raf) raf = requestAnimationFrame(paint);
       const t = (e.target as Element | null)?.closest?.("a, button, [data-cursor], input, textarea, select, label");
-      el.dataset.state = t ? (t.matches("input, textarea") ? "text" : "link") : "idle";
+      el.dataset.state = t
+        ? t.matches("input, textarea")
+          ? "text"
+          : t.closest('[data-cursor="invert"]')
+            ? "invert"
+            : "link"
+        : "idle";
     };
     const leave = rest;
     const wheel = () => arm(120);

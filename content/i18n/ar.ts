@@ -22,7 +22,7 @@ const ar: Dictionary = {
     language: "اللغة",
     scroll: "مرّر",
   },
-  nav: { home: "الرئيسية", whatWeDo: "خدماتنا", brands: "علاماتنا", company: "الشركة", contact: "تواصل معنا" },
+  nav: { home: "الرئيسية", whatWeDo: "خدماتنا", brands: "علاماتنا", company: "الشركة", contact: "تواصل معنا", cta: "تواصل معنا" },
   legal: { impressum: "بيانات الناشر", datenschutz: "حماية البيانات" },
   company: { place: "كولونيا، ألمانيا", city: "كولونيا" },
   chapters: {
