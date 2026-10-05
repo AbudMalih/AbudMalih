@@ -5,8 +5,6 @@
 export const LOCALES = ["de", "en", "ar"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "de";
-/** Cookie written only when the visitor picks a language explicitly. */
-export const LOCALE_COOKIE = "luna-lang";
 
 export const LOCALE_META: Record<Locale, { label: string; name: string; dir: "ltr" | "rtl"; htmlLang: string; og: string }> = {
   de: { label: "DE", name: "Deutsch", dir: "ltr", htmlLang: "de", og: "de_DE" },
@@ -16,9 +14,38 @@ export const LOCALE_META: Record<Locale, { label: string; name: string; dir: "lt
 
 export const isLocale = (v: string | undefined): v is Locale => !!v && (LOCALES as readonly string[]).includes(v);
 
+/**
+ * Localized URL slugs. Code always uses the canonical path (the app route,
+ * e.g. "/what-we-do"); visitors see the localized one ("/leistungen",
+ * "/en/services"). The middleware maps between the two.
+ */
+export const SLUGS: Record<string, Record<Locale, string>> = {
+  "/what-we-do": { de: "/leistungen", en: "/services", ar: "/services" },
+};
+
+/** Canonical path → the localized slug for a locale (keeps sub-paths, query, hash). */
+export function localizeSlug(locale: Locale, path: string) {
+  for (const [canon, map] of Object.entries(SLUGS)) {
+    if (path === canon || path.startsWith(canon + "/") || path.startsWith(canon + "#") || path.startsWith(canon + "?")) {
+      return map[locale] + path.slice(canon.length);
+    }
+  }
+  return path;
+}
+
+/** A localized slug (any locale's) → the canonical path. */
+export function canonicalPath(path: string) {
+  for (const [canon, map] of Object.entries(SLUGS)) {
+    for (const slug of [...new Set(Object.values(map)), canon]) {
+      if (path === slug || path.startsWith(slug + "/")) return canon + path.slice(slug.length);
+    }
+  }
+  return path;
+}
+
 /** Internal href for a locale. German paths carry no prefix. */
 export function localePath(locale: Locale, path = "/") {
-  const p = path.startsWith("/") ? path : `/${path}`;
+  const p = localizeSlug(locale, path.startsWith("/") ? path : `/${path}`);
   if (locale === DEFAULT_LOCALE) return p;
   return p === "/" ? `/${locale}` : `/${locale}${p}`;
 }

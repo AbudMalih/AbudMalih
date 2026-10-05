@@ -1,4 +1,5 @@
 import type { Dictionary } from "./types";
+import services from "./services/en";
 
 /** English: concise and international. */
 const en: Dictionary = {
@@ -150,6 +151,7 @@ const en: Dictionary = {
     legalEyebrow: "Legal",
     legalNote: "The legal notice is provided in German, as required in Germany.",
   },
+  services,
 };
 
 export default en;
