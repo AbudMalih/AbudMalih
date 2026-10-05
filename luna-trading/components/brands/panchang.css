@@ -1,0 +1,14 @@
+/* Panchang (Indian Type Foundry, ITF Free Font License): the LUVISCENT
+   display face. Self-hosted, so the German site makes no third-party font
+   request. To activate: place Panchang-Variable.woff2 in
+   /public/fonts/panchang/ and add
+     url("/fonts/panchang/Panchang-Variable.woff2") format("woff2")
+   to src below. Until then a locally installed Panchang is used, and
+   otherwise the brand type falls back to the Luna sans. */
+@font-face {
+  font-family: "Panchang";
+  src: local("Panchang Variable"), local("Panchang-Variable"), local("Panchang");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
