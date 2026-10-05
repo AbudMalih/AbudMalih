@@ -1,4 +1,5 @@
 import type { Dictionary } from "./types";
+import services from "./services/de";
 
 /** Deutsch: Primärsprache. Kurz, präzise, international. */
 const de: Dictionary = {
@@ -150,6 +151,7 @@ const de: Dictionary = {
     legalEyebrow: "Rechtliches",
     legalNote: "",
   },
+  services,
 };
 
 export default de;

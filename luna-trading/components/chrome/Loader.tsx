@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/motion/gsap";
 import { stage } from "@/lib/stage/store";
 import { getLenis } from "@/lib/motion/SmoothScroll";
@@ -23,6 +23,9 @@ export default function Loader() {
   const lineR = useRef<HTMLDivElement>(null);
   const plate = useRef<HTMLDivElement>(null);
   const count = useRef<HTMLSpanElement>(null);
+  // unmounted through React (never removed from the DOM by hand, which breaks
+  // React's own unmount when the visitor navigates away from the homepage)
+  const [gone, setGone] = useState(false);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -36,10 +39,14 @@ export default function Loader() {
       window.dispatchEvent(new Event("luna:intro"));
       return;
     }
-    const seen = html.classList.contains("intro-seen");
+    let seen = html.classList.contains("intro-seen");
+    try {
+      // also when coming back to the homepage within the same visit
+      seen ||= sessionStorage.getItem("luna:intro") === "1";
+    } catch {}
     if (window.scrollY > 10) {
       // deep link / reload mid-page: no ceremony
-      root.current?.remove();
+      setGone(true);
       finishIntro();
       return;
     }
@@ -87,7 +94,7 @@ export default function Loader() {
             sessionStorage.setItem("luna:intro", "1");
           } catch {}
           getLenis()?.start();
-          root.current?.remove();
+          setGone(true);
         },
       });
       tl.to([lineL.current, lineR.current], { scaleX: 0, duration: 0.7 }, 0);
@@ -121,6 +128,7 @@ export default function Loader() {
     };
   }, []);
 
+  if (gone) return null;
   return (
     <div ref={root} className={styles.loader} aria-hidden="true">
       <div className={styles.center}>

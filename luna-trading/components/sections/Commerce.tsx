@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Chapter, { useChapterTimeline } from "@/components/stage/Chapter";
 import ChapterTag from "@/components/ui/ChapterTag";
 import { useI18n } from "@/content/i18n/I18nProvider";
-import { PLATFORMS, type Platform } from "@/content/platforms";
+import { HOME_PLATFORMS as PLATFORMS, type Platform } from "@/content/platforms";
 import s from "./Commerce.module.css";
 
 /**

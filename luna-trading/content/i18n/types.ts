@@ -1,4 +1,5 @@
 import type { ChapterId } from "../chapters";
+import type { ServicesCopy } from "./services/types";
 
 export type CapabilityId = "sourcing" | "trade" | "product" | "brand" | "ecommerce" | "distribution";
 export type StepId = "sourcing" | "import" | "development" | "brand" | "ecommerce" | "distribution";
@@ -74,4 +75,5 @@ export type Dictionary = {
     legalEyebrow: string;
     legalNote: string;
   };
+  services: ServicesCopy;
 };

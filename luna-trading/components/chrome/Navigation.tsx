@@ -8,6 +8,7 @@ import { LunaLogo } from "@/components/brand/Logos";
 import { getLenis } from "@/lib/motion/SmoothScroll";
 import { formatLat, formatLon } from "@/lib/globe/geo";
 import { useI18n } from "@/content/i18n/I18nProvider";
+import { canonicalPath, stripLocale } from "@/content/i18n/config";
 import LanguageSelector from "./LanguageSelector";
 import styles from "./Navigation.module.css";
 
@@ -129,7 +130,7 @@ export default function Navigation() {
           <ol className={styles.big}>
             {NAV.map((n, i) => (
               <li key={n.href} style={{ ["--i" as string]: i }}>
-                <Link href={href(n.href)} onClick={close} data-cursor="link" aria-current={pathname === href(n.href) ? "page" : undefined}>
+                <Link href={href(n.href)} onClick={close} data-cursor="link" aria-current={canonicalPath(stripLocale(pathname || "/")) === n.href ? "page" : undefined}>
                   <span className={`t-label ${styles.num}`}>{String(i).padStart(2, "0")}</span>
                   <span className={styles.word}>{dict.nav[n.key]}</span>
                 </Link>

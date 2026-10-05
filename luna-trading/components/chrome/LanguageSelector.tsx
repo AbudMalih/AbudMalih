@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { LOCALES, LOCALE_META, localePath, stripLocale } from "@/content/i18n/config";
+import { LOCALES, LOCALE_META, canonicalPath, localePath, stripLocale } from "@/content/i18n/config";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./LanguageSelector.module.css";
 
@@ -12,7 +12,8 @@ import styles from "./LanguageSelector.module.css";
  */
 export default function LanguageSelector({ size = "s", tabIndex }: { size?: "s" | "l"; tabIndex?: number }) {
   const { locale, dict } = useI18n();
-  const path = stripLocale(usePathname() || "/");
+  // works for both the visible (localized) and the internal (canonical) pathname
+  const path = canonicalPath(stripLocale(usePathname() || "/"));
   return (
     <ul className={`${styles.list} ${size === "l" ? styles.large : ""}`} aria-label={dict.a11y.language}>
       {LOCALES.map((l) => (

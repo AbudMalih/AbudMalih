@@ -1,4 +1,5 @@
 import type { Dictionary } from "./types";
+import services from "./services/ar";
 
 /** العربية: لغة مؤسسية حديثة وموجزة. */
 const ar: Dictionary = {
@@ -149,6 +150,7 @@ const ar: Dictionary = {
     legalEyebrow: "معلومات قانونية",
     legalNote: "تُعرض البيانات القانونية باللغة الألمانية وفقاً للقانون الألماني.",
   },
+  services,
 };
 
 export default ar;
