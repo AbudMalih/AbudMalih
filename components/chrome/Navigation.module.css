@@ -56,11 +56,13 @@ html:global(.intro-pending) .brand {
   opacity: 0;
 }
 
+/* one horizontal axis, three groups with clear hierarchy:
+   navigation · languages · the commercial control */
 .right {
   position: relative;
   display: flex;
   align-items: center;
-  gap: clamp(18px, 2vw, 32px);
+  gap: clamp(28px, 3vw, 52px);
   min-height: 44px;
 }
 /* links + languages + the compact "+" (absolute at this group's end, so in
@@ -69,12 +71,12 @@ html:global(.intro-pending) .brand {
   position: relative;
   display: flex;
   align-items: center;
-  gap: clamp(18px, 2vw, 32px);
+  gap: clamp(24px, 2.6vw, 44px);
   min-height: 44px;
 }
 .links ul {
   display: flex;
-  gap: clamp(20px, 2.4vw, 40px);
+  gap: clamp(20px, 2.2vw, 38px);
 }
 .links li {
   overflow: hidden;
@@ -85,6 +87,12 @@ html:global(.intro-pending) .brand {
 }
 .links a {
   display: inline-block;
+  /* navigation, not metadata: the brand sans, a touch of weight, moderate tracking */
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-variation-settings: "wght" 500;
+  letter-spacing: 0.075em;
   color: var(--paper);
   transition-property: transform, opacity, color;
   padding-block: 6px;
@@ -92,7 +100,7 @@ html:global(.intro-pending) .brand {
 .lang {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 1.2vw, 18px);
+  gap: clamp(12px, 1.3vw, 20px);
 }
 .divider {
   width: 1px;
@@ -251,34 +259,69 @@ html:global(.intro-pending) .brand {
 }
 
 /* ---------------- Commercial CTA ----------------
-   Compact, architectural: Luna red, square corners, label-sized type, a
-   small "+". Hover: the "+" turns a quarter, the label opens by a hair. */
+   An architectural control, not a block of colour: a graphite hairline
+   frame on the hero ground, graphite label, one Luna-red edge (the base
+   line) and a red "+". On interaction the red fills across from the
+   leading edge and the label turns white. */
 .cta {
+  --cta-line: rgba(242, 242, 240, 0.3);
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  height: 36px;
-  padding-inline: 16px 14px;
-  background: var(--luna-red);
-  color: #fbfaf8;
-  font-family: var(--font-mono);
-  font-size: var(--fs-label);
-  letter-spacing: 0.16em;
+  gap: 11px;
+  height: 34px;
+  padding-inline: 14px 12px;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-variation-settings: "wght" 500;
+  letter-spacing: 0.075em;
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
-  border-radius: 1px;
-  transition: background-color var(--dur-2) var(--ease-out), opacity var(--dur-3) var(--ease-out);
+  border: 1px solid var(--cta-line);
+  border-bottom-color: transparent;
+  overflow: hidden;
+  transition: color 0.28s var(--ease-out), border-color 0.28s var(--ease-out), opacity var(--dur-3) var(--ease-out);
+}
+:global(html[data-tone="light"]) .bar:not(.isOpen) .cta {
+  --cta-line: rgba(11, 11, 13, 0.28);
+}
+/* the one red edge */
+.cta::after {
+  content: "";
+  position: absolute;
+  inset-inline: -1px;
+  bottom: 0;
+  height: 2px;
+  background: var(--luna-red);
+}
+/* the red fill, revealed from the leading edge on interaction */
+.cta::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: var(--luna-red);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.32s cubic-bezier(0.65, 0, 0.35, 1);
+}
+:global([dir="rtl"]) .cta::before {
+  transform-origin: right center;
 }
 .ctaLabel {
-  transition: letter-spacing var(--dur-3) var(--ease-out);
+  transition: transform 0.32s var(--ease-out);
 }
 .ctaPlus {
   position: relative;
   width: 9px;
   height: 9px;
   flex: none;
-  transition: transform var(--dur-3) var(--ease-out);
+  color: var(--luna-red);
+  transition: transform 0.32s var(--ease-out), color 0.28s var(--ease-out);
 }
 .ctaPlus::before,
 .ctaPlus::after {
@@ -289,40 +332,48 @@ html:global(.intro-pending) .brand {
 .ctaPlus::before {
   left: 0;
   right: 0;
-  top: 4px;
+  top: 3.75px;
   height: 1.5px;
 }
 .ctaPlus::after {
   top: 0;
   bottom: 0;
-  left: 4px;
+  left: 3.75px;
   width: 1.5px;
 }
 .cta:hover,
 .cta:focus-visible {
-  background: #b30214;
+  color: #fbfaf8;
+  --cta-line: var(--luna-red);
+}
+.cta:hover::before,
+.cta:focus-visible::before {
+  transform: scaleX(1);
 }
 .cta:hover .ctaPlus,
 .cta:focus-visible .ctaPlus {
-  transform: rotate(90deg);
+  color: #fbfaf8;
+  transform: translateX(2px) rotate(90deg);
 }
-.cta:hover .ctaLabel,
-.cta:focus-visible .ctaLabel {
-  letter-spacing: 0.19em;
+:global([dir="rtl"]) .cta:hover .ctaPlus,
+:global([dir="rtl"]) .cta:focus-visible .ctaPlus {
+  transform: translateX(-2px) rotate(90deg);
 }
 .cta:focus-visible {
   outline: 1px solid var(--paper);
   outline-offset: 3px;
 }
+@media (prefers-reduced-motion: reduce) {
+  .cta::before,
+  .ctaPlus,
+  .ctaLabel {
+    transition-duration: 0.01s;
+  }
+}
 :global(html[lang="ar"]) .cta {
-  font-family: var(--font-sans);
   font-size: 0.86rem;
   letter-spacing: 0;
   text-transform: none;
-}
-:global(html[lang="ar"]) .cta:hover .ctaLabel,
-:global(html[lang="ar"]) .cta:focus-visible .ctaLabel {
-  letter-spacing: 0.01em;
 }
 /* inside the index (all sizes, the only CTA on mobile) */
 .ctaPanel {
@@ -330,17 +381,18 @@ html:global(.intro-pending) .brand {
   height: 52px;
   padding-inline: 22px 20px;
   margin-top: clamp(20px, 4vh, 40px);
-  font-size: 0.8rem;
+  font-size: 0.86rem;
+  --cta-line: rgba(242, 242, 240, 0.3);
 }
 .ctaPanel .ctaPlus {
   width: 11px;
   height: 11px;
 }
 .ctaPanel .ctaPlus::before {
-  top: 5px;
+  top: 4.75px;
 }
 .ctaPanel .ctaPlus::after {
-  left: 5px;
+  left: 4.75px;
 }
 @media (max-width: 860px) {
   .bar .cta:not(.ctaPanel) {
@@ -353,4 +405,15 @@ html:global(.intro-pending) .brand {
 }
 html:global(.intro-pending) .cta:not(.ctaPanel) {
   opacity: 0;
+}
+
+/* desktop: the wordmark gains ~12 % presence against the scale of the hero */
+@media (min-width: 861px) {
+  .brand {
+    --logo-h: clamp(24px, 2.07vw, 34px);
+  }
+}
+:global(html[lang="ar"]) .links a {
+  font-size: 0.86rem;
+  letter-spacing: 0;
 }

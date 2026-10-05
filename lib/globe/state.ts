@@ -45,7 +45,8 @@ function globeStateLtr(): GlobeDerived {
   }
 
   // Hero
-  const emerge = Math.max(stage.intro * 0.34, smooth(range(h, 0.0, 0.34)));
+  // in daylight the globe is present from the first frame: a metallic mass, not a ghost
+  const emerge = Math.max(stage.intro * 0.66, smooth(range(h, 0.0, 0.34)));
   const turnA = easeInOut(range(h, 0.12, 0.6));
   const turnB = easeInOut(range(h, 0.58, 0.98));
   let lon = lerp(lerp(124, 66, turnA), KOELN.lon + 1.5, turnB);
