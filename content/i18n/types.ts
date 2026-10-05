@@ -1,6 +1,7 @@
 import type { ChapterId } from "../chapters";
 import type { ServicesCopy } from "./services/types";
 import type { BrandsCopy } from "./brands/types";
+import type { CompanyCopy } from "./company/types";
 
 export type CapabilityId = "sourcing" | "trade" | "product" | "brand" | "ecommerce" | "distribution";
 export type StepId = "sourcing" | "import" | "development" | "brand" | "ecommerce" | "distribution";
@@ -78,4 +79,5 @@ export type Dictionary = {
   };
   services: ServicesCopy;
   brandsPage: BrandsCopy;
+  companyPage: CompanyCopy;
 };
