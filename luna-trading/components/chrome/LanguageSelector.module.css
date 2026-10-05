@@ -4,7 +4,8 @@
   gap: 2px;
   direction: ltr; /* DE EN AR keeps its order in every language */
 }
-.item {
+/* .list .item: must win over the global .t-label (mono) on the same element */
+.list .item {
   position: relative;
   display: inline-block;
   padding: 8px 7px;
@@ -33,7 +34,7 @@
   height: 1px;
   background: var(--luna-red);
 }
-.large .item {
+.list.large .item {
   font-size: 0.85rem;
   padding: 10px 12px;
 }

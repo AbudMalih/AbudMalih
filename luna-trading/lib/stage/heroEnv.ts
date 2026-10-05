@@ -5,16 +5,17 @@ import { stage, range, smooth } from "./store";
  * One scroll value u = hero + source progress drives everything, so the
  * background, type, header, rail and globe always agree (forward = reverse):
  *
- *   warm mineral off-white → soft silver (globe established)
+ *   brushed steel in daylight (silver plate, light from the upper left)
  *   → medium graphite (global trade) → the near-black of the port, where
  *   the line-world takes over (its first tone is 0x060607).
  */
 const KEYS: [number, number][] = [
-  [0.0, 0xdedcd6],
-  [0.38, 0xd5d5d2],
-  [0.55, 0xc3c4c4],
-  [0.62, 0xb2b3b4],
-  [0.66, 0x9b9c9e],
+  // brushed steel in daylight
+  [0.0, 0xb3b5b7],
+  [0.38, 0xadafb1],
+  [0.55, 0xa2a4a6],
+  [0.62, 0x97999b],
+  [0.66, 0x8b8d8f],
   // a short pass through mid-grey: type and header flip inside it
   [0.674, 0x67686b],
   [0.71, 0x4d4e52],

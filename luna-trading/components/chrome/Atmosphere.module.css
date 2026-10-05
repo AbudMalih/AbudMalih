@@ -21,11 +21,10 @@
   visibility: hidden;
 }
 
-/* 00 · THE OPENING: daylight entering the Luna Trading world. A mineral,
-   metallic, architectural ground (colour set per frame from heroEnv):
-   light falls from the upper left across a soft plane of silver, a cooler
-   graphite shade gathers low right, and a fine mineral grain keeps it
-   physical. Darker and more metallic than the digital-commerce light. */
+/* 00 · THE OPENING: brushed steel in daylight (colour set per frame from
+   heroEnv): a mid-silver plate with a fine horizontal brushing, daylight
+   from the upper left, deeper steel gathering behind the globe, and a
+   fine grain. Darker and more metallic than the digital-commerce light. */
 .mineral {
   inset: 0;
 }
@@ -33,11 +32,10 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(80% 70% at 16% 6%, rgba(250, 249, 246, 0.55), transparent 70%),
-    linear-gradient(104deg, transparent 0%, transparent 46%, rgba(255, 255, 255, 0.16) 54%, rgba(255, 255, 255, 0.05) 62%, transparent 70%),
-    radial-gradient(70% 60% at 96% 96%, rgba(96, 99, 106, 0.32), transparent 72%),
-    radial-gradient(55% 60% at 70% 72%, rgba(120, 122, 128, 0.12), transparent 75%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0) 60%, rgba(110, 112, 118, 0.16) 100%);
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px),
+    radial-gradient(75% 70% at 12% 4%, rgba(246, 246, 244, 0.62), transparent 70%),
+    radial-gradient(70% 75% at 88% 92%, rgba(52, 55, 61, 0.42), transparent 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 55%, rgba(70, 72, 78, 0.18) 100%);
 }
 .mineralTex::after {
   content: "";
