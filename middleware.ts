@@ -1,14 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale } from "@/content/i18n/config";
+import { DEFAULT_LOCALE, isLocale } from "@/content/i18n/config";
 
 /**
  * Locale routing
  *  "/…"      German (rewritten internally to /de/…)
  *  "/en/…"   English, "/ar/…" Arabic
  *  "/de/…"   redirects to the unprefixed German URL
- * A language the visitor picked explicitly (cookie) is respected on
- * unprefixed URLs. There is no Accept-Language auto-detection: German is
- * the default and an explicit choice is never overridden.
+ * Opening the site always shows German: unprefixed URLs are German, with no
+ * cookie or Accept-Language redirect. English and Arabic live under their
+ * own prefixes and are one click away in the language selector.
  */
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -21,12 +21,6 @@ export function middleware(req: NextRequest) {
   }
   if (isLocale(seg)) return NextResponse.next();
 
-  const chosen = req.cookies.get(LOCALE_COOKIE)?.value;
-  if (isLocale(chosen) && chosen !== DEFAULT_LOCALE) {
-    const url = req.nextUrl.clone();
-    url.pathname = `/${chosen}${pathname === "/" ? "" : pathname}`;
-    return NextResponse.redirect(url, 307);
-  }
   const url = req.nextUrl.clone();
   url.pathname = `/${DEFAULT_LOCALE}${pathname}`;
   url.search = search;
