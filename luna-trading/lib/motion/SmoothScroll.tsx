@@ -33,17 +33,39 @@ export default function SmoothScroll() {
     stage.tier = detectTier();
     updateViewport();
 
+    // Review switches for comparing scroll / text clarity on real hardware.
+    // Defaults are unchanged; nothing here applies without a query parameter.
+    //   ?scroll=native  no Lenis (native scrolling)
+    //   ?scroll=light   lighter interpolation, native wheel distance
+    //   ?scroll=hybrid  current smoothing for mouse wheels, native 1:1 for trackpads
+    //   ?text=stable    no permanent will-change on typography layers
+    const q = new URLSearchParams(location.search);
+    const mode = q.get("scroll");
+    if (q.get("text") === "stable") document.documentElement.classList.add("text-stable");
+
     let onTick: ((time: number) => void) | null = null;
-    if (stage.cine) {
+    if (stage.cine && mode !== "native") {
+      const light = mode === "light";
       lenis = new Lenis({
         // Responsive, not heavy: the page follows input almost at once and
         // settles with a natural deceleration (time constant ≈ 150 ms; was
         // 0.085 ≈ 196 ms), and a wheel/trackpad gesture travels slightly
         // further than native (was 0.9, below native).
-        lerp: 0.11,
-        wheelMultiplier: 1.1,
+        lerp: light ? 0.2 : 0.11,
+        wheelMultiplier: light ? 1 : 1.1,
         // Touch keeps native momentum — natural on phones.
         syncTouch: false,
+        // hybrid: trackpads already deliver OS momentum; let them scroll natively
+        virtualScroll:
+          mode === "hybrid"
+            ? (data) => {
+                const e = data.event as WheelEvent & { wheelDeltaY?: number };
+                if (e.type !== "wheel" || !lenis) return true;
+                const trackpad = e.deltaMode === 0 && (e.wheelDeltaY === undefined ? !Number.isInteger(e.deltaY) : e.wheelDeltaY % 120 !== 0);
+                lenis.options.smoothWheel = !trackpad;
+                return true;
+              }
+            : undefined,
       });
       lenis.on("scroll", ScrollTrigger.update);
       onTick = (time: number) => lenis?.raf(time * 1000);

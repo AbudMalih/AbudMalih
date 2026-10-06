@@ -197,6 +197,11 @@ ol {
   display: block;
   will-change: transform;
 }
+/* review switch (?text=stable): typography is not kept on its own layer */
+html.text-stable .mask > *,
+html.text-stable [class*="line"] {
+  will-change: auto;
+}
 
 /* ==========================================================================
    Layout
