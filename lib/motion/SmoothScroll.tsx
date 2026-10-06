@@ -36,8 +36,12 @@ export default function SmoothScroll() {
     let onTick: ((time: number) => void) | null = null;
     if (stage.cine) {
       lenis = new Lenis({
-        lerp: 0.085,
-        wheelMultiplier: 0.9,
+        // Responsive, not heavy: the page follows input almost at once and
+        // settles with a natural deceleration (time constant ≈ 150 ms; was
+        // 0.085 ≈ 196 ms), and a wheel/trackpad gesture travels slightly
+        // further than native (was 0.9, below native).
+        lerp: 0.11,
+        wheelMultiplier: 1.1,
         // Touch keeps native momentum — natural on phones.
         syncTouch: false,
       });
