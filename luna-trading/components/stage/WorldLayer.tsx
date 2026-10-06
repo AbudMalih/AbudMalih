@@ -102,7 +102,7 @@ export default function WorldLayer() {
       }
       const d = tgt - cur;
       const moving = Math.abs(d) > 1e-6;
-      cur = moving ? cur + d * damp(stage.mobile ? 10 : 8, dt) : tgt;
+      cur = moving ? cur + d * damp(stage.mobile ? 11 : 10, dt) : tgt;
       if (!moving && !dirty) return;
       dirty = false;
 

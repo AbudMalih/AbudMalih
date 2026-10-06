@@ -107,7 +107,8 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
           lastVersion = stage.version;
           dirty = true;
         }
-        const k = damp(stage.mobile ? 9 : 7, dt);
+        // light follow on top of Lenis (it already smooths): no second heavy glide
+        const k = damp(stage.mobile ? 10 : 9, dt);
         let moving = false;
         for (const key of KEYS) {
           const d = tgt[key] - cur[key];
