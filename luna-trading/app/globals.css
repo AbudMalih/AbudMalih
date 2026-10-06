@@ -195,12 +195,9 @@ ol {
 }
 .mask > * {
   display: block;
-  will-change: transform;
-}
-/* review switch (?text=stable): typography is not kept on its own layer */
-html.text-stable .mask > *,
-html.text-stable [class*="line"] {
-  will-change: auto;
+  /* no permanent will-change: a text layer that stays promoted is moved as a
+     bitmap (not pixel-snapped) and can look soft; the browser promotes it
+     only while a transition actually runs, and the text rests crisp. */
 }
 
 /* ==========================================================================

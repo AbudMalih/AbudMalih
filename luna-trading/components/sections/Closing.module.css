@@ -16,7 +16,6 @@
     linear-gradient(var(--luna-red), var(--luna-red)) center / 8px 100% no-repeat;
 }
 .block {
-  will-change: transform, opacity;
   position: absolute;
   inset-inline: var(--margin);
   bottom: clamp(40px, 8vh, 96px);

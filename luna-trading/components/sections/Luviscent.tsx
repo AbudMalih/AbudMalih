@@ -88,9 +88,8 @@ function Content() {
         .fromTo(q("[data-logo]"), { "--rv": 0 }, { "--rv": 1, duration: 0.17, ease: "power1.inOut" }, 0.24)
         .fromTo(q("[data-claim]"), { "--rv": 0 }, { "--rv": 1, duration: 0.14, ease: "power1.inOut" }, 0.4)
         .fromTo(q("[data-body], [data-cta]"), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.07, stagger: 0.03 }, 0.5)
-        // once established: calm depth, the room and the words drift apart by a few pixels
+        // once established: calm depth in the room only; the words stay anchored
         .fromTo(q("[data-depth-a]"), { y: 0 }, { y: -14, duration: 0.42, ease: "none" }, 0.3)
-        .fromTo(q("[data-depth-b]"), { y: 0 }, { y: 10, duration: 0.42, ease: "none" }, 0.3)
         .fromTo(q("[data-key]"), { scale: 1 }, { scale: 1.06, duration: 0.42, ease: "none", immediateRender: false }, 0.3)
         // exit: the world recedes, the horizon cools back to Luna red
         .to(q("[data-owner], [data-logo], [data-claim], [data-body], [data-cta]"), { opacity: 0, duration: 0.07 }, 0.72)
