@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { CHAPTERS } from "@/content/chapters";
 import { stage } from "@/lib/stage/store";
 import { onFrame } from "@/lib/stage/ticker";
-import { scrollToTarget } from "@/lib/motion/SmoothScroll";
+import { scrollToTarget } from "@/lib/motion/scroll";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./ProgressRail.module.css";
 

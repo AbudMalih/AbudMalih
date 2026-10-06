@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV, LEGAL_NAV, COMPANY } from "@/content/site";
 import { LunaLogo } from "@/components/brand/Logos";
-import { lockScroll } from "@/lib/motion/SmoothScroll";
+import { lockScroll } from "@/lib/motion/scroll";
 import { formatLat, formatLon } from "@/lib/globe/geo";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { canonicalPath, stripLocale } from "@/content/i18n/config";

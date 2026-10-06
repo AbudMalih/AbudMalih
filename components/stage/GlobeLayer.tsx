@@ -107,7 +107,7 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
           lastVersion = stage.version;
           dirty = true;
         }
-        // light follow on top of Lenis (it already smooths): no second heavy glide
+        // light follow of the scroll-driven targets
         const k = damp(stage.mobile ? 10 : 9, dt);
         let moving = false;
         for (const key of KEYS) {
