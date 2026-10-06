@@ -24,7 +24,6 @@
 }
 .line {
   display: block;
-  will-change: transform;
 }
 .indent {
   padding-inline-start: 1.06em;
