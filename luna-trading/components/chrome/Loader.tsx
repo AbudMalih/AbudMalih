@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/motion/gsap";
 import { stage } from "@/lib/stage/store";
-import { lockScroll } from "@/lib/motion/SmoothScroll";
+import { lockScroll } from "@/lib/motion/scroll";
 import { LunaLogo } from "@/components/brand/Logos";
 import styles from "./Loader.module.css";
 
@@ -44,12 +44,7 @@ export default function Loader() {
       // also when coming back to the homepage within the same visit
       seen ||= sessionStorage.getItem("luna:intro") === "1";
     } catch {}
-    let resuming = false;
-    try {
-      // returning to a position after switching scroll engine (test session)
-      resuming = sessionStorage.getItem("luna:scroll-y") !== null;
-    } catch {}
-    if (window.scrollY > 10 || resuming) {
+    if (window.scrollY > 10) {
       // deep link / reload mid-page: no ceremony
       setGone(true);
       finishIntro();

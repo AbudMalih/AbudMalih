@@ -6,7 +6,7 @@ let registered = false;
 if (typeof window !== "undefined" && !registered) {
   gsap.registerPlugin(ScrollTrigger);
   gsap.defaults({ ease: "power3.out" });
-  // Lenis drives scroll; tell ScrollTrigger not to fight mobile address bar resizes.
+  // Native scroll; do not re-layout scenes for mobile address-bar resizes.
   ScrollTrigger.config({ ignoreMobileResize: true });
   registered = true;
 }

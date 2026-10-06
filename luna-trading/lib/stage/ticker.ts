@@ -2,7 +2,7 @@
 import { gsap } from "@/lib/motion/gsap";
 import { stage } from "./store";
 
-/** Subscribe to the shared GSAP ticker (same frame as Lenis + ScrollTrigger). */
+/** Subscribe to the shared GSAP ticker (same frame as ScrollTrigger). */
 export function onFrame(cb: (dt: number) => void) {
   let last = performance.now();
   const fn = () => {

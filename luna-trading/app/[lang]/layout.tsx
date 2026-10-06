@@ -9,7 +9,7 @@ import "@fontsource/ibm-plex-sans-arabic/500.css";
 import "@fontsource/ibm-plex-sans-arabic/700.css";
 import "../globals.css";
 import { ENV_SCRIPT } from "@/lib/motion/env";
-import SmoothScroll from "@/lib/motion/SmoothScroll";
+import ScrollSetup from "@/lib/motion/scroll";
 import Navigation from "@/components/chrome/Navigation";
 import Cursor from "@/components/chrome/Cursor";
 import Footer from "@/components/chrome/Footer";
@@ -78,7 +78,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           <a href="#main" className="skip-link">
             {dict.a11y.skip}
           </a>
-          <SmoothScroll />
+          <ScrollSetup />
           <Navigation />
           <Cursor />
           <main id="main">{children}</main>
