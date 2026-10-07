@@ -8,11 +8,16 @@ import ContactForm from "./ContactForm";
 import svc from "@/components/services/Services.module.css";
 import s from "./Contact.module.css";
 
+/* graphite shell around a warm mineral workspace; hard, architectural edges
+   (--from = --bg), the red + is the hinge between them */
+const GRAPHITE = "#151619";
+const MINERAL = "#e4e0d8";
+
 /**
  * KONTAKT / CONTACT: the end point of the visitor journey, a conversion page.
- * Bright, quiet, architectural. One connection drawn as the page opens: two
- * graphite lines (your business, Luna Trading) meet at the red +, and a single
- * line continues down into the contact area. Direct e-mail and the structured
+ * Graphite shell, warm mineral workspace, red connection signal. Two metallic
+ * lines (your business, Luna Trading) meet at the red + on the edge between
+ * the graphite hero and the mineral contact area; one red line continues down. Direct e-mail and the structured
  * inquiry stand side by side; a quiet signature closes the page. Typography is
  * planted: only lines and the + move.
  */
@@ -25,7 +30,7 @@ export default function ContactPage() {
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
       {/* ------------------------------------------------------------ HERO */}
-      <section className={`${svc.section} ${s.hero}`} style={{ ["--bg" as string]: "#e9e7e2", ["--from" as string]: "#e9e7e2" }} data-tone="light" aria-labelledby="ct-title">
+      <section className={`${svc.section} ${s.hero}`} style={{ ["--bg" as string]: GRAPHITE, ["--from" as string]: GRAPHITE }} data-tone="dark" aria-labelledby="ct-title">
         <div className={`frame ${s.heroCopy}`}>
           <p className={`t-label ${s.eyebrow}`} data-reveal>
             <span className={s.idx}>04</span>
@@ -62,8 +67,7 @@ export default function ContactPage() {
       </section>
 
       {/* --------------------------------------------------------- CONTACT */}
-      <section className={`${svc.section} ${s.contact}`} style={{ ["--bg" as string]: "#e9e7e2", ["--from" as string]: "#e9e7e2" }} data-tone="light" aria-label={t.hero.eyebrow}>
-        <span className={s.downEnd} aria-hidden="true" />
+      <section className={`${svc.section} ${s.contact}`} style={{ ["--bg" as string]: MINERAL, ["--from" as string]: MINERAL }} data-tone="light" aria-label={t.hero.eyebrow}>
         <div className={`frame ${s.grid}`}>
           {/* direct */}
           <div className={s.direct} data-reveal>
@@ -107,7 +111,7 @@ export default function ContactPage() {
       </section>
 
       {/* --------------------------------------------------------- CLOSING */}
-      <section className={`${svc.section} ${s.closing}`} style={{ ["--bg" as string]: "#e9e7e2", ["--from" as string]: "#e9e7e2" }} data-tone="light" aria-label={COMPANY.legalName}>
+      <section className={`${svc.section} ${s.closing}`} style={{ ["--bg" as string]: GRAPHITE, ["--from" as string]: GRAPHITE }} data-tone="dark" aria-label={COMPANY.legalName}>
         <div className={`frame ${s.closeRow}`} data-reveal>
           <span className={s.closeLine} aria-hidden="true" />
           <span className={s.closePlus} aria-hidden="true" />
