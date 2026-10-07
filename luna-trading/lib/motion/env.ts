@@ -10,7 +10,6 @@ var gl=false;try{var c=document.createElement('canvas');var x=c.getContext('webg
 var forceStatic=/[?&]static\\b/.test(q);
 if(!rm&&gl&&!forceStatic){d.classList.add('cine');if(/^\\/(de|en|ar)?\\/?$/.test(location.pathname)){d.classList.add('intro-pending');}}else{d.classList.add('static');}
 if(!rm&&window.matchMedia('(hover: hover) and (pointer: fine)').matches){d.classList.add('has-cursor');}
-try{if(sessionStorage.getItem('luna:intro'))d.classList.add('intro-seen');}catch(e){}
 }catch(e){}})();`;
 
 export function isCine() {

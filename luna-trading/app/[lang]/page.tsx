@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { getDictionary, isLocale } from "@/content/i18n";
+import { organizationJsonLd, pageMetadata } from "@/lib/seo";
 import Hero from "@/components/sections/Hero";
 import SourceToMarket from "@/components/sections/SourceToMarket";
 import Transport from "@/components/sections/Transport";
@@ -14,6 +17,11 @@ import ProgressRail from "@/components/chrome/ProgressRail";
 import GlobeLayer from "@/components/stage/GlobeLayer";
 import WorldLayer from "@/components/stage/WorldLayer";
 
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLocale(lang)) return {};
+  return pageMetadata({ locale: lang, path: "/", description: getDictionary(lang).meta.description });
+}
 
 /**
  * HOME — one continuous story:
@@ -26,6 +34,7 @@ import WorldLayer from "@/components/stage/WorldLayer";
 export default function HomePage() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
       <Atmosphere />
       <GlobeLayer />
       <WorldLayer />

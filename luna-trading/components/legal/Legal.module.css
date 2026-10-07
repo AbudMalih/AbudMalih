@@ -1,0 +1,80 @@
+/* Legal documents: reading first. Clear hierarchy, a calm measure, no motion. */
+.doc {
+  max-width: 46rem;
+  text-align: start;
+}
+.doc > :first-child {
+  margin-top: 0;
+}
+/* the page header already ends in a rule */
+.doc > h2:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.doc h2 {
+  font-size: clamp(1.2rem, 1.6vw, 1.45rem);
+  font-weight: 600;
+  font-variation-settings: "wght" 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  color: var(--fg);
+  margin: 2.6em 0 0.8em;
+  padding-top: 1.1em;
+  border-top: 1px solid var(--hairline);
+}
+.doc h3 {
+  font-size: 1.02rem;
+  font-weight: 600;
+  font-variation-settings: "wght" 600;
+  color: var(--fg);
+  margin: 1.8em 0 0.5em;
+}
+.doc p,
+.doc li,
+.doc address {
+  /* lighter than the UI's muted grey: long-form text must read easily */
+  color: #c2c3c7;
+  line-height: 1.65;
+  font-style: normal;
+}
+.doc p + p {
+  margin-top: 0.9em;
+}
+.doc ul {
+  margin: 0.8em 0;
+  padding-inline-start: 1.2em;
+  display: grid;
+  gap: 0.35em;
+}
+.doc li::marker {
+  color: var(--luna-red);
+}
+.doc a {
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--luna-red);
+  text-underline-offset: 0.2em;
+}
+.doc a:hover {
+  text-decoration-thickness: 2px;
+}
+.doc strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.entity {
+  color: var(--fg) !important;
+}
+.note {
+  margin-top: 1.4em;
+  padding-inline-start: 1em;
+  border-inline-start: 2px solid var(--luna-red);
+}
+.stand {
+  margin-top: 3em !important;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--graphite-300) !important;
+}

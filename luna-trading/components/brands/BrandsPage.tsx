@@ -303,7 +303,7 @@ function BrandScene({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }
       <span className={s.sceneLight} aria-hidden="true" />
       <div className={`frame ${s.sceneGrid}`}>
         <div className={s.sceneRoom} data-parallax>
-          <BrandMediaSlot media={brand.media.hero ? { ...brand.media.hero, alt: copy.world.productAlt } : null} className={s.sceneNiche} />
+          <BrandMediaSlot media={brand.media.hero ? { ...brand.media.hero, alt: copy.world.productAlts.tower ?? copy.world.productAlt } : null} className={s.sceneNiche} />
         </div>
         <div className={s.sceneCopy}>
           <p className={s.owner} data-reveal>
@@ -385,7 +385,7 @@ function BrandWorld({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }
                 src={p.src}
                 width={p.width}
                 height={p.height}
-                alt={`${w.productAlt} ${String(i + 1).padStart(2, "0")}`}
+                alt={w.productAlts[p.id] ?? `${w.productAlt} ${String(i + 1).padStart(2, "0")}`}
                 className={s.tileImg}
                 loading="lazy"
                 decoding="async"

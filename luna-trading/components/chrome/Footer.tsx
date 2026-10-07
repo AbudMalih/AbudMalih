@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { COMPANY, NAV, LEGAL_NAV, BRANDS } from "@/content/site";
 import { LunaLogo } from "@/components/brand/Logos";
-import { formatLat, formatLon } from "@/lib/globe/geo";
+import { formatLat, formatLon } from "@/lib/globe/coords";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./Footer.module.css";
 
@@ -20,11 +20,11 @@ export default function Footer() {
         <div className={styles.top}>
           <Link href={href("/")} aria-label={dict.a11y.home} className={styles.logo} data-cursor="link">
             <span className={styles.logoPaper}>
-              <LunaLogo variant="master" height="100%" />
+              <LunaLogo variant="master" height="100%" lazy />
             </span>
             {/* a page may ask for the graphite footer (Kontakt); the reverse logo serves it */}
             <span className={styles.logoGraphite} aria-hidden="true">
-              <LunaLogo variant="reverse" height="100%" />
+              <LunaLogo variant="reverse" height="100%" lazy />
             </span>
           </Link>
           <p className={styles.statement}>{dict.footer.statement}</p>

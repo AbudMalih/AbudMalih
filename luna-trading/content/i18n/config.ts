@@ -21,6 +21,7 @@ export const isLocale = (v: string | undefined): v is Locale => !!v && (LOCALES 
  */
 export const SLUGS: Record<string, Record<Locale, string>> = {
   "/what-we-do": { de: "/leistungen", en: "/services", ar: "/services" },
+  "/brands": { de: "/marken", en: "/brands", ar: "/brands" },
   "/company": { de: "/unternehmen", en: "/company", ar: "/company" },
   "/contact": { de: "/kontakt", en: "/contact", ar: "/contact" },
 };

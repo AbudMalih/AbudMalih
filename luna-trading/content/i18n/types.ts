@@ -74,9 +74,10 @@ export type Dictionary = {
     brands: { eyebrow: string; t1: string; t2: string; lead: string };
     company: { eyebrow: string; t1: string; t2: string; lead: string; items: string[] };
     contact: { eyebrow: string; t1: string; t2: string; pending: string };
-    notFound: { eyebrow: string; t1: string; t2: string };
+    notFound: { eyebrow: string; lead: string; home: string; t1: string; t2: string };
+    error: { title: string; lead: string; retry: string };
     legalEyebrow: string;
-    legalNote: string;
+    legalNote: { impressum: string; datenschutz: string };
   };
   services: ServicesCopy;
   brandsPage: BrandsCopy;

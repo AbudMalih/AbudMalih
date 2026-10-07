@@ -5,7 +5,7 @@ const de: ServicesCopy = {
   meta: {
     title: "Leistungen",
     description:
-      "Beschaffung, Import und Export, Produktentwicklung, Markenentwicklung, E-Commerce und Distribution: wie Luna Trading den Weg von der Quelle bis zum Markt verbindet.",
+      "Beschaffung, Import und Export, Produkt- und Markenentwicklung, E-Commerce und Distribution: wie Luna Trading den Weg von der Quelle zum Markt verbindet.",
   },
   hero: {
     eyebrow: "Was wir tun",

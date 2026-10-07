@@ -4,7 +4,7 @@ const en: BrandsCopy = {
   meta: {
     title: "Brands",
     description:
-      "The owned brands of Luna Trading GmbH: brands with their own identity, built on sourcing, product development, e-commerce and distribution. Including LUVISCENT®, home fragrance.",
+      "The owned brands of Luna Trading GmbH: brands with their own identity, built on sourcing, product development and e-commerce. Including LUVISCENT®.",
   },
   hero: {
     eyebrow: "Our brands",
@@ -47,6 +47,7 @@ const en: BrandsCopy = {
         collection: "Collection",
         areas: "Areas of the brand",
         productAlt: "LUVISCENT scent machine",
+        productAlts: { tower: "LUVISCENT scent diffuser, slim black tower with a gold side panel", box: "LUVISCENT scent diffuser, compact black box form", lamp: "LUVISCENT scent diffuser with a fabric cover and a warm light top", ribbed: "LUVISCENT scent diffuser, white with a ribbed finish", cylinder: "LUVISCENT scent diffuser, anthracite cylinder" },
       },
     },
   },

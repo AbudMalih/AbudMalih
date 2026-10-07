@@ -13,7 +13,9 @@ export type OwnedBrandCopy = {
     categories: { id: string; name: string; note: string }[];
     collection: string; // label above the category that has products
     areas: string; // label for the list of brand areas
-    productAlt: string; // alt text prefix for product images
+    productAlt: string; // fallback alt text for product images
+    /** per-product descriptions (what the image shows; no specifications) */
+    productAlts: Record<string, string>;
   };
 };
 

@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { DEFAULT_LOCALE, SLUGS, isLocale, localePath, type Locale } from "@/content/i18n/config";
+import { DEFAULT_LOCALE, SLUGS, canonicalPath, isLocale, localePath, type Locale } from "@/content/i18n/config";
+import { SITE_HOST, SITE_ORIGIN } from "@/lib/origin";
 
 /**
  * Locale routing
@@ -34,9 +35,16 @@ export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   const seg = pathname.split("/")[1];
 
+  // www.luna-trading.de → luna-trading.de (takes effect once the domain is
+  // attached in Vercel; assets are redirected by the Vercel domain setting)
+  if ((req.headers.get("host") ?? "").toLowerCase() === `www.${SITE_HOST}`) {
+    return NextResponse.redirect(`${SITE_ORIGIN}${pathname}${search}`, 308);
+  }
+
   if (seg === "de") {
+    // one hop straight to the German address ("/de/brands" → "/marken")
     const url = req.nextUrl.clone();
-    url.pathname = pathname.replace(/^\/de/, "") || "/";
+    url.pathname = localePath(DEFAULT_LOCALE, canonicalPath(pathname.replace(/^\/de/, "") || "/"));
     return NextResponse.redirect(url, 308);
   }
   if (isLocale(seg)) {

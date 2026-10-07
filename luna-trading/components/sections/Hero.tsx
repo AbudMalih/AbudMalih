@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import Chapter, { useChapterTimeline } from "@/components/stage/Chapter";
 import { gsap } from "@/lib/motion/gsap";
 import { COMPANY } from "@/content/site";
@@ -78,7 +78,10 @@ function HeroContent() {
           // only the closing period carries the red: it is the route's origin
           const last = i === lines.length - 1 && w.endsWith(".");
           return (
-            <span key={i} className={`${styles.line} ${i === 1 ? `${styles.indent} tone-graphite` : ""}`} data-line={i + 1}>
+            <Fragment key={i}>
+              {/* a real space between the block lines, so the heading reads as words (no visual effect) */}
+              {i > 0 && " "}
+              <span className={`${styles.line} ${i === 1 ? `${styles.indent} tone-graphite` : ""}`} data-line={i + 1}>
               <span className="mask">
                 <span data-move>
                   <span data-word>
@@ -91,7 +94,8 @@ function HeroContent() {
                   </span>
                 </span>
               </span>
-            </span>
+              </span>
+            </Fragment>
           );
         })}
       </h1>
