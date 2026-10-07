@@ -2,6 +2,7 @@ import type { Dictionary } from "./types";
 import services from "./services/ar";
 import brandsPage from "./brands/ar";
 import companyPage from "./company/ar";
+import contactPage from "./contact/ar";
 
 /** العربية: لغة مؤسسية حديثة وموجزة. */
 const ar: Dictionary = {
@@ -155,6 +156,7 @@ const ar: Dictionary = {
   services,
   brandsPage,
   companyPage,
+  contactPage,
 };
 
 export default ar;
