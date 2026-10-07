@@ -3,6 +3,14 @@
  * by Luna Trading is `null` and is NOT rendered. Never replace a null with
  * invented data. Translatable copy lives in content/i18n.
  */
+/**
+ * Verified official contact address for the website (Kontakt page and the
+ * server-side recipient of inquiries). Kept separate from COMPANY.email,
+ * which the approved footer and Impressum render once it is set: switching
+ * those on is a decision for the legal / launch phase.
+ */
+export const CONTACT_EMAIL = "info@luna-trading.de";
+
 export const COMPANY = {
   legalName: "Luna Trading GmbH",
   city: "Köln",

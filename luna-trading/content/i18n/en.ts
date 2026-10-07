@@ -2,6 +2,7 @@ import type { Dictionary } from "./types";
 import services from "./services/en";
 import brandsPage from "./brands/en";
 import companyPage from "./company/en";
+import contactPage from "./contact/en";
 
 /** English: concise and international. */
 const en: Dictionary = {
@@ -156,6 +157,7 @@ const en: Dictionary = {
   services,
   brandsPage,
   companyPage,
+  contactPage,
 };
 
 export default en;

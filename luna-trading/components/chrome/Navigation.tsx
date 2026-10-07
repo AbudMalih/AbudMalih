@@ -79,7 +79,13 @@ export default function Navigation() {
             <ul>
               {NAV.slice(1).map((n) => (
                 <li key={n.href}>
-                  <Link href={href(n.href)} className="link-line t-label" data-cursor="link" tabIndex={compact ? -1 : 0}>
+                  <Link
+                    href={href(n.href)}
+                    className="link-line t-label"
+                    data-cursor="link"
+                    tabIndex={compact ? -1 : 0}
+                    aria-current={canonicalPath(stripLocale(pathname || "/")) === n.href ? "page" : undefined}
+                  >
                     {dict.nav[n.key]}
                   </Link>
                 </li>

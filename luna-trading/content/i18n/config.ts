@@ -22,6 +22,7 @@ export const isLocale = (v: string | undefined): v is Locale => !!v && (LOCALES 
 export const SLUGS: Record<string, Record<Locale, string>> = {
   "/what-we-do": { de: "/leistungen", en: "/services", ar: "/services" },
   "/company": { de: "/unternehmen", en: "/company", ar: "/company" },
+  "/contact": { de: "/kontakt", en: "/contact", ar: "/contact" },
 };
 
 /** Canonical path → the localized slug for a locale (keeps sub-paths, query, hash). */

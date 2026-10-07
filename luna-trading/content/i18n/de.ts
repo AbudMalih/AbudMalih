@@ -2,6 +2,7 @@ import type { Dictionary } from "./types";
 import services from "./services/de";
 import brandsPage from "./brands/de";
 import companyPage from "./company/de";
+import contactPage from "./contact/de";
 
 /** Deutsch: Primärsprache. Kurz, präzise, international. */
 const de: Dictionary = {
@@ -156,6 +157,7 @@ const de: Dictionary = {
   services,
   brandsPage,
   companyPage,
+  contactPage,
 };
 
 export default de;
