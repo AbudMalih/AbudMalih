@@ -150,11 +150,16 @@
 }
 
 @media (max-width: 767px) {
+  /* phones: lift the globe + headline composition out of the empty upper
+     band. Same formula as heroLift() in lib/globe/state.ts (keep in sync). */
+  .hero {
+    --hero-lift: clamp(84px, 15svh, 140px);
+  }
   .indent {
     padding-inline-start: 0.5em;
   }
   .title {
-    padding-bottom: 120px;
+    padding-bottom: calc(120px + var(--hero-lift));
   }
   .foot {
     grid-template-columns: 1fr auto;
@@ -167,7 +172,7 @@
   }
   .staticGlobe {
     right: -30vw;
-    top: 10vh;
+    top: calc(10vh - var(--hero-lift));
     width: 110vw;
   }
 }

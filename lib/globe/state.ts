@@ -53,7 +53,9 @@ function globeStateLtr(): GlobeDerived {
   let lat = lerp(lerp(14, 28, turnA), 45, turnB);
   let dist = lerp(lerp(5.0, 4.15, smooth(range(h, 0, 0.45))), 2.75, easeInOut(range(h, 0.7, 1))) * distScale;
   let ox = m ? 0 : lerp(lerp(0.2, 0.16, smooth(range(h, 0, 0.4))), 0.0, easeInOut(range(h, 0.62, 1)));
-  let oy = lerp(m ? 0.34 : 0.46, m ? 0.1 : 0.05, easeOut(range(h, 0.0, 0.42)));
+  // phones: the resting globe sits higher by the same lift as the headline
+  // (Hero.module.css --hero-lift); it still eases to the same 0.1 framing
+  let oy = lerp(m ? 0.34 - heroLift() / Math.max(1, stage.vh) : 0.46, m ? 0.1 : 0.05, easeOut(range(h, 0.0, 0.42)));
   oy = lerp(oy, 0, easeInOut(range(h, 0.75, 1)));
   let opacity = 1;
   const route = easeInOut(range(h, 0.3, 0.94));
@@ -79,4 +81,9 @@ function globeStateLtr(): GlobeDerived {
     opacity,
     labels: range(h, 0.3, 0.36) * (1 - range(s, 0.04, 0.1)),
   };
+}
+
+/** Phone hero lift in px: clamp(84px, 15svh, 140px), as in Hero.module.css. */
+function heroLift() {
+  return Math.min(140, Math.max(84, stage.vh * 0.15));
 }
