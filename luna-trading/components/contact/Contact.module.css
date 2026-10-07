@@ -109,11 +109,6 @@
   top: 0;
   width: 14px;
   height: 14px;
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.4);
-  transition:
-    opacity 0.4s var(--ease-out),
-    transform 0.8s var(--ease-out);
 }
 .signalLine {
   position: absolute;
@@ -121,17 +116,6 @@
   top: 6.5px;
   height: 1px;
   background: var(--rule-strong);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1) 0.25s;
-}
-:global([dir="rtl"]) .signalLine {
-  transform-origin: right center;
-}
-.signal[data-in] .signalPlus,
-.signal[data-in] .signalLine {
-  opacity: 1;
-  transform: none;
 }
 
 /* direct */
@@ -183,7 +167,7 @@
 }
 .mailArrow {
   color: var(--luna-red);
-  transition: transform 0.4s var(--ease-out);
+  transition: transform 0.3s var(--ease-out);
 }
 .mail:hover,
 .mail:focus-visible {
@@ -191,7 +175,7 @@
 }
 .mail:hover .mailArrow,
 .mail:focus-visible .mailArrow {
-  transform: translateX(6px);
+  transform: translateX(7px);
 }
 .mail:focus-visible {
   outline: 1px solid var(--ink);
@@ -217,6 +201,9 @@
   grid-column: 6 / -1;
 }
 .inquiryTitle {
+  transition:
+    opacity 0.6s var(--ease-out),
+    transform 0.6s var(--ease-out);
   font-size: clamp(1.4rem, 2vw, 2rem);
   font-weight: 650;
   font-variation-settings: "wght" 650;
@@ -247,7 +234,10 @@
   border-bottom: 1px solid var(--rule);
   cursor: pointer;
   color: var(--soft);
-  transition: color 0.25s var(--ease-out);
+  transition:
+    color 0.25s var(--ease-out),
+    opacity 0.6s var(--ease-out) var(--d, 0ms),
+    transform 0.6s var(--ease-out) var(--d, 0ms);
 }
 :global([dir="rtl"]) .type {
   padding: 12px 0 12px 14px;
@@ -266,10 +256,10 @@
   opacity: 0;
   transform: rotate(-90deg) scale(0.4);
   transition:
-    opacity 0.25s var(--ease-out),
-    transform 0.45s var(--ease-out);
+    opacity 0.2s var(--ease-out),
+    transform 0.35s var(--ease-out);
 }
-.type:hover .typePlus {
+.type:not(.typeOn):hover .typePlus {
   opacity: 0.35;
   transform: none;
 }
@@ -293,14 +283,23 @@
   opacity: 1;
   transform: none;
 }
-.typeOn::after {
-  /* selected: a heavier rule under the option (not colour alone) */
+/* selected: a heavier rule draws under the option (not colour alone) */
+.type::after {
   content: "";
   position: absolute;
   inset-inline: 0;
   bottom: -1px;
   height: 2px;
   background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+}
+:global([dir="rtl"]) .type::after {
+  transform-origin: right center;
+}
+.typeOn::after {
+  transform: none;
 }
 .type:has(.typeInput:focus-visible) {
   outline: 1px solid var(--ink);
@@ -395,7 +394,7 @@
   background: var(--luna-red);
   transform: scaleX(0);
   transform-origin: left center;
-  transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  transition: transform 0.3s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .input {
   transition: background-color 0.3s var(--ease-out);
@@ -418,14 +417,30 @@
 .field:focus-within .label {
   color: var(--ink);
 }
-.field:focus-within .label::before {
+/* the focus + sits in the gutter before the label: the label never moves */
+.label {
+  position: relative;
+}
+.label::before {
   content: "";
+  position: absolute;
+  inset-inline-start: -17px;
+  top: 50%;
   width: 9px;
   height: 9px;
-  align-self: center;
+  margin-top: -4.5px;
   background:
     linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
     linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
+  transition:
+    opacity 0.2s var(--ease-out),
+    transform 0.3s var(--ease-out);
+}
+.field:focus-within .label::before {
+  opacity: 1;
+  transform: none;
 }
 
 /* errors: a message next to the field, a dashed rule (not colour alone) */
@@ -620,6 +635,7 @@
 }
 .closeLine {
   position: absolute;
+  transform-origin: left center;
   inset-inline: calc(var(--margin) + 26px) var(--margin);
   top: 0;
   height: 1px;
@@ -661,6 +677,56 @@
 .closeMail:hover,
 .closeMail:focus-visible {
   border-color: var(--luna-red);
+}
+
+/* -------------------------------------------- MICRO-MOTION
+   Enter, settle, stop. Hidden states exist only under html.cine and only
+   before an element's reveal; at rest every transform is none and nothing
+   keeps a will-change, so the typography renders fully stable. */
+
+/* direct: shorter travel and duration than the editorial default */
+.contact .direct [data-reveal] {
+  transition-duration: 0.7s;
+}
+:global(html.cine) .contact .direct [data-reveal]:not([data-in]) {
+  transform: translateY(12px);
+}
+
+/* line devices: the wrapper stays put; the line draws out of the red + */
+:global(html.cine) .contact .signal[data-reveal]:not([data-in]),
+:global(html.cine) .closing .closeRow[data-reveal]:not([data-in]) {
+  opacity: 1;
+  transform: none;
+}
+.signalPlus,
+.closePlus {
+  transition:
+    opacity 0.35s var(--ease-out),
+    transform 0.6s var(--ease-out);
+}
+.signalLine,
+.closeLine {
+  transition: transform 1s cubic-bezier(0.65, 0, 0.35, 1) 0.15s;
+}
+:global([dir="rtl"]) .signalLine,
+:global([dir="rtl"]) .closeLine {
+  transform-origin: right center;
+}
+:global(html.cine) .signal:not([data-in]) .signalPlus,
+:global(html.cine) .closeRow:not([data-in]) .closePlus {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
+}
+:global(html.cine) .signal:not([data-in]) .signalLine,
+:global(html.cine) .closeRow:not([data-in]) .closeLine {
+  transform: scaleX(0);
+}
+
+/* form entry: the title, then the four topics in quick sequence */
+:global(html.cine) .form:not([data-shown]) .inquiryTitle,
+:global(html.cine) .form:not([data-shown]) .type {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 /* ------------------------------------------------------------ RESPONSIVE */
@@ -720,10 +786,20 @@
 
 /* ------------------------------------------- REDUCED MOTION / STATIC */
 :global(html.static) .signalPlus,
-:global(html.static) .signalLine {
+:global(html.static) .signalLine,
+:global(html.static) .closePlus,
+:global(html.static) .closeLine,
+:global(html.static) .inquiryTitle,
+:global(html.static) .type {
   transition: none;
   transform: none;
   opacity: 1;
+}
+:global(html.static) .type::after,
+:global(html.static) .label::before,
+:global(html.static) .rule::before,
+:global(html.static) .mailArrow {
+  transition: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .successLine,
@@ -732,7 +808,10 @@
     animation: none;
   }
   .rule::before,
-  .typePlus {
+  .typePlus,
+  .type::after,
+  .label::before,
+  .mailArrow {
     transition: none;
   }
 }

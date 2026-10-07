@@ -71,12 +71,16 @@ export default function ContactPage() {
             <span className={s.signalLine} />
           </div>
 
-          <div className={s.direct} data-reveal>
+          <div className={s.direct}>
             <h2 id="ct-direct" className={s.directHead}>
-              <span className={`t-label ${s.directTag}`}>{t.direct.tag}</span>
-              <span className={s.directTitle}>{t.direct.title}</span>
+              <span className={`t-label ${s.directTag}`} data-reveal>
+                {t.direct.tag}
+              </span>
+              <span className={s.directTitle} data-reveal style={{ ["--d" as string]: "70ms" }}>
+                {t.direct.title}
+              </span>
             </h2>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={s.mail} dir="ltr" data-cursor="link">
+            <a href={`mailto:${CONTACT_EMAIL}`} className={s.mail} dir="ltr" data-cursor="link" data-reveal style={{ ["--d" as string]: "140ms" }}>
               <span className={s.mailText}>{CONTACT_EMAIL}</span>
               <span className={s.mailArrow} aria-hidden="true">
                 →
