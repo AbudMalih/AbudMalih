@@ -57,6 +57,8 @@ export default function ContactForm({
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
   const summaryRef = useRef<HTMLParagraphElement>(null);
+  // entry reveal, once per visit (kept across the success / "another inquiry" cycle)
+  const [shown, setShown] = useState(false);
 
   useEffect(() => {
     shownAt.current = Date.now();
@@ -64,6 +66,24 @@ export default function ContactForm({
   useEffect(() => {
     if (status === "success") successRef.current?.focus();
   }, [status]);
+  useEffect(() => {
+    const el = formRef.current;
+    if (shown || !el) return;
+    if (!("IntersectionObserver" in window) || document.documentElement.classList.contains("static")) {
+      setShown(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        setShown(true);
+        io.disconnect();
+      },
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.05 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [shown, status]);
 
   const set = (k: keyof Inquiry, value: string) => {
     if (!started.current) {
@@ -229,6 +249,7 @@ export default function ContactForm({
       onSubmit={submit}
       noValidate
       aria-describedby={hasErrors ? id("summary") : undefined}
+      data-shown={shown || undefined}
     >
       <div className={s.formLead}>
         <h2 className={s.inquiryTitle}>{copy.inquiry.title}</h2>
@@ -236,10 +257,11 @@ export default function ContactForm({
         {/* inquiry type: context, not qualification */}
         <fieldset className={s.types}>
           <legend className="sr-only">{copy.inquiry.typeLegend}</legend>
-          {INQUIRY_TYPES.map((tp: InquiryType) => (
+          {INQUIRY_TYPES.map((tp: InquiryType, i) => (
             <label
               key={tp}
               className={`${s.type} ${v.type === tp ? s.typeOn : ""}`}
+              style={{ ["--d" as string]: `${90 + i * 50}ms` }}
             >
               <input
                 type="radio"
