@@ -150,8 +150,7 @@
 }
 
 @media (max-width: 767px) {
-  /* phones: lift the globe + headline composition out of the empty upper
-     band. Same formula as heroLift() in lib/globe/state.ts (keep in sync). */
+  /* static (reduced-motion) phones: headline and still globe lifted together */
   .hero {
     --hero-lift: clamp(84px, 15svh, 140px);
   }
@@ -160,6 +159,13 @@
   }
   .title {
     padding-bottom: calc(120px + var(--hero-lift));
+  }
+  /* cinematic phones: an editorial opening laid out from the TOP of what
+     Safari shows (svh), not from the 100lvh stage bottom. The headline ends at
+     71% of the small viewport, set on the planet's upper surface (the globe's
+     edge sits at 27%: lib/globe/state.ts phoneOpening). */
+  :global(html.cine) .title {
+    padding-bottom: calc(100lvh - 71svh);
   }
   .foot {
     grid-template-columns: 1fr auto;
