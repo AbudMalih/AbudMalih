@@ -10,6 +10,8 @@ import styles from "./Loader.module.css";
 const REQUIRED = ["globe"];
 const MIN_MS = 1100;
 const MAX_MS = 7000;
+/** Intro already shown in this page load (memory only: no cookie or browser storage). */
+let introSeen = false;
 
 /**
  * Identity loader. The red "+" holds the screen while the globe and fonts
@@ -39,11 +41,9 @@ export default function Loader() {
       window.dispatchEvent(new Event("luna:intro"));
       return;
     }
-    let seen = html.classList.contains("intro-seen");
-    try {
-      // also when coming back to the homepage within the same visit
-      seen ||= sessionStorage.getItem("luna:intro") === "1";
-    } catch {}
+    // coming back to the homepage within the same page load: short version.
+    // Kept in memory only (no browser storage); a hard reload replays the intro.
+    const seen = introSeen;
     if (window.scrollY > 10) {
       // deep link / reload mid-page: no ceremony
       setGone(true);
@@ -90,9 +90,7 @@ export default function Loader() {
       const tl = gsap.timeline({
         defaults: { ease: "expo.inOut" },
         onComplete: () => {
-          try {
-            sessionStorage.setItem("luna:intro", "1");
-          } catch {}
+          introSeen = true;
           lockScroll(false);
           setGone(true);
         },

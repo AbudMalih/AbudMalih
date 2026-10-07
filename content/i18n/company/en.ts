@@ -4,7 +4,7 @@ const en: CompanyCopy = {
   meta: {
     title: "Company",
     description:
-      "Luna Trading GmbH, based in Cologne, connects international trade with product development, brand building, e-commerce and distribution. Why the company is structured this way.",
+      "Luna Trading GmbH in Cologne connects international trade with product development, brand building, e-commerce and distribution.",
   },
   hero: {
     eyebrow: "Company",

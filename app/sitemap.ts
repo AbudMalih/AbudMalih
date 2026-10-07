@@ -1,15 +1,21 @@
 import type { MetadataRoute } from "next";
-import { LOCALES, localePath } from "@/content/i18n/config";
+import { LOCALES, LOCALE_META, localePath } from "@/content/i18n/config";
+import { absolute } from "@/lib/seo";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3100";
+/** Indexable pages in every language (legal pages are noindex and stay out). */
 const PATHS = ["/", "/what-we-do", "/brands", "/company", "/contact"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return PATHS.flatMap((p) =>
     LOCALES.map((l) => ({
-      url: `${SITE}${localePath(l, p)}`,
+      url: absolute(localePath(l, p)),
       changeFrequency: "monthly" as const,
-      alternates: { languages: Object.fromEntries(LOCALES.map((x) => [x, `${SITE}${localePath(x, p)}`])) },
+      alternates: {
+        languages: {
+          ...Object.fromEntries(LOCALES.map((x) => [LOCALE_META[x].htmlLang, absolute(localePath(x, p))])),
+          "x-default": absolute(localePath("de", p)),
+        },
+      },
     }))
   );
 }

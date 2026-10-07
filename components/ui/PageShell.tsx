@@ -13,6 +13,7 @@ export default function PageShell({
   eyebrow,
   title,
   lead,
+  backLabel,
   children,
 }: {
   locale: Locale;
@@ -20,6 +21,8 @@ export default function PageShell({
   eyebrow: string;
   title: ReactNode;
   lead?: ReactNode;
+  /** label of the link home (defaults to "back to the story") */
+  backLabel?: string;
   children?: ReactNode;
 }) {
   const dict = getDictionary(locale);
@@ -40,7 +43,7 @@ export default function PageShell({
           <span className={styles.arrow} aria-hidden="true">
             ←
           </span>
-          {dict.pages.back}
+          {backLabel ?? dict.pages.back}
         </Link>
       </div>
     </article>

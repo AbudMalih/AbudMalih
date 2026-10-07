@@ -7,9 +7,9 @@
  *    trading → near-white, "+" → original Luna red. Transparent, no plate.
  *    Generated from the master by scripts/build-reverse-logo.sh.
  */
-type LunaProps = { height?: number | string; className?: string; variant?: "reverse" | "master"; priority?: boolean };
+type LunaProps = { height?: number | string; className?: string; variant?: "reverse" | "master"; priority?: boolean; lazy?: boolean };
 
-export function LunaLogo({ height = 22, className, variant = "reverse", priority }: LunaProps) {
+export function LunaLogo({ height = 22, className, variant = "reverse", priority, lazy }: LunaProps) {
   return (
     <img
       src={variant === "reverse" ? "/brand/luna-trading-logo-reverse.webp" : "/brand/luna-trading-logo-trim.webp"}
@@ -19,6 +19,7 @@ export function LunaLogo({ height = 22, className, variant = "reverse", priority
       style={{ height, width: "auto" }}
       className={className}
       fetchPriority={priority ? "high" : undefined}
+      loading={lazy ? "lazy" : undefined}
       decoding="async"
       draggable={false}
     />

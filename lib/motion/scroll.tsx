@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { ScrollTrigger } from "./gsap";
+import "./gsap"; // registers ScrollTrigger once for the whole app
 import { stage, detectTier, updateViewport } from "@/lib/stage/store";
 import { isCine } from "./env";
 
@@ -35,11 +35,6 @@ export default function ScrollSetup() {
     stage.rtl = document.documentElement.dir === "rtl";
     stage.tier = detectTier();
     updateViewport();
-
-    // Review hook: ?debug exposes the stage for automated capture.
-    if (/[?&]debug\b/.test(location.search)) {
-      (window as unknown as { __luna: unknown }).__luna = { stage, ScrollTrigger };
-    }
 
     let rid = 0;
     const onResize = () => {

@@ -4,7 +4,7 @@ const de: BrandsCopy = {
   meta: {
     title: "Marken",
     description:
-      "Die Eigenmarken der Luna Trading GmbH: Marken mit eigener Identität, aufgebaut auf Beschaffung, Produktentwicklung, E-Commerce und Distribution. Darunter LUVISCENT®, Raumduft.",
+      "Die Eigenmarken der Luna Trading GmbH: Marken mit eigener Identität, aufgebaut auf Beschaffung, Produktentwicklung und E-Commerce. Darunter LUVISCENT®.",
   },
   hero: {
     eyebrow: "Unsere Marken",
@@ -47,6 +47,7 @@ const de: BrandsCopy = {
         collection: "Kollektion",
         areas: "Bereiche der Marke",
         productAlt: "LUVISCENT Duftgerät",
+        productAlts: { tower: "LUVISCENT Duftgerät in schlanker Turmform, schwarz mit goldener Seite", box: "LUVISCENT Duftgerät in kompakter, schwarzer Kastenform", lamp: "LUVISCENT Duftgerät mit Stoffbezug und warm leuchtendem Kopf", ribbed: "LUVISCENT Duftgerät, weiß mit gerippter Oberfläche", cylinder: "LUVISCENT Duftgerät in anthrazitfarbener Zylinderform" },
       },
     },
   },

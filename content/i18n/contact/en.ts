@@ -4,7 +4,7 @@ const en: ContactCopy = {
   meta: {
     title: "Contact",
     description:
-      "Contact Luna Trading GmbH in Cologne: email info@luna-trading.de or send a short inquiry about trade, sourcing, product development, brands, e-commerce and distribution.",
+      "Contact Luna Trading GmbH in Cologne. Email info@luna-trading.de or send us a short inquiry.",
   },
   hero: {
     eyebrow: "Contact",

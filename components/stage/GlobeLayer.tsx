@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { GlobeHandle, GlobeFrame } from "@/lib/globe/createGlobe";
 import { globeState, type GlobeDerived } from "@/lib/globe/state";
-import { formatLat, formatLon, ROUTE_WAYPOINTS } from "@/lib/globe/geo";
+import { formatLat, formatLon, ROUTE_WAYPOINTS } from "@/lib/globe/coords";
 import { stage } from "@/lib/stage/store";
 import { onFrame, damp, markReady } from "@/lib/stage/ticker";
 import { COMPANY } from "@/content/site";

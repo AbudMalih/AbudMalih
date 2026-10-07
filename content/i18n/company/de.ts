@@ -4,7 +4,7 @@ const de: CompanyCopy = {
   meta: {
     title: "Unternehmen",
     description:
-      "Die Luna Trading GmbH mit Sitz in Köln verbindet internationalen Handel mit Produktentwicklung, Markenaufbau, E-Commerce und Distribution. Warum das Unternehmen so aufgebaut ist.",
+      "Die Luna Trading GmbH in Köln verbindet internationalen Handel mit Produktentwicklung, Markenaufbau, E-Commerce und Distribution.",
   },
   hero: {
     eyebrow: "Unternehmen",

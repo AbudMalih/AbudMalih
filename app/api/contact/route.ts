@@ -12,6 +12,8 @@ import { deliver } from "@/lib/contact/deliver";
  * - responds 503 while delivery is not connected: never a fake success
  */
 export const runtime = "nodejs";
+// executed in Frankfurt (vercel.json sets fra1 for every function as well)
+export const preferredRegion = "fra1";
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_PER_WINDOW = 5;
