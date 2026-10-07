@@ -17,6 +17,9 @@ type StageState = {
   version: number;
   vw: number;
   vh: number;
+  /** Small / large viewport heights in px (100svh / 100lvh): Safari toolbars. */
+  svh: number;
+  lvh: number;
   mobile: boolean;
   tier: Tier;
   cine: boolean;
@@ -35,6 +38,8 @@ export const stage: StageState = {
   version: 0,
   vw: 1440,
   vh: 900,
+  svh: 900,
+  lvh: 900,
   mobile: false,
   tier: "high",
   cine: false,
@@ -95,10 +100,34 @@ export function detectTier(): Tier {
   return "high";
 }
 
+let vProbe: HTMLDivElement | null = null;
+/** Measures 100svh / 100lvh in px (falls back to innerHeight without support). */
+function viewportUnits() {
+  const fallback = window.innerHeight;
+  try {
+    if (!vProbe) {
+      vProbe = document.createElement("div");
+      vProbe.setAttribute("aria-hidden", "true");
+      vProbe.style.cssText = "position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none";
+      document.body.appendChild(vProbe);
+    }
+    vProbe.style.height = "100svh";
+    const s = vProbe.getBoundingClientRect().height || fallback;
+    vProbe.style.height = "100lvh";
+    const l = vProbe.getBoundingClientRect().height || fallback;
+    return { s, l };
+  } catch {
+    return { s: fallback, l: fallback };
+  }
+}
+
 export function updateViewport() {
   if (typeof window === "undefined") return;
   stage.vw = window.innerWidth;
   stage.vh = window.innerHeight;
+  const u = viewportUnits();
+  stage.svh = u.s;
+  stage.lvh = u.l;
   stage.mobile = window.matchMedia("(max-width: 767px)").matches;
   stage.version++;
 }

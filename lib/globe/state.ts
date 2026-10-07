@@ -53,9 +53,16 @@ function globeStateLtr(): GlobeDerived {
   let lat = lerp(lerp(14, 28, turnA), 45, turnB);
   let dist = lerp(lerp(5.0, 4.15, smooth(range(h, 0, 0.45))), 2.75, easeInOut(range(h, 0.7, 1))) * distScale;
   let ox = m ? 0 : lerp(lerp(0.2, 0.16, smooth(range(h, 0, 0.4))), 0.0, easeInOut(range(h, 0.62, 1)));
-  // phones: the resting globe sits higher by the same lift as the headline
-  // (Hero.module.css --hero-lift); it still eases to the same 0.1 framing
-  let oy = lerp(m ? 0.34 - heroLift() / Math.max(1, stage.vh) : 0.46, m ? 0.1 : 0.05, easeOut(range(h, 0.0, 0.42)));
+  let oy = lerp(m ? 0.34 : 0.46, m ? 0.1 : 0.05, easeOut(range(h, 0.0, 0.42)));
+  if (m) {
+    // phones open on a monumental, cropped planet (see phoneOpening); the
+    // camera pulls back into the regular framing over the first scroll, so
+    // from h ≈ 0.45 on everything is exactly the shared choreography
+    const o = phoneOpening();
+    dist = lerp(o.dist, dist, smooth(range(h, 0, 0.45)));
+    oy = lerp(o.oy, oy, easeOut(range(h, 0, 0.42)));
+    ox = lerp(o.ox, ox, smooth(range(h, 0, 0.4)));
+  }
   oy = lerp(oy, 0, easeInOut(range(h, 0.75, 1)));
   let opacity = 1;
   const route = easeInOut(range(h, 0.3, 0.94));
@@ -83,7 +90,23 @@ function globeStateLtr(): GlobeDerived {
   };
 }
 
-/** Phone hero lift in px: clamp(84px, 15svh, 140px), as in Hero.module.css. */
-function heroLift() {
-  return Math.min(140, Math.max(84, stage.vh * 0.15));
+/**
+ * Phone opening: the planet enters high and large. Its upper edge sits at
+ * 27% of the small viewport (what Safari shows with its toolbars), its
+ * radius is ~98% of the screen width, so the surface runs past both sides
+ * and the bottom; only the curvature and its atmosphere rise into the
+ * negative space under the header. Solved exactly for the 26° camera.
+ */
+function phoneOpening() {
+  const W = Math.max(1, stage.vw);
+  const H = Math.max(1, stage.lvh); // the globe canvas is 100lvh tall
+  const top = 0.27 * Math.max(1, stage.svh);
+  const r = 0.98 * W;
+  const t = (2 * r * Math.tan((13 * Math.PI) / 180)) / H; // tan(angular radius)
+  const dist = 1 / Math.sin(Math.atan(t));
+  const oy = (top + r) / H - 0.5; // canvas centre → globe centre
+  // a little off-centre, away from the headline: the curvature falls toward
+  // the text side, a diagonal against the type rather than a centred dome
+  const ox = 0.12;
+  return { dist, oy, ox };
 }
