@@ -1,27 +1,21 @@
 /* KONTAKT / CONTACT
-   Graphite shell, warm mineral workspace, red connection signal. Shell, tones, reveals and the submit button
-   come from the approved system (Services.module.css). Only lines and the
-   red + move; typography is planted (no transforms after its reveal). */
+   A premium company inviting a conversation. Graphite environment, one warm
+   mineral sheet for the form, one red + / line as the signal in and out.
+   Shell, tones, reveals and the button come from the approved system
+   (Services.module.css). Typography is planted; only lines and the + move. */
 
-/* rules per environment: graphite on mineral, metallic on graphite */
-.page [data-tone="light"] {
-  --rule: rgba(20, 21, 24, 0.3);
-  --rule-strong: rgba(20, 21, 24, 0.66);
-}
 .page [data-tone="dark"] {
-  --rule: rgba(214, 216, 220, 0.2);
-  --rule-strong: rgba(214, 216, 220, 0.5);
+  --rule: rgba(214, 216, 220, 0.18);
+  --rule-strong: rgba(214, 216, 220, 0.42);
   --ink: #ecebe6;
 }
 .dim {
   color: #8d8f94;
 }
-.success .dim {
-  color: #5a5c61;
-}
 .period {
   color: var(--luna-red);
 }
+.signalPlus,
 .closePlus,
 .typePlus,
 .successPlus {
@@ -32,9 +26,8 @@
 
 /* ------------------------------------------------------------------ HERO */
 .hero {
-  z-index: 1; /* the + and the red line sit across the edge into the mineral */
   padding-top: calc(var(--safe-top) + clamp(30px, 8vh, 110px));
-  padding-bottom: 0;
+  padding-bottom: clamp(64px, 11vh, 120px);
 }
 .hero::after {
   content: "";
@@ -45,8 +38,7 @@
   /* graphite, not flat black: a faint charcoal lift and a brushed-metal grain */
   background:
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
-    radial-gradient(90% 80% at 82% 0%, rgba(120, 124, 132, 0.16), transparent 70%),
-    linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.22));
+    radial-gradient(90% 80% at 82% 0%, rgba(120, 124, 132, 0.16), transparent 70%);
 }
 .heroCopy {
   display: grid;
@@ -93,156 +85,84 @@
   padding-bottom: 0.4em;
 }
 
-/* the connection: two sides meet at the +, one line continues down */
-/* the connection sits ON the edge between graphite and mineral */
-.connect {
-  --cy: 100%;
-  position: relative;
-  height: clamp(96px, 13vh, 140px);
-  margin-top: clamp(48px, 8vh, 96px);
-}
-.side,
-.down {
-  position: absolute;
-}
-.side {
-  top: calc(var(--cy) - 1px);
-  height: 2px;
-  background: linear-gradient(180deg, #8f9298 0 50%, #6f7277 50%);
-  width: calc(50% - 22px);
-  transform: scaleX(0);
-  transition: transform 1.1s cubic-bezier(0.65, 0, 0.35, 1);
-}
-.sideStart {
-  inset-inline-start: 0;
-  transform-origin: left center;
-}
-.sideEnd {
-  inset-inline-end: 0;
-  transform-origin: right center;
-}
-:global([dir="rtl"]) .sideStart {
-  transform-origin: right center;
-}
-:global([dir="rtl"]) .sideEnd {
-  transform-origin: left center;
-}
-.connect[data-in] .side {
-  transform: none;
-}
-.cross {
-  position: absolute;
-  left: 50%;
-  top: var(--cy);
-  width: 30px;
-  height: 30px;
-  margin: -15px 0 0 -15px;
-  background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 3px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 3px 100% no-repeat;
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.3);
-  transition:
-    opacity 0.4s var(--ease-out) 0.95s,
-    transform 0.8s var(--ease-out) 0.95s;
-}
-.connect[data-in] .cross {
-  opacity: 1;
-  transform: none;
-}
-.down {
-  left: 50%;
-  top: calc(var(--cy) + 15px);
-  height: var(--drop);
-  width: 2px;
-  margin-left: -1px;
-  background: var(--luna-red);
-  transform: scaleY(0);
-  transform-origin: center top;
-  transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1.35s;
-}
-.connect[data-in] .down {
-  transform: none;
-}
-.cLabel {
-  position: absolute;
-  bottom: 20px;
-  color: #a3a5aa;
-  opacity: 0;
-  transition: opacity 0.6s var(--ease-out) 0.5s;
-}
-.labelStart {
-  inset-inline-start: var(--margin);
-}
-.labelEnd {
-  inset-inline-end: var(--margin);
-}
-.connect[data-in] .cLabel {
-  opacity: 1;
-}
-
 /* --------------------------------------------------------------- CONTACT */
-.page {
-  /* red line from the + down to the contact architecture */
-  --drop: clamp(44px, 6.5vh, 72px);
-}
 .contact {
-  padding-block: calc(var(--drop) + 15px) clamp(90px, 13vh, 150px);
+  padding-bottom: clamp(64px, 10vh, 110px);
 }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: var(--gutter);
-  border-top: 1px solid var(--rule-strong);
-  padding-top: clamp(40px, 6vh, 64px);
+/* the transition signal: a red + and one line drawing out of it */
+.signal {
   position: relative;
+  height: 14px;
+  margin-bottom: clamp(44px, 7vh, 72px);
 }
-.grid::before {
-  /* the + where the connection line meets the contact architecture */
-  content: "";
+.signalPlus {
   position: absolute;
-  left: 50%;
-  top: -7px;
+  inset-inline-start: 0;
+  top: 0;
   width: 14px;
   height: 14px;
-  margin-left: -7px;
-  background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.4);
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.8s var(--ease-out);
 }
-.tag {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  color: var(--soft);
-  font-weight: inherit;
-  margin-bottom: clamp(22px, 3.4vh, 34px);
+.signalLine {
+  position: absolute;
+  inset-inline: 26px 0;
+  top: 6.5px;
+  height: 1px;
+  background: var(--rule-strong);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1) 0.25s;
 }
-.tagNum {
-  color: var(--luna-red);
+:global([dir="rtl"]) .signalLine {
+  transform-origin: right center;
+}
+.signal[data-in] .signalPlus,
+.signal[data-in] .signalLine {
+  opacity: 1;
+  transform: none;
 }
 
 /* direct */
 .direct {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  align-items: end;
+}
+.directHead {
   grid-column: 1 / span 5;
-  padding-inline-end: clamp(0px, 3vw, 48px);
+  display: grid;
+  gap: clamp(14px, 2vh, 22px);
+  font-weight: inherit;
+}
+.directTag {
+  color: var(--soft);
 }
 .directTitle {
-  font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+  font-size: clamp(1.8rem, 3vw, 3.1rem);
   font-weight: 650;
   font-variation-settings: "wght" 650;
   letter-spacing: -0.035em;
-  line-height: 1.05;
+  line-height: 1.02;
+}
+:global(html[lang="ar"]) .directTitle {
+  letter-spacing: 0;
+  line-height: 1.3;
 }
 .mail {
+  grid-column: 7 / -1;
+  justify-self: start;
   display: inline-flex;
   align-items: baseline;
-  gap: 14px;
-  margin-top: clamp(26px, 4vh, 40px);
-  padding-bottom: 10px;
-  border-bottom: 3px solid var(--ink);
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--ink);
   color: var(--ink);
-  font-size: clamp(1.35rem, 2.3vw, 2.4rem);
+  font-size: clamp(1.35rem, 2.5vw, 2.6rem);
   font-weight: 700;
   font-variation-settings: "wght" 700;
   letter-spacing: -0.02em;
@@ -269,53 +189,46 @@
   outline: 1px solid var(--ink);
   outline-offset: 6px;
 }
-.directNote {
-  margin-top: 16px;
-  color: var(--muted);
+
+/* the mineral sheet: square, flat, set into the graphite (not a card) */
+.sheetFrame {
+  margin-top: clamp(56px, 9vh, 96px);
 }
-.sig {
-  margin: clamp(48px, 8vh, 90px) 0 0;
-  padding-top: 18px;
-  border-top: 1px solid var(--rule);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-  display: grid;
-  gap: 6px;
-}
-.sig dd {
-  margin: 0;
-}
-.sigName {
+.sheet {
+  --ink: #141518;
+  --muted: #4f5156;
+  --soft: #6a6c71;
+  --rule: rgba(20, 21, 24, 0.24);
+  --rule-strong: rgba(20, 21, 24, 0.6);
+  position: relative;
+  background: #e4e0d8;
   color: var(--ink);
-}
-:global(html[lang="ar"]) .sig {
-  font-family: var(--font-sans);
-  letter-spacing: 0;
-  font-size: 0.95rem;
-}
-.reply {
-  margin-top: 18px;
-  color: var(--muted);
-  font-size: 0.95rem;
+  padding: clamp(32px, 4.6vw, 72px);
 }
 
-/* structured inquiry */
-.inquiry {
-  grid-column: 7 / -1;
-}
+/* form: topic on one side, the few fields on the other */
 .form {
   display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+.formLead {
+  grid-column: 1 / span 4;
+}
+.formBody {
+  grid-column: 6 / -1;
 }
 .inquiryTitle {
-  font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+  font-size: clamp(1.4rem, 2vw, 2rem);
   font-weight: 650;
   font-variation-settings: "wght" 650;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-  margin-bottom: clamp(22px, 3.4vh, 34px);
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  margin-bottom: clamp(22px, 3.4vh, 32px);
+}
+:global(html[lang="ar"]) .inquiryTitle {
+  letter-spacing: 0;
+  line-height: 1.35;
 }
 
 /* inquiry type: a grid of rules; the red + marks the chosen intersection */
@@ -324,7 +237,6 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   border-top: 1px solid var(--rule-strong);
 }
 .type {
@@ -341,15 +253,6 @@
 }
 :global([dir="rtl"]) .type {
   padding: 12px 0 12px 14px;
-}
-/* odd/even counted among the options (the legend is not a label) */
-.types > .type:nth-of-type(even) {
-  padding-inline-start: 16px;
-  border-inline-start: 1px solid var(--rule);
-}
-.types > .type:nth-of-type(odd) {
-  padding-inline-start: 0;
-  border-inline-start: 0;
 }
 .typeInput {
   position: absolute;
@@ -409,16 +312,12 @@
 /* fields */
 .fields {
   display: grid;
-  gap: clamp(26px, 4vh, 38px);
-  margin-top: clamp(34px, 5vh, 52px);
+  gap: clamp(24px, 3.6vh, 34px);
 }
 .pair {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: var(--gutter);
-}
-.pairGap {
-  display: block;
 }
 .field {
   position: relative;
@@ -451,11 +350,6 @@
 :global(html[lang="ar"]) .opt {
   letter-spacing: 0;
 }
-.hint {
-  margin-top: 6px;
-  color: var(--soft);
-  font-size: 0.9rem;
-}
 .input {
   width: 100%;
   margin-top: 8px;
@@ -480,9 +374,12 @@
   text-align: right;
   unicode-bidi: plaintext;
 }
+/* starts compact, grows with the message */
 .textarea {
   resize: vertical;
-  min-height: 9.5em;
+  field-sizing: content;
+  min-height: 4.8em;
+  max-height: 22em;
   line-height: 1.55;
 }
 /* focus: the rule thickens in ink and a red line draws across it */
@@ -567,9 +464,7 @@
 .submitRow {
   display: grid;
   justify-items: start;
-  margin-top: clamp(30px, 5vh, 48px);
-  padding-top: clamp(22px, 3vh, 30px);
-  border-top: 1px solid var(--rule);
+  margin-top: clamp(28px, 4vh, 40px);
 }
 .privacy {
   max-width: 34em;
@@ -709,45 +604,37 @@
 
 /* --------------------------------------------------------------- CLOSING */
 .closing {
-  padding-block: clamp(40px, 7vh, 80px) clamp(70px, 11vh, 120px);
-}
-.closing .closeLine {
-  background: linear-gradient(90deg, var(--luna-red) 0 64px, var(--rule-strong) 64px);
-}
-:global([dir="rtl"]) .closing .closeLine {
-  background: linear-gradient(270deg, var(--luna-red) 0 64px, var(--rule-strong) 64px);
+  padding-block: 0 clamp(64px, 10vh, 110px);
 }
 .closeRow {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: baseline;
   column-gap: clamp(18px, 3vw, 40px);
-  padding-top: 26px;
+  padding-top: 30px;
 }
 .closeLine {
   position: absolute;
-  inset-inline: var(--margin);
+  inset-inline: calc(var(--margin) + 26px) var(--margin);
   top: 0;
   height: 1px;
   background: var(--rule-strong);
 }
 .closePlus {
   position: absolute;
-  inset-inline-start: calc(var(--margin) - 7px);
-  top: -7px;
+  inset-inline-start: var(--margin);
+  top: -6.5px;
   width: 14px;
   height: 14px;
 }
 .closeName {
-  font-size: 1.08rem;
   font-weight: 700;
   font-variation-settings: "wght" 700;
   letter-spacing: -0.01em;
   text-transform: uppercase;
 }
-.closeMeta,
-.closeCoord {
+.closeMeta {
   font-family: var(--font-data);
   font-size: 0.74rem;
   letter-spacing: 0.16em;
@@ -781,16 +668,23 @@
     grid-column: 1 / span 8;
     margin-top: clamp(20px, 3vh, 30px);
   }
-  .direct,
-  .inquiry {
+  .directHead,
+  .mail {
     grid-column: 1 / -1;
   }
-  .direct {
-    padding-inline-end: 0;
-    margin-bottom: clamp(56px, 8vh, 80px);
+  .mail {
+    margin-top: clamp(28px, 4vh, 40px);
   }
-  .sig {
-    margin-top: 40px;
+  .formLead,
+  .formBody {
+    grid-column: 1 / -1;
+  }
+  .formLead {
+    margin-bottom: clamp(32px, 5vh, 48px);
+  }
+  .types {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--gutter);
   }
 }
 
@@ -804,41 +698,32 @@
   .heroLead {
     grid-column: 1 / -1;
   }
-  .connect {
-    height: 84px;
-    margin-top: 40px;
+  .mail {
+    font-size: clamp(1.05rem, 5.4vw, 1.4rem);
   }
-  .cLabel {
-    bottom: 16px;
+  /* the sheet runs edge to edge on a phone */
+  .sheetFrame {
+    padding-inline: 0;
+  }
+  .sheet {
+    padding: 36px var(--margin) 40px;
   }
   .types {
     grid-template-columns: 1fr;
   }
-  .types > .type:nth-of-type(n) {
-    padding-inline-start: 0;
-    border-inline-start: 0;
-  }
   .pair {
     grid-template-columns: 1fr;
-    row-gap: clamp(26px, 4vh, 38px);
-  }
-  .pairGap {
-    display: none;
-  }
-  .mail {
-    font-size: clamp(1.05rem, 5.4vw, 1.4rem);
+    row-gap: clamp(24px, 3.6vh, 34px);
   }
   .closeRow {
     grid-template-columns: 1fr;
-    row-gap: 10px;
+    row-gap: 8px;
   }
 }
 
 /* ------------------------------------------- REDUCED MOTION / STATIC */
-:global(html.static) .side,
-:global(html.static) .cross,
-:global(html.static) .down,
-:global(html.static) .cLabel {
+:global(html.static) .signalPlus,
+:global(html.static) .signalLine {
   transition: none;
   transform: none;
   opacity: 1;

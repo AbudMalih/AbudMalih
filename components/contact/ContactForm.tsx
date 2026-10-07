@@ -1,17 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type FormEvent as ReactFormEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent as ReactFormEvent,
+} from "react";
 import type { ContactCopy } from "@/content/i18n/contact/types";
 import { CONTACT_EMAIL } from "@/content/site";
-import { INQUIRY_TYPES, WEBSITE_TYPES, normalise, validate, type Errors, type Inquiry, type InquiryType } from "@/lib/contact/schema";
+import {
+  INQUIRY_TYPES,
+  normalise,
+  validate,
+  type Errors,
+  type Inquiry,
+  type InquiryType,
+} from "@/lib/contact/schema";
 import { emitFormEvent } from "@/lib/contact/events";
 import svc from "@/components/services/Services.module.css";
 import s from "./Contact.module.css";
 
 type Status = "idle" | "sending" | "success" | "failure" | "rate";
 
-const EMPTY: Inquiry = { name: "", company: "", email: "", type: "general", website: "", message: "" };
+const EMPTY: Inquiry = {
+  name: "",
+  company: "",
+  email: "",
+  type: "general",
+  message: "",
+};
 
 /**
  * The structured inquiry. Native inputs and radios, real labels, errors next
@@ -19,7 +38,15 @@ const EMPTY: Inquiry = { name: "", company: "", email: "", type: "general", webs
  * Success is shown ONLY when the server confirms delivery (HTTP 200); any
  * other answer keeps the entries and offers the direct e-mail address.
  */
-export default function ContactForm({ copy, locale, privacyHref }: { copy: ContactCopy; locale: string; privacyHref: string }) {
+export default function ContactForm({
+  copy,
+  locale,
+  privacyHref,
+}: {
+  copy: ContactCopy;
+  locale: string;
+  privacyHref: string;
+}) {
   const uid = useId();
   const id = (k: string) => `${uid}-${k}`;
   const [v, setV] = useState<Inquiry>(EMPTY);
@@ -38,7 +65,6 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
     if (status === "success") successRef.current?.focus();
   }, [status]);
 
-  const showWebsite = WEBSITE_TYPES.includes(v.type);
   const set = (k: keyof Inquiry, value: string) => {
     if (!started.current) {
       started.current = true;
@@ -51,7 +77,14 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
   const message = (k: keyof Inquiry): string | null => {
     const e = errors[k];
     if (!e) return null;
-    if (e === "required") return k === "name" ? copy.errors.nameRequired : k === "email" ? copy.errors.emailRequired : k === "message" ? copy.errors.messageRequired : copy.errors.required;
+    if (e === "required")
+      return k === "name"
+        ? copy.errors.nameRequired
+        : k === "email"
+          ? copy.errors.emailRequired
+          : k === "message"
+            ? copy.errors.messageRequired
+            : copy.errors.required;
     return copy.errors[e];
   };
 
@@ -61,7 +94,9 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
     const data = normalise(v);
     const found = validate(data);
     setErrors(found);
-    const first = (["name", "email", "website", "message", "company"] as const).find((k) => found[k]);
+    const first = (["name", "email", "message", "company"] as const).find(
+      (k) => found[k],
+    );
     if (first) {
       emitFormEvent("form_error", { reason: "validation" });
       requestAnimationFrame(() => document.getElementById(id(first))?.focus());
@@ -69,12 +104,19 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
     }
     emitFormEvent("form_submit", { type: data.type });
     setStatus("sending");
-    const fax = (formRef.current?.elements.namedItem("fax") as HTMLInputElement | null)?.value ?? "";
+    const fax =
+      (formRef.current?.elements.namedItem("fax") as HTMLInputElement | null)
+        ?.value ?? "";
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, locale, fax, elapsed: Date.now() - shownAt.current }),
+        body: JSON.stringify({
+          ...data,
+          locale,
+          fax,
+          elapsed: Date.now() - shownAt.current,
+        }),
       });
       if (res.status === 200) {
         setStatus("success");
@@ -98,7 +140,13 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
 
   if (status === "success") {
     return (
-      <div ref={successRef} className={s.success} tabIndex={-1} role="status" aria-live="polite">
+      <div
+        ref={successRef}
+        className={s.success}
+        tabIndex={-1}
+        role="status"
+        aria-live="polite"
+      >
         <span className={s.successLine} aria-hidden="true" />
         <span className={s.successPlus} aria-hidden="true" />
         <p className={`t-label ${s.successTag}`}>{copy.success.tag}</p>
@@ -126,7 +174,12 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
   }
 
   const hasErrors = Object.values(errors).some(Boolean);
-  const field = (k: "name" | "company" | "email" | "website", type: string, auto: string, required: boolean) => {
+  const field = (
+    k: "name" | "company" | "email",
+    type: string,
+    auto: string,
+    required: boolean,
+  ) => {
     const err = message(k);
     return (
       <div className={`${s.field} ${err ? s.fieldError : ""}`}>
@@ -146,8 +199,8 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
           name={k}
           type={type}
           autoComplete={auto}
-          dir={k === "email" || k === "website" ? "ltr" : undefined}
-          inputMode={k === "email" ? "email" : k === "website" ? "url" : undefined}
+          dir={k === "email" ? "ltr" : undefined}
+          inputMode={k === "email" ? "email" : undefined}
           value={v[k]}
           onChange={(e) => set(k, e.target.value)}
           required={required}
@@ -168,105 +221,151 @@ export default function ContactForm({ copy, locale, privacyHref }: { copy: Conta
   };
 
   const msgErr = message("message");
-  const hint = v.type === "supplier" ? copy.fields.hint.supplier : copy.fields.hint.default;
 
   return (
-    <form ref={formRef} className={s.form} onSubmit={submit} noValidate aria-describedby={hasErrors ? id("summary") : undefined}>
-      <p className={s.inquiryTitle} data-reveal>
-        {copy.inquiry.title}
-      </p>
+    <form
+      ref={formRef}
+      className={s.form}
+      onSubmit={submit}
+      noValidate
+      aria-describedby={hasErrors ? id("summary") : undefined}
+    >
+      <div className={s.formLead}>
+        <h2 className={s.inquiryTitle}>{copy.inquiry.title}</h2>
 
-      {/* inquiry type: context, not qualification */}
-      <fieldset className={s.types} data-reveal>
-        <legend className="sr-only">{copy.inquiry.typeLegend}</legend>
-        {INQUIRY_TYPES.map((tp: InquiryType) => (
-          <label key={tp} className={`${s.type} ${v.type === tp ? s.typeOn : ""}`}>
-            <input type="radio" name="type" value={tp} checked={v.type === tp} onChange={() => set("type", tp)} className={s.typeInput} />
-            <span className={s.typePlus} aria-hidden="true" />
-            <span className={s.typeName}>{copy.inquiry.types[tp]}</span>
-          </label>
-        ))}
-      </fieldset>
-
-      <div className={s.fields} data-reveal>
-        <div className={s.pair}>
-          {field("name", "text", "name", true)}
-          {field("company", "text", "organization", false)}
-        </div>
-        <div className={s.pair}>
-          {field("email", "email", "email", true)}
-          {showWebsite ? field("website", "url", "url", false) : <span className={s.pairGap} aria-hidden="true" />}
-        </div>
-
-        <div className={`${s.field} ${s.fieldMessage} ${msgErr ? s.fieldError : ""}`}>
-          <label htmlFor={id("message")} className={s.label}>
-            {copy.fields.message}
-            <span className={s.req}>
-              <span aria-hidden="true">*</span>
-              <span className="sr-only"> ({copy.fields.required})</span>
-            </span>
-          </label>
-          <p id={id("message-hint")} className={s.hint}>
-            {hint}
-          </p>
-          <textarea
-            id={id("message")}
-            name="message"
-            rows={6}
-            value={v.message}
-            onChange={(e) => set("message", e.target.value)}
-            required
-            aria-required
-            aria-invalid={msgErr ? true : undefined}
-            aria-describedby={`${id("message-hint")}${msgErr ? ` ${id("message-err")}` : ""}`}
-            className={`${s.input} ${s.textarea}`}
-          />
-          <span className={s.rule} aria-hidden="true" />
-          {msgErr && (
-            <p id={id("message-err")} className={s.error}>
-              <span className={s.errorMark} aria-hidden="true" />
-              {msgErr}
-            </p>
-          )}
-        </div>
-
-        {/* honeypot: invisible to people and assistive tech, tempting to bots */}
-        <div className={s.hp} aria-hidden="true">
-          <label htmlFor={id("fax")}>Fax</label>
-          <input id={id("fax")} name="fax" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
-        </div>
+        {/* inquiry type: context, not qualification */}
+        <fieldset className={s.types}>
+          <legend className="sr-only">{copy.inquiry.typeLegend}</legend>
+          {INQUIRY_TYPES.map((tp: InquiryType) => (
+            <label
+              key={tp}
+              className={`${s.type} ${v.type === tp ? s.typeOn : ""}`}
+            >
+              <input
+                type="radio"
+                name="type"
+                value={tp}
+                checked={v.type === tp}
+                onChange={() => set("type", tp)}
+                className={s.typeInput}
+              />
+              <span className={s.typePlus} aria-hidden="true" />
+              <span className={s.typeName}>{copy.inquiry.types[tp]}</span>
+            </label>
+          ))}
+        </fieldset>
       </div>
 
-      <div className={s.submitRow}>
-        {hasErrors && (
-          <p id={id("summary")} ref={summaryRef} className={s.summary} role="alert">
-            <span className={s.errorMark} aria-hidden="true" />
-            {copy.errors.summary}
-          </p>
-        )}
-        {(status === "failure" || status === "rate") && (
-          <div className={s.failure} role="alert">
-            <p className={s.failureTitle}>{status === "rate" ? copy.failure.rate : copy.failure.title}</p>
-            {status === "failure" && (
-              <p className={s.failureText}>
-                {copy.failure.text}{" "}
-                <a href={`mailto:${CONTACT_EMAIL}`} dir="ltr" className={s.inlineMail}>
-                  {CONTACT_EMAIL}
-                </a>
+      <div className={s.formBody}>
+        <div className={s.fields}>
+          <div className={s.pair}>
+            {field("name", "text", "name", true)}
+            {field("company", "text", "organization", false)}
+          </div>
+          {field("email", "email", "email", true)}
+
+          <div
+            className={`${s.field} ${s.fieldMessage} ${msgErr ? s.fieldError : ""}`}
+          >
+            <label htmlFor={id("message")} className={s.label}>
+              {copy.fields.message}
+              <span className={s.req}>
+                <span aria-hidden="true">*</span>
+                <span className="sr-only"> ({copy.fields.required})</span>
+              </span>
+            </label>
+            <textarea
+              id={id("message")}
+              name="message"
+              rows={3}
+              value={v.message}
+              onChange={(e) => set("message", e.target.value)}
+              required
+              aria-required
+              aria-invalid={msgErr ? true : undefined}
+              aria-describedby={msgErr ? id("message-err") : undefined}
+              className={`${s.input} ${s.textarea}`}
+            />
+            <span className={s.rule} aria-hidden="true" />
+            {msgErr && (
+              <p id={id("message-err")} className={s.error}>
+                <span className={s.errorMark} aria-hidden="true" />
+                {msgErr}
               </p>
             )}
           </div>
-        )}
-        <p className={s.privacy}>
-          {copy.privacy.text}{" "}
-          <Link href={privacyHref} className={s.privacyLink}>
-            {copy.privacy.link}
-          </Link>
-        </p>
-        <button type="submit" className={`${svc.ctaButton} ${s.submit}`} disabled={status === "sending"} aria-busy={status === "sending" || undefined} data-cursor="invert">
-          <span className={svc.ctaLabel}>{status === "sending" ? copy.submit.sending : status === "failure" ? copy.failure.retry : copy.submit.idle}</span>
-          <span className={`${svc.ctaPlus} ${status === "sending" ? s.plusBusy : ""}`} aria-hidden="true" />
-        </button>
+
+          {/* honeypot: invisible to people and assistive tech, tempting to bots */}
+          <div className={s.hp} aria-hidden="true">
+            <label htmlFor={id("fax")}>Fax</label>
+            <input
+              id={id("fax")}
+              name="fax"
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              defaultValue=""
+            />
+          </div>
+        </div>
+
+        <div className={s.submitRow}>
+          {hasErrors && (
+            <p
+              id={id("summary")}
+              ref={summaryRef}
+              className={s.summary}
+              role="alert"
+            >
+              <span className={s.errorMark} aria-hidden="true" />
+              {copy.errors.summary}
+            </p>
+          )}
+          {(status === "failure" || status === "rate") && (
+            <div className={s.failure} role="alert">
+              <p className={s.failureTitle}>
+                {status === "rate" ? copy.failure.rate : copy.failure.title}
+              </p>
+              {status === "failure" && (
+                <p className={s.failureText}>
+                  {copy.failure.text}{" "}
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    dir="ltr"
+                    className={s.inlineMail}
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
+          <p className={s.privacy}>
+            {copy.privacy.text}{" "}
+            <Link href={privacyHref} className={s.privacyLink}>
+              {copy.privacy.link}
+            </Link>
+          </p>
+          <button
+            type="submit"
+            className={`${svc.ctaButton} ${s.submit}`}
+            disabled={status === "sending"}
+            aria-busy={status === "sending" || undefined}
+            data-cursor="invert"
+          >
+            <span className={svc.ctaLabel}>
+              {status === "sending"
+                ? copy.submit.sending
+                : status === "failure"
+                  ? copy.failure.retry
+                  : copy.submit.idle}
+            </span>
+            <span
+              className={`${svc.ctaPlus} ${status === "sending" ? s.plusBusy : ""}`}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
       </div>
     </form>
   );
