@@ -19,7 +19,13 @@ export default function Footer() {
       <div className={`frame ${styles.inner}`}>
         <div className={styles.top}>
           <Link href={href("/")} aria-label={dict.a11y.home} className={styles.logo} data-cursor="link">
-            <LunaLogo variant="master" height="100%" />
+            <span className={styles.logoPaper}>
+              <LunaLogo variant="master" height="100%" />
+            </span>
+            {/* a page may ask for the graphite footer (Kontakt); the reverse logo serves it */}
+            <span className={styles.logoGraphite} aria-hidden="true">
+              <LunaLogo variant="reverse" height="100%" />
+            </span>
           </Link>
           <p className={styles.statement}>{dict.footer.statement}</p>
         </div>

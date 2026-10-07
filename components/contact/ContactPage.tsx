@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { CONTACT_EMAIL, COMPANY } from "@/content/site";
 import { usePageMotion } from "@/components/services/usePageMotion";
@@ -8,26 +8,35 @@ import ContactForm from "./ContactForm";
 import svc from "@/components/services/Services.module.css";
 import s from "./Contact.module.css";
 
-/* graphite environment; the form is a warm mineral sheet set into it */
+/* one graphite room from the hero to the footer */
 const GRAPHITE = "#151619";
 
 /**
  * KONTAKT / CONTACT: the end point of the visitor journey, a conversion page.
- * A premium company inviting a conversation: graphite hero, the direct e-mail,
- * the inquiry on a mineral sheet, one quiet signature. One red + / line marks
- * the way in and the way out; nothing explains itself.
+ * A premium company inviting a conversation, in one graphite room: the hero,
+ * the direct e-mail, the inquiry drawn straight into the dark, one quiet
+ * signature, and the footer in the same graphite. Only typography, hairlines
+ * and the small red + carry the identity.
  */
 export default function ContactPage() {
   const { dict, locale, href } = useI18n();
   const t = dict.contactPage;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
+  // the footer continues the room on this page only (it stays paper elsewhere)
+  useEffect(() => {
+    const html = document.documentElement;
+    html.dataset.footer = "dark";
+    return () => {
+      delete html.dataset.footer;
+    };
+  }, []);
   const ground = { ["--bg" as string]: GRAPHITE, ["--from" as string]: GRAPHITE };
 
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
       {/* ------------------------------------------------------------ HERO */}
-      <section className={`${svc.section} ${s.hero}`} style={ground} data-tone="dark" aria-labelledby="ct-title">
+      <section className={`${svc.section} ${s.room} ${s.hero}`} style={ground} data-tone="dark" aria-labelledby="ct-title">
         <div className={`frame ${s.heroCopy}`}>
           <p className={`t-label ${s.eyebrow}`} data-reveal>
             <span className={s.idx}>04</span>
@@ -54,7 +63,7 @@ export default function ContactPage() {
       </section>
 
       {/* --------------------------------------------------------- CONTACT */}
-      <section className={`${svc.section} ${s.contact}`} style={ground} data-tone="dark" aria-labelledby="ct-direct">
+      <section className={`${svc.section} ${s.room} ${s.contact}`} style={ground} data-tone="dark" aria-labelledby="ct-direct">
         <div className="frame">
           {/* the one transition signal: a red + and a line drawing out of it */}
           <div className={s.signal} data-reveal aria-hidden="true">
@@ -74,18 +83,15 @@ export default function ContactPage() {
               </span>
             </a>
           </div>
-        </div>
 
-        {/* the mineral sheet: the only light surface on the page */}
-        <div className={`frame ${s.sheetFrame}`}>
-          <div className={s.sheet} data-tone="light">
+          <div className={s.formArea}>
             <ContactForm copy={t} locale={locale} privacyHref={href("/datenschutz")} />
           </div>
         </div>
       </section>
 
       {/* --------------------------------------------------------- CLOSING */}
-      <section className={`${svc.section} ${s.closing}`} style={ground} data-tone="dark" aria-label={COMPANY.legalName}>
+      <section className={`${svc.section} ${s.room} ${s.closing}`} style={ground} data-tone="dark" aria-label={COMPANY.legalName}>
         <div className={`frame ${s.closeRow}`} data-reveal>
           <span className={s.closeLine} aria-hidden="true" />
           <span className={s.closePlus} aria-hidden="true" />
