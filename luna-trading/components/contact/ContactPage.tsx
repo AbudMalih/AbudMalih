@@ -8,29 +8,26 @@ import ContactForm from "./ContactForm";
 import svc from "@/components/services/Services.module.css";
 import s from "./Contact.module.css";
 
-/* graphite shell around a warm mineral workspace; hard, architectural edges
-   (--from = --bg), the red + is the hinge between them */
+/* graphite environment; the form is a warm mineral sheet set into it */
 const GRAPHITE = "#151619";
-const MINERAL = "#e4e0d8";
 
 /**
  * KONTAKT / CONTACT: the end point of the visitor journey, a conversion page.
- * Graphite shell, warm mineral workspace, red connection signal. Two metallic
- * lines (your business, Luna Trading) meet at the red + on the edge between
- * the graphite hero and the mineral contact area; one red line continues down. Direct e-mail and the structured
- * inquiry stand side by side; a quiet signature closes the page. Typography is
- * planted: only lines and the + move.
+ * A premium company inviting a conversation: graphite hero, the direct e-mail,
+ * the inquiry on a mineral sheet, one quiet signature. One red + / line marks
+ * the way in and the way out; nothing explains itself.
  */
 export default function ContactPage() {
   const { dict, locale, href } = useI18n();
   const t = dict.contactPage;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
+  const ground = { ["--bg" as string]: GRAPHITE, ["--from" as string]: GRAPHITE };
 
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
       {/* ------------------------------------------------------------ HERO */}
-      <section className={`${svc.section} ${s.hero}`} style={{ ["--bg" as string]: GRAPHITE, ["--from" as string]: GRAPHITE }} data-tone="dark" aria-labelledby="ct-title">
+      <section className={`${svc.section} ${s.hero}`} style={ground} data-tone="dark" aria-labelledby="ct-title">
         <div className={`frame ${s.heroCopy}`}>
           <p className={`t-label ${s.eyebrow}`} data-reveal>
             <span className={s.idx}>04</span>
@@ -54,64 +51,41 @@ export default function ContactPage() {
             {t.hero.lead}
           </p>
         </div>
-
-        {/* the connection: two sides meet at the +, one line continues */}
-        <div className={s.connect} data-reveal aria-hidden="true">
-          <span className={`${s.side} ${s.sideStart}`} />
-          <span className={`${s.side} ${s.sideEnd}`} />
-          <span className={s.cross} />
-          <span className={s.down} />
-          <span className={`t-label ${s.cLabel} ${s.labelStart}`}>{t.hero.you}</span>
-          <span className={`t-label ${s.cLabel} ${s.labelEnd}`}>{t.hero.luna}</span>
-        </div>
       </section>
 
       {/* --------------------------------------------------------- CONTACT */}
-      <section className={`${svc.section} ${s.contact}`} style={{ ["--bg" as string]: MINERAL, ["--from" as string]: MINERAL }} data-tone="light" aria-label={t.hero.eyebrow}>
-        <div className={`frame ${s.grid}`}>
-          {/* direct */}
+      <section className={`${svc.section} ${s.contact}`} style={ground} data-tone="dark" aria-labelledby="ct-direct">
+        <div className="frame">
+          {/* the one transition signal: a red + and a line drawing out of it */}
+          <div className={s.signal} data-reveal aria-hidden="true">
+            <span className={s.signalPlus} />
+            <span className={s.signalLine} />
+          </div>
+
           <div className={s.direct} data-reveal>
-            <h2 className={`t-label ${s.tag}`}>
-              <span className={s.tagNum}>A</span> {t.direct.tag}
+            <h2 id="ct-direct" className={s.directHead}>
+              <span className={`t-label ${s.directTag}`}>{t.direct.tag}</span>
+              <span className={s.directTitle}>{t.direct.title}</span>
             </h2>
-            <p className={s.directTitle}>{t.direct.title}</p>
             <a href={`mailto:${CONTACT_EMAIL}`} className={s.mail} dir="ltr" data-cursor="link">
               <span className={s.mailText}>{CONTACT_EMAIL}</span>
               <span className={s.mailArrow} aria-hidden="true">
                 →
               </span>
             </a>
-            <p className={s.directNote}>{t.direct.note}</p>
-
-            <dl className={s.sig}>
-              <div>
-                <dt className="sr-only">{dict.companyPage.facts.rows[0].k}</dt>
-                <dd className={s.sigName}>{COMPANY.legalName}</dd>
-              </div>
-              <div>
-                <dt className="sr-only">{dict.companyPage.facts.rows[1].k}</dt>
-                <dd>{dict.companyPage.profile.city}</dd>
-              </div>
-              <div>
-                <dt className="sr-only">{dict.companyPage.facts.rows[2].k}</dt>
-                <dd>{dict.companyPage.profile.country}</dd>
-              </div>
-            </dl>
-            <p className={s.reply}>{t.direct.reply}</p>
           </div>
+        </div>
 
-          {/* structured inquiry */}
-          <div className={s.inquiry}>
-            <h2 className={`t-label ${s.tag}`} data-reveal>
-              <span className={s.tagNum}>B</span> {t.inquiry.tag}
-            </h2>
+        {/* the mineral sheet: the only light surface on the page */}
+        <div className={`frame ${s.sheetFrame}`}>
+          <div className={s.sheet} data-tone="light">
             <ContactForm copy={t} locale={locale} privacyHref={href("/datenschutz")} />
           </div>
         </div>
       </section>
 
       {/* --------------------------------------------------------- CLOSING */}
-      <section className={`${svc.section} ${s.closing}`} style={{ ["--bg" as string]: GRAPHITE, ["--from" as string]: GRAPHITE }} data-tone="dark" aria-label={COMPANY.legalName}>
+      <section className={`${svc.section} ${s.closing}`} style={ground} data-tone="dark" aria-label={COMPANY.legalName}>
         <div className={`frame ${s.closeRow}`} data-reveal>
           <span className={s.closeLine} aria-hidden="true" />
           <span className={s.closePlus} aria-hidden="true" />
@@ -120,9 +94,6 @@ export default function ContactPage() {
           <a href={`mailto:${CONTACT_EMAIL}`} className={s.closeMail} dir="ltr">
             {CONTACT_EMAIL}
           </a>
-          <p className={s.closeCoord} dir="ltr" aria-hidden="true">
-            50.94° N · 6.96° E
-          </p>
         </div>
       </section>
     </article>
