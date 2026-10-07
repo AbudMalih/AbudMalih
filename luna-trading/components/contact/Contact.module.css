@@ -1,13 +1,17 @@
 /* KONTAKT / CONTACT
-   A premium company inviting a conversation. Graphite environment, one warm
-   mineral sheet for the form, one red + / line as the signal in and out.
+   One graphite room: hero, direct e-mail, the inquiry drawn straight into the
+   dark, a quiet signature, then the footer in the same graphite. Hierarchy
+   comes from tone (off-white, silver, muted silver), hairlines and the red +.
    Shell, tones, reveals and the button come from the approved system
    (Services.module.css). Typography is planted; only lines and the + move. */
 
 .page [data-tone="dark"] {
-  --rule: rgba(214, 216, 220, 0.18);
-  --rule-strong: rgba(214, 216, 220, 0.42);
+  --rule: rgba(214, 216, 220, 0.16);
+  --rule-strong: rgba(214, 216, 220, 0.34);
   --ink: #ecebe6;
+  --muted: #b3b5ba;
+  --soft: #8a8c91;
+  --err: #f0838a;
 }
 .dim {
   color: #8d8f94;
@@ -27,18 +31,22 @@
 /* ------------------------------------------------------------------ HERO */
 .hero {
   padding-top: calc(var(--safe-top) + clamp(30px, 8vh, 110px));
-  padding-bottom: clamp(64px, 11vh, 120px);
+  padding-bottom: clamp(56px, 9vh, 100px);
 }
-.hero::after {
+/* the same graphite throughout: a brushed-metal grain on every section and
+   one faint charcoal lift over the hero, so no edge between them shows */
+.room::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  /* graphite, not flat black: a faint charcoal lift and a brushed-metal grain */
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
-    radial-gradient(90% 80% at 82% 0%, rgba(120, 124, 132, 0.16), transparent 70%);
+    var(--lift, linear-gradient(transparent, transparent)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px);
+}
+.hero {
+  --lift: radial-gradient(90% 80% at 82% 0%, rgba(120, 124, 132, 0.16), transparent 70%);
 }
 .heroCopy {
   display: grid;
@@ -87,7 +95,7 @@
 
 /* --------------------------------------------------------------- CONTACT */
 .contact {
-  padding-bottom: clamp(64px, 10vh, 110px);
+  padding-bottom: clamp(72px, 11vh, 120px);
 }
 /* the transition signal: a red + and one line drawing out of it */
 .signal {
@@ -190,24 +198,14 @@
   outline-offset: 6px;
 }
 
-/* the mineral sheet: square, flat, set into the graphite (not a card) */
-.sheetFrame {
-  margin-top: clamp(56px, 9vh, 96px);
-}
-.sheet {
-  --ink: #141518;
-  --muted: #4f5156;
-  --soft: #6a6c71;
-  --rule: rgba(20, 21, 24, 0.24);
-  --rule-strong: rgba(20, 21, 24, 0.6);
-  position: relative;
-  background: #e4e0d8;
-  color: var(--ink);
-  padding: clamp(32px, 4.6vw, 72px);
+/* the inquiry, drawn straight into the room */
+.formArea {
+  margin-top: clamp(88px, 13vh, 140px);
 }
 
 /* form: topic on one side, the few fields on the other */
 .form {
+  color-scheme: dark;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   column-gap: var(--gutter);
@@ -237,7 +235,7 @@
   margin: 0;
   padding: 0;
   display: grid;
-  border-top: 1px solid var(--rule-strong);
+  border-top: 1px solid var(--rule);
 }
 .type {
   position: relative;
@@ -248,7 +246,7 @@
   padding: 12px 14px 12px 0;
   border-bottom: 1px solid var(--rule);
   cursor: pointer;
-  color: #3c3d42;
+  color: var(--soft);
   transition: color 0.25s var(--ease-out);
 }
 :global([dir="rtl"]) .type {
@@ -301,7 +299,7 @@
   position: absolute;
   inset-inline: 0;
   bottom: -1px;
-  height: 3px;
+  height: 2px;
   background: var(--ink);
 }
 .type:has(.typeInput:focus-visible) {
@@ -332,7 +330,8 @@
   font-size: 0.74rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--muted);
+  transition: color 0.25s var(--ease-out);
 }
 :global(html[lang="ar"]) .label {
   font-family: var(--font-sans);
@@ -406,7 +405,12 @@
 }
 .input:focus {
   border-bottom-color: var(--ink);
-  background: rgba(255, 255, 255, 0.22);
+}
+/* keep browser autofill inside the room */
+.input:-webkit-autofill {
+  -webkit-text-fill-color: var(--ink);
+  box-shadow: 0 0 0 1000px #151619 inset;
+  caret-color: var(--ink);
 }
 .input:focus + .rule::before {
   transform: scaleX(1);
@@ -427,7 +431,7 @@
 /* errors: a message next to the field, a dashed rule (not colour alone) */
 .fieldError .input {
   border-bottom-style: dashed;
-  border-bottom-color: #8f0110;
+  border-bottom-color: var(--luna-red);
 }
 .error,
 .summary {
@@ -435,7 +439,7 @@
   align-items: baseline;
   gap: 10px;
   margin-top: 10px;
-  color: #7d0010;
+  color: var(--err);
   font-size: 0.92rem;
   font-weight: 500;
   font-variation-settings: "wght" 500;
@@ -482,12 +486,11 @@
 .privacyLink:focus-visible {
   border-color: var(--luna-red);
 }
-/* graphite on mineral; the red fill still sweeps in on hover / focus */
+/* the approved CTA on graphite: a hairline frame, the red fill sweeps in */
 .submit {
-  --cta-line: #151619;
+  --cta-line: rgba(236, 235, 230, 0.4);
   cursor: pointer;
-  background: #151619;
-  color: #ecebe6;
+  background: transparent;
   font-family: inherit;
 }
 .submit:disabled {
@@ -603,8 +606,9 @@
 }
 
 /* --------------------------------------------------------------- CLOSING */
+/* the footer's own top space finishes the room */
 .closing {
-  padding-block: 0 clamp(64px, 10vh, 110px);
+  padding-block: 0 clamp(8px, 2vh, 24px);
 }
 .closeRow {
   position: relative;
@@ -700,13 +704,6 @@
   }
   .mail {
     font-size: clamp(1.05rem, 5.4vw, 1.4rem);
-  }
-  /* the sheet runs edge to edge on a phone */
-  .sheetFrame {
-    padding-inline: 0;
-  }
-  .sheet {
-    padding: 36px var(--margin) 40px;
   }
   .types {
     grid-template-columns: 1fr;

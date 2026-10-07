@@ -24,6 +24,14 @@
 .logo img {
   height: 100% !important;
 }
+.logoPaper,
+.logoGraphite {
+  display: block;
+  height: 100%;
+}
+.logoGraphite {
+  display: none;
+}
 .statement {
   grid-column: 8 / span 5;
   font-size: var(--fs-lead);
@@ -77,4 +85,31 @@
   .cols {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* graphite variant, requested by a page through html[data-footer="dark"]
+   (Kontakt): the same footer, continuing that page's dark room */
+:global(html[data-footer="dark"]) .footer {
+  /* same graphite and brushed grain as the page above it */
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px),
+    #151619;
+  color: #ecebe6;
+}
+:global(html[data-footer="dark"]) .logoPaper {
+  display: none;
+}
+:global(html[data-footer="dark"]) .logoGraphite {
+  display: block;
+}
+:global(html[data-footer="dark"]) .statement {
+  color: #b3b5ba;
+}
+:global(html[data-footer="dark"]) .top,
+:global(html[data-footer="dark"]) .bottom {
+  border-color: rgba(214, 216, 220, 0.14);
+}
+:global(html[data-footer="dark"]) .h,
+:global(html[data-footer="dark"]) .bottom {
+  color: #8d8f94;
 }
