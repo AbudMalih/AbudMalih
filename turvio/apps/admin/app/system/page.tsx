@@ -1,36 +1,53 @@
-import { Badge } from "@turvio/web-ui";
+import { Badge, Card, PageHeader, cn, type BadgeTone } from "@turvio/web-ui/ds";
+import { CreditCard, Database, KeyRound, Map, Route, ShieldCheck, Unplug, type LucideIcon } from "lucide-react";
+import type { Metadata } from "next";
 import { AdminShell } from "../../components/AdminShell";
 
-const CHECKS: { name: string; state: "off" | "dev" | "todo"; note: string }[] = [
-  { name: "Stripe Billing", state: "off", note: "Payments intentionally disabled. Plans/subscriptions are managed manually." },
-  { name: "Supabase Auth", state: "todo", note: "Schema, RLS and API token verification ready; login UI not yet connected." },
-  { name: "Optimizer (OR-Tools)", state: "dev", note: "Runs as an internal service; travel times are straight-line estimates unless OSRM_URL is set." },
-  { name: "Routing engine (OSRM)", state: "todo", note: "Self-hosted OSRM with Germany extract planned." },
-  { name: "Carrier integrations (e.g. DHL)", state: "off", note: "Not connected. Requires written authorization before any integration." },
+export const metadata: Metadata = { title: "System status" };
+
+type State = "ready" | "dev" | "todo" | "off";
+
+const STATE: Record<State, { label: string; tone: BadgeTone }> = {
+  ready: { label: "Ready", tone: "success" },
+  dev: { label: "Development", tone: "brand" },
+  todo: { label: "Not yet connected", tone: "warning" },
+  off: { label: "Disabled", tone: "neutral" },
+};
+
+const COMPONENTS: { name: string; icon: LucideIcon; state: State; note: string }[] = [
+  { name: "Tenant isolation", icon: ShieldCheck, state: "ready", note: "Row Level Security on every table, composite tenant keys, API tenant checks. Covered by automated tests." },
+  { name: "Database schema", icon: Database, state: "dev", note: "Migrations ready; Supabase project (EU region) not provisioned yet." },
+  { name: "Authentication", icon: KeyRound, state: "todo", note: "API verifies Supabase tokens. Login screens and MFA for platform admins are the next milestone." },
+  { name: "Route optimizer", icon: Route, state: "dev", note: "OR-Tools service. Travel times are straight-line estimates until a routing engine (OSRM) is configured." },
+  { name: "Maps & geocoding", icon: Map, state: "todo", note: "Production tile and geocoding provider not chosen. Public OSM tiles are for development only." },
+  { name: "Stripe Billing", icon: CreditCard, state: "off", note: "Payments intentionally disabled. Subscriptions are managed manually." },
+  { name: "Carrier integrations (e.g. DHL)", icon: Unplug, state: "off", note: "Not connected. Requires written authorization before any integration." },
 ];
 
 export default function SystemPage() {
   return (
-    <AdminShell current="/system">
-      <h1>System</h1>
-      <div className="card table-wrap">
-        <table>
-          <thead><tr><th>Component</th><th>State</th><th>Notes</th></tr></thead>
-          <tbody>
-            {CHECKS.map((c) => (
-              <tr key={c.name}>
-                <td>{c.name}</td>
-                <td>
-                  <Badge tone={c.state === "off" ? "neutral" : c.state === "dev" ? "primary" : "warning"}>
-                    {c.state === "off" ? "disabled" : c.state === "dev" ? "development" : "not yet implemented"}
-                  </Badge>
-                </td>
-                <td className="muted">{c.note}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <AdminShell crumbs={[{ label: "Platform", href: "/" }, { label: "System status" }]}>
+      <PageHeader title="System status" description="Readiness of platform components. This is a static checklist maintained with the code, not live monitoring." />
+      <Card className="divide-y divide-line">
+        {COMPONENTS.map((c) => {
+          const Icon = c.icon;
+          const s = STATE[c.state];
+          return (
+            <div key={c.name} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+              <span className={cn("inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-line bg-surface-2/60 text-ink-2")}>
+                <Icon className="size-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-ink">{c.name}</div>
+                <p className="mt-0.5 text-[13px] text-muted">{c.note}</p>
+              </div>
+              <Badge tone={s.tone} dot className="self-start sm:self-center">
+                {s.label}
+              </Badge>
+            </div>
+          );
+        })}
+      </Card>
     </AdminShell>
   );
 }

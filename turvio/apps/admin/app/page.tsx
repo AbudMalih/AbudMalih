@@ -1,45 +1,70 @@
-import { Badge, Kpi } from "@turvio/web-ui";
+import { KpiCard, PageHeader, Sparkline } from "@turvio/web-ui/ds";
+import { Building2, CircleCheck, Hourglass, TrendingUp, Truck, Wallet } from "lucide-react";
+import { ActivityPanel } from "../components/ActivityPanel";
 import { AdminShell } from "../components/AdminShell";
-import { listTenants } from "../lib/data";
+import { CompanyTable } from "../components/CompanyTable";
+import { activityFeed, platformKpis, platformTenants, toRow } from "../lib/platform";
 
+// Data is evaluated per request so dates and trial states are current.
 export const dynamic = "force-dynamic";
 
-const STATUS_TONE = { active: "success", trialing: "primary", past_due: "warning", suspended: "danger", cancelled: "neutral", incomplete: "warning" } as const;
+const eur = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
 
-export default function CompaniesPage() {
-  const tenants = listTenants();
+export default function DashboardPage() {
+  const now = new Date();
+  const records = platformTenants(now);
+  const rows = records.map((r) => toRow(r, now));
+  const kpi = platformKpis(records, now);
+  const events = activityFeed(records, now);
+
   return (
-    <AdminShell current="/">
-      <h1>Companies</h1>
-      <div className="grid">
-        <Kpi label="Tenants" value={tenants.length} />
-        <Kpi label="Active subscriptions" value={tenants.filter((t) => t.subscription?.status === "active").length} />
-        <Kpi label="In trial" value={tenants.filter((t) => t.subscription?.status === "trialing").length} />
-      </div>
-      <div className="card table-wrap">
-        <table>
-          <thead>
-            <tr><th>Company</th><th>Status</th><th>Plan</th><th>Billing</th><th>Drivers</th><th>Trial / period end</th></tr>
-          </thead>
-          <tbody>
-            {tenants.map((t) => (
-              <tr key={t.org.id}>
-                <td>
-                  {t.org.name}
-                  <div className="muted">{t.org.slug} · {t.org.countryCode}</div>
-                </td>
-                <td>
-                  <Badge tone={STATUS_TONE[t.org.status]}>{t.org.status}</Badge>
-                  {!t.usable && <div><Badge tone="danger">blocked</Badge></div>}
-                </td>
-                <td>{t.plan?.name ?? "–"}</td>
-                <td>{t.subscription ? `${t.subscription.interval === "month" ? "Monthly" : "Annual"} · ${t.subscription.seats} seats` : "–"}</td>
-                <td>{t.activeDrivers} / {t.driverLimit ?? "∞"}</td>
-                <td>{t.subscription?.trialEndsAt?.slice(0, 10) ?? t.subscription?.currentPeriodEnd.slice(0, 10) ?? "–"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <AdminShell crumbs={[{ label: "Platform", href: "/" }, { label: "Dashboard" }]}>
+      <PageHeader
+        title="Platform overview"
+        description="Companies, subscriptions and usage across all TURVIO tenants. Figures are computed from synthetic demo records."
+      />
+
+      <section aria-label="Key metrics" className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
+        <KpiCard
+          label="Companies"
+          value={kpi.companies}
+          icon={<Building2 />}
+          accent="navy"
+          trend={{ delta: kpi.newLast30, label: "new in 30 days" }}
+        />
+        <KpiCard
+          label="Active subscriptions"
+          value={kpi.activeSubscriptions}
+          icon={<CircleCheck />}
+          accent="success"
+          footnote={kpi.pastDue > 0 ? `${kpi.pastDue} past due` : "none past due"}
+        />
+        <KpiCard
+          label="Trial accounts"
+          value={kpi.trials}
+          icon={<Hourglass />}
+          accent="warning"
+          footnote={`${kpi.trialsEndingSoon} ending within 7 days`}
+        />
+        <KpiCard
+          label="Monthly recurring revenue"
+          value={kpi.mrrCents === null ? <span className="text-subtle">—</span> : eur.format(kpi.mrrCents / 100)}
+          icon={<Wallet />}
+          footnote={kpi.mrrCents === null ? "Plan prices not configured · payments off" : "from active subscriptions"}
+        />
+        <KpiCard label="Active drivers" value={kpi.activeDrivers} icon={<Truck />} footnote="in companies with access" />
+        <KpiCard
+          label="Subscription growth"
+          value={`+${kpi.newLast30}`}
+          icon={<TrendingUp />}
+          trend={{ delta: kpi.newLast30 - kpi.newPrev30, label: "vs. previous 30 days" }}
+          sparkline={<Sparkline values={kpi.companiesByMonth} label={`Companies over the last 6 months: ${kpi.companiesByMonth.join(", ")}`} />}
+        />
+      </section>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        <CompanyTable rows={rows} now={now.getTime()} />
+        <ActivityPanel events={events} now={now} />
       </div>
     </AdminShell>
   );

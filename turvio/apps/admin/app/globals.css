@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@turvio/web-ui/ds/tokens.css";
+
+/* Let Tailwind see classes used inside the shared design-system package. */
+@source "../../../packages/web-ui/src/ds";

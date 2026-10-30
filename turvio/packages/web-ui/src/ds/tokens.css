@@ -1,0 +1,108 @@
+/*
+ * TURVIO design tokens (Tailwind CSS v4 theme).
+ * Mobile counterpart: packages/shared/src/theme.ts – keep values in sync.
+ *
+ * Usage in an app's globals.css:
+ *   @import "tailwindcss";
+ *   @import "tw-animate-css";
+ *   @import "@turvio/web-ui/ds/tokens.css";
+ *   @source "<path>/packages/web-ui/src/ds";
+ */
+
+@theme {
+  /* Typography – Geist is loaded by each app via next/font (CSS variables). */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Brand */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-navy: #0f172a;
+  --color-navy-800: #1e293b;
+
+  /* Neutrals / surfaces */
+  --color-canvas: #f8fafc;        /* app background */
+  --color-surface: #ffffff;       /* cards, panels */
+  --color-surface-2: #f1f5f9;     /* secondary surface, hovers */
+  --color-surface-3: #e9eef5;
+  --color-line: #e2e8f0;          /* borders */
+  --color-line-strong: #cbd5e1;
+  --color-ink: #0f172a;           /* primary text */
+  --color-ink-2: #334155;
+  --color-muted: #64748b;         /* secondary text */
+  --color-subtle: #94a3b8;
+
+  /* Status */
+  --color-success: #10b981;
+  --color-success-ink: #047857;
+  --color-success-soft: #ecfdf5;
+  --color-warning: #f59e0b;
+  --color-warning-ink: #b45309;
+  --color-warning-soft: #fffbeb;
+  --color-danger: #ef4444;
+  --color-danger-ink: #b91c1c;
+  --color-danger-soft: #fef2f2;
+  --color-info-soft: #eff6ff;
+
+  /* Type scale (size / line-height) */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Elevation – soft, layered, cool-tinted */
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.03);
+  --shadow-raised: 0 1px 2px 0 rgb(15 23 42 / 0.05), 0 4px 12px -2px rgb(15 23 42 / 0.06);
+  --shadow-overlay: 0 10px 38px -10px rgb(15 23 42 / 0.25), 0 10px 20px -15px rgb(15 23 42 / 0.15);
+  --shadow-focus: 0 0 0 3px rgb(37 99 235 / 0.18);
+
+  /* Motion */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 260ms;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+  }
+  ::selection {
+    background: var(--color-brand-100);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

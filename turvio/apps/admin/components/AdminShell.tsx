@@ -1,19 +1,41 @@
-import { Shell } from "@turvio/web-ui";
+"use client";
+
+import { AppShell, type Crumb, type NavGroup } from "@turvio/web-ui/ds";
+import { Activity, Building2, CreditCard, LayoutDashboard, Server } from "lucide-react";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-const NAV = [
-  { href: "/", label: "Companies" },
-  { href: "/plans", label: "Plans & limits" },
-  { href: "/system", label: "System" },
+const GROUPS: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      { href: "/", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/#companies", label: "Companies", icon: Building2 },
+      { href: "/#activity", label: "Activity", icon: Activity },
+    ],
+  },
+  { label: "Commercial", items: [{ href: "/plans", label: "Plans & limits", icon: CreditCard }] },
+  { label: "Platform", items: [{ href: "/system", label: "System status", icon: Server }] },
 ];
 
-export function AdminShell({ current, children }: { current: string; children: ReactNode }) {
+export function AdminShell({ crumbs, actions, children }: { crumbs: Crumb[]; actions?: ReactNode; children: ReactNode }) {
+  const pathname = usePathname() ?? "/";
   return (
-    <Shell product="Platform Admin" nav={NAV} current={current} footer="Lunapact Technologies">
-      <div className="banner" role="note">
-        Development mode: synthetic tenants, platform-admin login not yet connected. Payments are disabled.
-      </div>
+    <AppShell
+      product="Platform Admin"
+      groups={GROUPS}
+      current={pathname}
+      workspaces={[
+        { id: "dev", name: "TURVIO Platform", detail: "Development · Lunapact", current: true },
+        { id: "prod", name: "TURVIO Production", detail: "Not provisioned yet", disabled: true, disabledHint: "Soon" },
+      ]}
+      user={{ name: "Platform Admin", email: "admin@dev.turvio.invalid", role: "Platform admin · dev" }}
+      userNote="Development identity. Platform-admin login (Supabase Auth + MFA) is not connected yet."
+      crumbs={crumbs}
+      headerActions={actions}
+      environment="Development · synthetic data"
+    >
       {children}
-    </Shell>
+    </AppShell>
   );
 }
