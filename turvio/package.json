@@ -1,0 +1,19 @@
+{
+  "name": "turvio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TURVIO – route optimization and delivery management platform for JARBOU Logistik GmbH",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:dispatch": "pnpm --filter @turvio/dispatch dev",
+    "dev:driver": "pnpm --filter @turvio/driver start",
+    "dev:api": "pnpm --filter @turvio/api dev",
+    "build": "pnpm -r --filter=!@turvio/driver build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  }
+}

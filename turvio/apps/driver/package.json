@@ -1,0 +1,51 @@
+{
+  "name": "@turvio/driver",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "expo": "~58.0.21",
+    "expo-status-bar": "~58.0.4",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "@turvio/shared": "workspace:*",
+    "expo-router": "~58.0.28",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "expo-linking": "~58.0.15",
+    "expo-constants": "~58.0.14",
+    "expo-localization": "~58.0.5",
+    "react-native-maps": "1.29.11",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "zustand": "^5.0.16",
+    "@expo/vector-icons": "^15.0.2",
+    "expo-font": "~58.0.11"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0",
+    "typescript": "~6.0.3",
+    "jest-expo": "~58.0.13",
+    "jest": "^30.2.0",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "^30.0.0",
+    "@react-native/jest-preset": "^0.88.1",
+    "test-renderer": "^1.0.0"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "lint": "tsc --noEmit"
+  },
+  "private": true,
+  "jest": {
+    "preset": "jest-expo",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.tsx"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|expo-router|react-navigation|@react-navigation/.*|react-native-maps|zustand|@turvio/.*))"
+    ]
+  }
+}

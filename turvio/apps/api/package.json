@@ -1,0 +1,26 @@
+{
+  "name": "@turvio/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TURVIO API: tenant-aware auth, permissions, optimization gateway",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@turvio/shared": "workspace:*",
+    "fastify": "^5.12.7",
+    "jose": "^6.2.3",
+    "tsx": "^4.21.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}
