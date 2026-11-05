@@ -20,15 +20,21 @@ export const LIMITS = { name: 120, company: 160, email: 254, message: 5000, mess
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/* single-line fields (they also reach the e-mail subject): no control
+   characters at all, so nothing can break a header line */
+const oneLine = (v: string) => v.replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ").replace(/\s{2,}/g, " ").trim();
+/* the message keeps its line breaks and tabs, nothing else */
+const multiLine = (v: string) => v.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]+/g, "").trim();
+
 export function normalise(raw: Partial<Record<keyof Inquiry, unknown>>): Inquiry {
-  const s = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const s = (v: unknown) => (typeof v === "string" ? v : "");
   const type = INQUIRY_TYPES.includes(raw.type as InquiryType) ? (raw.type as InquiryType) : "general";
   return {
-    name: s(raw.name),
-    company: s(raw.company),
-    email: s(raw.email),
+    name: oneLine(s(raw.name)),
+    company: oneLine(s(raw.company)),
+    email: s(raw.email).trim(),
     type,
-    message: s(raw.message),
+    message: multiLine(s(raw.message)),
   };
 }
 
