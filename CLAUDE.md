@@ -14,7 +14,11 @@
 
 ## Branches
 
-- Main website branch: `claude/fervent-hopper-gibb4h` (Vercel production).
+- **`main`** is the website's main branch (GitHub default branch and Vercel
+  Production Branch). Start feature work from `main`; changes reach `main`
+  through a reviewed merge, never a force-push.
+- `claude/fervent-hopper-gibb4h` is the branch `main` was created from
+  (same history); keep it until the owner decides otherwise.
 - Other `claude/*` branches hold separate projects (Luna Trading website,
   JARBOU Recruiting Command Center, TURVIO). They are not versions of this
   website. Do not merge them into `web/` and do not delete them.
@@ -24,7 +28,8 @@
 - Editable content is typed in `web/src/content/*` (jobs, locations,
   services, legal, …); see `web/README.md` → "Inhalte pflegen".
 - Never invent legal information, salaries, addresses, vacancies or
-  statistics. Jobs are public only with `status: "published"`.
+  statistics. Jobs are public only with `status: "published"` and
+  `confirmed: true`. Launch approvals: `web/LAUNCH-CHECKLIST.md`.
 
 ## Rules that always apply
 

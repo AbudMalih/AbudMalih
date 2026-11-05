@@ -68,7 +68,7 @@ Alle Inhalte liegen typisiert in `src/content/*.ts` (`types.ts` beschreibt das M
 |---|---|---|
 | `company.ts` | Firmendaten & Kennzahlen (2019, 160+, 180+, 25) | Nur bestätigte Zahlen eintragen |
 | `locations.ts` | Bremen, Hannover, Köln, Magdeburg, Kassel, Haiger, Erfurt, Suhl, Zwickau | `type: null` = noch nicht bestätigt → nur der Ortsname wird angezeigt |
-| `jobs.ts` | Fahrer DHL Express Hannover, Disponent Hannover | `status: "published"` + `validThrough` steuern Sichtbarkeit; Filter, Sitemap, JobPosting und Formularoptionen leiten sich automatisch ab. Leere Listen (z. B. Anforderungen) werden ausgeblendet. |
+| `jobs.ts` | Fahrer DHL Express Hannover, Disponent Hannover | Öffentlich nur mit `status: "published"` **und** `confirmed: true` (Freigabe durch die Geschäftsführung), solange `validThrough` nicht abgelaufen ist; Filter, Sitemap, JobPosting und Formularoptionen leiten sich automatisch ab. Leere Listen (z. B. Anforderungen) werden ausgeblendet. |
 | `services.ts` | 6 Leistungen + 5 Prozessschritte | |
 | `media.ts` | Bild-Slots für Leistungen | Alle `placeholder: true` – siehe unten |
 | `partners.ts` | Partnerlogos | Sektion erscheint erst mit `publicUseApproved: true` + Logo-Datei |
@@ -137,6 +137,10 @@ In `src/content/media.ts` sind Plätze für LKW, Transporter, Fahrer, Dispositio
 
 - Cookie-Banner unterscheidet *notwendig / Statistik / Marketing*. Aktuell sind **keine** optionalen Dienste eingebunden (`optionalTechnologies` in `src/lib/consent.ts` ist leer); neue Dienste dürfen nur über diese Liste geladen werden.
 - Impressum und Datenschutz sind **Platzhalter** und müssen von JARBOU geliefert und rechtlich geprüft werden.
+
+## Launch-Freigabe
+
+Alle Punkte, die vor dem Livegang freigegeben werden müssen (Recht, Inhalte, Stellen, Logos, Formulare, Domain, Vercel): **[LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md)**.
 
 ## Offene Punkte (von JARBOU zu liefern / zu bestätigen)
 

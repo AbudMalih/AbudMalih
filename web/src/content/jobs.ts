@@ -7,8 +7,10 @@ import type { EmploymentType, Job, PositionCategory } from "./types";
  * locations (Bremen, Köln, Kassel, Haiger, Erfurt, Suhl, Zwickau, Magdeburg)
  * are NOT vacancies – add a posting only when a position is actually open.
  *
- * A job is public when `status === "published"` and `validThrough` (if set)
- * has not passed. Empty lists are hidden on the job page – never fill them
+ * A job is public only when `status === "published"`, `confirmed === true`
+ * (approved by JARBOU management) and `validThrough` (if set) has not passed.
+ * This one rule drives the job board, job pages, sitemap, JobPosting data,
+ * the application form's position list and the application API. Empty lists are hidden on the job page – never fill them
  * with assumptions.
  */
 export const jobs: Job[] = [
@@ -45,6 +47,7 @@ export const jobs: Job[] = [
     ],
     salary: null,
     status: "published",
+    confirmed: true,
     datePosted: "2026-09-30",
     validThrough: null,
     featured: true,
@@ -77,6 +80,7 @@ export const jobs: Job[] = [
     benefits: [],
     salary: null,
     status: "published",
+    confirmed: true,
     datePosted: "2026-09-30",
     validThrough: null,
     featured: true,
@@ -85,7 +89,7 @@ export const jobs: Job[] = [
 ];
 
 export function getPublishedJobs(now: Date = new Date()): Job[] {
-  return jobs.filter((j) => j.status === "published" && (!j.validThrough || new Date(j.validThrough) >= now));
+  return jobs.filter((j) => j.status === "published" && j.confirmed === true && (!j.validThrough || new Date(j.validThrough) >= now));
 }
 
 export function getJob(slug: string): Job | undefined {

@@ -134,6 +134,12 @@ export type Job = {
   /** Only publish when approved. */
   salary: string | null;
   status: "draft" | "published" | "archived";
+  /**
+   * Approval by JARBOU management. A posting is public only when
+   * `status === "published"` AND `confirmed === true` – a draft that is set
+   * to "published" by mistake still stays hidden until it is confirmed.
+   */
+  confirmed: boolean;
   /** ISO date when published. */
   datePosted: string | null;
   /** ISO date after which the posting is hidden. */
