@@ -4,7 +4,7 @@ import { Fragment, useEffect, useRef } from "react";
 import Chapter, { useChapterTimeline } from "@/components/stage/Chapter";
 import { gsap } from "@/lib/motion/gsap";
 import { COMPANY } from "@/content/site";
-import { formatLat, formatLon } from "@/lib/globe/geo";
+import { formatLat, formatLon } from "@/lib/globe/coords";
 import GlobeLayer from "@/components/stage/GlobeLayer";
 import HeroSignal from "./HeroSignal";
 import { useI18n } from "@/content/i18n/I18nProvider";
