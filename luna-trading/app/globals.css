@@ -251,28 +251,6 @@ html.cine .chapter-stage.is-active .interactive {
   pointer-events: auto;
 }
 
-/* Light chapters of the film on mineral daylight (ecosystem):
-   the same components, re-inked for mineral daylight. Tokens are remapped
-   so every rule keeps its role (paper = primary type, graphite scale = the
-   secondary steps, hairlines) with the polarity reversed. */
-[data-chapter="ecosystem"] {
-  --paper: #1c1d20;
-  --white: #141518;
-  --fg: #1c1d20;
-  --fg-muted: #4f5156;
-  --fg-subtle: #6b6c71;
-  --graphite-100: #2a2b2f;
-  --graphite-200: #3c3d42;
-  --graphite-300: #55575c;
-  --graphite-500: #8d8e93;
-  --graphite-600: #a9a9a6;
-  --graphite-700: #c2c1bd;
-  --graphite-750: #cfcdc8;
-  --hairline: rgba(20, 21, 24, 0.12);
-  --hairline-strong: rgba(20, 21, 24, 0.26);
-  color: var(--fg);
-}
-
 /* Static fallback presentation of chapter stages */
 html:not(.cine) .chapter-stage {
   display: flex;

@@ -6,7 +6,6 @@ import { ANCHOR_DEFS } from "@/lib/world/anchors";
 import { stage, journeyT, range, smooth, JOURNEY_SEGMENTS, tierSettled } from "@/lib/stage/store";
 import { onFrame, damp } from "@/lib/stage/ticker";
 import { worldShared } from "@/lib/world/shared";
-import { lightness } from "@/lib/world/tones";
 import { SEQUENCES, type SequenceManifest, type SequenceTier } from "@/content/sequences";
 import { FrameSequence } from "@/lib/sequence/FrameSequence";
 import { isCine } from "@/lib/motion/env";
@@ -116,8 +115,6 @@ export default function WorldLayer() {
       });
       seqCanvas.style.opacity = usedSeq ? "1" : "0";
       if (!usedSeq) world.render(cur);
-      // lens depth (dusk / interior): fades out completely in the brand light
-      wrap.style.setProperty("--vig", (1 - lightness(cur)).toFixed(3));
       worldShared.carton = world.cartonRect();
       worldShared.t = cur;
 

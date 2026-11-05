@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { stage, range, smooth, journeyT } from "@/lib/stage/store";
 import { onFrame } from "@/lib/stage/ticker";
-import { toneAt, lightness, skyAt } from "@/lib/world/tones";
+import { toneAt, lightness } from "@/lib/world/tones";
 import { heroEnv } from "@/lib/stage/heroEnv";
 import styles from "./Atmosphere.module.css";
 
@@ -50,9 +50,6 @@ export default function Atmosphere() {
   const gridRef = useRef<HTMLDivElement>(null);
   const warmRef = useRef<HTMLDivElement>(null);
   const forestRef = useRef<HTMLDivElement>(null);
-  const groundRef = useRef<HTMLDivElement>(null);
-  const skyRef = useRef<HTMLDivElement>(null);
-  const skyDayRef = useRef<HTMLDivElement>(null);
   const veilRef = useRef<HTMLDivElement>(null);
   const keyRef = useRef<HTMLDivElement>(null);
   const hazeRef = useRef<HTMLDivElement>(null);
@@ -103,7 +100,6 @@ export default function Atmosphere() {
     };
 
     let lastEnv = "";
-    let lastSky = "";
     const root = document.documentElement.style;
     // type on the opening follows its light: dark graphite → light (a short,
     // decisive crossover where the ground passes mid-grey)
@@ -140,21 +136,6 @@ export default function Atmosphere() {
       // ---- 04–05 · brand light ---------------------------------------------
       const jt = journeyT();
       const lit = b > 0 ? lightness(jt) : 0;
-
-      // ---- 01–02 · the open sky over port and road; again for the closing ---
-      // dusk over the port, a lighter morning haze along the road; the sky
-      // closes as the truck enters the hall and returns as dusk at the end
-      const dive = smooth(range(stage.p.source, 0.04, 0.2));
-      const skyJourney = b > 0 ? 0 : dive * skyAt(jt);
-      const skyClose = smooth(range(cl, 0.0, 0.14));
-      const skyO = Math.max(skyJourney, skyClose);
-      const dayO = cl > 0 ? 0 : smooth(range(jt, 0.24, 0.5));
-      const skyKey = `${skyO.toFixed(3)}|${dayO.toFixed(3)}`;
-      if (skyKey !== lastSky) {
-        lastSky = skyKey;
-        set(skyRef.current!, skyO);
-        skyDayRef.current!.style.opacity = dayO.toFixed(3);
-      }
       toneAt(jt, rgb);
       const brandColor = `rgb(${(rgb[0] * 255) | 0},${(rgb[1] * 255) | 0},${(rgb[2] * 255) | 0})`;
 
@@ -183,10 +164,6 @@ export default function Atmosphere() {
       const grow = smooth(range(X, 0.2, 0.92));
       const R = far * 1.6 * grow;
       const lvOut = 1 - smooth(range(lv, 0.76, 0.94));
-      // ecosystem + closing stand on warm mineral daylight: it rises beneath the
-      // emerald exactly as the emerald leaves (a crossfade, never black between)
-      const { ecosystem: eco } = stage.p;
-      const groundO = cl > 0 ? 1 - smooth(range(cl, 0.0, 0.14)) : eco > 0 ? 1 : lv > 0 ? 1 - lvOut : 0;
       const forestO = (X > 0 && R > 1 ? smooth(range(X, 0.2, 0.5)) : 0) * lvOut;
       // a wide, very soft dusk rather than a disc: stretched along the air,
       // closing to full cover before the light environments are removed
@@ -207,7 +184,7 @@ export default function Atmosphere() {
 
       // daylight moves slowly across the room while the brand is built
       const sweep = 0.6 * b + 1.4 * ch + 0.5 * Math.min(1, cm * 4);
-      const k = [brandColor, lit, sweep, lightO, reveal, gridO, warmO, forestO, groundO, R | 0, veilO, key, haze, dawn, lv, node.x | 0, node.y | 0].map((v) => (typeof v === "number" ? v.toFixed(3) : v)).join("|");
+      const k = [brandColor, lit, sweep, lightO, reveal, gridO, warmO, forestO, R | 0, veilO, key, haze, dawn, lv, node.x | 0, node.y | 0].map((v) => (typeof v === "number" ? v.toFixed(3) : v)).join("|");
       if (k !== last) {
         last = k;
         brandRef.current!.style.backgroundColor = brandColor;
@@ -219,7 +196,6 @@ export default function Atmosphere() {
         lightRef.current!.style.webkitMaskImage = lightMask;
         set(gridRef.current!, gridO);
         set(warmRef.current!, warmO);
-        set(groundRef.current!, groundO);
         set(forestRef.current!, forestO);
         forestRef.current!.style.maskImage = forestMask;
         forestRef.current!.style.webkitMaskImage = forestMask;
@@ -288,12 +264,8 @@ export default function Atmosphere() {
         soft[3].style.opacity = (mainO * smooth(range(X, 0.12, 0.4)) * 0.55).toFixed(3);
       }
 
-      // light chrome over the steel opening, the skies and the emerald; ink on
-      // the light worlds (brand, e-commerce, ecosystem)
-      const openingDark = env.active && env.light < 0.5 && b === 0;
-      const emerald = forestO > 0.5 && groundO < 0.5;
-      const indoors = b === 0 && stage.p.source > 0 && skyO < 0.5;
-      const lightTone = !openingDark && !emerald && skyO < 0.5 && !indoors;
+      const lightTone =
+        (env.active && env.light > 0.5 && b === 0) || (lit > 0.5 && b > 0 && X < 0.72 && lv < 0.3) || (lightO > 0.45 && X < 0.72);
       const tn = lightTone ? "light" : "dark";
       if (tn !== tone) {
         tone = tn;
@@ -305,7 +277,11 @@ export default function Atmosphere() {
   return (
     <div className={styles.root} aria-hidden="true">
       <div ref={mineralRef} className={styles.mineral}>
-        <div ref={mineralTexRef} className={styles.mineralTex} />
+        <div ref={mineralTexRef} className={styles.mineralTex}>
+          {/* daylight moving slowly over the brushed steel behind the planet */}
+          <div className={styles.daylight} />
+          <div className={styles.daylightWarm} />
+        </div>
       </div>
       <div ref={brandRef} className={styles.brand}>
         <div ref={brandTexRef} className={styles.brandTex}>
@@ -316,12 +292,6 @@ export default function Atmosphere() {
         <div ref={gridRef} className={styles.grid} />
       </div>
       <div ref={warmRef} className={styles.warm} />
-      <div ref={groundRef} className={styles.ground} />
-      <div ref={skyRef} className={styles.sky}>
-        <div ref={skyDayRef} className={styles.skyDay} />
-        <div className={styles.cloudsFar} />
-        <div className={styles.cloudsNear} />
-      </div>
       <div ref={forestRef} className={styles.forest} />
       <div ref={veilRef} className={styles.veil} />
       <div ref={keyRef} className={styles.key} />
