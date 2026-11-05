@@ -33,7 +33,8 @@ function globeStateLtr(): GlobeDerived {
       lat: lerp(30, 38, k),
       dist: lerp(7.2, 4.9, k) * distScale,
       ox: m ? 0 : 0.2,
-      oy: m ? -0.12 : 0.04,
+      // phones: the world sits above the closing headline, not behind it
+      oy: m ? -0.24 : 0.04,
       // arrival keeps its scroll distance; the camera's slow drift (k) runs
       // on through the held CTA
       reveal: smooth(range(c, 0.01, 0.2)) * 0.95,

@@ -25,13 +25,13 @@ const GROUNDS = {
   idea: "#ebebe8",
   principles: "#e2e0db",
   physical: "#e9e7e2",
-  digital: "#1b1c1f",
+  digital: "#dcdee0",
   base: "#ecebe6",
   standards: "#dfddd8",
   brand: "#e8e3d9",
   bridges: "#e3e1dc",
-  direction: "#1a1b1e",
-  cta: "#0f1012",
+  direction: "#e2e0db",
+  cta: "#e9e7e2",
 } as const;
 type G = keyof typeof GROUNDS;
 const ORDER = Object.keys(GROUNDS) as G[];
@@ -224,7 +224,7 @@ export default function CompanyPage() {
         </div>
         <World name={t.pd.physical.name} items={t.pd.physical.items} kind="physical" />
       </section>
-      <section className={`${svc.section} ${s.digital}`} style={ground("digital")} data-tone="dark" aria-label={t.pd.digital.name}>
+      <section className={`${svc.section} ${s.digital}`} style={ground("digital")} data-tone="light" aria-label={t.pd.digital.name}>
         <span className={s.seamLink} aria-hidden="true">
           <span className={s.seamPlus} />
         </span>
@@ -362,7 +362,7 @@ export default function CompanyPage() {
       </section>
 
       {/* ----------------------------------------------------- DIRECTION */}
-      <section className={`${svc.section} ${s.direction}`} style={ground("direction")} data-tone="dark" aria-labelledby="co-dir">
+      <section className={`${svc.section} ${s.direction}`} style={ground("direction")} data-tone="light" aria-labelledby="co-dir">
         <div className={`frame ${s.dirGrid}`}>
           <div>
             <p className={`t-label ${svc.tag}`} data-reveal>
@@ -393,7 +393,7 @@ export default function CompanyPage() {
       </section>
 
       {/* ----------------------------------------------------------- CTA */}
-      <section className={`${svc.section} ${svc.cta}`} style={ground("cta")} data-tone="dark" aria-labelledby="co-cta">
+      <section className={`${svc.section} ${svc.cta}`} style={ground("cta")} data-tone="light" aria-labelledby="co-cta">
         <div className={`frame ${svc.ctaInner}`}>
           <p className={`t-label ${svc.tag}`} data-reveal>
             {t.cta.tag}

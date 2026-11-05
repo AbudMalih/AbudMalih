@@ -32,8 +32,8 @@
 .doc p,
 .doc li,
 .doc address {
-  /* lighter than the UI's muted grey: long-form text must read easily */
-  color: #c2c3c7;
+  /* long-form text: a deep graphite on the mineral page, easy to read */
+  color: #33353a;
   line-height: 1.65;
   font-style: normal;
 }

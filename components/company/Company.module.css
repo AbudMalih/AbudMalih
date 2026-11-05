@@ -6,8 +6,9 @@
 .dim {
   color: #6b6c71;
 }
+/* was the dim tone of the former dark bands; those are mineral now */
 .dimDark {
-  color: #8b8d93;
+  color: #6b6c71;
 }
 .period {
   color: var(--luna-red);

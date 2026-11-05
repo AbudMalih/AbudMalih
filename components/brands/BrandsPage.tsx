@@ -29,7 +29,7 @@ const LOGOS: Record<string, ComponentType<{ width?: number | string; className?:
 };
 
 // Luna Trading grounds (the brand grounds come from OWNED_BRANDS)
-const LUNA = { hero: "#e6e3dd", principle: "#dedbd5", system: "#e2e0db", cta: "#0f1012" };
+const LUNA = { hero: "#e6e3dd", principle: "#dedbd5", system: "#e2e0db", cta: "#e9e7e2" };
 const ground = (bg: string, from: string): CSSProperties => ({ ["--bg" as string]: bg, ["--from" as string]: from });
 
 export default function BrandsPage() {
@@ -154,7 +154,7 @@ export default function BrandsPage() {
       </section>
 
       {/* ----------------------------------------------------------- CTA */}
-      <section className={`${svc.section} ${svc.cta}`} style={ground(LUNA.cta, LUNA.system)} data-tone="dark" aria-labelledby="brands-cta">
+      <section className={`${svc.section} ${svc.cta}`} style={ground(LUNA.cta, LUNA.system)} data-tone="light" aria-labelledby="brands-cta">
         <div className={`frame ${svc.ctaInner}`}>
           <p className={`t-label ${svc.tag}`} data-reveal>
             {t.cta.tag}

@@ -27,14 +27,14 @@ const TONE: Record<string, { bg: string; tone: "light" | "dark" }> = {
   hero: { bg: "#e4e2dd", tone: "light" },
   model: { bg: "#dcdcda", tone: "light" },
   sourcing: { bg: "#d4d5d4", tone: "light" },
-  trade: { bg: "#2b2d31", tone: "dark" },
-  development: { bg: "#1c1e21", tone: "dark" },
+  trade: { bg: "#d7d8d7", tone: "light" },
+  development: { bg: "#e0dfdb", tone: "light" },
   brand: { bg: "#ebe6dc", tone: "light" },
   ecommerce: { bg: "#f1f2f1", tone: "light" },
-  distribution: { bg: "#26282b", tone: "dark" },
-  payoff: { bg: "#18191c", tone: "dark" },
+  distribution: { bg: "#d9dad8", tone: "light" },
+  payoff: { bg: "#dedcd6", tone: "light" },
   luviscent: { bg: "#0a1b15", tone: "dark" },
-  cta: { bg: "#0f1012", tone: "dark" },
+  cta: { bg: "#e9e7e2", tone: "light" },
 };
 const ORDER = ["hero", "model", ...IDS, "payoff", "luviscent", "cta"];
 const ground = (key: string): CSSProperties => {
@@ -224,7 +224,7 @@ export default function ServicesPage() {
       </div>
 
       {/* ------------------------------------------------- COMPLETE ROUTE */}
-      <section className={`${s.section} ${s.payoff}`} style={ground("payoff")} data-tone="dark" aria-labelledby="svc-payoff">
+      <section className={`${s.section} ${s.payoff}`} style={ground("payoff")} data-tone="light" aria-labelledby="svc-payoff">
         <div className={`frame ${s.payoffGrid}`}>
           <div className={s.payoffCopy}>
             <p className={`t-label ${s.tag}`} data-reveal>
@@ -285,7 +285,7 @@ export default function ServicesPage() {
       </section>
 
       {/* ------------------------------------------------------------ CTA */}
-      <section className={`${s.section} ${s.cta}`} style={ground("cta")} data-tone="dark" aria-labelledby="svc-cta">
+      <section className={`${s.section} ${s.cta}`} style={ground("cta")} data-tone="light" aria-labelledby="svc-cta">
         <div className={`frame ${s.ctaInner}`}>
           <p className={`t-label ${s.tag}`} data-reveal>
             {t.cta.tag}

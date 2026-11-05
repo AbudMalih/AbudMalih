@@ -449,7 +449,8 @@ html:global(.intro-pending) .brand {
   outline-offset: 3px;
 }
 /* on the contact page the action carries the current-page signal */
-.cta[aria-current="page"] {
+.bar .cta[aria-current="page"],
+:global(html[data-tone="light"]) .bar .cta[aria-current="page"] {
   --cta-line: var(--luna-red);
 }
 @media (prefers-reduced-motion: reduce) {

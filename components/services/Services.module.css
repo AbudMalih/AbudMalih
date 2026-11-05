@@ -32,7 +32,10 @@
 .section[data-tone="light"] {
   --ink: #141518;
   --muted: #4f5156;
-  --soft: #6a6c71;
+  /* small labels stay at ≥ 4.5:1 on every mineral ground */
+  --soft: #55575c;
+  /* global type helpers (t-lead, t-label) on light grounds */
+  --fg-muted: #4f5156;
   --line: rgba(20, 21, 24, 0.16);
   --line-strong: rgba(20, 21, 24, 0.32);
   --v-ink: #26272b;
@@ -61,6 +64,11 @@
 }
 .tagStop {
   color: var(--luna-red);
+}
+/* small red text on mineral: a deeper shade of the same red keeps ≥ 4.5:1
+   (marks, rules and the logo keep the official #c90216) */
+.section[data-tone="light"] .tagStop {
+  color: #b00114;
 }
 .h2 {
   font-size: clamp(2rem, min(4.6vw, 8.6svh), 5rem);
