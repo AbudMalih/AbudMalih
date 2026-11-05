@@ -245,3 +245,82 @@
 :global(html.cine) .desc {
   color: #2a2b2e;
 }
+
+/* letters of the discipline word (Latin scripts) */
+.ch {
+  display: inline-block;
+  white-space: pre;
+  will-change: transform;
+}
+
+/* goods moving along the line ahead of the marker */
+.flow {
+  --m: 0;
+  position: absolute;
+  top: -1px;
+  height: 4px;
+  inset-inline-start: calc(var(--m) * 100% + 14px);
+  inset-inline-end: 0;
+  background: repeating-linear-gradient(90deg, rgba(201, 2, 22, 0.55) 0 10px, transparent 10px 34px);
+  mask-image: linear-gradient(90deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
+  -webkit-mask-image: linear-gradient(90deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
+  animation: flow 2.4s linear infinite;
+}
+:global([dir="rtl"]) .flow {
+  mask-image: linear-gradient(270deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
+  -webkit-mask-image: linear-gradient(270deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
+  animation-direction: reverse;
+}
+@keyframes flow {
+  from { background-position: 0 0; }
+  to { background-position: 34px 0; }
+}
+
+/* one drawing per discipline, in the open field above the line */
+.arts {
+  position: absolute;
+  inset-inline-end: 6%;
+  bottom: calc(50% + clamp(28px, 5vh, 60px));
+  width: clamp(200px, 26vw, 420px);
+  aspect-ratio: 8 / 5;
+}
+.art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  fill: none;
+  stroke: #6f6a62;
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  overflow: visible;
+}
+.art path {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  vector-effect: non-scaling-stroke;
+}
+.artRed {
+  stroke: var(--luna-red);
+  stroke-width: 2;
+}
+:global([dir="rtl"]) .art {
+  transform: scaleX(-1);
+}
+@media (max-width: 767px) {
+  .arts {
+    inset-inline-end: 6%;
+    bottom: auto;
+    top: calc(50% + 150px);
+    width: 46vw;
+    opacity: 0.85;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow {
+    animation: none;
+  }
+}

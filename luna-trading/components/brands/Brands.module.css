@@ -580,27 +580,33 @@
 .lvCta {
   display: inline-flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   margin-top: clamp(34px, 5vh, 54px);
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(212, 193, 155, 0.45);
+  height: 50px;
+  padding-inline: 22px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 193, 155, 0.5);
   font-family: var(--font-lv);
   font-size: 0.7rem;
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--lv-i);
-  transition: border-color 0.5s var(--ease-out);
+  transition: background-color 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
 }
-.lvCta:hover {
+.lvCta:hover,
+.lvCta:focus-visible {
   border-color: var(--lv-a);
+  background: rgba(212, 193, 155, 0.1);
 }
 .lvPlus {
-  width: 11px;
-  height: 11px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   background:
-    linear-gradient(var(--lv-a), var(--lv-a)) center / 100% 1px no-repeat,
-    linear-gradient(var(--lv-a), var(--lv-a)) center / 1px 100% no-repeat;
+    linear-gradient(#10140f, #10140f) center / 12px 1.5px no-repeat,
+    linear-gradient(#10140f, #10140f) center / 1.5px 12px no-repeat,
+    var(--lv-a);
   transition: transform 0.6s var(--ease-out);
 }
 .lvCta:hover .lvPlus {
