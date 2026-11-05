@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { WorldHandle } from "@/lib/world/createWorld";
 import { ANCHOR_DEFS } from "@/lib/world/anchors";
-import { stage, journeyT, range, smooth, JOURNEY_SEGMENTS } from "@/lib/stage/store";
+import { stage, journeyT, range, smooth, JOURNEY_SEGMENTS, tierSettled } from "@/lib/stage/store";
 import { onFrame, damp } from "@/lib/stage/ticker";
 import { worldShared } from "@/lib/world/shared";
 import { SEQUENCES, type SequenceManifest, type SequenceTier } from "@/content/sequences";
@@ -72,7 +72,7 @@ export default function WorldLayer() {
     const build = async () => {
       if (built) return;
       built = true;
-      const { createWorld } = await import("@/lib/world/createWorld");
+      const [{ createWorld }] = await Promise.all([import("@/lib/world/createWorld"), tierSettled()]);
       if (disposed) return;
       world = createWorld(canvas, stage.tier);
       size();

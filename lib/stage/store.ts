@@ -89,15 +89,48 @@ export function journeyT() {
 /* Device tier                                                               */
 /* ------------------------------------------------------------------------ */
 
-export function detectTier(): Tier {
-  if (typeof window === "undefined") return "high";
-  const nav = navigator as Navigator & { deviceMemory?: number };
-  const cores = nav.hardwareConcurrency ?? 8;
-  const mem = nav.deviceMemory ?? 8;
+/*
+ * Render quality is chosen from what the page itself experiences, never from
+ * device properties (no core count, memory or GPU queries): a start value
+ * from the screen size, then a short measurement of the browser's own frame
+ * rate while the intro plays. Nothing is stored or transmitted.
+ */
+let tierPromise: Promise<void> | null = null;
+
+/** Start the tier measurement once (call on mount); resolves when settled. */
+export function measureTier(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (tierPromise) return tierPromise;
   const small = window.matchMedia("(max-width: 767px)").matches;
-  if (cores <= 4 || mem <= 3) return "low";
-  if (small || cores <= 6) return "medium";
-  return "high";
+  stage.tier = small ? "medium" : "high";
+  tierPromise = new Promise<void>((resolve) => {
+    const frames: number[] = [];
+    let last = 0;
+    let skip = 6; // let the first layout / font frames pass
+    const step = (now: number) => {
+      if (last) {
+        if (skip > 0) skip--;
+        else frames.push(now - last);
+      }
+      last = now;
+      if (frames.length < 40) return void requestAnimationFrame(step);
+      frames.sort((a, b) => a - b);
+      const median = frames[frames.length >> 1];
+      // ~60 fps keeps the start tier; sustained slow frames step down
+      if (median > 34) stage.tier = "low";
+      else if (median > 22) stage.tier = stage.tier === "high" ? "medium" : "low";
+      resolve();
+    };
+    requestAnimationFrame(step);
+    // a background tab may not paint: never block the scenes for long
+    setTimeout(resolve, 1500);
+  });
+  return tierPromise;
+}
+
+/** Resolves once the render tier is settled (immediately if not started). */
+export function tierSettled(): Promise<void> {
+  return tierPromise ?? Promise.resolve();
 }
 
 let vProbe: HTMLDivElement | null = null;

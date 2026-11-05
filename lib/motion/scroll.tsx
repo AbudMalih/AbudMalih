@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import "./gsap"; // registers ScrollTrigger once for the whole app
-import { stage, detectTier, updateViewport } from "@/lib/stage/store";
+import { stage, measureTier, updateViewport } from "@/lib/stage/store";
 import { isCine } from "./env";
 
 /**
@@ -33,7 +33,7 @@ export default function ScrollSetup() {
   useEffect(() => {
     stage.cine = isCine();
     stage.rtl = document.documentElement.dir === "rtl";
-    stage.tier = detectTier();
+    void measureTier();
     updateViewport();
 
     let rid = 0;

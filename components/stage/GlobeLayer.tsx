@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { GlobeHandle, GlobeFrame } from "@/lib/globe/createGlobe";
 import { globeState, type GlobeDerived } from "@/lib/globe/state";
 import { formatLat, formatLon, ROUTE_WAYPOINTS } from "@/lib/globe/coords";
-import { stage } from "@/lib/stage/store";
+import { stage, tierSettled } from "@/lib/stage/store";
 import { onFrame, damp, markReady } from "@/lib/stage/ticker";
 import { COMPANY } from "@/content/site";
 import { isCine } from "@/lib/motion/env";
@@ -83,7 +83,7 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
     };
 
     (async () => {
-      const { createGlobe } = await import("@/lib/globe/createGlobe");
+      const [{ createGlobe }] = await Promise.all([import("@/lib/globe/createGlobe"), tierSettled()]);
       if (disposed) return;
       globe = createGlobe(canvas, { hiRes: stage.tier === "high" && !stage.mobile });
       size();
