@@ -12,14 +12,22 @@ Updated 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapac
 - **Driver app**: navigation (tabs + modal + detail), home with tour progress and actions, stop list with search and manual reorder, map, manual stop entry with validation and parcel grouping, stop completion, offline persistence, server/offline optimization, RTL support – 15 tests; Android & iOS bundles build.
 - **Dispatch** (read-only tour overview, tour detail with map + optimization preview, drivers, vehicles, depots) and **Admin** (tenants, plans/limits, system status) – build + tests.
 
+## M1.5 – Premium UI & Dispatch command centre ✅ (2026-11)
+
+- Design system (Tailwind v4 tokens, Radix-based components), official TURVIO logo integrated (raster derivatives, favicons, Expo icons).
+- TURVIO Admin redesign (companies, subscriptions, activity).
+- TURVIO Dispatch: map-centred workspace (tours/drivers panel, route map, details panel), List, Planning (local draft: create tours, assign drivers/vehicles, assign unassigned stops, priorities, optimization) and Pickups (deadlines, conflicts) – multi-depot pilot data for Hannover, Bremen, Kassel, Haiger.
+- Depot-scoped access in Postgres (`membership_depots`, `app.can_access_depot`) and server-side scoping in Dispatch; unassigned stops in the schema.
+
 ## M2 – Real accounts & driver app on live data (next)
 
 1. Supabase project (EU region, Frankfurt) – apply migrations, configure Auth (email OTP/magic link for drivers, password + MFA for staff).
 2. Login flows in Driver, Dispatch and Admin; tenant switcher for multi-tenant users; `organizations`/subscription creation via a server-side signup/invite flow.
-3. Driver app: read today's tour from Supabase, write stop status via RPC, offline outbox + sync and conflict handling.
-4. Proof of delivery: photo (expo-camera / image picker) and signature capture, upload to private bucket with tenant-prefixed paths + storage policies.
-5. Edit stop, editable service time, failure reason codes, drag-and-drop reorder, start/end location UI.
-6. CI pipeline (typecheck, tests, migration tests, builds) – after the repository move.
+3. Dispatch: read tours/stops from Supabase (RLS does the scoping) and add the tour write API so planning drafts can be saved; realtime progress.
+4. Driver app redesign on the design system, then: read today's tour from Supabase, write stop status via RPC, offline outbox + sync and conflict handling.
+5. Proof of delivery: photo (expo-camera / image picker) and signature capture, upload to private bucket with tenant-prefixed paths + storage policies.
+6. Edit stop, editable service time, failure reason codes, drag-and-drop reorder, start/end location UI.
+7. CI pipeline (typecheck, tests, migration tests, builds) – after the repository move.
 
 ## M3 – Dispatch operations
 

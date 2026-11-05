@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
-  transpilePackages: ["@turvio/shared", "@turvio/web-ui"],
+  transpilePackages: ["@turvio/shared", "@turvio/web-ui", "geist"],
   poweredByHeader: false,
   async headers() {
     return [

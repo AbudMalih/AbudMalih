@@ -33,7 +33,9 @@ One visual identity for **TURVIO Admin**, **TURVIO Dispatch** and **TURVIO Drive
 
 ## Components (web)
 
-`AppShell` (collapsible grouped sidebar with animated active indicator, workspace switcher, user menu, sticky blurred header with breadcrumbs, mobile drawer) · `PageHeader` · `Card`, `CardHeader` · `KpiCard` (+ `Sparkline` for genuine series only) · `Badge` (status with dot) · `Button` (primary, dark, secondary, ghost, danger; sm/md/lg/icon) · `SearchInput` · `Checkbox` · `Menu*` (Radix dropdown incl. checkbox items) · `Tooltip` · `Sheet` (Radix dialog side panel) · `Avatar` (initials, deterministic tint) · `Skeleton`, `EmptyState`, `DemoDataTag` · `Toaster`/`toast` (Sonner) · `Wordmark`/`TurvioMark`.
+**Logo:** `Wordmark`, `TurvioLockup`, `TurvioMark` render the official raster logo from `/brand/*` (see `branding/README.md`); only the height is set so proportions are preserved. Use `tone="dark"` on dark surfaces.
+
+`AppShell` (collapsible grouped sidebar with animated active indicator, workspace switcher, user menu, sticky blurred header with breadcrumbs, mobile drawer) · `PageHeader` · `Card`, `CardHeader` · `KpiCard` (+ `Sparkline` for genuine series only) · `Badge` (status with dot) · `Button` (primary, dark, secondary, ghost, danger; sm/md/lg/icon) · `SearchInput` · `Checkbox` · `Menu*` (Radix dropdown incl. checkbox items) · `Tooltip` · `Sheet` (Radix dialog side panel) · `Avatar` (initials, deterministic tint) · `Skeleton`, `EmptyState`, `DemoDataTag` · `Toaster`/`toast` (Sonner) · `Dialog` (modal) · `Wordmark`/`TurvioLockup`/`TurvioMark`.
 
 Built with Tailwind CSS v4, Radix primitives (shadcn-style composition, written in-repo), Lucide icons, Motion. Recharts is reserved for real analytics once historical data exists.
 
@@ -50,5 +52,5 @@ Built with Tailwind CSS v4, Radix primitives (shadcn-style composition, written 
 ## Rollout
 
 - [x] **Admin** – fully on the design system (dashboard, companies, activity, plans, system).
-- [ ] **Dispatch** – next: AppShell + map-centred operations view (Map / List / Planning), driver list, tour cards.
+- [x] **Dispatch** – top navigation with workspace tabs, depot switcher, date, compact operations strip; Map (three panels), List, Planning and Pickups workspaces; tour drawer. Desktop uses the top bar; below 1024 px a bottom tab bar.
 - [ ] **Driver** – palette already shared via `theme.ts`; next: home redesign with Scan Parcels / Optimize actions, stop cards, bottom navigation.

@@ -7,3 +7,4 @@ export * from "./theme";
 export * from "./i18n";
 export * from "./permissions";
 export * from "./billing";
+export * from "./dispatch";

@@ -85,7 +85,11 @@ pnpm workspaces with a hoisted `node_modules` (`.npmrc: node-linker=hoisted`) �
 
 All of this is covered by automated tests (`packages/db`, 22 tests against a real Postgres engine via PGlite): cross-tenant reads/writes, FK cross-references, role restrictions, owner-role escalation, platform-admin scope, suspended tenants, plan limits, audit, retention.
 
-### 3.3 Roles and permissions
+### 3.3 Depot scope inside a tenant
+
+Owners/admins have company-wide access. A dispatcher can be limited to specific depots via `membership_depots`; without rows the dispatcher sees all depots of the company. `app.can_access_depot(org, depot)` implements the rule and is used by the RLS policies for depots, drivers, vehicles, tours, stops (incl. unassigned stops that belong to a depot) and by the driver/tour RPCs. Depot scope is evaluated inside the tenant checks, so company-level access never reaches another tenant. TURVIO Dispatch applies the same rule on the server (`scopeDispatchDataset`) before any data is sent to the browser. Tests: `packages/db/test/depot-scope.test.ts`, `packages/shared/src/__tests__/dispatch.test.ts`, `apps/dispatch/test/logic.test.ts`.
+
+### 3.4 Roles and permissions
 
 The permission matrix lives in `packages/shared/src/permissions.ts` and mirrors the RLS policies.
 
@@ -116,18 +120,22 @@ See [BILLING.md](BILLING.md). Plans (`driver_solo`, `team`, `business` – place
 * **Offline fallback (driver app):** nearest-neighbour + 2-opt on estimates, priority stops first, *no* time windows. The UI states which engine was used.
 * **Planned:** breaks (OR-Tools break intervals), linked pickup→delivery pairs, workload balancing, traffic-aware matrices.
 
-## 6. Driver app
+## 6. Dispatch
+
+Next.js app with a persistent client provider (`apps/dispatch/lib/store.tsx`) holding depot, date, selection and the **planning draft**. The server loads and permission-scopes the data per request; the client derives tour summaries, ETAs, delays, pickup states and KPIs with the pure functions in `packages/shared/src/dispatch/ops.ts` (straight-line travel estimates, labelled as such). Planning edits are a local draft until the tour write API exists. The map is Leaflet with explicit loading/error/tile-unavailable states; it never shows driver positions because no authorized location data exists yet.
+
+## 7. Driver app
 
 Expo Router (file-based) with tabs Today / Stops / Map / Settings, plus Add-stop (modal) and Stop detail. State in Zustand persisted to AsyncStorage → the current tour works offline. Maps via `react-native-maps` (Apple Maps on iOS; Google Maps on Android needs an API key in dev/prod builds). Navigation handoff via deep links to Apple Maps / Google Maps. Server sync with Supabase is the next milestone; today the app runs on synthetic data.
 
-## 7. Internationalization
+## 8. Internationalization
 
 `packages/shared/src/i18n` holds typed message catalogues for **de, en, ro, ar** with a test that keys and placeholders match. Device locale is detected via `expo-localization`; Arabic switches the app to RTL (`I18nManager.forceRTL`, effective after app restart – a React Native constraint). Romanian and Arabic texts are machine-assisted drafts that need native review. The web apps are German/English only so far (i18n wiring planned).
 
-## 8. Security and privacy
+## 9. Security and privacy
 
 See [SECURITY_PRIVACY.md](SECURITY_PRIVACY.md). Highlights: TLS everywhere, RLS + API authorization, least-privilege roles, audit log without personal data copies, per-tenant retention for location pings and proofs, location only during active tours, no carrier (e.g. DHL) integrations without written authorization.
 
-## 9. Maps and tiles
+## 10. Maps and tiles
 
 The Dispatch map uses Leaflet with OpenStreetMap's public tiles **for development only** (OSM tile usage policy). Production needs a commercial or self-hosted tile provider – decision pending (see roadmap).

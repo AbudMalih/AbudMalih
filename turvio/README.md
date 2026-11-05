@@ -15,6 +15,8 @@ Multi-tenant SaaS for route optimization and delivery management. Intended softw
 | Optimizer | `services/optimizer` | Python 3.13, FastAPI, Google OR-Tools |
 | Database | `supabase/migrations` | Supabase Postgres + RLS |
 
+Branding: official logo files in [`branding/`](branding/README.md) (raster; no vector version yet).
+
 Docs: [Architecture](docs/ARCHITECTURE.md) · [Feature parity](docs/FEATURE_PARITY.md) · [Roadmap](docs/ROADMAP.md) · [Billing](docs/BILLING.md) · [Security & privacy](docs/SECURITY_PRIVACY.md) · [Design system](docs/DESIGN_SYSTEM.md)
 
 All data in development is **synthetic** (fictional people, made-up `TVO…` tracking numbers). There is no connection to DHL or any other carrier.
@@ -63,7 +65,15 @@ pnpm --filter @turvio/dispatch dev
 pnpm --filter @turvio/admin dev
 ```
 
-Set `NEXT_PUBLIC_API_URL=http://localhost:4000` in `apps/dispatch/.env.local` to optimize through the API; without it the dashboard uses an in-browser heuristic preview.
+Set `NEXT_PUBLIC_API_URL=http://localhost:4000` in `apps/dispatch/.env.local` to optimize through the API; without it Dispatch uses a clearly labelled in-browser heuristic.
+
+Dispatch has no login yet; its development identity can be switched to exercise permissions (data is scoped on the server):
+
+```bash
+DISPATCH_DEV_ROLE=dispatcher DISPATCH_DEV_DEPOTS=dep_bremen,dep_kassel pnpm --filter @turvio/dispatch dev
+```
+
+Roles: `owner`, `admin` (default, company-wide), `dispatcher` (optionally limited to depots), `driver` (no dispatch data).
 
 Driver app:
 
@@ -109,13 +119,30 @@ pnpm --filter @turvio/dispatch build && pnpm --filter @turvio/admin build
 cd apps/driver && EXPO_OFFLINE=1 npx expo export --platform android --platform ios
 ```
 
+Dispatch browser tests (real Chromium against a running production build; screenshots optional):
+
+```bash
+pnpm --filter @turvio/dispatch build && pnpm --filter @turvio/dispatch start
+```
+
+```bash
+SCREENSHOT_DIR=/tmp/turvio-shots pnpm --filter @turvio/dispatch e2e
+```
+
+Brand assets (regenerate after replacing files in `branding/source/`):
+
+```bash
+python3 branding/build_assets.py
+```
+
 | Suite | What it covers |
 |---|---|
 | `packages/shared` | schemas, stop logic, offline heuristic, i18n completeness, permissions, billing rules |
-| `packages/db` | migrations + **tenant isolation**, roles, plan limits, audit, retention (PGlite = real Postgres engine) |
+| `packages/db` | migrations + **tenant isolation**, **depot scope**, roles, plan limits, audit, retention (PGlite = real Postgres engine) |
 | `apps/api` | JWT verification, tenant/role authorization, optimize gateway, config safety |
 | `apps/driver` | store, stop form, optimizer client, Home screen rendering |
-| `apps/dispatch`, `apps/admin` | tenant-scoped data helpers, UI logic |
+| `apps/dispatch` | planning draft, server-side scoping, components (tour list, list view, planning, pickups); `e2e/smoke.mjs` browser tests incl. responsive checks at 1920/1440/1100/800/390 px |
+| `apps/admin` | platform KPIs, company table logic and component tests |
 | `services/optimizer` | VRPTW constraints, OSRM client, HTTP contract |
 
 ## External services and keys

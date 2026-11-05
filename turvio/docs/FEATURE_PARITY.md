@@ -60,19 +60,19 @@ TURVIO is developed independently. This list compares against **publicly documen
 | Feature | Spoke | TURVIO | Notes |
 |---|---|---|---|
 | Secure login, role-based access | Documented | **Partial** | Roles, RLS and API token checks done and tested; login UI: M2. |
-| Multiple depots | Documented | **Partial** | Schema + list view; management UI: M3. |
+| Multiple depots | Documented | **Partial** | Depot switcher, depot-scoped data and permissions (DB + server); depot CRUD UI: M3. |
 | Driver management | Documented | **Partial** | Schema, list view, plan-limit enforcement; CRUD UI: M3. |
 | Vehicle management (capacity) | Documented (weight) | **Partial** | Parcel-count capacity in schema + optimizer; weight: M5. |
-| Create and assign tours | Documented | Planned (M3) | Read-only tour views now. |
+| Create and assign tours | Documented | **Partial** | Planning workspace: create tours, assign drivers/vehicles with conflict checks – local draft until the tour write API (M2). |
 | Import stops (spreadsheet) | Documented | Planned (M3) | |
 | Barcode data import | Documented | Planned (M4) | |
-| Multi-driver optimization | Documented | **Partial** | Optimizer supports many vehicles + capacity; Dispatch UI optimizes one tour (preview, not saved). |
+| Multi-driver optimization | Documented | **Partial** | Optimizer supports many vehicles + capacity; Dispatch optimizes per tour (OR-Tools via API or labelled in-browser heuristic) into the draft. |
 | Optimization objective (balance workload etc.) | Documented | Planned (M5) | |
 | Linked pickup → delivery | Documented | Planned (M5) | |
-| Reassign stops | Documented | Planned (M3) | |
+| Reassign stops | Documented | **Partial** | Unassigned stops/pickups can be assigned to tours (draft); moving stops between tours: M3. |
 | Max stops per driver, allowed drivers per stop | Documented | Planned (M5) | |
-| Live tour progress | Documented | **Partial** | Progress per tour from data; realtime updates + live driver positions: M3 (`location_pings` table + RLS ready). |
-| Pickups and delivery deadlines | Documented | **Partial** | Pickup stop type + time windows in schema, optimizer and UI display. |
+| Live tour progress | Documented | **Partial** | Progress, ETAs, delay detection and day KPIs from tour data (synthetic clock); realtime updates and live positions: M3 – the map deliberately shows no driver locations without authorized data. |
+| Pickups and delivery deadlines | Documented | **Done** (UI on synthetic data) | Pickups workspace: windows, deadlines, projected ETA, late/at-risk/unassigned conflicts, assignment. |
 | Reports / analytics | Documented | Planned (M5) | |
 | Export (CSV/manifests) | Documented | Planned (M5) | |
 | Recipient notifications + tracking page | Documented | Planned (M6) | Needs GDPR review (recipient contact data). |

@@ -31,6 +31,8 @@ export const Membership = z.object({
   userId: z.string().min(1),
   role: OrgRole,
   active: z.boolean().default(true),
+  /** Optional depot restriction for dispatchers (null/empty = all depots). */
+  depotIds: z.array(z.string().min(1)).nullable().optional(),
 });
 export type Membership = z.infer<typeof Membership>;
 
