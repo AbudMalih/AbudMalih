@@ -14,6 +14,8 @@ import { deliver } from "@/lib/contact/deliver";
 export const runtime = "nodejs";
 // executed in Frankfurt (vercel.json sets fra1 for every function as well)
 export const preferredRegion = "fra1";
+// SMTP needs a few seconds at most; the transport itself times out at 10–15 s
+export const maxDuration = 20;
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_PER_WINDOW = 5;
