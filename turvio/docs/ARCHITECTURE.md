@@ -101,11 +101,19 @@ The permission matrix lives in `packages/shared/src/permissions.ts` and mirrors 
 | Manage drivers, vehicles, tours, stops; imports; live tracking; reports/exports | ✓ | ✓ | ✓ | |
 | See own tours, add stops to own tour, set stop status, optimize own tour | ✓ | ✓ | ✓ | ✓ |
 
-### 3.4 Authentication
+### 3.5 Authentication and sessions
 
-Supabase Auth issues JWTs. The API verifies them with `jose` (project JWKS, or the legacy HS256 secret), checks issuer and audience, then resolves the membership for the tenant in the URL. `AUTH_MODE=dev` (synthetic identity, no token) exists for local development and is refused when `NODE_ENV=production`.
+The API talks to an `AuthProvider` (`apps/api/src/auth/`):
 
-Login UIs in the three apps are **not yet built** (next milestone).
+* **`local`** – credentials in Postgres (`app_auth` schema, not exposed to `authenticated`): scrypt password hashes, HS256 access tokens with Supabase-compatible claims (`sub`, `aud=authenticated`, `email`, 15 min), opaque refresh tokens stored as SHA-256 hashes and **rotated on every use**; re-using a rotated token revokes all sessions of that user. Login throttling (5 failures / 15 min per account), single-use password-reset tokens (60 min), mails via an outbox (dev) or SMTP.
+* **`supabase`** – Supabase Auth (GoTrue) does the same; tokens verified via JWKS or the project secret. Implemented and unit-tested against a mocked GoTrue; **not yet run against a live project.**
+* `dev` (synthetic identity, no token) for isolated UI work only – refused with `NODE_ENV=production`.
+
+**RLS is the authority.** Every tenant request runs in a transaction that does `set local role authenticated` and sets `request.jwt.claims` (`Db.asUser`) – exactly what PostgREST does – so Postgres policies decide what a user sees and changes, and the API cannot accidentally bypass them. Only the auth tables and invitation acceptance use the service connection (`Db.asService`). DB errors are mapped to stable codes (`not_found`, `version_conflict`, `forbidden`, `invalid_reference`, `plan_limit`).
+
+**Web apps** (`packages/web-session`): Dispatch and Admin never expose tokens to browser JavaScript. Next.js route handlers log in against the API and store access/refresh tokens in `httpOnly`, `SameSite=Lax` (and `Secure` in production) cookies; `/api/turvio/v1/*` is a same-origin proxy that adds the bearer token and transparently refreshes once on 401. `proxy.ts` redirects signed-out visitors to `/login?next=…`. Invitations: an admin invites by email + role (+ depots); the link opens `/invite?token=…`, where the person sets a password.
+
+**Driver app**: tokens in `expo-secure-store` (Keychain/Keystore; `localStorage` only in the test web build), automatic refresh, sign-out revokes the refresh token.
 
 ## 4. Subscriptions and limits
 
@@ -122,11 +130,20 @@ See [BILLING.md](BILLING.md). Plans (`driver_solo`, `team`, `business` – place
 
 ## 6. Dispatch
 
-Next.js app with a persistent client provider (`apps/dispatch/lib/store.tsx`) holding depot, date, selection and the **planning draft**. The server loads and permission-scopes the data per request; the client derives tour summaries, ETAs, delays, pickup states and KPIs with the pure functions in `packages/shared/src/dispatch/ops.ts` (straight-line travel estimates, labelled as such). Planning edits are a local draft until the tour write API exists. The map is Leaflet with explicit loading/error/tile-unavailable states; it never shows driver positions because no authorized location data exists yet.
+Next.js app. `DispatchProvider` (`apps/dispatch/lib/store.tsx`) loads the depot/day from `GET /v1/orgs/:org/dispatch` and every action is a real API call: create/edit/delete tours (optimistic `version` – concurrent edits get `409 version_conflict`; double-booking a driver or vehicle gets `409 driver_busy/vehicle_busy`), add stops (single or pasted list), assign stops, priorities, **optimize & save** (OR-Tools; result and travel-time source stored on the tour), **optimize the whole depot plan**, **publish/withdraw** (`publish_tour` RPC – a tour needs a driver and stops; drivers only see published tours), fleet CRUD (drivers, vehicles, depots), team and invitations. A `tour_events` table records created/assigned/optimized/published/started/completed… and is shown as the tour's activity timeline.
+
+**Change propagation:** triggers on `tours`/`stops` call `pg_notify('turvio_changes', …)`; the API holds one `LISTEN` connection and streams Server-Sent Events at `GET /v1/orgs/:org/events`, filtered by tenant and the user's depot scope. Dispatch reloads on an event (and polls every 60 s as a fallback; the header shows *Live* / *Polling*). With Supabase, Supabase Realtime can replace this later.
+
+The map is Leaflet; it never shows driver positions because no authorized location data exists yet. Progress and ETAs are derived from stop statuses, with straight-line travel estimates labelled as such.
 
 ## 7. Driver app
 
-Expo Router (file-based) with tabs Today / Stops / Map / Settings, plus Add-stop (modal) and Stop detail. State in Zustand persisted to AsyncStorage → the current tour works offline. Maps via `react-native-maps` (Apple Maps on iOS; Google Maps on Android needs an API key in dev/prod builds). Navigation handoff via deep links to Apple Maps / Google Maps. Server sync with Supabase is the next milestone; today the app runs on synthetic data.
+Expo Router with tabs Today / Stops / Map / Settings. Two modes:
+
+* **Server mode** (`EXPO_PUBLIC_API_URL` set): sign in → `GET /v1/me/tours` returns only tours *published to this driver*. Status changes (start/pause/finish tour, delivered/failed/skipped) are applied on the device immediately and put in a persisted **outbox**, sent through the driver RPCs (`driver_set_stop_status`, `driver_set_tour_status`), retried when offline; rejected items (e.g. tour withdrawn) are dropped with a message. Sync: on start, every 30 s, when the app returns to the foreground, and pull-to-refresh. Last-writer-wins per stop; the server re-validates every transition.
+* **Demo mode** (no API configured): synthetic data, all local.
+
+State in Zustand persisted to AsyncStorage, so the current tour works offline. Maps via `react-native-maps`; navigation handoff to Apple/Google Maps.
 
 ## 8. Internationalization
 

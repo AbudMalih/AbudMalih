@@ -12,6 +12,9 @@ import {
 } from "@turvio/shared";
 
 /**
+ * Platform KPI/table model. The demo tenant generator below is a TEST FIXTURE
+ * (used by unit tests); the running app maps real API data (lib/remote.ts).
+ *
  * SYNTHETIC DEMO DATA for the platform admin console.
  *
  * Until the Admin app reads from Supabase (as a platform admin), it shows the

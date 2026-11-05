@@ -1,6 +1,5 @@
 "use client";
 
-import { formatClock } from "@turvio/shared";
 import {
   Avatar,
   Badge,
@@ -18,19 +17,21 @@ import {
   TurvioMark,
   cn,
 } from "@turvio/web-ui/ds";
-import { CalendarDays, Check, ChevronDown, ClipboardList, List, LogOut, Map as MapIcon, PackageCheck, Warehouse } from "lucide-react";
+import { Building2, CalendarDays, Check, ChevronDown, ClipboardList, List, LogOut, Map as MapIcon, PackageCheck, Truck, Warehouse } from "lucide-react";
 import { MotionConfig, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useDispatch } from "../lib/store";
 import { OpsSummary } from "./OpsSummary";
+import { signOut } from "./SignOutButton";
 
 export const VIEWS = [
   { href: "/map", label: "Map", icon: MapIcon, key: "1" },
   { href: "/list", label: "List", icon: List, key: "2" },
   { href: "/planning", label: "Planning", icon: ClipboardList, key: "3" },
   { href: "/pickups", label: "Pickups", icon: PackageCheck, key: "4" },
+  { href: "/fleet", label: "Fleet", icon: Truck, key: "5" },
 ] as const;
 
 function DepotSwitcher() {
@@ -67,7 +68,7 @@ function DepotSwitcher() {
 }
 
 function DateControl() {
-  const { date, setDate, scoped } = useDispatch();
+  const { date, setDate } = useDispatch();
   return (
     <label className="relative inline-flex h-9 items-center gap-2 rounded-md border border-line bg-surface px-3 text-sm shadow-xs focus-within:shadow-[var(--shadow-focus)] hover:border-line-strong">
       <CalendarDays className="size-4 text-subtle" aria-hidden="true" />
@@ -80,16 +81,29 @@ function DateControl() {
         aria-describedby="date-hint"
       />
       <span id="date-hint" className="sr-only">
-        Synthetic data exists for {scoped.date} only.
+        Shows tours planned for the selected day.
       </span>
     </label>
+  );
+}
+
+function LiveIndicator() {
+  const { live, loading, lastLoadedAt } = useDispatch();
+  const label = live === "live" ? "Live – updates appear automatically" : live === "connecting" ? "Connecting…" : "Live updates unavailable – refreshing every minute";
+  return (
+    <Tooltip content={`${label} · last refresh ${new Date(lastLoadedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`} side="bottom">
+      <span className="hidden items-center gap-1.5 rounded-full border border-line px-2 py-1 text-2xs font-medium text-muted md:inline-flex" role="status" aria-label={label}>
+        <span className={cn("size-2 rounded-full", live === "live" ? "bg-success" : live === "connecting" ? "bg-warning" : "bg-subtle", loading && "animate-pulse")} />
+        {live === "live" ? "Live" : live === "connecting" ? "…" : "Polling"}
+      </span>
+    </Tooltip>
   );
 }
 
 export function DispatchShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/map";
   const router = useRouter();
-  const { session, scoped } = useDispatch();
+  const { session, switchWorkspace } = useDispatch();
 
   // Keyboard: 1–4 switch views (ignored while typing).
   useEffect(() => {
@@ -115,13 +129,15 @@ export function DispatchShell({ children }: { children: ReactNode }) {
                 <span className="hidden h-4 w-px bg-line-strong sm:block" aria-hidden="true" />
                 <span className="hidden text-[13px] font-medium text-muted sm:block">Dispatch</span>
               </Link>
-              <Tooltip content={`Synthetic development data · operations clock ${formatClock(scoped.asOfMinute)}`} side="bottom">
-                <span className="xl:hidden">
-                  <Badge tone="warning" dot>
-                    Synthetic
-                  </Badge>
-                </span>
-              </Tooltip>
+              {session.environment && (
+                <Tooltip content={session.environment} side="bottom">
+                  <span className="hidden sm:inline-flex xl:hidden">
+                    <Badge tone="warning" dot>
+                      Dev
+                    </Badge>
+                  </span>
+                </Tooltip>
+              )}
 
               <nav aria-label="Workspaces" className="ms-2 hidden lg:block">
                 <ul className="flex items-center gap-0.5">
@@ -141,7 +157,8 @@ export function DispatchShell({ children }: { children: ReactNode }) {
                           >
                             {active && <motion.span layoutId="view-pill" className="absolute inset-0 rounded-md bg-surface-2" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
                             <Icon className={cn("relative size-4", active ? "text-brand-600" : "text-subtle")} />
-                            <span className="relative">{v.label}</span>
+                            <span className="relative hidden xl:inline">{v.label}</span>
+                            <span className="sr-only xl:hidden">{v.label}</span>
                           </Link>
                         </Tooltip>
                       </li>
@@ -151,11 +168,14 @@ export function DispatchShell({ children }: { children: ReactNode }) {
               </nav>
 
               <div className="ms-auto flex min-w-0 items-center gap-2">
-                <div className="hidden xl:block">
-                  <Badge tone="warning" dot>
-                    Synthetic data · as of {formatClock(scoped.asOfMinute)}
-                  </Badge>
-                </div>
+                {session.environment && (
+                  <div className="hidden xl:block">
+                    <Badge tone="warning" dot>
+                      {session.environment}
+                    </Badge>
+                  </div>
+                )}
+                <LiveIndicator />
                 <div className="hidden sm:flex sm:items-center sm:gap-2">
                   <DepotSwitcher />
                   <DateControl />
@@ -174,11 +194,26 @@ export function DispatchShell({ children }: { children: ReactNode }) {
                       </div>
                       <div className="mt-1 text-2xs text-subtle">{session.companyWide ? "Company-wide access" : "Access limited to assigned depots"}</div>
                     </div>
+                    {session.workspaces.length > 1 && (
+                      <>
+                        <MenuSeparator />
+                        <MenuLabel>Switch company</MenuLabel>
+                        {session.workspaces.map((w) => (
+                          <MenuItem
+                            key={w.id}
+                            icon={w.id === session.organizationId ? <Check className="!text-brand-600" /> : <Building2 />}
+                            hint={w.role}
+                            onSelect={() => w.id !== session.organizationId && switchWorkspace(w.id)}
+                          >
+                            {w.name}
+                          </MenuItem>
+                        ))}
+                      </>
+                    )}
                     <MenuSeparator />
-                    <MenuItem icon={<LogOut />} disabled hint="Dev">
+                    <MenuItem icon={<LogOut />} onSelect={() => void signOut()}>
                       Sign out
                     </MenuItem>
-                    <p className="px-2 pb-1.5 pt-1 text-2xs leading-4 text-subtle">Development identity – login (Supabase Auth) is not connected yet.</p>
                   </MenuContent>
                 </Menu>
               </div>
@@ -193,7 +228,7 @@ export function DispatchShell({ children }: { children: ReactNode }) {
           <div className="relative min-h-0 flex-1 pb-[60px] lg:pb-0">{children}</div>
           {/* Bottom tab bar on phones/tablets */}
           <nav aria-label="Workspaces" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur lg:hidden">
-            <ul className="grid grid-cols-4">
+            <ul className="grid grid-cols-5">
               {VIEWS.map((v) => {
                 const active = pathname.startsWith(v.href);
                 const Icon = v.icon;

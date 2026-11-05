@@ -1,6 +1,6 @@
 # TURVIO – Development roadmap
 
-Updated 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapact Technologies, UAE; pilot: JARBOU Logistik GmbH).
+Updated 2026-11-05 (Phase 3). Originally written 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapact Technologies, UAE; pilot: JARBOU Logistik GmbH).
 
 ## M1 – Foundation & vertical slice ✅ (this delivery)
 
@@ -19,19 +19,25 @@ Updated 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapac
 - TURVIO Dispatch: map-centred workspace (tours/drivers panel, route map, details panel), List, Planning (local draft: create tours, assign drivers/vehicles, assign unassigned stops, priorities, optimization) and Pickups (deadlines, conflicts) – multi-depot pilot data for Hannover, Bremen, Kassel, Haiger.
 - Depot-scoped access in Postgres (`membership_depots`, `app.can_access_depot`) and server-side scoping in Dispatch; unassigned stops in the schema.
 
-## M2 – Real accounts & driver app on live data (next)
+## M2 – Real accounts, persistence & working Dispatch ✅ (2026-11, Phase 3)
 
-1. Supabase project (EU region, Frankfurt) – apply migrations, configure Auth (email OTP/magic link for drivers, password + MFA for staff).
-2. Login flows in Driver, Dispatch and Admin; tenant switcher for multi-tenant users; `organizations`/subscription creation via a server-side signup/invite flow.
-3. Dispatch: read tours/stops from Supabase (RLS does the scoping) and add the tour write API so planning drafts can be saved; realtime progress.
-4. Driver app redesign on the design system, then: read today's tour from Supabase, write stop status via RPC, offline outbox + sync and conflict handling.
-5. Proof of delivery: photo (expo-camera / image picker) and signature capture, upload to private bucket with tenant-prefixed paths + storage policies.
-6. Edit stop, editable service time, failure reason codes, drag-and-drop reorder, start/end location UI.
-7. CI pipeline (typecheck, tests, migration tests, builds) – after the repository move.
+Done:
+- Authentication for all three apps: login, password reset, invitations, session refresh/rotation, logout, workspace switch, role- and depot-based navigation (local provider; Supabase provider implemented, not yet tested against a live project).
+- Persistent Dispatch: tours, stops, parcels, drivers, vehicles, depots, team; optimize & save, depot-plan optimization, publish/withdraw, activity log, optimistic concurrency.
+- Driver app on live data: only published tours, status updates via RPC, offline outbox, background sync.
+- Change feed (Postgres NOTIFY → SSE) so Dispatch shows driver progress without reloading.
+- Security tests (DB 39, API 31 incl. 22 integration) and a browser end-to-end test of the full dispatcher→driver workflow (15 steps).
+
+Still open from the original M2 list:
+1. Hosted Supabase project (EU, Frankfurt) – see [SETUP_SUPABASE.md](SETUP_SUPABASE.md); requires Lunapact accounts.
+2. Driver app redesign on the design system.
+3. Proof of delivery (photo, signature) with storage policies.
+4. Edit stop, failure reason codes, drag-and-drop reorder, start/end location UI.
+5. MFA for staff; CI pipeline after the repository move.
 
 ## M3 – Dispatch operations
 
-Tour creation/assignment, stop import (CSV/XLSX, paste list), geocoding provider + address autocomplete, depot/driver/vehicle CRUD, reassign stops, realtime tour progress (Supabase Realtime), live driver positions (privacy-reviewed), multi-tour optimization saved to DB.
+Stop import (CSV/XLSX), geocoding provider + address autocomplete, moving stops between tours, live driver positions (privacy-reviewed, DPIA), self-hosted OSRM for road travel times, hosted map tiles.
 
 ## M4 – Scanning & OCR
 

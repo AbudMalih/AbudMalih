@@ -41,55 +41,48 @@ pnpm install
 cd services/optimizer && python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 ```
 
-## Run
+## Run (complete local stack)
 
-Optimizer (port 8000):
-
-```bash
-cd services/optimizer && .venv/bin/uvicorn turvio_optimizer.app:app --port 8000
-```
-
-API in development auth mode (port 4000; synthetic identity, refused in production):
+Everything runs locally without Docker: PostgreSQL 16 (system binaries), the OR-Tools optimizer, the API, Dispatch, Admin and a web build of TURVIO Driver.
 
 ```bash
-cd apps/api && AUTH_MODE=dev pnpm dev
+scripts/dev-stack.sh up --fresh
 ```
 
-Dispatch (http://localhost:3000) and Admin (http://localhost:3001):
+`--fresh` resets the database (`scripts/db.sh reset`: Supabase-compatible stubs, all migrations, local auth schema) and seeds **synthetic** data: JARBOU Logistik GmbH with depots Hannover, Bremen, Kassel, Haiger (Hannover starts empty, the others have a live-looking day) and a second company, Muster Kurier GmbH. Add `--no-demo` for empty tours everywhere.
+
+| App | URL |
+|---|---|
+| TURVIO Dispatch | http://localhost:3000 |
+| TURVIO Admin | http://localhost:3001 |
+| TURVIO Driver (web build, for testing) | http://localhost:8081 |
+| API / dev mailbox (reset & invitation mails) | http://localhost:4000 · http://localhost:4000/v1/dev/outbox |
+
+Development accounts (password `Turvio-Demo-2026`, override with `SEED_PASSWORD`; local only):
+
+| Account | Role |
+|---|---|
+| `ops@turvio.test` | platform admin (TURVIO Admin) |
+| `owner@jarbou.test` | JARBOU owner (all depots) |
+| `dispatch.hannover@jarbou.test` / `dispatch.bremen@jarbou.test` | dispatchers limited to one depot |
+| `lena.hoffmann@jarbou.test`, `mihai.popescu@jarbou.test` (Hannover), `aylin.demir@jarbou.test` (Bremen) | drivers |
+| `owner@muster.test`, `driver@muster.test` | second company |
 
 ```bash
-pnpm --filter @turvio/dispatch dev
+scripts/dev-stack.sh down
 ```
+
+Individual pieces: `scripts/db.sh start|reset|psql|url`, `pnpm --filter @turvio/api seed`, `pnpm --filter @turvio/api dev` (see `apps/api/.env.example`), `pnpm --filter @turvio/dispatch dev` with `TURVIO_API_URL`.
+
+Driver app on a phone/emulator (needs a development build because of native modules):
 
 ```bash
-pnpm --filter @turvio/admin dev
+cd apps/driver && EXPO_PUBLIC_API_URL=http://<your-LAN-IP>:4000 npx expo run:android
 ```
 
-Set `NEXT_PUBLIC_API_URL=http://localhost:4000` in `apps/dispatch/.env.local` to optimize through the API; without it Dispatch uses a clearly labelled in-browser heuristic.
+Without `EXPO_PUBLIC_API_URL` the driver app runs in offline demo mode with synthetic data.
 
-Dispatch has no login yet; its development identity can be switched to exercise permissions (data is scoped on the server):
-
-```bash
-DISPATCH_DEV_ROLE=dispatcher DISPATCH_DEV_DEPOTS=dep_bremen,dep_kassel pnpm --filter @turvio/dispatch dev
-```
-
-Roles: `owner`, `admin` (default, company-wide), `dispatcher` (optionally limited to depots), `driver` (no dispatch data).
-
-Driver app:
-
-```bash
-cd apps/driver && cp .env.example .env
-```
-
-```bash
-cd apps/driver && npx expo run:android
-```
-
-```bash
-cd apps/driver && npx expo run:ios
-```
-
-Then `pnpm dev:driver` for subsequent starts. Set `EXPO_PUBLIC_API_URL` (use your computer's LAN IP on a physical phone) to use OR-Tools; otherwise the app optimizes on-device. Android maps need `GOOGLE_MAPS_ANDROID_API_KEY`.
+Hosted Supabase (EU): see [docs/SETUP_SUPABASE.md](docs/SETUP_SUPABASE.md).
 
 ## Test
 
@@ -119,7 +112,15 @@ pnpm --filter @turvio/dispatch build && pnpm --filter @turvio/admin build
 cd apps/driver && EXPO_OFFLINE=1 npx expo export --platform android --platform ios
 ```
 
-Dispatch browser tests (real Chromium against a running production build; screenshots optional):
+API integration tests run against the local PostgreSQL (start it with `scripts/db.sh start`; they are skipped with a warning if it is not reachable).
+
+End-to-end workflow (dispatcher → driver, all apps, real database and optimizer):
+
+```bash
+scripts/dev-stack.sh up --fresh && SCREENSHOT_DIR=/tmp/turvio-e2e node e2e/workflow.mjs
+```
+
+Dispatch UI browser tests (synthetic-data era smoke suite; screenshots optional):
 
 ```bash
 pnpm --filter @turvio/dispatch build && pnpm --filter @turvio/dispatch start
@@ -139,11 +140,12 @@ python3 branding/build_assets.py
 |---|---|
 | `packages/shared` | schemas, stop logic, offline heuristic, i18n completeness, permissions, billing rules |
 | `packages/db` | migrations + **tenant isolation**, **depot scope**, roles, plan limits, audit, retention (PGlite = real Postgres engine) |
-| `apps/api` | JWT verification, tenant/role authorization, optimize gateway, config safety |
-| `apps/driver` | store, stop form, optimizer client, Home screen rendering |
+| `apps/api` | unit: JWT, authorization, config · **integration on PostgreSQL**: auth (rotation, reuse detection, throttling, reset), invitations, tenant/depot/driver/platform isolation, 25-stop workflow, version conflicts, change feed, plan limits |
+| `apps/driver` | store, stop form, optimizer client, Home screen, **server mode**: sign-in, sync, offline outbox, token refresh |
 | `apps/dispatch` | planning draft, server-side scoping, components (tour list, list view, planning, pickups); `e2e/smoke.mjs` browser tests incl. responsive checks at 1920/1440/1100/800/390 px |
 | `apps/admin` | platform KPIs, company table logic and component tests |
 | `services/optimizer` | VRPTW constraints, OSRM client, HTTP contract |
+| `e2e/workflow.mjs` | Playwright across Dispatch, Driver (web build), Admin and API: the complete dispatcher → driver scenario and cross-tenant checks |
 
 ## External services and keys
 

@@ -38,7 +38,8 @@ function Metric({ icon, label, value, sub, tone, href }: { icon: ReactNode; labe
 }
 
 export function OpsSummary() {
-  const { kpis, hasDataForDate } = useDispatch();
+  const { kpis, data } = useDispatch();
+  const hasData = data.tours.length > 0 || data.unassigned.length > 0;
   const pct = Math.round(kpis.completion * 100);
   return (
     <section aria-label="Operations summary" className="flex items-center gap-1 overflow-x-auto border-t border-line px-3 py-1.5 sm:px-4">
@@ -46,7 +47,7 @@ export function OpsSummary() {
         <div className="min-w-[132px]">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-2xs font-medium uppercase tracking-[0.06em] text-subtle">Day progress</span>
-            <span className="text-xs font-semibold tabular text-ink">{hasDataForDate ? `${pct}%` : "–"}</span>
+            <span className="text-xs font-semibold tabular text-ink">{hasData ? `${pct}%` : "–"}</span>
           </div>
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-3" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Stops completed today">
             <motion.div className="h-full rounded-full bg-brand-600" initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }} />

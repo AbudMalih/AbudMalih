@@ -20,7 +20,8 @@
     "lucide-react": "^1.65.0",
     "motion": "^14.9.0",
     "radix-ui": "^1.8.1",
-    "sonner": "^2.0.8"
+    "sonner": "^2.0.8",
+    "@turvio/web-session": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

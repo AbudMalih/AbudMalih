@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { tourColor } from "../lib/draft";
+import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
 import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
 import { TourDetail } from "./TourDetail";
@@ -194,7 +194,7 @@ export function MapWorkspace() {
                 <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
                   <div className="min-w-0">
                     <h2 className="truncate text-sm font-semibold text-ink">{selected ? `Tour ${selected.tour.name}` : "Operations overview"}</h2>
-                    <p className="truncate text-xs text-muted">{selected ? `${selected.depot.name} · ${selected.tour.date}` : `As of ${formatClock(data.asOfMinute)} (synthetic clock)`}</p>
+                    <p className="truncate text-xs text-muted">{selected ? `${selected.depot.name} · ${selected.tour.date}` : `${data.date} · as of ${formatClock(data.asOfMinute)}`}</p>
                   </div>
                   {selected && (
                     <Button variant="ghost" size="sm" onClick={() => selectTour(null)}>

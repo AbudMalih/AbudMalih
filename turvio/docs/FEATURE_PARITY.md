@@ -38,7 +38,7 @@ TURVIO is developed independently. This list compares against **publicly documen
 | Manual reorder | Documented | **Done** | Up/down controls in the stop list. Drag-and-drop: M2. |
 | Draw on map to reorder | Documented | Not planned yet | |
 | "Update route" vs full re-optimize | Documented | **Partial** | Re-optimization of remaining stops keeps completed stops in place; minimal-change insert: M5. |
-| Offline route access | Documented | **Done** | Tour persisted on device (AsyncStorage). Sync/conflict handling: M2. |
+| Offline route access | Documented | **Done** | Tour persisted on device; status changes queued in an outbox and sent when online (server mode). |
 | Breaks | Documented | Planned (M5) | Schema has `break` stop type; solver support pending. |
 | Start / pause / finish tour | – | **Done** | State machine in app and DB RPC. |
 | Navigation handoff (Google/Apple Maps) | Documented (+Waze, HERE, Sygic) | **Done** | Apple Maps on iOS, Google Maps elsewhere; Waze option: M5. |
@@ -59,20 +59,20 @@ TURVIO is developed independently. This list compares against **publicly documen
 
 | Feature | Spoke | TURVIO | Notes |
 |---|---|---|---|
-| Secure login, role-based access | Documented | **Partial** | Roles, RLS and API token checks done and tested; login UI: M2. |
-| Multiple depots | Documented | **Partial** | Depot switcher, depot-scoped data and permissions (DB + server); depot CRUD UI: M3. |
-| Driver management | Documented | **Partial** | Schema, list view, plan-limit enforcement; CRUD UI: M3. |
+| Secure login, role-based access | Documented | **Done** (local auth) | Login, password reset, invitations, session refresh, logout, workspace switch, role/depot-scoped navigation. Supabase Auth provider implemented, not yet tested live. MFA: planned. |
+| Multiple depots | Documented | **Done** | Depot switcher, depot-scoped dispatchers (RLS), depot create/edit in Fleet. |
+| Driver management | Documented | **Done** | Create/edit/deactivate in Fleet; plan-limit enforced in DB; driver login via invitation. |
 | Vehicle management (capacity) | Documented (weight) | **Partial** | Parcel-count capacity in schema + optimizer; weight: M5. |
-| Create and assign tours | Documented | **Partial** | Planning workspace: create tours, assign drivers/vehicles with conflict checks – local draft until the tour write API (M2). |
-| Import stops (spreadsheet) | Documented | Planned (M3) | |
+| Create and assign tours | Documented | **Done** | Persistent tours with driver/vehicle, double-booking check, optimistic versioning, publish/withdraw to the driver, activity log. |
+| Import stops (spreadsheet) | Documented | **Partial** | Paste list (address; lat; lng; …) and single-stop form. CSV/XLSX upload and geocoding: M3 – coordinates are required today. |
 | Barcode data import | Documented | Planned (M4) | |
-| Multi-driver optimization | Documented | **Partial** | Optimizer supports many vehicles + capacity; Dispatch optimizes per tour (OR-Tools via API or labelled in-browser heuristic) into the draft. |
+| Multi-driver optimization | Documented | **Done** | Per tour and whole depot plan (OR-Tools), saved to the DB. Travel times are straight-line estimates until OSRM is hosted (labelled). |
 | Optimization objective (balance workload etc.) | Documented | Planned (M5) | |
 | Linked pickup → delivery | Documented | Planned (M5) | |
-| Reassign stops | Documented | **Partial** | Unassigned stops/pickups can be assigned to tours (draft); moving stops between tours: M3. |
+| Reassign stops | Documented | **Done** | Assign unassigned stops/pickups to tours; deleting a tour returns its stops to unassigned. |
 | Max stops per driver, allowed drivers per stop | Documented | Planned (M5) | |
-| Live tour progress | Documented | **Partial** | Progress, ETAs, delay detection and day KPIs from tour data (synthetic clock); realtime updates and live positions: M3 – the map deliberately shows no driver locations without authorized data. |
-| Pickups and delivery deadlines | Documented | **Done** (UI on synthetic data) | Pickups workspace: windows, deadlines, projected ETA, late/at-risk/unassigned conflicts, assignment. |
+| Live tour progress | Documented | **Partial** | Stop statuses from the driver app appear in Dispatch within seconds (SSE change feed, polling fallback). No live GPS positions – the map deliberately shows none without authorized location data. |
+| Pickups and delivery deadlines | Documented | **Done** | Pickups workspace on persisted data: windows, deadlines, projected ETA, conflicts, assignment. |
 | Reports / analytics | Documented | Planned (M5) | |
 | Export (CSV/manifests) | Documented | Planned (M5) | |
 | Recipient notifications + tracking page | Documented | Planned (M6) | Needs GDPR review (recipient contact data). |
@@ -90,4 +90,4 @@ TURVIO is developed independently. This list compares against **publicly documen
 | Plans, per-driver seats, limits, overrides, trials | **Done** (rules) | DB-enforced limits; shared rule functions tested. |
 | Upgrades/downgrades with limit check | **Done** (rules) | `checkPlanChange`; no UI yet. |
 | Stripe Billing | Planned (M7) | Intentionally inactive. |
-| Admin console: tenants, plans, system status | **Partial** | Read-only on synthetic data. |
+| Admin console: tenants, plans, system status | **Partial** | Live tenant stats (aggregates only), activity, create company with owner invitation. Plan changes in the UI: planned. |

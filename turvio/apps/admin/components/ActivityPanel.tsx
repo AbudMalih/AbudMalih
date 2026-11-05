@@ -1,4 +1,4 @@
-import { Avatar, Card, CardHeader, DemoDataTag, EmptyState, cn } from "@turvio/web-ui/ds";
+import { Avatar, Card, CardHeader, EmptyState, cn } from "@turvio/web-ui/ds";
 import { ArrowRightLeft, CircleAlert, Hourglass, Inbox, UserPlus, Building2, CircleX, type LucideIcon } from "lucide-react";
 import { formatRelative, type ActivityEvent, type ActivityKind } from "../lib/platform";
 
@@ -15,7 +15,7 @@ const KIND: Record<ActivityKind, { icon: LucideIcon; tone: string; label: string
 export function ActivityPanel({ events, now }: { events: ActivityEvent[]; now: Date }) {
   return (
     <Card className="flex flex-col" id="activity">
-      <CardHeader title="Platform activity" description="Registrations, plan changes, trials" actions={<DemoDataTag>Demo</DemoDataTag>} />
+      <CardHeader title="Platform activity" description="From the audit log: companies, subscriptions, members, invitations" />
       {events.length === 0 ? (
         <EmptyState icon={<Inbox />} title="No recent activity" />
       ) : (

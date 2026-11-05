@@ -5,7 +5,7 @@ import { Avatar, Button, Card, EmptyState, Menu, MenuCheckboxItem, MenuContent, 
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ListFilter, SearchX } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { tourColor } from "../lib/draft";
+import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
 import { TOUR_STATUS, TourStatusBadge } from "./StatusBadge";
 import { TourDetailSheet } from "./TourDetail";
@@ -139,7 +139,7 @@ export function ListView() {
             </Menu>
           </div>
           {filtered.length === 0 ? (
-            <EmptyState icon={<SearchX />} title="No tours match" description={data.tours.length ? "Adjust the search or status filter." : "There is no synthetic data for this date."} />
+            <EmptyState icon={<SearchX />} title="No tours match" description={data.tours.length ? "Adjust the search or status filter." : "No tours are planned for this date."} />
           ) : (
             <div className="relative overflow-x-auto">
               <table className="w-full min-w-[980px] text-[13px]">

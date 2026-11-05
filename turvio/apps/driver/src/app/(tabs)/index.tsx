@@ -7,6 +7,9 @@ import { useT } from "../../lib/i18n";
 import { openNavigation } from "../../lib/navigation";
 import { useTourStore } from "../../store/tourStore";
 import { useMyTour } from "../../store/useMyTour";
+import { SyncBar } from "../../components/SyncBar";
+import { RefreshControl } from "react-native";
+import { isServerMode } from "../../store/tourStore";
 
 export default function HomeScreen() {
   const t = useT();
@@ -15,6 +18,8 @@ export default function HomeScreen() {
   const optimize = useTourStore((s) => s.optimize);
   const optimizing = useTourStore((s) => s.optimizing);
   const lastOptimization = useTourStore((s) => s.lastOptimization);
+  const sync = useTourStore((s) => s.sync);
+  const syncing = useTourStore((s) => s.syncState === "syncing");
   const [optError, setOptError] = useState<string | null>(null);
 
   const progress = useMemo(() => tourProgress(stops), [stops]);
@@ -28,7 +33,8 @@ export default function HomeScreen() {
   if (!tour || !depot) {
     return (
       <View style={[ui.screen, ui.content]}>
-        <Text style={ui.body}>{t("home.noTour")}</Text>
+        <SyncBar />
+        <Text style={ui.body}>{isServerMode() ? t("home.noPublishedTour") : t("home.noTour")}</Text>
       </View>
     );
   }
@@ -46,8 +52,8 @@ export default function HomeScreen() {
   const ratio = progress.total ? progress.done / progress.total : 0;
 
   return (
-    <ScrollView style={ui.screen} contentContainerStyle={ui.content}>
-      <Banner text={t("home.syntheticBanner")} />
+    <ScrollView style={ui.screen} contentContainerStyle={ui.content} refreshControl={isServerMode() ? <RefreshControl refreshing={syncing} onRefresh={() => void sync()} /> : undefined}>
+      {isServerMode() ? <SyncBar /> : <Banner text={t("home.syntheticBanner")} />}
       <Text style={ui.h1}>{t("home.greeting", { name: driver?.displayName.split(" ")[0] ?? "" })}</Text>
 
       <Card>
@@ -100,6 +106,7 @@ export default function HomeScreen() {
               variant="secondary"
               style={{ flex: 1 }}
               onPress={() => router.push({ pathname: "/stop/[id]", params: { id: next.id } })}
+              testID="open-next-stop"
             />
           </View>
         </Card>

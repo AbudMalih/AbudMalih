@@ -1,17 +1,19 @@
 import { colors, searchStops, spacing } from "@turvio/shared";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { FlatList, Text, TextInput, View } from "react-native";
+import { FlatList, RefreshControl, Text, TextInput, View } from "react-native";
 import { StopRow } from "../../components/StopRow";
 import { Button, styles as ui } from "../../components/ui";
 import { useT } from "../../lib/i18n";
-import { useTourStore } from "../../store/tourStore";
+import { isServerMode, useTourStore } from "../../store/tourStore";
 import { useMyTour } from "../../store/useMyTour";
 
 export default function StopsScreen() {
   const t = useT();
   const { tour, stops } = useMyTour();
   const moveStop = useTourStore((s) => s.moveStop);
+  const sync = useTourStore((s) => s.sync);
+  const syncing = useTourStore((s) => s.syncState === "syncing");
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => searchStops(stops, query), [stops, query]);
   // Manual reordering only makes sense on the full, unfiltered list.
@@ -36,6 +38,7 @@ export default function StopsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(s) => s.id}
+        refreshControl={isServerMode() ? <RefreshControl refreshing={syncing} onRefresh={() => void sync()} /> : undefined}
         renderItem={({ item }) => {
           const index = stops.findIndex((s) => s.id === item.id);
           return (

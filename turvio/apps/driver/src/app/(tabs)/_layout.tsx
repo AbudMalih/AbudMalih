@@ -1,9 +1,26 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors } from "@turvio/shared";
 import { Tabs } from "expo-router/js-tabs";
-import type { ComponentProps } from "react";
+import { useEffect, type ComponentProps } from "react";
+import { AppState } from "react-native";
 import type { ColorValue } from "react-native";
 import { useT } from "../../lib/i18n";
+import { isServerMode, useTourStore } from "../../store/tourStore";
+
+/** Keeps the published tour in sync: on open, every 30 s and when the app returns to the foreground. */
+function useBackgroundSync() {
+  const sync = useTourStore((s) => s.sync);
+  useEffect(() => {
+    if (!isServerMode()) return;
+    void sync();
+    const timer = setInterval(() => void sync(), 30_000);
+    const sub = AppState.addEventListener("change", (state) => state === "active" && void sync());
+    return () => {
+      clearInterval(timer);
+      sub.remove();
+    };
+  }, [sync]);
+}
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -13,6 +30,7 @@ function icon(name: IconName) {
 
 export default function TabLayout() {
   const t = useT();
+  useBackgroundSync();
   return (
     <Tabs
       screenOptions={{

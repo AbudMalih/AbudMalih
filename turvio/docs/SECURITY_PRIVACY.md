@@ -8,7 +8,12 @@ TURVIO processes personal data of recipients (name, address), drivers (identity,
 |---|---|
 | Tenant isolation | RLS on all tables, composite tenant FKs, explicit tenant in API routes, tests (see ARCHITECTURE §3.2) |
 | Least privilege | Roles owner/admin/dispatcher/driver; drivers change state only through checked RPCs; `anon` has no table access; platform admins see no operational data |
-| Authentication | Supabase JWT verified (issuer, audience, signature, expiry); dev bypass refused in production |
+| Authentication | JWT verified (issuer, audience, signature, expiry); local provider: scrypt hashes, 15-min access tokens, hashed + rotated refresh tokens with reuse detection (revokes all sessions), login throttling, single-use reset tokens, no account enumeration on password reset; dev bypass and dev mailbox refused in production |
+| Sessions in web apps | Tokens only in `httpOnly`/`SameSite=Lax`/`Secure` cookies behind a same-origin proxy – never readable by page scripts; logout revokes the refresh token server-side |
+| Sessions in the driver app | Tokens in the OS keystore (`expo-secure-store`) |
+| Database access | Each request runs as role `authenticated` with the user's claims, so RLS applies to every API query; service connection only for auth tables and invitation acceptance |
+| Concurrency | Optimistic `version` on tours (409 on conflict), DB transactions per request, API check against double-booking a driver/vehicle on the same day (not yet a DB constraint – a race between two simultaneous requests is possible) |
+| Invitations | Single-use, hashed, expiring tokens; role + depot scope set by an admin; audited |
 | Input validation | Zod schemas on client and API; Pydantic in the optimizer; DB CHECK constraints |
 | Error handling | API never returns internal errors or upstream addresses to clients |
 | Audit | Trigger-based audit log: actor, table, record id, *names* of changed columns – no copies of personal data |
@@ -23,7 +28,8 @@ TURVIO processes personal data of recipients (name, address), drivers (identity,
 * Hosting in the EU (Supabase Frankfurt); TLS only; HSTS at the edge.
 * Records of processing, DPIA for location tracking and OCR, TOMs, DPA template for tenants, privacy notices for drivers (works council involvement in Germany for employee location tracking – BetrVG §87(1) no. 6).
 * Storage bucket policies for `proofs` (tenant-prefixed paths), signed URLs with short expiry, purge of storage objects with the DB rows.
-* MFA for owners/admins/platform admins; session revocation on member removal.
+* MFA for owners/admins/platform admins (not built yet); session revocation on member removal.
+* Production mail (SMTP, SPF/DKIM) – today mails go to a development outbox.
 * Rate limiting and request logging without personal data in the API.
 * Dependency scanning and a penetration test before onboarding the second customer.
 

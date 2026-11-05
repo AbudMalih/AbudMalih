@@ -1,0 +1,250 @@
+// End-to-end: dispatcher → driver workflow across TURVIO Dispatch, TURVIO Driver (web build)
+// and the API, on a real PostgreSQL database with the real OR-Tools optimizer.
+//
+//   scripts/dev-stack.sh up --fresh        (database reset + synthetic seed, all services)
+//   SCREENSHOT_DIR=/tmp/turvio-e2e node e2e/workflow.mjs
+//
+// Synthetic scenario: JARBOU Logistik GmbH, depot Hannover, 25 stops.
+import assert from "node:assert/strict";
+import { mkdirSync } from "node:fs";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const { chromium } = require("playwright");
+
+const DISPATCH = process.env.DISPATCH_URL ?? "http://localhost:3000";
+const ADMIN = process.env.ADMIN_URL ?? "http://localhost:3001";
+const DRIVER = process.env.DRIVER_URL ?? "http://localhost:8081";
+const API = process.env.API_URL ?? "http://localhost:4000";
+const PASSWORD = process.env.SEED_PASSWORD ?? "Turvio-Demo-2026";
+const SHOTS = process.env.SCREENSHOT_DIR;
+if (SHOTS) mkdirSync(SHOTS, { recursive: true });
+
+const results = [];
+async function step(name, fn) {
+  const t0 = Date.now();
+  try {
+    await fn();
+    results.push({ name, ok: true });
+    console.log(`  ✓ ${name} (${Date.now() - t0} ms)`);
+  } catch (e) {
+    results.push({ name, ok: false });
+    console.log(`  ✗ ${name}\n    ${String(e?.message ?? e).split("\n").slice(0, 8).join("\n    ")}`);
+    throw e;
+  }
+}
+const shot = async (p, name) => SHOTS && p.screenshot({ path: `${SHOTS}/${name}.png` });
+
+/** 25 synthetic Hannover stops (fictional recipients, approximate coordinates). */
+function stopLines() {
+  const streets = ["Lister Meile", "Podbielskistraße", "Sallstraße", "Limmerstraße", "Engelbosteler Damm", "Hildesheimer Straße", "Vahrenwalder Straße", "Göttinger Chaussee"];
+  const lines = [];
+  for (let i = 0; i < 25; i++) {
+    const lat = (52.355 + (i % 5) * 0.009 + (i % 3) * 0.002).toFixed(5);
+    const lng = (9.705 + Math.floor(i / 5) * 0.012 + (i % 2) * 0.003).toFixed(5);
+    const pickup = i === 7 || i === 19;
+    const window = pickup ? "13:00-16:00" : i === 4 ? "09:00-12:00" : "";
+    lines.push([`Testkunde ${String(i + 1).padStart(2, "0")}`, streets[i % streets.length], String(10 + i), "30161", "Hannover", lat, lng, pickup ? "pickup" : "delivery", window, `TVOE2E${String(i).padStart(4, "0")}DE`].join("; "));
+  }
+  return lines.join("\n");
+}
+
+async function loginDispatch(page, email) {
+  await page.goto(`${DISPATCH}/login`, { waitUntil: "networkidle" });
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 20000 });
+}
+
+async function loginDriver(page, email) {
+  await page.goto(DRIVER, { waitUntil: "networkidle" });
+  await page.getByTestId("login-email").fill(email);
+  await page.getByTestId("login-password").fill(PASSWORD);
+  await page.getByTestId("login-submit").click();
+}
+
+const browser = await chromium.launch();
+const errors = [];
+const watch = (p, label) => {
+  p.on("pageerror", (e) => errors.push(`${label}: ${e.message}`));
+  p.on("console", (m) => m.type() === "error" && !/Failed to load resource|tile\.openstreetmap/.test(m.text()) && errors.push(`${label}: ${m.text().slice(0, 200)}`));
+};
+
+console.log(`TURVIO end-to-end workflow → ${DISPATCH} · ${DRIVER} · ${API}`);
+let failed = false;
+try {
+  const dispatcher = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  watch(dispatcher, "dispatch");
+  const driver = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  watch(driver, "driver");
+
+  await step("unauthenticated visitors are sent to sign-in; wrong passwords are rejected", async () => {
+    await dispatcher.goto(`${DISPATCH}/planning`, { waitUntil: "networkidle" });
+    assert.match(dispatcher.url(), /\/login\?next=%2Fplanning/);
+    await dispatcher.getByLabel("Email").fill("dispatch.hannover@jarbou.test");
+    await dispatcher.getByLabel("Password", { exact: true }).fill("not-the-password-1");
+    await dispatcher.getByRole("button", { name: "Sign in" }).click();
+    await dispatcher.getByText("Email or password is incorrect").waitFor();
+    await shot(dispatcher, "01-login-error");
+  });
+
+  await step("Hannover dispatcher signs in and only sees the Hannover depot", async () => {
+    await loginDispatch(dispatcher, "dispatch.hannover@jarbou.test");
+    await dispatcher.goto(`${DISPATCH}/planning`, { waitUntil: "networkidle" });
+    const depotButton = dispatcher.getByRole("button", { name: /^Depot:/ }).first();
+    assert.equal(await depotButton.getAttribute("aria-label"), "Depot: Hannover");
+    await dispatcher.getByText(/No tours planned for/).waitFor();
+    await shot(dispatcher, "02-planning-empty");
+  });
+
+  await step("creates a tour with driver and vehicle", async () => {
+    await dispatcher.getByRole("button", { name: "New tour" }).first().click();
+    const dlg = dispatcher.getByRole("dialog");
+    await dlg.getByLabel("Driver").selectOption({ label: "Lena Hoffmann" });
+    await dlg.getByLabel("Vehicle").selectOption({ label: "Sprinter 1 · H-JL 100" });
+    await dlg.getByRole("button", { name: "Create tour" }).click();
+    await dispatcher.getByText("Tour HAN-01 created").waitFor();
+    await dispatcher.getByRole("dialog", { name: "Tour HAN-01" }).waitFor();
+  });
+
+  await step("adds 25 stops (paste list)", async () => {
+    const sheet = dispatcher.getByRole("dialog", { name: "Tour HAN-01" });
+    await sheet.getByRole("button", { name: "Add stops" }).click();
+    const dlg = dispatcher.getByRole("dialog", { name: /Add stops · HAN-01/ });
+    await dlg.getByRole("tab", { name: "Paste list" }).click();
+    await dlg.getByLabel("Stop list").fill(stopLines());
+    await dlg.getByText("25 valid · 0 with errors").waitFor();
+    await dlg.getByRole("button", { name: "Add 25 stops" }).click();
+    await dispatcher.getByText("25 stops added to HAN-01").waitFor();
+    await sheet.getByTestId("tour-progress").filter({ hasText: "0 of 25 stops done" }).waitFor();
+  });
+
+  await step("optimizes with the OR-Tools service and saves the order", async () => {
+    const sheet = dispatcher.getByRole("dialog", { name: "Tour HAN-01" });
+    await sheet.getByRole("button", { name: /Optimize & save/ }).click();
+    await dispatcher.getByText("Route optimized and saved").waitFor({ timeout: 60000 });
+    await sheet.getByText(/Last optimized/).waitFor();
+    await shot(dispatcher, "03-tour-optimized");
+  });
+
+  await step("publishes the tour to the driver", async () => {
+    const sheet = dispatcher.getByRole("dialog", { name: "Tour HAN-01" });
+    await sheet.getByRole("button", { name: "Publish to driver" }).click();
+    const confirm = dispatcher.getByRole("dialog", { name: "Publish HAN-01?" });
+    await confirm.getByRole("button", { name: "Publish" }).click();
+    await dispatcher.getByText("HAN-01 published to Lena Hoffmann").waitFor();
+    await sheet.getByText("Published", { exact: true }).waitFor();
+  });
+
+  await step("driver signs in to TURVIO Driver and receives the tour with 25 stops", async () => {
+    await loginDriver(driver, "lena.hoffmann@jarbou.test");
+    await driver.getByText("HAN-01").first().waitFor({ timeout: 20000 });
+    await driver.getByTestId("progress-text").filter({ hasText: "0 of 25 stops done" }).waitFor();
+    await shot(driver, "04-driver-home");
+  });
+
+  await step("driver starts the tour and completes five stops", async () => {
+    await driver.getByTestId("start-tour").click();
+    for (let i = 1; i <= 5; i++) {
+      await driver.getByTestId("open-next-stop").click();
+      await driver.getByTestId("mark-delivered").click();
+      await driver.getByTestId("progress-text").filter({ hasText: `${i} of 25 stops done` }).waitFor({ timeout: 15000 });
+    }
+    // Wait until the outbox is empty (all changes confirmed by the server).
+    await driver.getByText(/^Updated /).waitFor({ timeout: 20000 });
+    await shot(driver, "05-driver-five-done");
+  });
+
+  await step("dispatcher sees the progress live, without reloading", async () => {
+    const sheet = dispatcher.getByRole("dialog", { name: "Tour HAN-01" });
+    await sheet.getByTestId("tour-progress").filter({ hasText: "5 of 25 stops done" }).waitFor({ timeout: 20000 });
+    await sheet.getByText("Driver started the tour").waitFor({ timeout: 10000 });
+    await shot(dispatcher, "06-dispatch-live-progress");
+  });
+
+  await step("data persists after refreshing both apps", async () => {
+    await dispatcher.reload({ waitUntil: "networkidle" });
+    await dispatcher.goto(`${DISPATCH}/list`, { waitUntil: "networkidle" });
+    const row = dispatcher.getByRole("table").getByRole("row").filter({ hasText: "HAN-01" });
+    await row.waitFor();
+    assert.match(await row.textContent(), /Lena Hoffmann/);
+    const cells = await row.getByRole("cell").allTextContents();
+    assert.equal(cells[4], "25"); // total stops
+    assert.match(cells[5], /^5/); // completed
+    await driver.reload({ waitUntil: "networkidle" });
+    await driver.getByTestId("progress-text").filter({ hasText: "5 of 25 stops done" }).waitFor({ timeout: 20000 });
+  });
+
+  await step("data persists after signing out and in again", async () => {
+    await dispatcher.getByRole("button", { name: /^Account:/ }).click();
+    await dispatcher.getByRole("menuitem", { name: "Sign out" }).click();
+    await dispatcher.waitForURL(/\/login/);
+    await loginDispatch(dispatcher, "dispatch.hannover@jarbou.test");
+    await dispatcher.goto(`${DISPATCH}/list`, { waitUntil: "networkidle" });
+    await dispatcher.getByRole("table").getByRole("row").filter({ hasText: "HAN-01" }).waitFor();
+  });
+
+  await step("another depot's dispatcher (Bremen) cannot see the Hannover tour", async () => {
+    const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await loginDispatch(p, "dispatch.bremen@jarbou.test");
+    await p.goto(`${DISPATCH}/list`, { waitUntil: "networkidle" });
+    assert.equal(await p.getByRole("button", { name: /^Depot:/ }).first().getAttribute("aria-label"), "Depot: Bremen");
+    assert.equal(await p.getByText("HAN-01").count(), 0);
+    await p.close();
+  });
+
+  await step("another company (Muster Kurier) cannot see or reach JARBOU data", async () => {
+    const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await loginDispatch(p, "owner@muster.test");
+    await p.goto(`${DISPATCH}/list`, { waitUntil: "networkidle" });
+    assert.equal(await p.getByText("HAN-01").count(), 0);
+    await p.getByText("LEI-01").first().waitFor();
+    // Direct API request for JARBOU through Muster's session is refused.
+    const me = await p.evaluate(async () => (await fetch("/api/turvio/v1/me")).json());
+    assert.equal(me.memberships.length, 1);
+    const jarbouId = await (async () => {
+      const r = await fetch(`${API}/v1/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: "owner@jarbou.test", password: PASSWORD }) });
+      const t = (await r.json()).accessToken;
+      return (await (await fetch(`${API}/v1/me`, { headers: { authorization: `Bearer ${t}` } })).json()).memberships[0].organizationId;
+    })();
+    const status = await p.evaluate(async (id) => (await fetch(`/api/turvio/v1/orgs/${id}/dispatch`)).status, jarbouId);
+    assert.equal(status, 403);
+    await p.close();
+  });
+
+  await step("a different driver of the same company does not receive the tour", async () => {
+    const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await loginDriver(p, "mihai.popescu@jarbou.test");
+    await p.getByText(/No tour published for you today/).waitFor({ timeout: 20000 });
+    await p.close();
+  });
+
+  await step("drivers cannot use Dispatch; platform admins cannot read delivery data", async () => {
+    const p = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await loginDispatch(p, "lena.hoffmann@jarbou.test");
+    await p.getByText("No Dispatch access").waitFor();
+    await p.close();
+    const a = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await a.goto(`${ADMIN}/login`, { waitUntil: "networkidle" });
+    await a.getByLabel("Email").fill("ops@turvio.test");
+    await a.getByLabel("Password", { exact: true }).fill(PASSWORD);
+    await a.getByRole("button", { name: "Sign in" }).click();
+    await a.getByRole("heading", { name: "Platform overview" }).waitFor({ timeout: 20000 });
+    await a.getByText("JARBOU Logistik GmbH").first().waitFor();
+    await shot(a, "07-admin-overview");
+    const jarbou = await a.evaluate(async () => (await (await fetch("/api/turvio/v1/platform/overview")).json()).organizations.find((o) => o.slug === "jarbou").id);
+    assert.equal(await a.evaluate(async (id) => (await fetch(`/api/turvio/v1/orgs/${id}/dispatch`)).status, jarbou), 403);
+    await a.close();
+  });
+
+  assert.deepEqual(errors, [], "browser errors");
+} catch {
+  failed = true;
+} finally {
+  await browser.close();
+}
+const bad = results.filter((r) => !r.ok).length;
+if (errors.length) console.log("Browser errors:\n  " + errors.join("\n  "));
+console.log(`\n${results.length - bad} passed, ${bad} failed${failed && !bad ? " (browser errors)" : ""}`);
+process.exit(failed ? 1 : 0);

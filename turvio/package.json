@@ -14,6 +14,10 @@
     "build": "pnpm -r --filter=!@turvio/driver build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "stack:up": "scripts/dev-stack.sh up --fresh",
+    "stack:down": "scripts/dev-stack.sh down",
+    "e2e": "node e2e/workflow.mjs && node e2e/responsive.mjs",
+    "db:reset": "scripts/db.sh reset"
   }
 }

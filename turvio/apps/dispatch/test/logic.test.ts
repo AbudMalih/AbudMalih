@@ -1,86 +1,39 @@
-import { createDispatchDataset, summarizeTours } from "@turvio/shared";
+import { createDispatchDataset } from "@turvio/shared";
 import { describe, expect, it } from "vitest";
-import { EMPTY_DRAFT, applyDraft, createDraftTour, draftChangeCount, driverBusy, nextTourCode, vehicleBusy } from "../lib/draft";
-import { getDevSession, loadDispatchData } from "../lib/session";
+import { driverBusy, parseStopLines, tourColor, vehicleBusy } from "../lib/helpers";
 
-const NOW = new Date("2026-11-05T10:00:00Z");
-const base = createDispatchDataset(NOW);
+const base = createDispatchDataset(new Date("2026-11-05T10:00:00Z"));
 
-describe("planning draft", () => {
-  it("returns the base dataset untouched without changes", () => {
-    expect(applyDraft(base, EMPTY_DRAFT)).toBe(base);
-    expect(draftChangeCount(EMPTY_DRAFT)).toBe(0);
+describe("stop list import", () => {
+  it("parses valid lines with defaults, windows, types and tracking numbers", () => {
+    const r = parseStopLines("Praxis Lang; Lister Meile; 12; 30161; ; 52,3801; 9.7420; delivery; 09:00-12:00; TVO1, TVO2\n# comment\nAutohaus; Hafenstr.; 3; 30159; Hannover; 52.37; 9.73; pickup", { city: "Hannover" });
+    expect(r).toHaveLength(2);
+    expect(r[0]!.stop).toMatchObject({
+      type: "delivery",
+      recipientName: "Praxis Lang",
+      address: { street: "Lister Meile", houseNumber: "12", postalCode: "30161", city: "Hannover" },
+      location: { lat: 52.3801, lng: 9.742 },
+      timeWindow: { start: 540, end: 720 },
+      trackingNumbers: ["TVO1", "TVO2"],
+    });
+    expect(r[1]!.stop!.type).toBe("pickup");
   });
 
-  it("creates tours with the next depot code and assigns driver/vehicle", () => {
-    expect(nextTourCode(base, "dep_hannover")).toBe("HAN-04");
-    const t = createDraftTour(base, { depotId: "dep_hannover", startMinute: 780, driverId: null, vehicleId: null });
-    const free = base.drivers.find((d) => d.depotId === "dep_hannover" && d.active && !driverBusy(base, d.id))!;
-    const data = applyDraft(base, { ...EMPTY_DRAFT, newTours: [t], assignments: { [t.id]: { driverId: free.id } } });
-    const created = data.tours.find((x) => x.id === t.id)!;
-    expect(created.name).toBe("HAN-04");
-    expect(created.driverId).toBe(free.id);
-    expect(driverBusy(data, free.id)?.id).toBe(t.id);
-  });
-
-  it("moves unassigned stops onto a tour at the end of its sequence", () => {
-    const u = base.unassigned.find((x) => x.depotId === "dep_kassel")!;
-    const tour = base.tours.find((x) => x.name === "KAS-01")!;
-    const before = base.stops.filter((s) => s.tourId === tour.id).length;
-    const data = applyDraft(base, { ...EMPTY_DRAFT, moved: { [u.id]: tour.id } });
-    expect(data.unassigned.find((x) => x.id === u.id)).toBeUndefined();
-    const moved = data.stops.find((s) => s.id === u.id)!;
-    expect(moved.tourId).toBe(tour.id);
-    expect(moved.sequence).toBe(before);
-  });
-
-  it("applies optimized order to pending stops only and keeps sequences contiguous", () => {
-    const tour = base.tours.find((x) => x.name === "HAN-01")!;
-    const own = base.stops.filter((s) => s.tourId === tour.id).sort((a, b) => a.sequence - b.sequence);
-    const pending = own.filter((s) => s.status === "pending").map((s) => s.id).reverse();
-    const data = applyDraft(base, { ...EMPTY_DRAFT, order: { [tour.id]: pending } });
-    const after = data.stops.filter((s) => s.tourId === tour.id).sort((a, b) => a.sequence - b.sequence);
-    expect(after.filter((s) => s.status !== "pending").map((s) => s.id)).toEqual(own.filter((s) => s.status !== "pending").map((s) => s.id));
-    expect(after.filter((s) => s.status === "pending").map((s) => s.id)).toEqual(pending);
-    expect(after.map((s) => s.sequence)).toEqual(after.map((_, i) => i));
-  });
-
-  it("overrides priority for assigned and unassigned stops", () => {
-    const a = base.stops[0]!;
-    const u = base.unassigned[0]!;
-    const data = applyDraft(base, { ...EMPTY_DRAFT, priority: { [a.id]: !a.priority, [u.id]: !u.priority } });
-    expect(data.stops.find((s) => s.id === a.id)!.priority).toBe(!a.priority);
-    expect(data.unassigned.find((s) => s.id === u.id)!.priority).toBe(!u.priority);
-  });
-
-  it("detects busy vehicles", () => {
-    const t = base.tours.find((x) => x.status === "in_progress" && x.vehicleId)!;
-    expect(vehicleBusy(base, t.vehicleId!)?.id).toBe(t.id);
-    expect(vehicleBusy(base, t.vehicleId!, t.id)).toBeUndefined();
+  it("reports line-level errors instead of guessing", () => {
+    const r = parseStopLines("A; Weg; 1; 30159; Hannover; ; ;\nB; Weg; 2; 30159; Hannover; 52.3; 9.7; delivery; 12:00-11:00\nC; ; ; ; Hannover; 52.3; 9.7");
+    expect(r.map((x) => x.error)).toEqual(["valid latitude and longitude are required", 'invalid time window "12:00-11:00"', "street and postcode are required"]);
   });
 });
 
-describe("server-side session scoping", () => {
-  it("gives the default admin every depot", () => {
-    const s = getDevSession({});
-    expect(s.membership.role).toBe("admin");
-    expect(s.companyWide).toBe(true);
-    expect(loadDispatchData(s, NOW).depots).toHaveLength(4);
+describe("availability helpers", () => {
+  it("detects busy drivers and vehicles on open tours", () => {
+    const t = base.tours.find((x) => x.status === "in_progress" && x.driverId && x.vehicleId)!;
+    expect(driverBusy(base, t.driverId!)?.id).toBe(t.id);
+    expect(driverBusy(base, t.driverId!, t.id)).toBeUndefined();
+    expect(vehicleBusy(base, t.vehicleId!)?.id).toBe(t.id);
   });
-
-  it("limits a scoped dispatcher before data leaves the server", () => {
-    const s = getDevSession({ DISPATCH_DEV_ROLE: "dispatcher", DISPATCH_DEV_DEPOTS: "dep_bremen" });
-    expect(s.companyWide).toBe(false);
-    const d = loadDispatchData(s, NOW);
-    expect(d.depots.map((x) => x.id)).toEqual(["dep_bremen"]);
-    expect(d.tours.every((t) => t.depotId === "dep_bremen")).toBe(true);
-    expect(d.drivers.every((x) => x.depotId === "dep_bremen")).toBe(true);
-    expect(summarizeTours(d).length).toBe(3);
-  });
-
-  it("returns no dispatch data for a driver role", () => {
-    const d = loadDispatchData(getDevSession({ DISPATCH_DEV_ROLE: "driver" }), NOW);
-    expect(d.tours).toHaveLength(0);
-    expect(d.depots).toHaveLength(0);
+  it("gives each tour a stable colour", () => {
+    expect(tourColor(base, base.tours[0]!.id)).toBe("#2563EB");
+    expect(tourColor(base, base.tours[1]!.id)).not.toBe(tourColor(base, base.tours[0]!.id));
   });
 });

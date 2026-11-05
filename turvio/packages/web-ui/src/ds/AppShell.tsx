@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, ChevronsUpDown, LogOut, Menu as MenuIcon, PanelLeftClose, PanelLeftOpen, UserRound, type LucideIcon } from "lucide-react";
+import { Check, ChevronRight, ChevronsUpDown, LogOut, Menu as MenuIcon, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
 import { LayoutGroup, motion, MotionConfig } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Avatar } from "./Avatar";
@@ -147,7 +147,7 @@ function WorkspaceSwitcher({ workspaces, collapsed }: { workspaces: WorkspaceOpt
   );
 }
 
-function UserMenu({ user, collapsed, note }: { user: ShellUser; collapsed: boolean; note?: string }) {
+function UserMenu({ user, collapsed, note, onSignOut }: { user: ShellUser; collapsed: boolean; note?: string; onSignOut?: () => void }) {
   return (
     <Menu>
       <MenuTrigger asChild>
@@ -173,10 +173,7 @@ function UserMenu({ user, collapsed, note }: { user: ShellUser; collapsed: boole
           <div className="text-2xs text-muted">{user.email}</div>
         </div>
         <MenuSeparator />
-        <MenuItem icon={<UserRound />} disabled hint="Soon">
-          Profile
-        </MenuItem>
-        <MenuItem icon={<LogOut />} disabled hint={note ? "Dev" : undefined}>
+        <MenuItem icon={<LogOut />} disabled={!onSignOut} onSelect={() => onSignOut?.()}>
           Sign out
         </MenuItem>
         {note && <p className="px-2 pb-1.5 pt-1 text-2xs leading-4 text-subtle">{note}</p>}
@@ -195,6 +192,7 @@ export function AppShell({
   crumbs,
   headerActions,
   environment,
+  onSignOut,
   children,
 }: {
   product: string;
@@ -206,6 +204,7 @@ export function AppShell({
   crumbs: Crumb[];
   headerActions?: ReactNode;
   environment?: string;
+  onSignOut?: () => void;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -253,7 +252,7 @@ export function AppShell({
               <NavLinks groups={groups} current={current} collapsed={collapsed} />
             </div>
             <div className={cn("flex flex-col gap-1 border-t border-line p-3", collapsed && "items-center p-2")}>
-              <UserMenu user={user} collapsed={collapsed} note={userNote} />
+              <UserMenu user={user} collapsed={collapsed} note={userNote} onSignOut={onSignOut} />
               <Tooltip content={collapsed ? "Expand sidebar" : "Collapse sidebar"} side="right">
                 <Button variant="ghost" size="icon-sm" onClick={toggle} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} aria-expanded={!collapsed} className="self-end text-subtle">
                   {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
@@ -268,7 +267,7 @@ export function AppShell({
               <WorkspaceSwitcher workspaces={workspaces} collapsed={false} />
               <NavLinks groups={groups} current={current} collapsed={false} onNavigate={() => setMobileOpen(false)} />
               <div className="border-t border-line pt-3">
-                <UserMenu user={user} collapsed={false} note={userNote} />
+                <UserMenu user={user} collapsed={false} note={userNote} onSignOut={onSignOut} />
               </div>
             </div>
           </Sheet>

@@ -4,6 +4,7 @@ import { AppShell, type Crumb, type NavGroup } from "@turvio/web-ui/ds";
 import { Activity, Building2, CreditCard, LayoutDashboard, Server } from "lucide-react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { signOut, useAdminSession } from "../lib/session";
 
 const GROUPS: NavGroup[] = [
   {
@@ -20,20 +21,18 @@ const GROUPS: NavGroup[] = [
 
 export function AdminShell({ crumbs, actions, children }: { crumbs: Crumb[]; actions?: ReactNode; children: ReactNode }) {
   const pathname = usePathname() ?? "/";
+  const session = useAdminSession();
   return (
     <AppShell
       product="Platform Admin"
       groups={GROUPS}
       current={pathname}
-      workspaces={[
-        { id: "dev", name: "TURVIO Platform", detail: "Development · Lunapact", current: true },
-        { id: "prod", name: "TURVIO Production", detail: "Not provisioned yet", disabled: true, disabledHint: "Soon" },
-      ]}
-      user={{ name: "Platform Admin", email: "admin@dev.turvio.invalid", role: "Platform admin · dev" }}
-      userNote="Development identity. Platform-admin login (Supabase Auth + MFA) is not connected yet."
+      workspaces={[{ id: "platform", name: "TURVIO Platform", detail: session.environment ?? "Lunapact Technologies", current: true }]}
+      user={{ name: session.name, email: session.email, role: "Platform admin" }}
       crumbs={crumbs}
       headerActions={actions}
-      environment="Development · synthetic data"
+      environment={session.environment ?? undefined}
+      onSignOut={() => void signOut()}
     >
       {children}
     </AppShell>

@@ -4,7 +4,7 @@ import { formatClock, type DispatchTourStatus, type TourSummary } from "@turvio/
 import { Avatar, EmptyState, SearchInput, cn } from "@turvio/web-ui/ds";
 import { ArrowUpFromLine, Route, SearchX, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
-import { tourColor } from "../lib/draft";
+import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
 import { TourStatusBadge } from "./StatusBadge";
 
@@ -61,7 +61,7 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {visible.length === 0 ? (
-          <EmptyState icon={<SearchX />} title={data.tours.length ? "No tours match" : "No tours for this day"} description={data.tours.length ? "Change the search or filter." : "Synthetic data exists for the current operating day only."} />
+          <EmptyState icon={<SearchX />} title={data.tours.length ? "No tours match" : "No tours for this day"} description={data.tours.length ? "Change the search or filter." : "Create a tour in Planning."} />
         ) : (
           <ul className="flex flex-col gap-1.5" aria-label="Tours">
             {visible.map((s) => {

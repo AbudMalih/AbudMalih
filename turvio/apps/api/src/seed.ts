@@ -173,7 +173,8 @@ async function seedDemoDay(c: pg.ClientBase, s: { jarbou: string; depots: Record
     if (key === "hannover") continue;
     const dIdx = t.driverId ? ds.drivers.filter((d) => d.depotId === t.depotId).findIndex((d) => d.id === t.driverId) : -1;
     const vIdx = t.vehicleId ? ds.vehicles.filter((v) => v.depotId === t.depotId).findIndex((v) => v.id === t.vehicleId) : -1;
-    const shift = nowMinute - ds.asOfMinute; // move the synthetic clock to "now"
+    // Move the synthetic 11:30 clock towards "now", but keep tours within a working day.
+    const shift = Math.max(-180, Math.min(nowMinute - ds.asOfMinute, 150));
     const started = t.startedAt ? Number(t.startedAt.slice(11, 13)) * 60 + Number(t.startedAt.slice(14, 16)) + shift : null;
     const status = started !== null && started > nowMinute ? "planned" : t.status;
     const tour = (

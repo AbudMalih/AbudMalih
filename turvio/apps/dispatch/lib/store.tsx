@@ -7,26 +7,42 @@ import {
   summarizeTours,
   type DispatchDataset,
   type DispatchKpis,
+  type NewStopInput,
   type PickupRow,
   type Tour,
   type TourSummary,
 } from "@turvio/shared";
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { EMPTY_DRAFT, applyDraft, createDraftTour, draftChangeCount, type PlanDraft } from "./draft";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ApiCallError, api } from "./api";
 
 export interface SessionInfo {
   userName: string;
   email: string;
-  role: string;
+  role: "owner" | "admin" | "dispatcher" | "driver";
+  organizationId: string;
   organizationName: string;
   companyWide: boolean;
+  workspaces: { id: string; name: string; role: string }[];
+  /** Optional environment label, e.g. "Development · synthetic data". */
+  environment: string | null;
+}
+
+export type LiveState = "connecting" | "live" | "offline";
+
+export interface OptimizeMeta {
+  engine: string;
+  matrixSource: string;
+  unassignedStopIds: string[];
+  unlocatedStopIds?: string[];
+  distanceMeters?: number;
+  durationSeconds?: number;
 }
 
 interface DispatchState {
   session: SessionInfo;
-  /** All data the user may see (already scoped server-side), with the draft applied. */
+  /** Everything the user may see for the selected date (scoped by the database). */
   scoped: DispatchDataset;
-  /** `scoped` narrowed to the selected depot and date. */
+  /** `scoped` narrowed to the selected depot. */
   data: DispatchDataset;
   summaries: TourSummary[];
   kpis: DispatchKpis;
@@ -35,52 +51,107 @@ interface DispatchState {
   setDepotId: (id: string | null) => void;
   date: string;
   setDate: (date: string) => void;
-  /** True when the selected date has synthetic data. */
-  hasDataForDate: boolean;
+  today: string;
+  loading: boolean;
+  live: LiveState;
+  lastLoadedAt: number;
+  reload: () => Promise<void>;
   selectedTourId: string | null;
   selectedStopId: string | null;
   selectTour: (id: string | null) => void;
   selectStop: (id: string | null, tourId?: string | null) => void;
-  draft: PlanDraft;
-  draftChanges: number;
-  createTour: (input: { depotId: string; startMinute: number; driverId: string | null; vehicleId: string | null }) => Tour;
-  assign: (tourId: string, patch: { driverId?: string | null; vehicleId?: string | null }) => void;
-  moveStops: (stopIds: string[], tourId: string) => void;
-  setPriority: (stopId: string, value: boolean) => void;
-  setOrder: (tourId: string, stopIds: string[]) => void;
-  resetDraft: () => void;
+  // Persistent operations (API). All reload the view on success.
+  createTour: (input: { depotId: string; plannedStartMinute: number; driverId: string | null; vehicleId: string | null; name?: string }) => Promise<Tour>;
+  updateTour: (tour: Tour, patch: { name?: string; plannedStartMinute?: number; driverId?: string | null; vehicleId?: string | null }) => Promise<Tour>;
+  deleteTour: (tour: Tour) => Promise<void>;
+  publishTour: (tour: Tour) => Promise<void>;
+  unpublishTour: (tour: Tour) => Promise<void>;
+  optimizeTour: (tourId: string) => Promise<OptimizeMeta>;
+  optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; matrixSource: string }>;
+  addStops: (target: { tourId?: string; depotId?: string }, stops: NewStopInput[]) => Promise<string[]>;
+  assignStops: (stopIds: string[], tourId: string | null) => Promise<void>;
+  setPriority: (stopId: string, value: boolean) => Promise<void>;
+  deleteStop: (stopId: string) => Promise<void>;
+  switchWorkspace: (orgId: string) => void;
 }
 
 const Ctx = createContext<DispatchState | null>(null);
 
-const emptyFor = (d: DispatchDataset): DispatchDataset => ({ ...d, tours: [], stops: [], unassigned: [] });
-
-export function DispatchProvider({ base, session, children }: { base: DispatchDataset; session: SessionInfo; children: ReactNode }) {
-  const singleDepot = base.depots.length === 1 ? base.depots[0]!.id : null;
-  const [depotId, setDepotIdState] = useState<string | null>(singleDepot);
-  const [date, setDate] = useState(base.date);
+export function DispatchProvider({ base: initial, session, children }: { base: DispatchDataset; session: SessionInfo; children: ReactNode }) {
+  const org = session.organizationId;
+  const [scoped, setScoped] = useState<DispatchDataset>(initial);
+  const [date, setDateState] = useState(initial.date);
+  const today = useRef(initial.date).current;
+  const [depotId, setDepotIdState] = useState<string | null>(initial.depots.length === 1 ? initial.depots[0]!.id : null);
   const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<PlanDraft>(EMPTY_DRAFT);
+  const [loading, setLoading] = useState(false);
+  const [live, setLive] = useState<LiveState>("connecting");
+  const [lastLoadedAt, setLastLoadedAt] = useState(() => Date.now());
+  const dateRef = useRef(date);
+  dateRef.current = date;
 
-  const scoped = useMemo(() => applyDraft(base, draft), [base, draft]);
-  const hasDataForDate = date === base.date;
-  const data = useMemo(() => {
-    const byDepot = filterByDepot(scoped, depotId);
-    return hasDataForDate ? byDepot : emptyFor(byDepot);
-  }, [scoped, depotId, hasDataForDate]);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    try {
+      const d = await api<DispatchDataset>("GET", `/v1/orgs/${org}/dispatch?date=${dateRef.current}`);
+      setScoped(d);
+      setLastLoadedAt(Date.now());
+    } finally {
+      setLoading(false);
+    }
+  }, [org]);
+
+  const setDate = useCallback(
+    (d: string) => {
+      dateRef.current = d;
+      setDateState(d);
+      setSelectedTourId(null);
+      void reload().catch(() => undefined);
+    },
+    [reload],
+  );
+
+  // Live updates: server-sent events from the API (Postgres notifications), polling as fallback.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleReload = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => void reload().catch(() => undefined), 350);
+    };
+    let es: EventSource | null = null;
+    if (typeof EventSource !== "undefined") {
+      es = new EventSource(`/api/turvio/v1/orgs/${org}/events`);
+      es.addEventListener("ready", () => setLive("live"));
+      es.addEventListener("change", scheduleReload);
+      es.onerror = () => setLive("offline");
+    } else setLive("offline");
+    const poll = setInterval(() => void reload().catch(() => undefined), 60_000);
+    return () => {
+      es?.close();
+      clearInterval(poll);
+      clearTimeout(timer);
+    };
+  }, [org, reload]);
+
+  const data = useMemo(() => filterByDepot(scoped, depotId), [scoped, depotId]);
   const summaries = useMemo(() => summarizeTours(data), [data]);
   const kpis = useMemo(() => dispatchKpis(data, summaries), [data, summaries]);
   const pickups = useMemo(() => pickupRows(data, summaries), [data, summaries]);
 
-  const setDepotId = useCallback(
-    (id: string | null) => {
-      // Never allow "all depots" for a user limited to one depot.
-      setDepotIdState(singleDepot ?? id);
-      setSelectedTourId(null);
-      setSelectedStopId(null);
+  // After a version conflict, refresh so the user works on current data.
+  const run = useCallback(
+    async <T,>(fn: () => Promise<T>): Promise<T> => {
+      try {
+        const r = await fn();
+        await reload();
+        return r;
+      } catch (e) {
+        if (e instanceof ApiCallError && (e.code === "version_conflict" || e.status === 404)) await reload().catch(() => undefined);
+        throw e;
+      }
     },
-    [singleDepot],
+    [reload],
   );
 
   const value: DispatchState = {
@@ -91,10 +162,18 @@ export function DispatchProvider({ base, session, children }: { base: DispatchDa
     kpis,
     pickups,
     depotId,
-    setDepotId,
+    setDepotId: (id) => {
+      setDepotIdState(scoped.depots.length === 1 ? scoped.depots[0]!.id : id);
+      setSelectedTourId(null);
+      setSelectedStopId(null);
+    },
     date,
     setDate,
-    hasDataForDate,
+    today,
+    loading,
+    live,
+    lastLoadedAt,
+    reload,
     selectedTourId,
     selectedStopId,
     selectTour: (id) => {
@@ -105,18 +184,21 @@ export function DispatchProvider({ base, session, children }: { base: DispatchDa
       if (tourId !== undefined) setSelectedTourId(tourId);
       setSelectedStopId(id);
     },
-    draft,
-    draftChanges: draftChangeCount(draft),
-    createTour: (input) => {
-      const tour = createDraftTour(scoped, input);
-      setDraft((d) => ({ ...d, newTours: [...d.newTours, tour] }));
-      return tour;
+    createTour: (input) => run(() => api<Tour>("POST", `/v1/orgs/${org}/tours`, { ...input, date })),
+    updateTour: (tour, patch) => run(() => api<Tour>("PATCH", `/v1/orgs/${org}/tours/${tour.id}`, { expectedVersion: tour.version, ...patch })),
+    deleteTour: (tour) => run(() => api<void>("DELETE", `/v1/orgs/${org}/tours/${tour.id}?expectedVersion=${tour.version}`)),
+    publishTour: (tour) => run(() => api<void>("POST", `/v1/orgs/${org}/tours/${tour.id}/publish`, { expectedVersion: tour.version })),
+    unpublishTour: (tour) => run(() => api<void>("POST", `/v1/orgs/${org}/tours/${tour.id}/unpublish`, { expectedVersion: tour.version })),
+    optimizeTour: (tourId) => run(async () => (await api<{ result: OptimizeMeta }>("POST", `/v1/orgs/${org}/tours/${tourId}/optimize`, {})).result),
+    optimizePlan: (tourIds, includeUnassigned) => run(() => api("POST", `/v1/orgs/${org}/plans/optimize`, { tourIds, includeUnassigned })),
+    addStops: (target, stops) => run(async () => (await api<{ ids: string[] }>("POST", `/v1/orgs/${org}/stops`, { ...target, stops })).ids),
+    assignStops: (stopIds, tourId) => run(() => api<void>("POST", `/v1/orgs/${org}/stops/assign`, { stopIds, tourId })),
+    setPriority: (stopId, v) => run(() => api<void>("PATCH", `/v1/orgs/${org}/stops/${stopId}`, { priority: v })),
+    deleteStop: (stopId) => run(() => api<void>("DELETE", `/v1/orgs/${org}/stops/${stopId}`)),
+    switchWorkspace: (orgId) => {
+      document.cookie = `tv_org=${encodeURIComponent(orgId)}; path=/; samesite=lax; max-age=31536000`;
+      window.location.assign("/map");
     },
-    assign: (tourId, patch) => setDraft((d) => ({ ...d, assignments: { ...d.assignments, [tourId]: { ...d.assignments[tourId], ...patch } } })),
-    moveStops: (stopIds, tourId) => setDraft((d) => ({ ...d, moved: { ...d.moved, ...Object.fromEntries(stopIds.map((id) => [id, tourId])) } })),
-    setPriority: (stopId, v) => setDraft((d) => ({ ...d, priority: { ...d.priority, [stopId]: v } })),
-    setOrder: (tourId, ids) => setDraft((d) => ({ ...d, order: { ...d.order, [tourId]: ids } })),
-    resetDraft: () => setDraft(EMPTY_DRAFT),
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

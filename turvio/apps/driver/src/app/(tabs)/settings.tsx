@@ -3,13 +3,16 @@ import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { Button, Card, styles as ui } from "../../components/ui";
 import { applyLayoutDirection, useLocale, useT } from "../../lib/i18n";
 import { apiBaseUrl } from "../../lib/optimizer";
-import { useTourStore } from "../../store/tourStore";
+import { isServerMode, useTourStore } from "../../store/tourStore";
 
 export default function SettingsScreen() {
   const t = useT();
   const locale = useLocale();
   const setLocale = useTourStore((s) => s.setLocale);
   const resetData = useTourStore((s) => s.resetData);
+  const user = useTourStore((s) => s.user);
+  const signOut = useTourStore((s) => s.signOut);
+  const orgName = useTourStore((s) => s.organizationName);
   const api = apiBaseUrl();
 
   return (
@@ -47,7 +50,19 @@ export default function SettingsScreen() {
       </Card>
 
       <View style={{ marginTop: spacing.md }}>
-        <Button label={t("settings.resetData")} variant="danger" onPress={resetData} />
+        {isServerMode() ? (
+          <Card>
+            <Text style={ui.h2}>{t("settings.account")}</Text>
+            <Text style={ui.body}>{user?.name ?? user?.email}</Text>
+            <Text style={ui.muted}>
+              {user?.email}
+              {orgName ? ` · ${orgName}` : ""}
+            </Text>
+            <Button label={t("settings.signOut")} variant="danger" onPress={() => void signOut()} testID="sign-out" />
+          </Card>
+        ) : (
+          <Button label={t("settings.resetData")} variant="danger" onPress={resetData} />
+        )}
       </View>
       <Text style={[ui.muted, { textAlign: "center", marginTop: spacing.lg }]}>
         {t("app.name")} · {t("app.tagline")}

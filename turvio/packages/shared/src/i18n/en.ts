@@ -15,7 +15,7 @@ export const en = {
   "tabs.map": "Map",
   "tabs.settings": "Settings",
 
-  "home.greeting": "Good morning, {name}",
+  "home.greeting": "Hello, {name}",
   "home.todaysTour": "Today's tour",
   "home.noTour": "No tour assigned for today.",
   "home.progress": "{done} of {total} stops done",
@@ -92,6 +92,22 @@ export const en = {
   "settings.resetData": "Reset synthetic test data",
   "settings.apiStatus": "Optimization service",
   "settings.apiNotConfigured": "Not configured – on-device heuristic is used",
+
+  "login.title": "Sign in",
+  "login.subtitle": "Use the account your dispatcher invited you with.",
+  "login.email": "Email",
+  "login.password": "Password",
+  "login.submit": "Sign in",
+  "login.forgot": "Forgot password?",
+  "login.forgotSent": "If an account exists, we sent a reset link to {email}.",
+  "login.forgotNeedEmail": "Enter your email first.",
+  "sync.offline": "Offline – {n} change(s) will be sent automatically",
+  "sync.pending": "Sending {n} change(s)…",
+  "sync.lastSync": "Updated {time}",
+  "sync.refresh": "Refresh",
+  "home.noPublishedTour": "No tour published for you today. Your dispatcher publishes tours to this app.",
+  "settings.account": "Account",
+  "settings.signOut": "Sign out",
 } as const;
 
 export type MessageKey = keyof typeof en;

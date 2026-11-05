@@ -4,6 +4,7 @@ import { formatAddress, formatClock, isPickupConflict, type PickupRow, type Pick
 import { Button, Card, EmptyState, Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger, SearchInput, cn, toast } from "@turvio/web-ui/ds";
 import { AlertTriangle, ArrowUpFromLine, PackagePlus, SearchX, Star } from "lucide-react";
 import { useMemo, useState } from "react";
+import { errorMessage } from "../lib/api";
 import { useDispatch } from "../lib/store";
 import { PICKUP_STATE, PickupStateBadge, deadlineLabel } from "./StatusBadge";
 import { TourDetailSheet } from "./TourDetail";
@@ -20,7 +21,7 @@ export function filterPickups(rows: PickupRow[], filter: Filter, query: string):
 }
 
 export function PickupsView() {
-  const { pickups, data, summaries, moveStops, selectTour, scoped } = useDispatch();
+  const { pickups, data, summaries, assignStops, selectTour, scoped } = useDispatch();
   const [filter, setFilter] = useState<Filter>("attention");
   const [query, setQuery] = useState("");
   const rows = useMemo(() => filterPickups(pickups, filter, query), [pickups, filter, query]);
@@ -37,7 +38,7 @@ export function PickupsView() {
         <div className="mb-4 flex flex-col gap-1">
           <h1 className="text-[20px] font-semibold tracking-tight text-ink">Pickups</h1>
           <p className="text-sm text-muted">
-            Express pickup schedule for {data.date} · deadlines relative to the synthetic clock ({formatClock(data.asOfMinute)}) · synthetic customers, no carrier integration
+            Pickup schedule for {data.date} · deadlines relative to {formatClock(data.asOfMinute)} · no carrier integration
           </p>
         </div>
 
@@ -134,8 +135,9 @@ export function PickupsView() {
                                     key={s.tour.id}
                                     hint={s.driver?.displayName.split(" ")[0]}
                                     onSelect={() => {
-                                      moveStops([r.stop.id], s.tour.id);
-                                      toast.success(`Pickup added to ${s.tour.name}`, { description: "Draft – check the projected ETA against the window." });
+                                      assignStops([r.stop.id], s.tour.id)
+                                        .then(() => toast.success(`Pickup added to ${s.tour.name}`, { description: "Saved. Re-optimize the tour to place it in the route." }))
+                                        .catch((e) => toast.error("Could not assign the pickup", { description: errorMessage(e) }));
                                     }}
                                   >
                                     {s.tour.name}
