@@ -12,8 +12,14 @@ TURVIO processes personal data of recipients (name, address), drivers (identity,
 | Sessions in web apps | Tokens only in `httpOnly`/`SameSite=Lax`/`Secure` cookies behind a same-origin proxy – never readable by page scripts; logout revokes the refresh token server-side |
 | Sessions in the driver app | Tokens in the OS keystore (`expo-secure-store`) |
 | Database access | Each request runs as role `authenticated` with the user's claims, so RLS applies to every API query; service connection only for auth tables and invitation acceptance |
-| Concurrency | Optimistic `version` on tours (409 on conflict), DB transactions per request, API check against double-booking a driver/vehicle on the same day (not yet a DB constraint – a race between two simultaneous requests is possible) |
+| Concurrency | Optimistic `version` on tours (409 on conflict), DB transactions per request, **unique partial indexes** against double-booking a driver or vehicle on two open dispatch tours on the same day (tested with simultaneous requests), idempotent offline events (`client_event_id`), stale offline updates recorded but not applied |
 | Invitations | Single-use, hashed, expiring tokens; role + depot scope set by an admin; audited |
+| Proof of delivery | Files in private storage (local disk or private Supabase bucket), never public URLs; the API streams a file only after RLS confirmed access to the proof record (`Cache-Control: private, no-store`, CSP sandbox, nosniff); content checked by magic number; signatures accepted only as path-only SVG (whitelist, no scripts/links/styles); idempotent uploads; admins can delete; retention purge removes records and queues file deletion |
+| Camera / location | Permissions requested in context with an explanation; camera only while scanning or capturing; location only on request (map, optimize-from-here) and stored with proof of delivery **only if the company enables it**; no background location; Android background-location and microphone permissions removed from the manifest |
+| Label photos | Deleted on the device right after barcode/text extraction; never uploaded |
+| Delivery photos | Downscaled and re-encoded (EXIF removed) before upload; kept in the app's private directory until the upload is confirmed, then deleted |
+| Recipient phone numbers | Sent to drivers only when the company enables `showRecipientPhone` |
+| Offline data on the phone | Tour, queue and scans in app storage; tokens in the OS keystore. Signing out clears queued data and pending files (with a warning when changes are unsent) |
 | Input validation | Zod schemas on client and API; Pydantic in the optimizer; DB CHECK constraints |
 | Error handling | API never returns internal errors or upstream addresses to clients |
 | Audit | Trigger-based audit log: actor, table, record id, *names* of changed columns – no copies of personal data |
@@ -27,7 +33,8 @@ TURVIO processes personal data of recipients (name, address), drivers (identity,
 
 * Hosting in the EU (Supabase Frankfurt); TLS only; HSTS at the edge.
 * Records of processing, DPIA for location tracking and OCR, TOMs, DPA template for tenants, privacy notices for drivers (works council involvement in Germany for employee location tracking – BetrVG §87(1) no. 6).
-* Storage bucket policies for `proofs` (tenant-prefixed paths), signed URLs with short expiry, purge of storage objects with the DB rows.
+* Create the private `proofs` bucket in the hosted project and verify the Supabase storage adapter against it (only tested with a mocked Storage API).
+* DPIA for proof-of-delivery photos/signatures and (if enabled) PoD location; works-council agreement for location data.
 * MFA for owners/admins/platform admins (not built yet); session revocation on member removal.
 * Production mail (SMTP, SPF/DKIM) – today mails go to a development outbox.
 * Rate limiting and request logging without personal data in the API.

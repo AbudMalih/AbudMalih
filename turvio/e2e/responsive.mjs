@@ -54,7 +54,7 @@ const driverLogin = async (page, base, email) => {
   await page.getByTestId("login-email").fill(email);
   await page.getByTestId("login-password").fill(PASSWORD);
   await page.getByTestId("login-submit").click();
-  await page.getByText(/Today's tour|No tour published/).first().waitFor({ timeout: 20000 });
+  await page.getByTestId("home").waitFor({ timeout: 20000 });
 };
 
 console.log("Responsive checks at " + WIDTHS.join("/") + " px");

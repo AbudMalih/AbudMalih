@@ -1,6 +1,6 @@
 # TURVIO – Development roadmap
 
-Updated 2026-11-05 (Phase 3). Originally written 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapact Technologies, UAE; pilot: JARBOU Logistik GmbH).
+Updated 2026-11-05 (Phase 4). Originally written 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapact Technologies, UAE; pilot: JARBOU Logistik GmbH).
 
 ## M1 – Foundation & vertical slice ✅ (this delivery)
 
@@ -30,10 +30,16 @@ Done:
 
 Still open from the original M2 list:
 1. Hosted Supabase project (EU, Frankfurt) – see [SETUP_SUPABASE.md](SETUP_SUPABASE.md); requires Lunapact accounts.
-2. Driver app redesign on the design system.
-3. Proof of delivery (photo, signature) with storage policies.
-4. Edit stop, failure reason codes, drag-and-drop reorder, start/end location UI.
+2. ~~Driver app redesign~~ – done in Phase 4 (M2.5).
+3. ~~Proof of delivery~~ – done in Phase 4; create the private bucket in the hosted project.
+4. ~~Failure reason codes, start/end options~~ – done; editing address fields of a stop, drag-and-drop reorder: open.
 5. MFA for staff; CI pipeline after the repository move.
+
+## M2.5 – Driver app (Phase 4) ✅ (2026-11, device tests pending)
+
+Done: redesigned driver app (scan/optimize-first home, stops, map, stop detail), continuous barcode scanning, label capture with review (OCR boundary), manual/paste/CSV/XLSX import with grouping, geocoder abstraction, server optimization with start/end/locks, navigation hand-off (Google/Apple/Waze), arrival and not-delivered outcomes with configurable reasons, notes, proof of delivery (photo, signature, name, optional location) with private storage and retention, personal routes, offline outbox with idempotent retries, dark mode, de/en/ro/ar. DB-level double-booking protection; shared route metrics (Dispatch = driver figures).
+
+Open: **device testing on Android and iOS (EAS dev builds)**, OCR engine, hosted geocoder and OSRM, native review of ro/ar texts.
 
 ## M3 – Dispatch operations
 

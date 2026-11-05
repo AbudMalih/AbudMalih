@@ -1,4 +1,5 @@
 import type { Messages } from "./en";
+import { driverAr } from "./driver.ar";
 
 // Machine-assisted draft – needs review by a native speaker before release.
 export const ar: Messages = {
@@ -111,4 +112,5 @@ export const ar: Messages = {
   "home.noPublishedTour": "لا توجد جولة منشورة لك اليوم. يقوم المرسل بنشر الجولات في هذا التطبيق.",
   "settings.account": "الحساب",
   "settings.signOut": "تسجيل الخروج",
+  ...driverAr,
 };

@@ -62,7 +62,7 @@ describe("tenant isolation (RLS)", () => {
   it("composite foreign keys prevent referencing another tenant's driver or depot", async () => {
     await asUser(db, ids.ownerA, async () => {
       await expect(
-        db.query(`insert into tours (organization_id, depot_id, driver_id, name, tour_date) values ($1, $2, $3, 'x', current_date)`, [
+        db.query(`insert into tours (organization_id, depot_id, driver_id, name, tour_date) values ($1, $2, $3, 'x', current_date + 1)`, [
           ids.orgJarbou,
           ids.depotA,
           ids.drvRowB,

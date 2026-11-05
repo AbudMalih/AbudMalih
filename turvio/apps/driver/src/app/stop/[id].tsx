@@ -1,93 +1,176 @@
-import { formatAddress, formatMinuteOfDay, spacing, type StopStatus } from "@turvio/shared";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { isOpen, isSuccess } from "@turvio/shared";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, ScrollView, Text, TextInput, View } from "react-native";
-import { statusTone } from "../../components/StopRow";
-import { Button, Card, Pill, styles as ui } from "../../components/ui";
+import { Linking, Text, TextInput, View } from "react-native";
+import { NavigateButton } from "../../components/NavigateButton";
+import { Banner, Button, Card, EmptyState, Ionicons, ListRow, Pill, Screen, SectionTitle } from "../../components/ui";
+import { addressLine, statusTone, timeOf, windowText } from "../../lib/format";
+import { feedback } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
-import { openNavigation } from "../../lib/navigation";
+import { pendingProofIds } from "../../lib/sync";
 import { useTourStore } from "../../store/tourStore";
+import { useStop } from "../../store/useMyTour";
+import { radii, space, type as ty, useTheme } from "../../theme";
 
-export default function StopDetailScreen() {
-  const t = useT();
+export default function StopDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const stop = useTourStore((s) => s.stops.find((x) => x.id === id));
+  const t = useT();
+  const { c } = useTheme();
+  const { stop, tour, settings } = useStop(id);
   const setStopStatus = useTourStore((s) => s.setStopStatus);
-  const [notes, setNotes] = useState(stop?.notes ?? "");
+  const addNote = useTourStore((s) => s.addNote);
+  const setLocked = useTourStore((s) => s.setLocked);
+  const outbox = useTourStore((s) => s.outbox);
+  const stops = useTourStore((s) => s.stops);
+  const [note, setNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!stop) {
-    return (
-      <View style={[ui.screen, ui.content]}>
-        <Text style={ui.body}>404</Text>
-      </View>
-    );
-  }
+  if (!stop || !tour) return <EmptyState icon="alert-circle-outline" title="—" />;
+  const open = isOpen(stop.status);
+  const index = stops.filter((s) => s.tourId === stop.tourId).sort((a, b) => a.sequence - b.sequence).findIndex((s) => s.id === stop.id);
+  const pendingProofs = pendingProofIds(outbox);
+  const reasonLabel = (code?: string) => {
+    if (!code) return "";
+    const custom = settings.failureReasons.find((r) => r.code === code)?.label;
+    return custom ?? t(`reason.${code}` as never);
+  };
 
-  const complete = (status: StopStatus) => {
+  const act = (fn: () => void) => {
     try {
-      setStopStatus(stop.id, status, notes.trim() || undefined);
-      if (status !== "pending") router.back();
+      setError(null);
+      fn();
+      feedback.success();
     } catch (e) {
-      Alert.alert(e instanceof Error ? e.message : String(e));
+      feedback.error();
+      setError(e instanceof Error ? e.message : String(e));
     }
   };
 
   return (
-    <ScrollView style={ui.screen} contentContainerStyle={ui.content}>
-      <Stack.Screen options={{ title: `#${stop.sequence + 1}` }} />
-      <Card>
-        <View style={ui.row}>
-          <Pill label={t(`stopStatus.${stop.status}`)} tone={statusTone(stop.status)} />
-          <Pill label={t(`stopType.${stop.type}`)} tone="primary" />
-          {stop.priority && <Pill label={t("stops.priority")} tone="warning" />}
+    <Screen testID="stop-detail">
+      <Stack.Screen options={{ title: t("stop.title", { n: index + 1 }) }} />
+      <View style={{ gap: 4 }}>
+        <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+          <Pill label={t(`stopType.${stop.type}`)} tone={stop.type === "pickup" ? "warning" : "primary"} icon={stop.type === "pickup" ? "arrow-up-circle-outline" : "arrow-down-circle-outline"} />
+          <Pill label={t(`stopStatus.${stop.status}` as never)} tone={statusTone(stop.status)} testID="stop-status" />
+          {stop.priority && <Pill label={t("stops.priority")} tone="warning" icon="flash" />}
+          {stop.locked && <Pill label={t("stops.locked")} icon="lock-closed" />}
         </View>
-        <Text style={ui.h2}>{stop.recipientName ?? formatAddress(stop)}</Text>
-        <Text style={ui.body}>{formatAddress(stop)}</Text>
-        {stop.timeWindow && (
-          <Text style={ui.muted}>
-            {t("stops.window", {
-              from: formatMinuteOfDay(stop.timeWindow.start),
-              to: formatMinuteOfDay(stop.timeWindow.end),
-            })}
-          </Text>
-        )}
-        <Button
-          label={t("stop.navigate")}
-          onPress={() => openNavigation({ location: stop.location, addressText: formatAddress(stop) }).catch((e) => Alert.alert(String(e)))}
-        />
-      </Card>
+        <Text style={[ty.display, { color: c.text, fontSize: 26 }]} testID="stop-title">
+          {stop.recipientName ?? addressLine(stop)}
+        </Text>
+        <Text style={[ty.body, { color: c.textSecondary }]}>{addressLine(stop)}</Text>
+        {stop.completedAt && <Text style={[ty.small, { color: c.textMuted }]}>{t("stop.completedAt", { time: timeOf(stop.completedAt) })}</Text>}
+        {stop.failureReason && <Banner text={`${t("stop.reason")}: ${reasonLabel(stop.failureReason)}`} tone="danger" />}
+      </View>
 
-      {stop.parcels.length > 0 && (
+      {error && <Banner text={error} tone="danger" />}
+
+      <View style={{ flexDirection: "row", gap: space.sm }}>
+        <NavigateButton stop={stop} variant={open ? "primary" : "secondary"} />
+      </View>
+      {!stop.location && (
+        <Banner text={t("address.noPin")} tone="warning" icon="location-outline" action={{ label: t("stop.setLocation"), onPress: () => router.push(`/pick-location/${stop.id}`) }} />
+      )}
+
+      {open && (
         <Card>
-          <Text style={ui.h2}>{t("stop.parcels")}</Text>
-          {stop.parcels.map((p) => (
-            <Text key={p.id} style={[ui.body, { fontVariant: ["tabular-nums"] }]} selectable>
+          {stop.status === "pending" && <Button label={t("stop.arrived")} variant="secondary" icon="location" onPress={() => act(() => setStopStatus(stop.id, "in_progress"))} testID="arrived" />}
+          {stop.type === "pickup" ? (
+            <Button label={t("stop.pickup")} variant="success" size="lg" icon="checkmark-circle" onPress={() => act(() => setStopStatus(stop.id, "picked_up"))} testID="mark-picked-up" />
+          ) : (
+            <Button label={t("stop.deliver")} variant="success" size="lg" icon="checkmark-circle" onPress={() => router.push(`/pod/${stop.id}`)} testID="mark-delivered" />
+          )}
+          <Button label={t("stop.notDelivered")} variant="danger" icon="close-circle" onPress={() => router.push(`/outcome/${stop.id}`)} testID="mark-not-delivered" />
+        </Card>
+      )}
+      {!open && (
+        <Button label={t("stop.reopen")} variant="secondary" icon="arrow-undo" onPress={() => act(() => setStopStatus(stop.id, "pending"))} testID="reopen" />
+      )}
+
+      {stop.notes ? (
+        <Card>
+          <SectionTitle>{t("stop.instructions")}</SectionTitle>
+          <Text style={[ty.body, { color: c.text }]}>{stop.notes}</Text>
+        </Card>
+      ) : null}
+
+      {(stop.timeWindow || stop.recipientPhone) && (
+        <Card>
+          {stop.timeWindow && <ListRow icon="time-outline" title={windowText(stop)!} subtitle={t("stop.timeWindow")} />}
+          {stop.recipientPhone && settings.showRecipientPhone && (
+            <ListRow icon="call-outline" title={stop.recipientPhone} subtitle={t("stop.contact")} onPress={() => void Linking.openURL(`tel:${stop.recipientPhone}`)} />
+          )}
+        </Card>
+      )}
+
+      <Card>
+        <SectionTitle>{`${t("stop.parcels")} · ${stop.parcels.length}`}</SectionTitle>
+        {stop.parcels.length === 0 && <Text style={[ty.small, { color: c.textMuted }]}>—</Text>}
+        {stop.parcels.map((p) => (
+          <View key={p.id} style={{ flexDirection: "row", alignItems: "center", gap: space.sm, paddingVertical: 6 }}>
+            <Ionicons name={p.loadedAt ? "checkmark-circle" : "cube-outline"} size={18} color={p.loadedAt ? c.success : c.textMuted} />
+            <Text style={[ty.body, { color: c.text, flex: 1, fontVariant: ["tabular-nums"] }]} selectable>
               {p.trackingNumber}
             </Text>
+            <Text style={[ty.small, { color: p.loadedAt ? c.successInk : c.textSubtle }]}>{p.loadedAt ? t("stop.loaded") : t("stop.notLoaded")}</Text>
+          </View>
+        ))}
+      </Card>
+
+      {(stop.proofs?.length ?? 0) > 0 && (
+        <Card testID="stop-proofs">
+          <SectionTitle>{t("stop.proofs")}</SectionTitle>
+          {stop.proofs!.map((p) => (
+            <ListRow
+              key={p.id}
+              icon={p.kind === "photo" ? "camera-outline" : "create-outline"}
+              title={`${t(p.kind === "photo" ? "pod.photo" : "pod.signature")}${p.recipientName ? ` · ${p.recipientName}` : ""}`}
+              subtitle={`${timeOf(p.capturedAt)}${pendingProofs.has(p.id) ? ` · ${t("stop.proofPending")}` : ""}`}
+              tone={pendingProofs.has(p.id) ? "warning" : "success"}
+            />
           ))}
         </Card>
       )}
 
       <Card>
-        <Text style={ui.label}>{t("stop.notes")}</Text>
-        <TextInput value={notes} onChangeText={setNotes} multiline style={[ui.input, { minHeight: 88, paddingTop: 12 }]} testID="stop-notes" />
+        <SectionTitle>{t("stop.driverNote")}</SectionTitle>
+        {stop.driverNotes && note === null && <Text style={[ty.body, { color: c.text }]}>{stop.driverNotes}</Text>}
+        {note === null ? (
+          <Button label={stop.driverNotes ? t("common.edit") : t("stop.addNote")} variant="secondary" icon="create-outline" onPress={() => setNote(stop.driverNotes ?? "")} testID="add-note" />
+        ) : (
+          <>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              multiline
+              maxLength={1000}
+              autoFocus
+              style={[ty.body, { minHeight: 90, borderWidth: 1, borderColor: c.border, borderRadius: radii.md, padding: space.md, color: c.text, backgroundColor: c.card, textAlignVertical: "top" }]}
+              testID="note-input"
+              accessibilityLabel={t("stop.driverNote")}
+            />
+            <Button
+              label={t("stop.saveNote")}
+              onPress={() => {
+                addNote(stop.id, note);
+                setNote(null);
+                feedback.success();
+              }}
+              disabled={!note.trim()}
+              testID="save-note"
+            />
+          </>
+        )}
       </Card>
 
-      {stop.status === "pending" ? (
-        <View style={{ gap: spacing.sm }}>
-          {stop.type === "pickup" ? (
-            <Button label={t("stop.markPickedUp")} variant="success" onPress={() => complete("picked_up")} />
-          ) : (
-            <Button label={t("stop.markDelivered")} variant="success" onPress={() => complete("delivered")} testID="mark-delivered" />
-          )}
-          <View style={ui.row}>
-            <Button label={t("stop.markFailed")} variant="danger" style={{ flex: 1 }} onPress={() => complete("failed")} />
-            <Button label={t("stop.markSkipped")} variant="secondary" style={{ flex: 1 }} onPress={() => complete("skipped")} />
-          </View>
+      {open && (
+        <View style={{ flexDirection: "row", gap: space.sm }}>
+          <Button label={stop.locked ? t("stops.unlock") : t("stops.lock")} variant="secondary" icon={stop.locked ? "lock-open-outline" : "lock-closed-outline"} onPress={() => setLocked(stop.id, !stop.locked)} style={{ flex: 1 }} />
+          <Button label={stop.location ? t("stop.adjustLocation") : t("stop.setLocation")} variant="secondary" icon="pin-outline" onPress={() => router.push(`/pick-location/${stop.id}`)} style={{ flex: 1 }} />
         </View>
-      ) : (
-        <Button label={t("stop.reopen")} variant="secondary" onPress={() => complete("pending")} />
       )}
-    </ScrollView>
+      {isSuccess(stop.status) && <Text style={[ty.small, { color: c.textMuted, textAlign: "center" }]}>{t("pod.privacy")}</Text>}
+    </Screen>
   );
 }

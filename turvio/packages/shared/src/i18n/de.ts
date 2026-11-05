@@ -1,4 +1,5 @@
 import type { Messages } from "./en";
+import { driverDe } from "./driver.de";
 
 export const de: Messages = {
   "app.name": "TURVIO",
@@ -110,4 +111,5 @@ export const de: Messages = {
   "home.noPublishedTour": "Für heute wurde Ihnen keine Tour freigegeben. Die Disposition gibt Touren für diese App frei.",
   "settings.account": "Konto",
   "settings.signOut": "Abmelden",
+  ...driverDe,
 };

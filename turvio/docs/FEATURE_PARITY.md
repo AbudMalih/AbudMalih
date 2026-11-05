@@ -9,7 +9,8 @@ TURVIO is developed independently. This list compares against **publicly documen
 * **Unconfirmed** – mentioned somewhere, but no official documentation found, or official sources contradict each other.
 
 **TURVIO column**
-* **Done** – implemented and covered by tests in this repository.
+* **Done** – implemented and covered by tests in this repository. For the driver app, "Done" means verified by unit/integration tests and the browser build – **not on a physical device** (see the verification matrix in [DRIVER_APP.md](DRIVER_APP.md)).
+* **Done (device test pending)** – implemented with native modules (camera, map, haptics, location) whose behaviour could only be verified up to the bundle/prebuild stage.
 * **Partial** – part of the feature works (scope stated in Notes).
 * **Planned (M#)** – scheduled in [ROADMAP.md](ROADMAP.md) milestone #.
 
@@ -17,43 +18,50 @@ TURVIO is developed independently. This list compares against **publicly documen
 
 ## 1. Driver app (vs. Spoke Route Planner and the Dispatch driver app)
 
+Updated 2026-11-05 (Phase 4).
+
 | Feature | Spoke | TURVIO | Notes |
 |---|---|---|---|
-| Add stop by typing an address | Documented | **Partial** | Manual form (street, no., postcode, city, recipient, tracking numbers, time window, priority, notes) with validation. No address autocomplete/geocoding yet (M3). |
-| Long-press/tap map to place a stop | Documented | **Partial** | Tap map in the add-stop form sets the stop position. |
-| Extended search for partial addresses | Documented | Planned (M3) | Needs geocoding provider. |
+| Add stop by typing an address | Documented | **Done** | Form with validation; duplicate-address hint; address autocomplete when a geocoder is configured. |
+| Address autocomplete / geocoding | Documented | **Partial** | Provider abstraction (self-hosted Nominatim/Photon) + API endpoint, tested with mocked providers. No provider is configured yet – addresses are then kept and marked "needs map position" (never invented coordinates). |
+| Long-press/tap map to place a stop | Documented | **Done (device test pending)** | Tap/drag pin in the stop form and "set/move pin" for existing stops. |
+| Extended search for partial addresses | Documented | Planned | Depends on the geocoder. |
 | Voice entry / dictation | Documented | Planned (M5) | |
-| Camera scan of an address label (OCR) | Documented | Planned (M4) | Recipient name, address, tracking no. + review/correct screen. |
-| Barcode scanning, continuous | Documented (Dispatch driver app) | Planned (M4) | expo-camera barcode scanning. |
+| Continuous barcode scanning | Documented (Dispatch driver app) | **Done (device test pending)** | Camera stays open, Code 128/39/93, EAN, UPC, ITF, Codabar, QR, Data Matrix, PDF417, Aztec; duplicate/repeat handling, counters, haptics, torch, pause, history, manual entry, offline queue; parcels marked loaded in Dispatch. Scan logic tested; camera decoding not hardware-verified. |
+| Camera scan of an address label (OCR) | Documented | **Partial** | Label photo → barcode from photo → review screen with confidence per field; label-text parser tested. **No OCR engine bundled** (needs ML Kit + dev build). Photo deleted after reading. |
 | Manifest / PDF / image import (OCR) | Documented | Planned (M4) | |
-| Spreadsheet import (CSV/XLS/XLSX) | Documented | Planned (M3) | Shared parser used by driver app and Dispatch. |
-| Paste multiple addresses | Unconfirmed | Planned (M3) | Required by TURVIO spec regardless. |
-| Group parcels for the same address | – | **Done** | Normalised address matching merges parcels into the existing pending stop. |
-| Edit stop after adding | Documented | Planned (M2) | |
-| Multi-stop optimization | Documented | **Done** | OR-Tools service via API; offline heuristic fallback. |
-| Start/end location, round trip | Documented | **Done** (engine) | Per-vehicle start/end supported by optimizer; UI to change them: M2. |
-| Time windows | Documented | **Done** (engine) | Enforced by OR-Tools; entry in add-stop form. Offline heuristic ignores them (labelled). |
-| Service time per stop | Documented | **Done** (engine) | Derived from parcel count; editable field: M2. |
+| Spreadsheet import (CSV/XLS/XLSX) | Documented | **Done** | CSV and .xlsx with preview, per-row errors, edit/remove, grouping. Legacy .xls refused with a message. |
+| Paste multiple addresses | Unconfirmed | **Done** | One stop per line incl. tracking numbers and optional coordinates. |
+| Group parcels for the same address | – | **Done** | Import, manual entry, label capture; all tracking numbers kept, duplicates reported. |
+| Edit stop after adding | Documented | **Partial** | Notes, lock, map position. Editing address fields of an existing stop: planned. |
+| Multi-stop optimization | Documented | **Done** | Server OR-Tools for saved routes (time windows, priorities, shift, capacity, multiple parcels); offline heuristic fallback, labelled. |
+| Optimize remaining stops / from current position | Documented | **Done** | Completed stops stay; optional device position as start. |
+| Start/end location, round trip | Documented | **Partial** | Start: depot/last stop or device position; end: depot or last stop. Arbitrary addresses as start/end: planned. |
+| Time windows | Documented | **Done** | |
+| Service time per stop | Documented | **Partial** | Used by the optimizer; not editable in the app yet. |
 | Priority stops | Documented (Dispatch "ASAP") | **Done** | |
-| Manual reorder | Documented | **Done** | Up/down controls in the stop list. Drag-and-drop: M2. |
+| Manual reorder | Documented | **Done** | Up/down in reorder mode; synced to the server. Drag-and-drop: planned. |
+| Lock stop positions | Documented ("pin") | **Done** | Locked stops keep their slot on re-optimization (server and offline). |
 | Draw on map to reorder | Documented | Not planned yet | |
-| "Update route" vs full re-optimize | Documented | **Partial** | Re-optimization of remaining stops keeps completed stops in place; minimal-change insert: M5. |
-| Offline route access | Documented | **Done** | Tour persisted on device; status changes queued in an outbox and sent when online (server mode). |
-| Breaks | Documented | Planned (M5) | Schema has `break` stop type; solver support pending. |
-| Start / pause / finish tour | – | **Done** | State machine in app and DB RPC. |
-| Navigation handoff (Google/Apple Maps) | Documented (+Waze, HERE, Sygic) | **Done** | Apple Maps on iOS, Google Maps elsewhere; Waze option: M5. |
-| In-app turn-by-turn navigation | Documented | Not planned | Handoff to navigation apps is the chosen approach. |
+| Road-network travel times | Documented | **Partial** | OSRM client ready; not hosted → straight-line estimates, always labelled. |
+| Offline route access | Documented | **Done** | Persistent store + outbox with client ids; restart and interrupted-upload recovery tested. |
+| Breaks | Documented | Planned (M5) | |
+| Start / pause / finish tour | – | **Done** | |
+| Navigation handoff (Google/Apple Maps/Waze) | Documented (+HERE, Sygic) | **Done (device test pending)** | Native schemes with https fallback when an app is missing; default app setting. |
+| In-app turn-by-turn navigation | Documented | Not planned | Handoff is the chosen approach. |
 | Android Auto / CarPlay | Documented | Not planned yet | |
-| Mark delivered / failed / skipped, reopen | Documented | **Done** | Notes per stop. Failure reason codes: M2. |
-| Proof of delivery – photo | Documented | Planned (M2) | Private bucket path scheme + table ready. |
-| Proof of delivery – signature | Documented | Planned (M2) | |
+| Arrival, delivered / failed / attempted / rescheduled / returned | Documented (subset) | **Done** | Configurable failure reasons per company; notes; reopen. |
+| Proof of delivery – photo | Documented | **Done (device test pending)** | Private storage, idempotent upload, offline queue; camera capture not device-verified. |
+| Proof of delivery – signature | Documented | **Done** | SVG signature pad; verified in the browser e2e incl. Dispatch viewing it. |
+| Recipient name, timestamp, location with PoD | Documented | **Done** | Location only when the company enables it. |
 | Package finder / parcel position in van | Documented | Planned (M5) | |
-| Package photo at stop creation | Documented | Planned (M5) | |
 | Search by tracking no., recipient, address | – | **Done** | |
-| Map with stop markers and order preview | Documented | **Done** | Order shown as straight lines, not road geometry. |
-| Completed-tour statistics | Unconfirmed | **Partial** | Progress, delivered/failed/skipped counts, estimated distance/time. History view: M5. |
-| Live disruption alerts | Documented | Not planned yet | |
-| Languages de/en/ro/ar incl. RTL | – | **Done** (driver app) | ro/ar need native review; web apps: M6. |
+| Map with stop markers and order preview | Documented | **Done (device test pending)** | Numbered, current/next, pickups, completed; order line is straight (labelled). Web build uses a schematic. |
+| Current device location on the map | Documented | **Done (device test pending)** | Only after the driver turns it on; not sent anywhere. |
+| Completed-tour statistics | Unconfirmed | **Partial** | Progress, outcomes, remaining/total estimates. History view: M5. |
+| Personal routes (driver-created) | Documented (Route Planner) | **Done** | Visible to the depot's dispatch. |
+| Dark mode | Documented | **Done** | System/light/dark. |
+| Languages de/en/ro/ar incl. RTL | – | **Done** | ro/ar need native review. |
 
 ## 2. Dispatch (vs. Spoke Dispatch)
 
@@ -65,7 +73,7 @@ TURVIO is developed independently. This list compares against **publicly documen
 | Vehicle management (capacity) | Documented (weight) | **Partial** | Parcel-count capacity in schema + optimizer; weight: M5. |
 | Create and assign tours | Documented | **Done** | Persistent tours with driver/vehicle, double-booking check, optimistic versioning, publish/withdraw to the driver, activity log. |
 | Import stops (spreadsheet) | Documented | **Partial** | Paste list (address; lat; lng; …) and single-stop form. CSV/XLSX upload and geocoding: M3 – coordinates are required today. |
-| Barcode data import | Documented | Planned (M4) | |
+| Barcode data import | Documented | **Partial** | Driver scans mark parcels loaded and are visible in Dispatch; bulk barcode file import: planned. |
 | Multi-driver optimization | Documented | **Done** | Per tour and whole depot plan (OR-Tools), saved to the DB. Travel times are straight-line estimates until OSRM is hosted (labelled). |
 | Optimization objective (balance workload etc.) | Documented | Planned (M5) | |
 | Linked pickup → delivery | Documented | Planned (M5) | |
@@ -76,7 +84,8 @@ TURVIO is developed independently. This list compares against **publicly documen
 | Reports / analytics | Documented | Planned (M5) | |
 | Export (CSV/manifests) | Documented | Planned (M5) | |
 | Recipient notifications + tracking page | Documented | Planned (M6) | Needs GDPR review (recipient contact data). |
-| Proof of custody (scan trail) | Documented | Planned (M4) | `stop_events` is the base. |
+| Proof of custody (scan trail) | Documented | **Partial** | Load scans (`parcels.loaded_at`), status history with reasons, notes and proofs in the tour activity. Per-scan audit trail: planned. |
+| Proof of delivery in Dispatch | Documented | **Done** | Photos/signatures via authenticated proxy; admins can delete; retention purge. |
 | REST API / webhooks | Documented | **Partial** | Internal API exists (tenant-scoped); public API + webhooks: M6. |
 | Client portal | Documented | Not planned yet | |
 | Data history retention by plan | Documented | **Partial** | Per-tenant retention settings + purge function (location pings, proofs). |

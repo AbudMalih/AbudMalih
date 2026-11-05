@@ -10,6 +10,9 @@ import type { Mailer } from "./mail";
 import { registerAuthRoutes } from "./routes/auth";
 import { registerDriverRoutes } from "./routes/driver";
 import { registerEventRoutes } from "./routes/events";
+import { registerExecutionRoutes } from "./routes/execution";
+import type { Geocoder } from "./geocode";
+import type { ProofStore } from "./storage";
 import { registerOrgRoutes } from "./routes/org";
 import { registerPlatformRoutes } from "./routes/platform";
 import { registerTourRoutes } from "./routes/tours";
@@ -29,6 +32,8 @@ export interface AppDeps {
   urls?: { dispatch: string; admin: string };
   devMailbox?: boolean;
   events?: ChangeFeed;
+  proofStore?: ProofStore;
+  geocoder?: Geocoder;
 }
 
 declare module "fastify" {
@@ -137,6 +142,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     registerOrgRoutes(app, ctx);
     registerTourRoutes(app, ctx);
     registerDriverRoutes(app, ctx);
+    registerExecutionRoutes(app, ctx, { proofStore: deps.proofStore, geocoder: deps.geocoder });
     registerPlatformRoutes(app, ctx);
     if (deps.events) registerEventRoutes(app, { ...ctx, events: deps.events });
   }

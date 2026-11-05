@@ -1,4 +1,4 @@
-import { NewStopInput, OptimizeRequest, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
+import { NewStopInput, OptimizeRequest, StopStatus, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
@@ -85,10 +85,27 @@ async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; dep
   }
   const ids: string[] = [];
   for (const s of stops) {
+    if (s.id) {
+      // Offline retry of a stop the client already created: no duplicate.
+      const existing = (await tx.query<{ tour_id: string | null }>(`select tour_id from stops where id = $1`, [s.id])).rows[0];
+      if (existing) {
+        if (existing.tour_id !== (target.tourId ?? null)) throw new ApiError(409, "conflict", "A different stop with this id already exists");
+        // Same stop again: add parcels that are not there yet (parcels grouped onto an existing address).
+        for (const tn of s.trackingNumbers) {
+          await tx.query(
+            `insert into parcels (organization_id, stop_id, tracking_number, recipient_name)
+             select $1, $2, $3, $4 where not exists (select 1 from parcels where stop_id = $2 and upper(tracking_number) = upper($3))`,
+            [orgId, s.id, tn, s.recipientName ?? null],
+          );
+        }
+        ids.push(s.id);
+        continue;
+      }
+    }
     const { rows } = await tx.query<{ id: string }>(
-      `insert into stops (organization_id, tour_id, depot_id, type, sequence, recipient_name, street, house_number, postal_code, city, country_code,
-                          lat, lng, tw_start_minute, tw_end_minute, service_seconds, priority, notes)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) returning id`,
+      `insert into stops (id, organization_id, tour_id, depot_id, type, sequence, recipient_name, street, house_number, postal_code, city, country_code,
+                          lat, lng, tw_start_minute, tw_end_minute, service_seconds, priority, notes, location_source, recipient_phone)
+       values (coalesce($19::uuid, gen_random_uuid()), $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$20,$21) returning id`,
       [
         orgId,
         target.tourId ?? null,
@@ -108,6 +125,9 @@ async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; dep
         s.serviceSeconds,
         s.priority,
         s.notes ?? null,
+        s.id ?? null,
+        s.location ? (s.locationSource ?? "manual_pin") : null,
+        s.recipientPhone ?? null,
       ],
     );
     const id = rows[0]!.id;
@@ -134,7 +154,7 @@ async function vehicleFor(tx: Tx, tour: TourRow, nowMinute: number): Promise<Veh
   const driver = tour.driver_id ? (await tx.query<{ max_shift_minutes: number }>(`select max_shift_minutes from drivers where id = $1`, [tour.driver_id])).rows[0] : undefined;
   const vehicle = tour.vehicle_id ? (await tx.query<{ capacity_parcels: number | null }>(`select capacity_parcels from vehicles where id = $1`, [tour.vehicle_id])).rows[0] : undefined;
   const last = (
-    await tx.query<{ lat: number; lng: number }>(`select lat, lng from stops where tour_id = $1 and status <> 'pending' and lat is not null order by sequence desc limit 1`, [tour.id])
+    await tx.query<{ lat: number; lng: number }>(`select lat, lng from stops where tour_id = $1 and status not in ('pending', 'in_progress') and lat is not null order by sequence desc limit 1`, [tour.id])
   ).rows[0];
   const running = tour.status === "in_progress" || tour.status === "paused";
   return {
@@ -263,8 +283,12 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       const { rows } = await tx.query(
         `select 'tour' as source, kind, detail, created_at from tour_events where tour_id = $1
          union all
-         select 'stop' as source, e.status::text as kind, jsonb_build_object('stopId', e.stop_id, 'notes', e.notes), e.created_at
+         select 'stop' as source, case when e.kind = 'note' then 'note' else e.status::text end as kind,
+                jsonb_build_object('stopId', e.stop_id, 'notes', e.notes, 'failureReason', e.failure_reason, 'applied', e.applied), e.created_at
            from stop_events e join stops s on s.id = e.stop_id where s.tour_id = $1
+         union all
+         select 'stop' as source, 'proof_' || f.kind::text as kind, jsonb_build_object('stopId', f.stop_id, 'recipientName', f.recipient_name), f.created_at
+           from proofs f join stops s on s.id = f.stop_id where s.tour_id = $1
          order by created_at desc limit 200`,
         [id],
       );
@@ -350,35 +374,68 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     return reply.status(204).send();
   });
 
-  /** Status update by the assigned driver (or staff). */
+  /** Status update by the assigned driver (or staff). Idempotent via clientEventId; stale offline updates are recorded but not applied. */
   app.post("/v1/orgs/:orgId/stops/:id/status", { preHandler: guards.requireTenant("stops.update_status_own") }, async (req, reply) => {
     const { id } = IdParams.parse(req.params);
-    const b = parse(z.object({ status: z.enum(["pending", "delivered", "picked_up", "failed", "skipped"]), notes: z.string().trim().max(1000).optional() }), req.body, reply);
+    const b = parse(
+      z.object({
+        status: StopStatus,
+        notes: z.string().trim().max(1000).optional(),
+        failureReason: z.string().regex(/^[a-z0-9_]{2,40}$/).optional(),
+        clientEventId: Uuid.optional(),
+        occurredAt: z.iso.datetime().optional(),
+      }),
+      req.body,
+      reply,
+    );
     if (!b) return;
-    const row = await db.asUser(claims(req), async (tx) => (await tx.query(`select (driver_set_stop_status($1, $2, $3)).id`, [id, b.status, b.notes ?? null])).rows[0]);
-    return { id: row.id, status: b.status };
+    const row = await db.asUser(claims(req), async (tx) => {
+      await tx.query(`select driver_set_stop_status($1, $2, $3, $4, $5, $6)`, [id, b.status, b.notes ?? null, b.failureReason ?? null, b.clientEventId ?? null, b.occurredAt ?? null]);
+      return (await tx.query<StopRow>(`${STOP_SELECT} where s.id = $1`, [id])).rows[0]!;
+    });
+    return { id: row.id, status: row.status, applied: row.status === b.status, stop: toStop(row) };
   });
 
   // ---------------------------------------------------------------- optimization
+  /**
+   * Optimize the open stops of a saved tour.
+   * Options (driver app): start = current device position (only if the driver chose to use it),
+   * end = "depot" | "none" | point; locked stops keep their position in the order.
+   */
   app.post("/v1/orgs/:orgId/tours/:id/optimize", { preHandler: guards.requireTenant("tours.optimize") }, async (req, reply) => {
     const { orgId, id } = IdParams.parse(req.params);
+    const opts = parse(
+      z
+        .object({
+          start: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }).optional(),
+          end: z.union([z.enum(["depot", "none"]), z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) })]).optional(),
+          respectLocks: z.boolean().default(true),
+        })
+        .default({ respectLocks: true }),
+      req.body ?? {},
+      reply,
+    );
+    if (!opts) return;
     await requireOptimizationPlan(req, orgId);
     const input = await db.asUser(claims(req), async (tx) => {
       const tour = await loadTour(tx, orgId, id);
       if (tour.status === "completed") throw new ApiError(422, "invalid_operation", "Completed tours cannot be optimized");
       const tz = await orgTimeZone(tx, orgId);
       const v = await vehicleFor(tx, tour, nowInZone(tz).minute);
-      const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 and s.status = 'pending' order by s.sequence`, [id])).rows;
+      const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 and s.status in ('pending', 'in_progress') order by s.sequence`, [id])).rows;
       return { v, stops };
     });
-    const located = input.stops.filter((s) => s.lat != null && s.lng != null);
-    if (located.length === 0) return problem(reply, 422, "nothing_to_optimize", "This tour has no open stops with a map position");
+    const locked = opts.respectLocks ? input.stops.filter((s) => s.locked) : [];
+    const located = input.stops.filter((s) => s.lat != null && s.lng != null && !locked.includes(s));
+    if (located.length === 0) return problem(reply, 422, "nothing_to_optimize", "This tour has no open, unlocked stops with a map position");
+    const tourEnd = input.v.tour.end_lat != null && input.v.tour.end_lng != null ? { lat: input.v.tour.end_lat, lng: input.v.tour.end_lng } : input.v.depot;
+    const end = opts.end === "none" ? undefined : opts.end === "depot" ? input.v.depot : (opts.end ?? tourEnd);
     const request = OptimizeRequest.parse({
       vehicles: [
         {
           id,
-          start: input.v.start,
-          end: input.v.tour.end_lat != null && input.v.tour.end_lng != null ? { lat: input.v.tour.end_lat, lng: input.v.tour.end_lng } : input.v.depot,
+          start: opts.start ?? input.v.start,
+          end,
           shiftStart: input.v.shiftStart,
           maxShiftMinutes: input.v.maxShift,
           capacity: input.v.capacity ?? undefined,
@@ -395,9 +452,14 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       timeLimitSeconds: located.length > 60 ? 10 : 5,
     });
     const result: OptimizeResponse = await guards.callOptimizer(request, request.timeLimitSeconds ?? 5);
-    const ordered = result.routes[0]?.visits.map((x) => x.stopId) ?? [];
+    const optimized = result.routes[0]?.visits.map((x) => x.stopId) ?? [];
+    // Locked stops keep their slot among the open stops; the optimized order fills the other slots.
+    const free = [...optimized, ...input.stops.filter((s) => !locked.includes(s) && !optimized.includes(s.id)).map((s) => s.id)];
+    const ordered = input.stops.map((s) => (locked.includes(s) ? s.id : free.shift()!)).filter(Boolean);
     const meta = {
       engine: result.engine,
+      lockedStopIds: locked.map((s) => s.id),
+      startSource: opts.start ? "device" : "tour",
       matrixSource: result.matrixSource,
       unassignedStopIds: result.unassignedStopIds,
       unlocatedStopIds: input.stops.filter((s) => s.lat == null).map((s) => s.id),
@@ -434,7 +496,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       const [depotId] = [...depots];
       const stops = (
         await tx.query<StopRow>(
-          `${STOP_SELECT} where s.status = 'pending' and (s.tour_id = any($1::uuid[]) or ($2 and s.tour_id is null and s.depot_id = $3))`,
+          `${STOP_SELECT} where s.status in ('pending', 'in_progress') and (s.tour_id = any($1::uuid[]) or ($2 and s.tour_id is null and s.depot_id = $3))`,
           [b.tourIds, b.includeUnassigned, depotId],
         )
       ).rows;

@@ -1,5 +1,6 @@
 import { estimateDrive } from "./geo";
 import type { GeoPoint, Stop } from "./schemas";
+import { isOpen } from "./stopStatus";
 import { resequence, sortBySequence } from "./tour";
 
 /**
@@ -89,8 +90,8 @@ function twoOpt(start: GeoPoint, path: Located[], end?: GeoPoint, maxPasses = 50
  */
 export function orderStopsLocally(stops: Stop[], from: GeoPoint, end?: GeoPoint): LocalOrderResult {
   const ordered = sortBySequence(stops);
-  const done = ordered.filter((s) => s.status !== "pending");
-  const pending = ordered.filter((s) => s.status === "pending");
+  const done = ordered.filter((s) => !isOpen(s.status));
+  const pending = ordered.filter((s) => isOpen(s.status));
   const located = pending.filter((s): s is Located => s.location !== null);
   const unlocated = pending.filter((s) => s.location === null);
 

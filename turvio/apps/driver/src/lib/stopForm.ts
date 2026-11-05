@@ -12,7 +12,9 @@ export interface StopFormValues {
   windowTo: string;
   priority: boolean;
   notes: string;
+  phone: string;
   location: GeoPoint | null;
+  locationSource: "geocoder" | "manual_pin" | null;
 }
 
 export const emptyStopForm = (city = ""): StopFormValues => ({
@@ -27,7 +29,9 @@ export const emptyStopForm = (city = ""): StopFormValues => ({
   windowTo: "",
   priority: false,
   notes: "",
+  phone: "",
   location: null,
+  locationSource: null,
 });
 
 export type StopFormErrors = Partial<Record<keyof StopFormValues, true>>;
@@ -55,6 +59,8 @@ export function parseStopForm(
       city: v.city,
     },
     location: v.location,
+    locationSource: v.location ? (v.locationSource ?? "manual_pin") : null,
+    recipientPhone: v.phone.trim() || undefined,
     timeWindow: from !== null && to !== null ? { start: from, end: to } : undefined,
     priority: v.priority,
     notes: v.notes.trim() || undefined,

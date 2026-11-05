@@ -37,6 +37,16 @@ const Env = z.object({
   MAIL_FROM: z.string().default("TURVIO <no-reply@turvio.invalid>"),
   /** Exposes GET /v1/dev/outbox for local testing of mails. Never in production. */
   DEV_MAILBOX: z.enum(["true", "false"]).default("false"),
+  /** Proof-of-delivery files: local disk (dev/self-hosted) or a private Supabase Storage bucket. */
+  PROOF_STORAGE: z.enum(["local", "supabase"]).default("local"),
+  PROOF_STORAGE_DIR: z.string().default("./.data/proofs"),
+  PROOF_BUCKET: z.string().default("proofs"),
+  /** Address search: none (default – addresses are kept and marked "needs location"), nominatim or photon (self-hosted). */
+  GEOCODER: z.enum(["none", "nominatim", "photon"]).default("none"),
+  GEOCODER_URL: z.url().optional(),
+  GEOCODER_USER_AGENT: z.string().default("TURVIO (development)"),
+  /** Run the retention purge and proof-file deletion worker inside the API process. */
+  BACKGROUND_JOBS: z.enum(["true", "false"]).default("true"),
   /** Legacy synthetic mode (AUTH_PROVIDER=dev). */
   SUPABASE_JWT_SECRET: z.string().min(32).optional(),
 });
@@ -53,5 +63,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error("SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY are required for AUTH_PROVIDER=supabase");
   }
   if (config.MAILER === "smtp" && !config.SMTP_URL) throw new Error("SMTP_URL is required for MAILER=smtp");
+  if (config.GEOCODER !== "none" && !config.GEOCODER_URL) throw new Error("GEOCODER_URL is required when GEOCODER is set");
+  if (config.PROOF_STORAGE === "supabase" && (!config.SUPABASE_URL || !config.SUPABASE_SERVICE_ROLE_KEY)) {
+    throw new Error("PROOF_STORAGE=supabase needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
+  }
   return config;
 }

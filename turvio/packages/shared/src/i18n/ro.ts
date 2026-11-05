@@ -1,4 +1,5 @@
 import type { Messages } from "./en";
+import { driverRo } from "./driver.ro";
 
 // Machine-assisted draft – needs review by a native speaker before release.
 export const ro: Messages = {
@@ -111,4 +112,5 @@ export const ro: Messages = {
   "home.noPublishedTour": "Nicio tură publicată pentru tine azi. Dispecerul publică turele în această aplicație.",
   "settings.account": "Cont",
   "settings.signOut": "Deconectare",
+  ...driverRo,
 };

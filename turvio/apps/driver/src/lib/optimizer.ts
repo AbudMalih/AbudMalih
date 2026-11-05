@@ -1,33 +1,24 @@
-import {
-  OptimizeResponse,
-  orderStopsLocally,
-  resequence,
-  type Depot,
-  type OptimizeRequest,
-  type Stop,
-  type Tour,
-} from "@turvio/shared";
+import { isOpen, orderStopsLocally, resequence, sortBySequence, type Depot, type GeoPoint, type Stop, type Tour } from "@turvio/shared";
+
+export interface OptimizeOptions {
+  /** Start from this point (device position) instead of the depot / last completed stop. */
+  start?: GeoPoint;
+  /** "depot" (default) = return to the depot, "none" = end at the last stop. */
+  end?: "depot" | "none";
+  /** Locked stops keep their position (default true). */
+  respectLocks?: boolean;
+}
 
 export interface OptimizationOutcome {
   stops: Stop[];
-  /** "server" = OR-Tools via the TURVIO API, "local" = on-device heuristic. */
+  /** "server" = OR-Tools via the TURVIO API, "local" = on-device heuristic (offline / demo). */
   engine: "server" | "local";
   matrixSource?: "osrm" | "haversine_estimate";
   unassignedStopIds: string[];
   unlocatedStopIds: string[];
-  /** Set when the server was configured but could not be used. */
-  fallbackReason?: string;
-}
-
-export interface OptimizeTourInput {
-  tour: Tour;
-  depot: Depot;
-  stops: Stop[];
-  maxShiftMinutes: number;
-  /** Supabase access token; absent until driver login is implemented (API in AUTH_MODE=dev). */
-  accessToken?: string;
-  /** Current position for re-optimization; defaults to tour start / depot. */
-  from?: { lat: number; lng: number };
+  lockedStopIds?: string[];
+  distanceMeters?: number;
+  durationSeconds?: number;
 }
 
 export function apiBaseUrl(): string | null {
@@ -35,95 +26,29 @@ export function apiBaseUrl(): string | null {
   return url ? url.replace(/\/$/, "") : null;
 }
 
-function minutesNow(): number {
-  const d = new Date();
-  return d.getHours() * 60 + d.getMinutes();
-}
-
-export function buildOptimizeRequest(input: OptimizeTourInput): OptimizeRequest {
-  const start = input.from ?? input.tour.startLocation ?? input.depot.location;
-  const pending = input.stops.filter((s) => s.status === "pending" && s.location);
-  const shiftStart = input.tour.status === "planned" ? input.tour.plannedStartMinute : minutesNow();
+/**
+ * On-device ordering (nearest neighbour + 2-opt on straight-line estimates).
+ * Time windows, shift length and capacity are NOT considered – the UI says so.
+ * Closed stops stay first; locked stops keep their slot among the open stops.
+ */
+export function optimizeLocally(tour: Tour, depot: Depot, stops: Stop[], opts: OptimizeOptions = {}): OptimizationOutcome {
+  const ordered = sortBySequence(stops);
+  const closed = ordered.filter((s) => !isOpen(s.status));
+  const open = ordered.filter((s) => isOpen(s.status));
+  const locked = opts.respectLocks === false ? [] : open.filter((s) => s.locked);
+  const free = open.filter((s) => !locked.includes(s));
+  const lastClosed = closed.filter((s) => s.location).at(-1)?.location;
+  const from = opts.start ?? lastClosed ?? tour.startLocation ?? depot.location;
+  const end = opts.end === "none" ? undefined : (tour.endLocation ?? depot.location);
+  const local = orderStopsLocally(free, from, end);
+  const queue = [...local.stops];
+  const merged = open.map((s) => (locked.includes(s) ? s : queue.shift()!));
   return {
-    vehicles: [
-      {
-        id: input.tour.id,
-        start,
-        end: input.tour.endLocation ?? input.depot.location,
-        shiftStart,
-        maxShiftMinutes: input.maxShiftMinutes,
-      },
-    ],
-    stops: pending.map((s) => ({
-      id: s.id,
-      location: s.location!,
-      serviceSeconds: s.serviceSeconds,
-      timeWindow: s.timeWindow,
-      priority: s.priority,
-      demand: Math.max(1, s.parcels.length),
-    })),
-    timeLimitSeconds: 5,
-  };
-}
-
-/** Apply a server route to the stop list: done stops first, then route order, then the rest. */
-export function applyServerRoute(stops: Stop[], response: OptimizeResponse): Stop[] {
-  const byId = new Map(stops.map((s) => [s.id, s]));
-  const done = stops.filter((s) => s.status !== "pending");
-  const routed = (response.routes[0]?.visits ?? [])
-    .map((v) => byId.get(v.stopId))
-    .filter((s): s is Stop => !!s && s.status === "pending");
-  const routedIds = new Set(routed.map((s) => s.id));
-  const rest = stops.filter((s) => s.status === "pending" && !routedIds.has(s.id));
-  return resequence([...done, ...routed, ...rest]);
-}
-
-export async function optimizeTour(
-  input: OptimizeTourInput,
-  fetchImpl: typeof fetch = fetch,
-): Promise<OptimizationOutcome> {
-  const start = input.from ?? input.tour.startLocation ?? input.depot.location;
-  const unlocatedStopIds = input.stops.filter((s) => s.status === "pending" && !s.location).map((s) => s.id);
-  const base = apiBaseUrl();
-  let fallbackReason: string | undefined;
-
-  const pendingLocated = input.stops.filter((s) => s.status === "pending" && s.location);
-  if (base && pendingLocated.length > 0) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 20_000);
-      // The tenant is always explicit in the URL; the API checks membership + role.
-      const url = `${base}/v1/orgs/${encodeURIComponent(input.tour.organizationId)}/optimize`;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (input.accessToken) headers.Authorization = `Bearer ${input.accessToken}`;
-      const res = await fetchImpl(url, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(buildOptimizeRequest(input)),
-        signal: controller.signal,
-      }).finally(() => clearTimeout(timer));
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const parsed = OptimizeResponse.parse(await res.json());
-      if (parsed.status === "no_solution") throw new Error("no feasible solution");
-      return {
-        stops: applyServerRoute(input.stops, parsed),
-        engine: "server",
-        matrixSource: parsed.matrixSource,
-        unassignedStopIds: parsed.unassignedStopIds,
-        unlocatedStopIds,
-      };
-    } catch (err) {
-      fallbackReason = err instanceof Error ? err.message : String(err);
-    }
-  }
-
-  const local = orderStopsLocally(input.stops, start, input.tour.endLocation ?? input.depot.location);
-  return {
-    stops: local.stops,
+    stops: resequence([...closed, ...merged]),
     engine: "local",
     matrixSource: "haversine_estimate",
     unassignedStopIds: [],
     unlocatedStopIds: local.unlocatedStopIds,
-    fallbackReason,
+    lockedStopIds: locked.map((s) => s.id),
   };
 }

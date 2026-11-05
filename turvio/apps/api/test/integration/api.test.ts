@@ -242,7 +242,7 @@ describe.runIf(available)("TURVIO API on PostgreSQL", () => {
       const off = env.events.subscribe((e) => seen.push(e));
       const stops = (await env.as(U.driverHannover1, "GET", "/v1/me/tours")).json().tours[0].stops as { id: string; status: string }[];
       const next = stops.find((s) => s.status === "pending")!;
-      await env.as(U.driverHannover1, "POST", `/v1/orgs/${jarbou()}/stops/${next.id}/status`, { status: "failed", notes: "Niemand angetroffen" });
+      await env.as(U.driverHannover1, "POST", `/v1/orgs/${jarbou()}/stops/${next.id}/status`, { status: "failed", failureReason: "recipient_absent", notes: "Niemand angetroffen" });
       await new Promise((r) => setTimeout(r, 300));
       off();
       expect(seen).toContainEqual(expect.objectContaining({ org: jarbou(), depot: H(), tour: tour.id, table: "stops" }));

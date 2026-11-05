@@ -1,12 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   addStop as addStopToList,
+  canTransition,
   createSyntheticDataset,
+  isOpen,
   moveStop as moveStopInList,
-  setStopStatus as setStatus,
+  normalizeTrackingNumber,
+  resequence,
+  setStopStatus as applyStatus,
   sortBySequence,
+  validateOutcome,
+  type GeoPoint,
   type Locale,
   type NewStopInput,
+  type ScanEntry,
   type Stop,
   type StopStatus,
   type SyntheticDataset,
@@ -16,18 +23,21 @@ import {
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createAuthClient, isTransient, type AuthClient, type SessionUser } from "../lib/auth";
-import { apiBaseUrl, optimizeTour, type OptimizationOutcome } from "../lib/optimizer";
-import { applyOutbox, newOutboxId, snapshotFrom, type MyTour, type OutboxItem } from "../lib/sync";
+import { deleteFile, readFileBase64 } from "../lib/files";
+import { uuid } from "../lib/ids";
+import type { NavApp } from "../lib/navigation";
+import { apiBaseUrl, optimizeLocally, type OptimizationOutcome, type OptimizeOptions } from "../lib/optimizer";
+import { drainOutbox, type OutboxItem } from "../lib/outbox";
+import { DEFAULT_DRIVER_SETTINGS, applyOutbox, snapshotFrom, type DriverSettingsView, type MyTour } from "../lib/sync";
 
 /**
- * Driver-side state, persisted to AsyncStorage so the current tour stays
- * available offline.
+ * Driver-side state, persisted on the device so the current tour, queued
+ * changes, scans and captured proofs survive restarts and dead zones.
  *
- * - server mode (EXPO_PUBLIC_API_URL set): the driver signs in; tours come from
- *   the TURVIO API (only tours dispatch published to this driver). Status
- *   changes are applied immediately on the device and queued in an outbox
- *   that is sent to the server – retried automatically when offline.
- * - demo mode (no server configured): synthetic data, everything local.
+ * - server mode (EXPO_PUBLIC_API_URL set): signed-in driver, tours published by
+ *   dispatch plus personal routes. Every change is applied on the device at
+ *   once and queued in a persistent outbox (client ids -> idempotent retries).
+ * - demo mode (no server): synthetic data, everything stays on the device.
  */
 
 export const DEV_DRIVER_ID = "drv_01";
@@ -41,26 +51,65 @@ const TOUR_TRANSITIONS: Record<"start" | "pause" | "resume" | "finish", [TourSta
 
 export type SyncState = "idle" | "syncing" | "offline" | "error";
 
+export interface Prefs {
+  /** Preferred navigation app; null = ask every time. */
+  navApp: NavApp | null;
+  /** Use the device position as start when optimizing. */
+  optimizeFromDevice: boolean;
+  colorScheme: "system" | "light" | "dark";
+}
+
+export interface FailedItem {
+  item: OutboxItem;
+  error: string;
+  at: string;
+}
+
+export interface ProofCapture {
+  photo?: { uri: string; base64?: string };
+  signatureSvg?: string;
+  recipientName?: string;
+  notes?: string;
+  location?: GeoPoint;
+}
+
 export interface TourState extends SyntheticDataset {
   driverId: string;
   locale: Locale | null;
+  prefs: Prefs;
+  activeTourId: string | null;
+  settingsByOrg: Record<string, DriverSettingsView>;
   lastOptimization: (OptimizationOutcome & { tourId: string; at: string }) | null;
   optimizing: boolean;
+  /** Scan history per tour (survives restarts). */
+  scans: Record<string, ScanEntry[]>;
   // server mode
   user: SessionUser | null;
   organizationName: string;
   outbox: OutboxItem[];
+  failed: FailedItem[];
   syncState: SyncState;
   syncMessage: string | null;
   lastSyncAt: string | null;
 
   setLocale(locale: Locale): void;
+  setPrefs(p: Partial<Prefs>): void;
+  selectTour(id: string | null): void;
+  createRoute(name: string, date: string): Tour;
   addStop(tourId: string, input: NewStopInput): { stop: Stop; merged: boolean };
-  setStopStatus(stopId: string, status: StopStatus, notes?: string): void;
+  addStops(tourId: string, inputs: NewStopInput[]): { created: number; merged: number };
+  setStopStatus(stopId: string, status: StopStatus, opts?: { notes?: string; failureReason?: string }): void;
+  addNote(stopId: string, note: string): void;
+  captureProof(stopId: string, capture: ProofCapture): Promise<number>;
   moveStop(tourId: string, from: number, to: number): void;
+  setLocked(stopId: string, locked: boolean): void;
+  setStopLocation(stopId: string, location: GeoPoint, source: "geocoder" | "manual_pin"): void;
+  recordScans(tourId: string, entries: ScanEntry[]): void;
   tourAction(tourId: string, action: keyof typeof TOUR_TRANSITIONS): void;
-  optimize(tourId: string): Promise<OptimizationOutcome>;
+  optimize(tourId: string, opts?: OptimizeOptions): Promise<OptimizationOutcome>;
   resetData(): void;
+  retryFailed(id: string): void;
+  discardFailed(id: string): Promise<void>;
   // server mode
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;
@@ -74,43 +123,39 @@ let client: AuthClient | null = null;
 export function setAuthClient(c: AuthClient | null) {
   client = c;
 }
-function auth(): AuthClient {
+export function auth(): AuthClient {
   client ??= createAuthClient({ onSignedOut: () => useTourStore.setState({ user: null }) });
   return client;
 }
+
+/** Overridable file helpers (tests). */
+export const fileDeps = { readFileBase64, deleteFile };
 
 function replaceTourStops(all: Stop[], tourId: string, tourStops: Stop[]): Stop[] {
   return [...all.filter((s) => s.tourId !== tourId), ...tourStops];
 }
 
 const EMPTY_SERVER = { organizationId: "", organizationName: "", depots: [], drivers: [], vehicles: [], tours: [], stops: [] };
+const DEFAULT_PREFS: Prefs = { navApp: null, optimizeFromDevice: false, colorScheme: "system" };
 
 export const useTourStore = create<TourState>()(
   persist(
     (set, get) => {
       let syncing: Promise<void> | null = null;
-
-      async function flushOutbox() {
-        // Drain the live queue, so changes made while a sync runs are sent in the same pass.
-        for (let item = get().outbox[0]; item; item = get().outbox[0]) {
-          try {
-            if (item.kind === "stop_status") {
-              await auth().request("POST", `/v1/orgs/${item.orgId}/stops/${item.stopId}/status`, { status: item.status, notes: item.notes });
-            } else {
-              await auth().request("POST", `/v1/orgs/${item.orgId}/tours/${item.tourId}/status`, { status: item.status });
-            }
-            set({ outbox: get().outbox.filter((o) => o.id !== item.id) });
-          } catch (e) {
-            if (isTransient(e)) throw e; // keep queued, retry on next sync
-            // Rejected by the server (e.g. tour withdrawn): drop it and tell the driver.
-            set({ outbox: get().outbox.filter((o) => o.id !== item.id), syncMessage: e instanceof Error ? e.message : String(e) });
-          }
-        }
-      }
+      const now = () => new Date().toISOString();
 
       function enqueue(item: OutboxItem) {
+        if (!isServerMode()) return;
         set({ outbox: [...get().outbox, item] });
         void get().sync();
+      }
+
+      function orgOf(tourId: string) {
+        return get().tours.find((t) => t.id === tourId)?.organizationId ?? get().organizationId;
+      }
+
+      function updateStop(stopId: string, fn: (s: Stop) => Stop) {
+        set({ stops: get().stops.map((s) => (s.id === stopId ? fn(s) : s)) });
       }
 
       return {
@@ -118,114 +163,295 @@ export const useTourStore = create<TourState>()(
         organizationName: "",
         driverId: DEV_DRIVER_ID,
         locale: null,
+        prefs: DEFAULT_PREFS,
+        activeTourId: null,
+        settingsByOrg: {},
         lastOptimization: null,
         optimizing: false,
+        scans: {},
         user: null,
         outbox: [],
+        failed: [],
         syncState: "idle",
         syncMessage: null,
         lastSyncAt: null,
 
         setLocale: (locale) => set({ locale }),
+        setPrefs: (p) => set({ prefs: { ...get().prefs, ...p } }),
+        selectTour: (id) => set({ activeTourId: id }),
+
+        createRoute: (name, date) => {
+          const driver = get().drivers.find((d) => d.id === get().driverId) ?? get().drivers[0];
+          const depotId = driver?.depotId ?? get().depots[0]?.id ?? "";
+          const tour: Tour = {
+            id: uuid(),
+            organizationId: get().organizationId || driver?.organizationId || "",
+            name: name.trim(),
+            date,
+            depotId,
+            driverId: get().driverId,
+            vehicleId: null,
+            status: "planned",
+            plannedStartMinute: 8 * 60,
+            publishedAt: now(),
+            origin: "driver",
+          };
+          set({ tours: [...get().tours, tour], activeTourId: tour.id });
+          enqueue({ id: uuid(), kind: "create_tour", orgId: tour.organizationId, at: now(), tourId: tour.id, name: tour.name, date });
+          return tour;
+        },
 
         addStop: (tourId, input) => {
           const tour = get().tours.find((t) => t.id === tourId);
           if (!tour) throw new Error(`Unknown tour ${tourId}`);
           const current = get().stops.filter((s) => s.tourId === tourId);
-          if (!isServerMode()) {
-            const result = addStopToList(current, tour, input);
-            set({ stops: replaceTourStops(get().stops, tourId, result.stops) });
-            return { stop: result.stop, merged: result.merged };
-          }
-          // Server: always a new stop (shown immediately, confirmed by the next sync).
-          const { stop } = addStopToList([], tour, input);
-          const placed = { ...stop, sequence: current.length };
-          set({ stops: [...get().stops, placed] });
-          auth()
-            .request("POST", `/v1/orgs/${tour.organizationId}/stops`, { tourId, stops: [input] })
-            .then(() => get().sync())
-            .catch((e) => set({ syncMessage: `Stop not saved: ${e instanceof Error ? e.message : String(e)}`, stops: get().stops.filter((s) => s.id !== placed.id) }));
-          return { stop: placed, merged: false };
+          const result = addStopToList(current, tour, { ...input, id: input.id ?? uuid() });
+          set({ stops: replaceTourStops(get().stops, tourId, result.stops) });
+          const { stop } = result;
+          enqueue({
+            id: uuid(),
+            kind: "create_stops",
+            orgId: tour.organizationId,
+            at: now(),
+            tourId,
+            stops: [
+              {
+                id: stop.id,
+                type: stop.type === "pickup" ? "pickup" : "delivery",
+                recipientName: stop.recipientName,
+                address: stop.address,
+                location: stop.location,
+                locationSource: stop.location ? (stop.locationSource ?? "manual_pin") : null,
+                timeWindow: stop.timeWindow,
+                serviceSeconds: stop.serviceSeconds,
+                priority: stop.priority,
+                notes: stop.notes,
+                recipientPhone: stop.recipientPhone,
+                trackingNumbers: stop.parcels.map((p) => p.trackingNumber),
+              },
+            ],
+          });
+          return { stop, merged: result.merged };
         },
 
-        setStopStatus: (stopId, status, notes) => {
-          const before = get().stops.find((s) => s.id === stopId);
-          set({
-            stops: get().stops.map((s) => {
-              if (s.id !== stopId) return s;
-              const updated = setStatus(s, status);
-              return notes !== undefined ? { ...updated, notes } : updated;
-            }),
-          });
-          if (isServerMode() && before) {
-            enqueue({ id: newOutboxId(), kind: "stop_status", orgId: before.organizationId, stopId, status, notes, at: new Date().toISOString() });
+        addStops: (tourId, inputs) => {
+          let created = 0;
+          let merged = 0;
+          for (const input of inputs) {
+            const r = get().addStop(tourId, input);
+            if (r.merged) merged++;
+            else created++;
           }
+          return { created, merged };
+        },
+
+        setStopStatus: (stopId, status, opts = {}) => {
+          const before = get().stops.find((s) => s.id === stopId);
+          if (!before) throw new Error(`Unknown stop ${stopId}`);
+          if (!canTransition(before.status, status)) throw new Error(`Invalid stop status transition ${before.status} -> ${status}`);
+          const reasons = (get().settingsByOrg[before.organizationId] ?? DEFAULT_DRIVER_SETTINGS).failureReasons;
+          const invalid = validateOutcome({ status, failureReason: opts.failureReason, notes: opts.notes }, reasons);
+          if (invalid) throw new Error(invalid);
+          updateStop(stopId, (s) => {
+            const next = applyStatus(s, status, new Date(), { failureReason: opts.failureReason });
+            return opts.notes !== undefined ? { ...next, driverNotes: opts.notes } : next;
+          });
+          enqueue({ id: uuid(), kind: "stop_status", orgId: before.organizationId, at: now(), stopId, status, notes: opts.notes, failureReason: opts.failureReason });
+        },
+
+        addNote: (stopId, note) => {
+          const stop = get().stops.find((s) => s.id === stopId);
+          if (!stop || !note.trim()) return;
+          updateStop(stopId, (s) => ({ ...s, driverNotes: note.trim() }));
+          enqueue({ id: uuid(), kind: "stop_note", orgId: stop.organizationId, at: now(), stopId, note: note.trim() });
+        },
+
+        captureProof: async (stopId, capture) => {
+          const stop = get().stops.find((s) => s.id === stopId);
+          if (!stop) throw new Error(`Unknown stop ${stopId}`);
+          const settings = get().settingsByOrg[stop.organizationId] ?? DEFAULT_DRIVER_SETTINGS;
+          const location = settings.podLocation ? capture.location : undefined;
+          const at = now();
+          const items: OutboxItem[] = [];
+          if (capture.photo) {
+            const proofId = uuid();
+            items.push({
+              id: uuid(),
+              kind: "proof",
+              orgId: stop.organizationId,
+              at,
+              proofId,
+              stopId,
+              proofKind: "photo",
+              contentType: "image/jpeg",
+              fileUri: capture.photo.base64 ? undefined : capture.photo.uri,
+              dataBase64: capture.photo.base64,
+              recipientName: capture.recipientName,
+              notes: capture.notes,
+              location,
+            });
+          }
+          if (capture.signatureSvg) {
+            items.push({
+              id: uuid(),
+              kind: "proof",
+              orgId: stop.organizationId,
+              at,
+              proofId: uuid(),
+              stopId,
+              proofKind: "signature",
+              contentType: "image/svg+xml",
+              dataBase64: base64Utf8(capture.signatureSvg),
+              recipientName: capture.recipientName,
+              notes: capture.notes,
+              location,
+            });
+          }
+          updateStop(stopId, (s) => ({
+            ...s,
+            proofs: [
+              ...(s.proofs ?? []),
+              ...items.map((i) => (i.kind === "proof" ? { id: i.proofId, kind: i.proofKind, capturedAt: at, recipientName: capture.recipientName ?? null, notes: capture.notes ?? null, hasLocation: !!location } : null)).filter((x) => !!x),
+            ],
+          }));
+          if (isServerMode()) {
+            set({ outbox: [...get().outbox, ...items] });
+            void get().sync();
+          }
+          return items.length;
         },
 
         moveStop: (tourId, from, to) => {
           const current = get().stops.filter((s) => s.tourId === tourId);
           const moved = moveStopInList(current, from, to);
           set({ stops: replaceTourStops(get().stops, tourId, moved) });
-          if (isServerMode()) {
-            const pending = moved.filter((s) => s.status === "pending").map((s) => s.id);
-            auth()
-              .request("POST", `/v1/me/tours/${tourId}/sequence`, { stopIds: pending })
-              .then(() => get().sync())
-              .catch((e) => set({ syncMessage: `New order not saved: ${e instanceof Error ? e.message : String(e)}` }));
-          }
+          const open = moved.filter((s) => isOpen(s.status)).map((s) => s.id);
+          if (open.length) enqueue({ id: uuid(), kind: "sequence", orgId: orgOf(tourId), at: now(), tourId, stopIds: open });
+        },
+
+        setLocked: (stopId, locked) => {
+          const stop = get().stops.find((s) => s.id === stopId);
+          if (!stop) return;
+          updateStop(stopId, (s) => ({ ...s, locked }));
+          enqueue({ id: uuid(), kind: "stop_update", orgId: stop.organizationId, at: now(), stopId, locked });
+        },
+
+        setStopLocation: (stopId, location, source) => {
+          const stop = get().stops.find((s) => s.id === stopId);
+          if (!stop) return;
+          updateStop(stopId, (s) => ({ ...s, location, locationSource: source }));
+          enqueue({ id: uuid(), kind: "stop_update", orgId: stop.organizationId, at: now(), stopId, location, locationSource: source });
+        },
+
+        recordScans: (tourId, entries) => {
+          if (!entries.length) return;
+          const history = get().scans[tourId] ?? [];
+          const known = new Set(history.map((e) => e.code));
+          const fresh = entries.filter((e) => !known.has(e.code));
+          set({ scans: { ...get().scans, [tourId]: [...history, ...fresh] } });
+          const codes = new Map(fresh.map((e) => [e.code, e.at]));
+          set({
+            stops: get().stops.map((s) =>
+              s.tourId !== tourId
+                ? s
+                : { ...s, parcels: s.parcels.map((p) => {
+                      const code = normalizeTrackingNumber(p.trackingNumber);
+                      return code && codes.has(code) && !p.loadedAt ? { ...p, loadedAt: codes.get(code) } : p;
+                    }) },
+            ),
+          });
+          if (fresh.length) enqueue({ id: uuid(), kind: "scans", orgId: orgOf(tourId), at: now(), tourId, scans: fresh.map((e) => ({ code: e.code, at: e.at })) });
         },
 
         tourAction: (tourId, action) => {
           const [allowed, next] = TOUR_TRANSITIONS[action];
           const tour = get().tours.find((t) => t.id === tourId);
           if (!tour || !allowed.includes(tour.status)) return;
-          const now = new Date().toISOString();
+          const at = now();
           set({
             tours: get().tours.map((t): Tour =>
-              t.id !== tourId ? t : { ...t, status: next, startedAt: action === "start" ? now : t.startedAt, finishedAt: action === "finish" ? now : t.finishedAt },
+              t.id !== tourId ? t : { ...t, status: next, startedAt: action === "start" ? at : t.startedAt, finishedAt: action === "finish" ? at : t.finishedAt },
             ),
           });
-          if (isServerMode()) enqueue({ id: newOutboxId(), kind: "tour_status", orgId: tour.organizationId, tourId, status: next, at: now });
+          enqueue({ id: uuid(), kind: "tour_status", orgId: tour.organizationId, at, tourId, status: next });
         },
 
-        optimize: async (tourId) => {
+        optimize: async (tourId, opts = {}) => {
           const state = get();
           const tour = state.tours.find((t) => t.id === tourId);
           const depot = state.depots.find((d) => d.id === tour?.depotId);
-          const driver = state.drivers.find((d) => d.id === tour?.driverId);
           if (!tour || !depot) throw new Error(`Unknown tour ${tourId}`);
           set({ optimizing: true });
           try {
-            let outcome: OptimizationOutcome;
+            let outcome: OptimizationOutcome | null = null;
             if (isServerMode()) {
-              // Saved tour: the server optimizes with OR-Tools and stores the new order.
-              const r = await auth().request<{ stops: Stop[]; result: { matrixSource: "osrm" | "haversine_estimate"; unassignedStopIds: string[]; unlocatedStopIds?: string[] } }>(
-                "POST",
-                `/v1/orgs/${tour.organizationId}/tours/${tourId}/optimize`,
-                {},
-              );
-              outcome = { stops: r.stops, engine: "server", matrixSource: r.result.matrixSource, unassignedStopIds: r.result.unassignedStopIds, unlocatedStopIds: r.result.unlocatedStopIds ?? [] };
-            } else {
-              outcome = await optimizeTour({ tour, depot, maxShiftMinutes: driver?.maxShiftMinutes ?? 480, stops: sortBySequence(state.stops.filter((s) => s.tourId === tourId)) });
+              // Queued stops must exist on the server before it can optimize them.
+              await get().sync();
+              const pendingForTour = get().outbox.some((o) => "tourId" in o && o.tourId === tourId);
+              if (!pendingForTour) {
+                try {
+                  const r = await auth().request<{ stops: Stop[]; result: { matrixSource: "osrm" | "haversine_estimate"; unassignedStopIds: string[]; unlocatedStopIds?: string[]; lockedStopIds?: string[]; distanceMeters?: number; durationSeconds?: number } }>(
+                    "POST",
+                    `/v1/orgs/${tour.organizationId}/tours/${tourId}/optimize`,
+                    { start: opts.start, end: opts.end, respectLocks: opts.respectLocks ?? true },
+                  );
+                  outcome = {
+                    stops: r.stops,
+                    engine: "server",
+                    matrixSource: r.result.matrixSource,
+                    unassignedStopIds: r.result.unassignedStopIds,
+                    unlocatedStopIds: r.result.unlocatedStopIds ?? [],
+                    lockedStopIds: r.result.lockedStopIds ?? [],
+                    distanceMeters: r.result.distanceMeters,
+                    durationSeconds: r.result.durationSeconds,
+                  };
+                } catch (e) {
+                  if (!isTransient(e)) throw e;
+                  outcome = null; // offline -> on-device fallback below
+                }
+              }
             }
-            set({ stops: replaceTourStops(get().stops, tourId, outcome.stops), lastOptimization: { ...outcome, tourId, at: new Date().toISOString() } });
+            if (!outcome) {
+              const stops = sortBySequence(get().stops.filter((s) => s.tourId === tourId));
+              outcome = optimizeLocally(tour, depot, stops, opts);
+              if (isServerMode()) {
+                const open = outcome.stops.filter((s) => isOpen(s.status)).map((s) => s.id);
+                if (open.length) enqueue({ id: uuid(), kind: "sequence", orgId: tour.organizationId, at: now(), tourId, stopIds: open });
+              }
+            }
+            set({ stops: replaceTourStops(get().stops, tourId, resequence(sortBySequence(outcome.stops))), lastOptimization: { ...outcome, tourId, at: now() } });
             return outcome;
           } finally {
             set({ optimizing: false });
           }
         },
 
-        resetData: () => set({ ...createSyntheticDataset(), lastOptimization: null }),
+        resetData: () => set({ ...createSyntheticDataset(), lastOptimization: null, scans: {}, activeTourId: null, settingsByOrg: {} }),
+
+        retryFailed: (id) => {
+          const f = get().failed.find((x) => x.item.id === id);
+          if (!f) return;
+          set({ failed: get().failed.filter((x) => x.item.id !== id), outbox: [...get().outbox, { ...f.item, attempts: 0, nextAttemptAt: undefined }] });
+          void get().sync();
+        },
+
+        discardFailed: async (id) => {
+          const f = get().failed.find((x) => x.item.id === id);
+          if (f?.item.kind === "proof" && f.item.fileUri) await fileDeps.deleteFile(f.item.fileUri).catch(() => undefined);
+          set({ failed: get().failed.filter((x) => x.item.id !== id) });
+          void get().sync();
+        },
 
         signIn: async (email, password) => {
           const user = await auth().login(email.trim(), password);
-          set({ user, syncMessage: null, outbox: [] });
+          set({ user, syncMessage: null, outbox: [], failed: [] });
           await get().sync();
         },
 
         signOut: async () => {
           await auth().logout();
-          set({ ...EMPTY_SERVER, user: null, outbox: [], lastSyncAt: null, lastOptimization: null, syncState: "idle", syncMessage: null });
+          for (const o of get().outbox) if (o.kind === "proof" && o.fileUri) await fileDeps.deleteFile(o.fileUri).catch(() => undefined);
+          set({ ...EMPTY_SERVER, user: null, outbox: [], failed: [], scans: {}, activeTourId: null, settingsByOrg: {}, lastSyncAt: null, lastOptimization: null, syncState: "idle", syncMessage: null });
         },
 
         sync: async () => {
@@ -234,10 +460,29 @@ export const useTourStore = create<TourState>()(
           syncing = (async () => {
             set({ syncState: "syncing" });
             try {
-              await flushOutbox();
+              // Retry everything now (manual refresh / app foreground).
+              set({ outbox: get().outbox.map((o) => ({ ...o, nextAttemptAt: undefined })) });
+              const drained = await drainOutbox(
+                () => get().outbox[0],
+                (id) => set({ outbox: get().outbox.filter((o) => o.id !== id) }),
+                (item) => set({ outbox: get().outbox.map((o) => (o.id === item.id ? item : o)) }),
+                { client: auth(), ...fileDeps },
+              );
+              if (drained.failed.length) {
+                set({
+                  failed: [...get().failed, ...drained.failed.map((f) => ({ ...f, at: now() }))],
+                  syncMessage: drained.failed.at(-1)!.error,
+                });
+              }
+              if (drained.offline) {
+                set({ syncState: "offline", syncMessage: drained.error ?? null });
+                return;
+              }
               const payload = await auth().request<{ tours: MyTour[] }>("GET", "/v1/me/tours");
-              const snap = applyOutbox(snapshotFrom(payload, get().driverId), get().outbox);
-              set({ ...snap, syncState: "idle", lastSyncAt: new Date().toISOString(), syncMessage: get().syncMessage });
+              const localTours = get().tours;
+              const snap = applyOutbox(snapshotFrom(payload, get().driverId, get()), get().outbox, localTours);
+              const active = get().activeTourId;
+              set({ ...snap, activeTourId: active && snap.tours.some((t) => t.id === active) ? active : null, syncState: "idle", lastSyncAt: now() });
             } catch (e) {
               const offline = isTransient(e);
               set({ syncState: offline ? "offline" : "error", syncMessage: e instanceof Error ? e.message : String(e) });
@@ -251,8 +496,8 @@ export const useTourStore = create<TourState>()(
       };
     },
     {
-      // v3: server mode (user, outbox). Older caches are discarded.
-      name: "turvio-driver-v3",
+      // v4: Phase 4 outbox (client ids), proofs, scans, prefs. Older caches are discarded.
+      name: "turvio-driver-v4",
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         organizationId: s.organizationId,
@@ -264,11 +509,22 @@ export const useTourStore = create<TourState>()(
         stops: s.stops,
         driverId: s.driverId,
         locale: s.locale,
+        prefs: s.prefs,
+        activeTourId: s.activeTourId,
+        settingsByOrg: s.settingsByOrg,
         lastOptimization: s.lastOptimization,
+        scans: s.scans,
         user: s.user,
         outbox: s.outbox,
+        failed: s.failed,
         lastSyncAt: s.lastSyncAt,
       }),
     },
   ),
 );
+
+/** UTF-8 safe base64 (signature SVG). */
+function base64Utf8(text: string): string {
+  // encodeURIComponent -> percent bytes -> binary string; btoa exists in Hermes, browsers and Node.
+  return btoa(unescape(encodeURIComponent(text)));
+}

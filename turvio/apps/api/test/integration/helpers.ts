@@ -8,6 +8,10 @@ import { ChangeFeed } from "../../src/events";
 import { OutboxMailer } from "../../src/mail";
 import { SEED_PASSWORD_DEFAULT, seed, type SeedResult } from "../../src/seed";
 import { PgTenancyRepository } from "../../src/tenancy";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { LocalProofStore } from "../../src/storage";
+import type { Geocoder } from "../../src/geocode";
 
 /**
  * Integration harness: a fresh PostgreSQL database with all migrations, the
@@ -42,7 +46,7 @@ export const fakeOptimizerFetch: typeof fetch = async (_url, init) => {
   return new Response(JSON.stringify({ routes, unassignedStopIds: [], matrixSource: "haversine_estimate", status: "feasible", engine: "or-tools" }), { status: 200 });
 };
 
-export async function createTestEnv(name: string) {
+export async function createTestEnv(name: string, opts: { geocoder?: Geocoder } = {}) {
   const dbName = `turvio_it_${name}_${process.pid}`;
   const admin = new pg.Client({ connectionString: adminUrl("postgres") });
   await admin.connect();
@@ -66,6 +70,7 @@ export async function createTestEnv(name: string) {
   const mailer = new OutboxMailer(db);
   const auth = new LocalAuthProvider(db, mailer, { secret: JWT_SECRET, issuer: "turvio-test", accessTtl: 900, refreshTtlDays: 30 });
   const events = new ChangeFeed(serviceUrl);
+  const proofDir = mkdtempSync(join(tmpdir(), "turvio-proofs-"));
   await events.start();
   const app = buildApp({
     verifier: auth.verifier,
@@ -78,6 +83,8 @@ export async function createTestEnv(name: string) {
     events,
     urls: { dispatch: "http://dispatch.test", admin: "http://admin.test" },
     devMailbox: true,
+    proofStore: new LocalProofStore(proofDir),
+    geocoder: opts.geocoder,
   });
   await app.ready();
 
@@ -90,7 +97,7 @@ export async function createTestEnv(name: string) {
     tokens.set(email, t);
     return t;
   }
-  async function as(email: string, method: "GET" | "POST" | "PATCH" | "DELETE", url: string, payload?: unknown) {
+  async function as(email: string, method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE", url: string, payload?: unknown) {
     const token = await login(email);
     return app.inject({ method, url, payload: payload as never, headers: { authorization: `Bearer ${token}` } });
   }
@@ -104,7 +111,7 @@ export async function createTestEnv(name: string) {
     await a.query(`drop database if exists ${dbName} with (force)`);
     await a.end();
   }
-  return { app, db, data, login, as, close, superuser: c, events };
+  return { app, db, data, login, as, close, superuser: c, events, proofDir };
 }
 
 export type TestEnv = Awaited<ReturnType<typeof createTestEnv>>;

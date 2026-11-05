@@ -16,7 +16,7 @@ const version = async (id: string) => (await db.query<{ version: number }>(`sele
 beforeEach(async () => {
   db = await createSeededDb();
   // An unpublished tour for driver A1 with three stops.
-  await db.query(`insert into tours (id, organization_id, depot_id, driver_id, name, tour_date) values ($1, $2, $3, $4, 'Draft', current_date)`, [
+  await db.query(`insert into tours (id, organization_id, depot_id, driver_id, name, tour_date) values ($1, $2, $3, $4, 'Draft', current_date + 1)`, [
     draftTour,
     ids.orgJarbou,
     ids.depotA,
@@ -98,7 +98,7 @@ describe("stop sequencing", () => {
 
   it("refuses foreign or completed stops and unauthorized callers", async () => {
     await asUser(db, ids.dispatcherA, async () => {
-      await expect(db.query(`select set_tour_sequence($1, $2::uuid[])`, [draftTour, [ids.stopB]])).rejects.toThrow(/not pending stops of this tour/);
+      await expect(db.query(`select set_tour_sequence($1, $2::uuid[])`, [draftTour, [ids.stopB]])).rejects.toThrow(/not open stops of this tour/);
     });
     await asUser(db, ids.driverA2, async () => {
       await expect(db.query(`select set_tour_sequence($1, $2::uuid[])`, [draftTour, [s1]])).rejects.toThrow(/tour not found/);

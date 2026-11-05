@@ -3,6 +3,7 @@ import { z } from "zod";
 import { parse, type RouteCtx } from "../http";
 import { ApiError } from "../db";
 import { STOP_SELECT, toDepot, toStop, toTour, type DepotRow, type StopRow, type TourRow } from "../data/dispatch";
+import { driverSettingsOf } from "./execution";
 
 /**
  * Endpoints for TURVIO Driver. Visibility is enforced by RLS: a driver sees
@@ -29,12 +30,18 @@ export function registerDriverRoutes(app: FastifyInstance, { deps, guards }: Rou
         )
       ).rows;
       const out = [];
+      const settingsByOrg = new Map<string, Awaited<ReturnType<typeof driverSettingsOf>>>();
       for (const t of tours) {
+        if (!settingsByOrg.has(t.organization_id)) settingsByOrg.set(t.organization_id, await driverSettingsOf(tx, t.organization_id));
+        const settings = settingsByOrg.get(t.organization_id)!;
         const depot = (await tx.query<DepotRow>(`select * from depots where id = $1`, [t.depot_id])).rows[0];
-        const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 order by s.sequence`, [t.id])).rows.map(toStop);
+        const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 order by s.sequence`, [t.id])).rows
+          .map(toStop)
+          // Recipient phone numbers only when the company shares them with drivers.
+          .map((st) => (settings.showRecipientPhone ? st : { ...st, recipientPhone: undefined }));
         out.push({
           tour: toTour(t),
-          organization: { id: t.organization_id, name: t.org_name, timeZone: t.time_zone },
+          organization: { id: t.organization_id, name: t.org_name, timeZone: t.time_zone, driverSettings: settings },
           depot: depot ? toDepot(depot) : null,
           driver: { id: t.driver_id, displayName: t.driver_name, maxShiftMinutes: t.max_shift_minutes },
           vehicle: t.vehicle_id ? { id: t.vehicle_id, label: t.vehicle_label, licensePlate: t.license_plate } : null,
@@ -43,6 +50,14 @@ export function registerDriverRoutes(app: FastifyInstance, { deps, guards }: Rou
       }
       return { tours: out };
     });
+  });
+
+  /** Personal route: the driver creates their own tour (idempotent by client id). */
+  app.post("/v1/me/tours", { preHandler: guards.authenticate }, async (req, reply) => {
+    const b = parse(z.object({ id: z.string().uuid(), name: z.string().trim().min(1).max(120), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }), req.body, reply);
+    if (!b) return;
+    const tour = await db.asUser(guards.claims(req), async (tx) => (await tx.query<TourRow>(`select (driver_create_tour($1, $2, $3::date)).*`, [b.id, b.name, b.date])).rows[0]!);
+    return reply.status(201).send({ tour: toTour(tour) });
   });
 
   /** Lets the assigned driver re-order the remaining stops of a published tour. */

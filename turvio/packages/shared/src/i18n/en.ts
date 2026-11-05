@@ -1,4 +1,6 @@
-export const en = {
+import { driverEn } from "./driver.en";
+
+const core = {
   "app.name": "TURVIO",
   // Brand tagline stays in English in every locale.
   "app.tagline": "Smart Routes. Simple Deliveries.",
@@ -109,6 +111,8 @@ export const en = {
   "settings.account": "Account",
   "settings.signOut": "Sign out",
 } as const;
+
+export const en = { ...core, ...driverEn } as const;
 
 export type MessageKey = keyof typeof en;
 export type Messages = Record<MessageKey, string>;

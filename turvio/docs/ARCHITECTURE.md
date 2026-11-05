@@ -138,12 +138,7 @@ The map is Leaflet; it never shows driver positions because no authorized locati
 
 ## 7. Driver app
 
-Expo Router with tabs Today / Stops / Map / Settings. Two modes:
-
-* **Server mode** (`EXPO_PUBLIC_API_URL` set): sign in → `GET /v1/me/tours` returns only tours *published to this driver*. Status changes (start/pause/finish tour, delivered/failed/skipped) are applied on the device immediately and put in a persisted **outbox**, sent through the driver RPCs (`driver_set_stop_status`, `driver_set_tour_status`), retried when offline; rejected items (e.g. tour withdrawn) are dropped with a message. Sync: on start, every 30 s, when the app returns to the foreground, and pull-to-refresh. Last-writer-wins per stop; the server re-validates every transition.
-* **Demo mode** (no API configured): synthetic data, all local.
-
-State in Zustand persisted to AsyncStorage, so the current tour works offline. Maps via `react-native-maps`; navigation handoff to Apple/Google Maps.
+See [DRIVER_APP.md](DRIVER_APP.md) for screens, scanning, capture, offline behaviour and the verification matrix. In short: a persisted Zustand store applies every change immediately and queues it in an ordered outbox with client-generated ids (idempotent on the server via `client_event_id`, client stop/tour/proof ids); the API's driver RPCs (`driver_set_stop_status`, `driver_add_stop_note`, `driver_record_scans`, `driver_create_tour`, `driver_update_stop`) enforce access and transitions in Postgres. Proof files go to a `ProofStore` (local disk or private Supabase bucket) behind access-checked endpoints. Address search goes through a `Geocoder` provider on the API (none by default). OCR is an integration boundary (`registerOcrEngine`) with no engine bundled.
 
 ## 8. Internationalization
 

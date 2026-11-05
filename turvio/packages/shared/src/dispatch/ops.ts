@@ -1,6 +1,7 @@
 import { estimateDrive } from "../geo";
 import type { Depot, Driver, GeoPoint, Stop, Tour } from "../schemas";
-import { sortBySequence } from "../tour";
+import { isNotDelivered, isOpen, isSuccess } from "../stopStatus";
+import { routeMetrics, sortBySequence } from "../tour";
 import type { DispatchDataset, UnassignedStop } from "./dataset";
 
 /**
@@ -29,6 +30,8 @@ export interface TourTimeline {
   /** Latest allowed end (start + driver's max shift). */
   shiftEndMinute: number;
   distanceMeters: number;
+  /** From the last closed stop through the open stops back to the end point. */
+  remainingMeters: number;
   durationMinutes: number;
   delayed: boolean;
   delayReasons: string[];
@@ -67,19 +70,13 @@ export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Dr
   const shiftEndMinute = tour.plannedStartMinute + (driver?.maxShiftMinutes ?? 480);
   const projections = new Map<string, StopProjection>();
 
-  // Full-route distance estimate (depot -> all stops -> depot).
-  let distanceMeters = 0;
-  let prev: GeoPoint = depot.location;
-  for (const s of ordered) {
-    if (!s.location) continue;
-    distanceMeters += estimateDrive(prev, s.location).meters;
-    prev = s.location;
-  }
-  distanceMeters += estimateDrive(prev, depot.location).meters;
+  // Same figures as the driver app (shared routeMetrics): total and remaining.
+  const metrics = routeMetrics(tour.startLocation ?? depot.location, ordered, tour.endLocation ?? depot.location);
+  const distanceMeters = metrics.totalMeters;
 
   // Project pending stops from the last completed stop (or the depot).
-  const done = ordered.filter((s) => s.status !== "pending");
-  const pending = ordered.filter((s) => s.status === "pending");
+  const done = ordered.filter((s) => !isOpen(s.status));
+  const pending = ordered.filter((s) => isOpen(s.status));
   for (const s of done) {
     const m = minuteOf(s.completedAt);
     if (m !== null) projections.set(s.id, { stopId: s.id, etaMinute: m, late: !!s.timeWindow && m > s.timeWindow.end, atRisk: false });
@@ -113,6 +110,7 @@ export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Dr
     projectedEndMinute,
     shiftEndMinute,
     distanceMeters,
+    remainingMeters: metrics.remainingMeters,
     durationMinutes: projectedEndMinute - startMinute,
     delayed: delayReasons.length > 0,
     delayReasons,
@@ -146,7 +144,7 @@ export function summarizeTour(data: DispatchDataset, tour: Tour): TourSummary {
   const stops = sortBySequence(data.stops.filter((s) => s.tourId === tour.id));
   const work = stops.filter((s) => s.type !== "break");
   const timeline = tourTimeline(tour, stops, depot, driver, data.asOfMinute, data.timeZone);
-  const openPickups = work.filter((s) => s.type === "pickup" && s.status === "pending");
+  const openPickups = work.filter((s) => s.type === "pickup" && isOpen(s.status));
   return {
     tour,
     depot,
@@ -155,10 +153,10 @@ export function summarizeTour(data: DispatchDataset, tour: Tour): TourSummary {
     vehiclePlate: vehicle?.licensePlate ?? null,
     stops,
     total: work.length,
-    completed: work.filter((s) => s.status !== "pending").length,
-    delivered: work.filter((s) => s.status === "delivered" || s.status === "picked_up").length,
-    failed: work.filter((s) => s.status === "failed").length,
-    remaining: work.filter((s) => s.status === "pending").length,
+    completed: work.filter((s) => !isOpen(s.status)).length,
+    delivered: work.filter((s) => isSuccess(s.status)).length,
+    failed: work.filter((s) => isNotDelivered(s.status)).length,
+    remaining: work.filter((s) => isOpen(s.status)).length,
     pickups: work.filter((s) => s.type === "pickup").length,
     pickupsRemaining: openPickups.length,
     nextPickupDeadline: openPickups.reduce<number | null>((min, s) => (s.timeWindow ? Math.min(min ?? Infinity, s.timeWindow.end) : min), null),
@@ -196,7 +194,7 @@ export function pickupRows(data: DispatchDataset, summaries: TourSummary[] = sum
       const p = s.timeline.projections.get(stop.id);
       let state: PickupState;
       if (stop.status === "picked_up") state = "completed";
-      else if (stop.status !== "pending") state = "failed";
+      else if (!isOpen(stop.status)) state = "failed";
       else if (p?.late) state = "late";
       else if (p?.atRisk) state = "at_risk";
       else state = "scheduled";
@@ -266,7 +264,7 @@ export function dispatchKpis(data: DispatchDataset, summaries: TourSummary[] = s
     completedStops,
     totalStops,
     remainingDeliveries:
-      summaries.reduce((n, s) => n + s.stops.filter((x) => x.type === "delivery" && x.status === "pending").length, 0) +
+      summaries.reduce((n, s) => n + s.stops.filter((x) => x.type === "delivery" && isOpen(x.status)).length, 0) +
       data.unassigned.filter((u) => u.type === "delivery").length,
     unassignedDeliveries: data.unassigned.filter((u) => u.type === "delivery").length,
     scheduledPickups: pickups.filter((p) => p.state !== "completed" && p.state !== "failed").length,

@@ -1,4 +1,5 @@
 import { estimateDrive } from "./geo";
+import { canTransition, isNotDelivered, isOpen, isSuccess } from "./stopStatus";
 import {
   NewStopInput,
   type GeoPoint,
@@ -7,20 +8,14 @@ import {
   type StopStatus,
 } from "./schemas";
 
-/** Allowed status transitions for a stop. Completed stops can be reopened. */
-const TRANSITIONS: Record<StopStatus, readonly StopStatus[]> = {
-  pending: ["delivered", "picked_up", "failed", "skipped"],
-  delivered: ["pending"],
-  picked_up: ["pending"],
-  failed: ["pending"],
-  skipped: ["pending"],
-};
+export { canTransition } from "./stopStatus";
 
-export function canTransition(from: StopStatus, to: StopStatus): boolean {
-  return TRANSITIONS[from].includes(to);
-}
-
-export function setStopStatus(stop: Stop, to: StopStatus, now: Date = new Date()): Stop {
+export function setStopStatus(
+  stop: Stop,
+  to: StopStatus,
+  now: Date = new Date(),
+  extra: { failureReason?: string; notes?: string } = {},
+): Stop {
   if (!canTransition(stop.status, to)) {
     throw new Error(`Invalid stop status transition ${stop.status} -> ${to}`);
   }
@@ -30,10 +25,13 @@ export function setStopStatus(stop: Stop, to: StopStatus, now: Date = new Date()
   if (to === "picked_up" && stop.type !== "pickup") {
     throw new Error("Only pickup stops can be marked picked up");
   }
+  const closed = !isOpen(to);
   return {
     ...stop,
     status: to,
-    completedAt: to === "pending" ? undefined : now.toISOString(),
+    completedAt: closed ? now.toISOString() : undefined,
+    failureReason: isNotDelivered(to) ? extra.failureReason : undefined,
+    ...(extra.notes !== undefined ? { notes: extra.notes } : {}),
   };
 }
 
@@ -59,26 +57,34 @@ export function moveStop(stops: Stop[], from: number, to: number): Stop[] {
 
 export interface TourProgress {
   total: number;
+  /** Closed stops (any outcome). */
   done: number;
+  /** Delivered or picked up. */
   delivered: number;
+  /** Not delivered (failed, attempted, rescheduled, returned). */
   failed: number;
   skipped: number;
+  /** Open stops (pending or in progress). */
   pending: number;
+  inProgress: number;
   parcels: number;
+  /** Parcels scanned into the vehicle. */
+  parcelsLoaded: number;
 }
 
 export function tourProgress(stops: Stop[]): TourProgress {
   const work = stops.filter((s) => s.type !== "break");
-  const count = (st: StopStatus) => work.filter((s) => s.status === st).length;
-  const pending = count("pending");
+  const pending = work.filter((s) => isOpen(s.status)).length;
   return {
     total: work.length,
     done: work.length - pending,
-    delivered: count("delivered") + count("picked_up"),
-    failed: count("failed"),
-    skipped: count("skipped"),
+    delivered: work.filter((s) => isSuccess(s.status)).length,
+    failed: work.filter((s) => isNotDelivered(s.status)).length,
+    skipped: work.filter((s) => s.status === "skipped").length,
     pending,
+    inProgress: work.filter((s) => s.status === "in_progress").length,
     parcels: work.reduce((n, s) => n + s.parcels.length, 0),
+    parcelsLoaded: work.reduce((n, s) => n + s.parcels.filter((p) => p.loadedAt).length, 0),
   };
 }
 
@@ -145,7 +151,7 @@ export function addStop(
 
   const key = addressKey(parsed.address);
   const existing = stops.find(
-    (s) => s.status === "pending" && s.type === parsed.type && addressKey(s.address) === key,
+    (s) => isOpen(s.status) && s.type === parsed.type && addressKey(s.address) === key,
   );
   if (existing) {
     const known = new Set(existing.parcels.map((p) => p.trackingNumber));
@@ -154,6 +160,7 @@ export function addStop(
       parcels: [...existing.parcels, ...parcels.filter((p) => !known.has(p.trackingNumber))],
       priority: existing.priority || parsed.priority,
       location: existing.location ?? parsed.location,
+      locationSource: existing.location ? existing.locationSource : (parsed.locationSource ?? existing.locationSource),
     };
     return {
       stops: stops.map((s) => (s.id === existing.id ? merged : s)),
@@ -163,7 +170,7 @@ export function addStop(
   }
 
   const stop: Stop = {
-    id: makeId("stp"),
+    id: parsed.id ?? makeId("stp"),
     organizationId: tour.organizationId,
     tourId: tour.id,
     type: parsed.type,
@@ -171,6 +178,8 @@ export function addStop(
     recipientName: parsed.recipientName,
     address: parsed.address,
     location: parsed.location,
+    locationSource: parsed.location ? (parsed.locationSource ?? "manual_pin") : null,
+    recipientPhone: parsed.recipientPhone,
     timeWindow: parsed.timeWindow,
     serviceSeconds: parsed.serviceSeconds,
     priority: parsed.priority,
@@ -207,4 +216,53 @@ export function estimateRoute(start: GeoPoint, stops: Stop[], end?: GeoPoint): R
     driveSeconds += leg.seconds;
   }
   return { distanceMeters, driveSeconds, serviceSeconds };
+}
+
+export interface RouteMetrics {
+  /** Whole route: start -> every located stop in sequence -> end. */
+  totalMeters: number;
+  totalDriveSeconds: number;
+  /** What is left: from the last closed stop (or the start) through the open stops -> end. */
+  remainingMeters: number;
+  remainingDriveSeconds: number;
+  remainingServiceSeconds: number;
+  /** Open stops without coordinates – not included in the figures. */
+  unlocatedOpen: number;
+  /** Always straight-line × detour-factor estimates; never road-network values. */
+  source: "haversine_estimate";
+}
+
+/**
+ * Single source for tour distance/duration figures, used by Dispatch AND the
+ * driver app so both show the same numbers (total vs. remaining are labelled).
+ */
+export function routeMetrics(start: GeoPoint, stops: Stop[], end?: GeoPoint): RouteMetrics {
+  const ordered = sortBySequence(stops.filter((s) => s.type !== "break"));
+  let totalMeters = 0;
+  let totalDriveSeconds = 0;
+  let prev = start;
+  for (const s of ordered) {
+    if (!s.location) continue;
+    const leg = estimateDrive(prev, s.location);
+    totalMeters += leg.meters;
+    totalDriveSeconds += leg.seconds;
+    prev = s.location;
+  }
+  if (end) {
+    const leg = estimateDrive(prev, end);
+    totalMeters += leg.meters;
+    totalDriveSeconds += leg.seconds;
+  }
+  const lastClosed = ordered.filter((s) => !isOpen(s.status) && s.location).at(-1);
+  const open = ordered.filter((s) => isOpen(s.status));
+  const remaining = estimateRoute(lastClosed?.location ?? start, open, end);
+  return {
+    totalMeters,
+    totalDriveSeconds,
+    remainingMeters: remaining.distanceMeters,
+    remainingDriveSeconds: remaining.driveSeconds,
+    remainingServiceSeconds: remaining.serviceSeconds,
+    unlocatedOpen: open.filter((s) => !s.location).length,
+    source: "haversine_estimate",
+  };
 }

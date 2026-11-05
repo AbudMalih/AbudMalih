@@ -20,10 +20,26 @@ export const PICKUP_STATE: Record<PickupState, { label: string; tone: BadgeTone 
 
 export const STOP_STATUS: Record<StopStatus, { label: string; tone: BadgeTone }> = {
   pending: { label: "Open", tone: "neutral" },
+  in_progress: { label: "Driver on site", tone: "brand" },
   delivered: { label: "Delivered", tone: "success" },
   picked_up: { label: "Picked up", tone: "success" },
   failed: { label: "Failed", tone: "danger" },
+  attempted: { label: "Attempted", tone: "danger" },
+  rescheduled: { label: "Rescheduled", tone: "warning" },
+  returned: { label: "Returned", tone: "danger" },
   skipped: { label: "Skipped", tone: "warning" },
+};
+
+/** Labels for the default failure-reason codes (companies may define their own labels). */
+export const FAILURE_REASON: Record<string, string> = {
+  recipient_absent: "Recipient not at home",
+  refused: "Refused by recipient",
+  address_not_found: "Address not found",
+  no_access: "No access",
+  damaged: "Parcel damaged",
+  business_closed: "Business closed",
+  rescheduled_by_recipient: "Recipient asked for another day",
+  other: "Other",
 };
 
 export function TourStatusBadge({ status }: { status: DispatchTourStatus }) {

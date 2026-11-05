@@ -64,6 +64,22 @@ async function loginDriver(page, email) {
   await page.getByTestId("login-submit").click();
 }
 
+
+/** Complete the open stop on the driver's stop screen (delivery without proof, or pickup). */
+async function completeStop(driver) {
+  const pickup = driver.getByTestId("mark-picked-up");
+  await driver.getByTestId(/^mark-(delivered|picked-up)$/).waitFor();
+  if (await pickup.isVisible()) {
+    await pickup.click();
+    await driver.getByTestId("stop-status").filter({ hasText: "Picked up" }).waitFor();
+  } else {
+    await driver.getByTestId("mark-delivered").click();
+    await driver.getByTestId("pod-skip").click();
+    await driver.getByTestId("stop-status").filter({ hasText: "Delivered" }).waitFor();
+  }
+  await driver.goBack();
+}
+
 const browser = await chromium.launch();
 const errors = [];
 const watch = (p, label) => {
@@ -144,23 +160,117 @@ try {
     await shot(driver, "04-driver-home");
   });
 
-  await step("driver starts the tour and completes five stops", async () => {
+  await step("driver scans parcels continuously (manual entry on the web build), duplicates are flagged", async () => {
+    await driver.getByTestId("hero-scan").click();
+    await driver.getByTestId("scanner").waitFor();
+    for (const code of ["TVOE2E0000DE", "TVOE2E0001DE", "TVOE2E0002DE", "TVOE2E0001DE", "TVONEW99999"]) {
+      await driver.getByTestId("scan-manual-input").fill(code);
+      await driver.getByTestId("scan-manual-add").click();
+    }
+    await driver.getByTestId("scan-count").filter({ hasText: "4 scanned" }).waitFor();
+    await driver.getByText("3 on route · 1 new").waitFor();
+    await shot(driver, "08-driver-scanner");
+    await driver.getByTestId("scan-finish").click();
+    await driver.getByText("3/25 parcels loaded").waitFor({ timeout: 10000 });
+  });
+
+  await step("driver starts the tour and works five stops: proof of delivery, outcomes, notes", async () => {
     await driver.getByTestId("start-tour").click();
-    for (let i = 1; i <= 5; i++) {
+    // Stop 1: arrive, deliver with signature + name (proof of delivery).
+    await driver.getByTestId("open-next-stop").click();
+    await driver.getByTestId("arrived").click();
+    await driver.getByTestId("stop-status").filter({ hasText: "Arrived" }).waitFor();
+    await shot(driver, "09-driver-stop-detail");
+    await driver.getByTestId("mark-delivered").click();
+    const pad = driver.getByTestId("signature-pad");
+    await pad.waitFor();
+    const box = await pad.boundingBox();
+    await driver.mouse.move(box.x + 30, box.y + 110);
+    await driver.mouse.down();
+    for (const [dx, dy] of [[60, 60], [100, 120], [150, 50], [200, 130], [260, 70]]) await driver.mouse.move(box.x + dx, box.y + dy, { steps: 6 });
+    await driver.mouse.up();
+    await driver.getByTestId("pod-name").fill("E. Beispiel");
+    await shot(driver, "10-driver-proof-of-delivery");
+    await driver.getByTestId("pod-complete").click();
+    await driver.getByTestId("stop-proofs").waitFor();
+    await driver.goBack();
+    await driver.getByTestId("progress-text").filter({ hasText: "1 of 25 stops done" }).waitFor({ timeout: 15000 });
+    // Stops 2–4: delivered without proof.
+    for (let i = 2; i <= 4; i++) {
       await driver.getByTestId("open-next-stop").click();
-      await driver.getByTestId("mark-delivered").click();
+      await completeStop(driver);
       await driver.getByTestId("progress-text").filter({ hasText: `${i} of 25 stops done` }).waitFor({ timeout: 15000 });
     }
-    // Wait until the outbox is empty (all changes confirmed by the server).
-    await driver.getByText(/^Updated /).waitFor({ timeout: 20000 });
+    // Stop 5: not delivered – attempted, recipient absent, with a note.
+    await driver.getByTestId("open-next-stop").click();
+    await driver.getByTestId("mark-not-delivered").click();
+    await driver.getByTestId("outcome-attempted").click();
+    await driver.getByTestId("reason-recipient_absent").click();
+    await driver.getByTestId("outcome-note").fill("Karte eingeworfen");
+    await shot(driver, "11-driver-not-delivered");
+    await driver.getByTestId("outcome-save").click();
+    await driver.getByTestId("stop-status").filter({ hasText: "Attempted" }).waitFor();
+    await driver.goBack();
+    await driver.getByTestId("progress-text").filter({ hasText: "5 of 25 stops done" }).waitFor({ timeout: 15000 });
+    // A note on the next stop.
+    await driver.getByTestId("open-next-stop").click();
+    await driver.getByTestId("add-note").click();
+    await driver.getByTestId("note-input").fill("Hinterhof, 2. Tür links");
+    await driver.getByTestId("save-note").click();
+    await driver.goBack();
+    // Wait until the outbox is empty (all changes and the signature confirmed by the server).
+    await driver.getByText(/^Updated /).waitFor({ timeout: 30000 });
     await shot(driver, "05-driver-five-done");
   });
 
-  await step("dispatcher sees the progress live, without reloading", async () => {
+  await step("works offline: changes are queued and sent when the connection returns", async () => {
+    await driver.context().setOffline(true);
+    await driver.getByTestId("open-next-stop").click();
+    await completeStop(driver);
+    await driver.getByTestId("progress-text").filter({ hasText: "6 of 25 stops done" }).waitFor();
+    await driver.getByTestId("sync-pill").filter({ hasText: /Offline|waiting/ }).waitFor({ timeout: 15000 });
+    await shot(driver, "12-driver-offline");
+    await driver.context().setOffline(false);
+    await driver.getByTestId("sync-pill").click();
+    await driver.getByText(/^Updated /).waitFor({ timeout: 30000 });
+  });
+
+  await step("driver optimizes the remaining stops on the server (OR-Tools, labelled estimate)", async () => {
+    await driver.getByTestId("hero-optimize").click();
+    await driver.getByTestId("optimize-run").click();
+    await driver.getByTestId("optimize-result").getByText(/Optimized with OR-Tools – travel times: straight-line estimate/).waitFor({ timeout: 30000 });
+    await shot(driver, "13-driver-optimize");
+    await driver.getByTestId("optimize-done").click();
+  });
+
+  await step("dispatcher sees progress, outcome, note, scans and the signature – live", async () => {
     const sheet = dispatcher.getByRole("dialog", { name: "Tour HAN-01" });
-    await sheet.getByTestId("tour-progress").filter({ hasText: "5 of 25 stops done" }).waitFor({ timeout: 20000 });
+    await sheet.getByTestId("tour-progress").filter({ hasText: "6 of 25 stops done" }).waitFor({ timeout: 20000 });
     await sheet.getByText("Driver started the tour").waitFor({ timeout: 10000 });
+    await sheet.getByText(/Delivery attempted \(Recipient not at home\)/).first().waitFor({ timeout: 10000 });
+    await sheet.getByText(/Signature captured/).first().waitFor();
+    await sheet.getByText(/Driver note/).first().waitFor();
+    // Open the stop with the signature and view it through the authenticated proxy.
+    const rows = sheet.locator("li button[aria-expanded]");
+    let opened = false;
+    for (let i = 0; i < (await rows.count()) && !opened; i++) {
+      await rows.nth(i).click();
+      if (await sheet.getByTestId("proof-signature").isVisible().catch(() => false)) opened = true;
+      else await rows.nth(i).click();
+    }
+    assert.ok(opened, "stop with signature found");
+    await sheet.getByTestId("proof-signature").click();
+    const img = dispatcher.getByTestId("proof-image");
+    await img.waitFor();
+    await dispatcher.waitForFunction(() => {
+      const el = document.querySelector('[data-testid="proof-image"]');
+      return el instanceof HTMLImageElement && el.complete && el.naturalWidth > 0;
+    }, null, { timeout: 10000 });
     await shot(dispatcher, "06-dispatch-live-progress");
+    await dispatcher.keyboard.press("Escape");
+    // The file is not reachable without a session.
+    const anon = await fetch(`${API}/v1/orgs/x/proofs/00000000-0000-4000-8000-000000000000/file`);
+    assert.equal(anon.status, 401);
   });
 
   await step("data persists after refreshing both apps", async () => {
@@ -171,9 +281,9 @@ try {
     assert.match(await row.textContent(), /Lena Hoffmann/);
     const cells = await row.getByRole("cell").allTextContents();
     assert.equal(cells[4], "25"); // total stops
-    assert.match(cells[5], /^5/); // completed
+    assert.match(cells[5], /^6/); // completed
     await driver.reload({ waitUntil: "networkidle" });
-    await driver.getByTestId("progress-text").filter({ hasText: "5 of 25 stops done" }).waitFor({ timeout: 20000 });
+    await driver.getByTestId("progress-text").filter({ hasText: "6 of 25 stops done" }).waitFor({ timeout: 20000 });
   });
 
   await step("data persists after signing out and in again", async () => {
@@ -183,6 +293,24 @@ try {
     await loginDispatch(dispatcher, "dispatch.hannover@jarbou.test");
     await dispatcher.goto(`${DISPATCH}/list`, { waitUntil: "networkidle" });
     await dispatcher.getByRole("table").getByRole("row").filter({ hasText: "HAN-01" }).waitFor();
+  });
+
+  await step("driver creates a personal route and imports pasted stops (grouped by address)", async () => {
+    await driver.getByTestId("quick-route").click();
+    await driver.getByTestId("route-name").fill("Nachmittag Extra");
+    await driver.getByTestId("route-create").click();
+    await driver.getByText("Nachmittag Extra").first().waitFor();
+    await driver.getByTestId("quick-import").click();
+    await driver.getByTestId("import-text").fill(["Lister Meile 4, 30161 Hannover TVOIMP000001 52.3822, 9.7471", "Lister Meile 4, 30161 Hannover TVOIMP000002", "Am Markt 1, 28195 Bremen TVOIMP000003", "kaputte Zeile"].join("\n"));
+    await driver.getByTestId("import-preview").click();
+    await driver.getByText("2 stops · 3 parcels · 1 rows with errors").waitFor();
+    await shot(driver, "14-driver-import-preview");
+    await driver.getByTestId("import-run").click();
+    await driver.getByTestId("progress-text").filter({ hasText: "0 of 2 stops done" }).waitFor({ timeout: 15000 });
+    await driver.getByText(/^Updated /).waitFor({ timeout: 30000 });
+    // Dispatch (Hannover) sees the driver's own route.
+    await dispatcher.goto(`${DISPATCH}/list`, { waitUntil: "networkidle" });
+    await dispatcher.getByRole("table").getByRole("row").filter({ hasText: "Nachmittag Extra" }).waitFor({ timeout: 20000 });
   });
 
   await step("another depot's dispatcher (Bremen) cannot see the Hannover tour", async () => {
@@ -216,7 +344,7 @@ try {
   await step("a different driver of the same company does not receive the tour", async () => {
     const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await loginDriver(p, "mihai.popescu@jarbou.test");
-    await p.getByText(/No tour published for you today/).waitFor({ timeout: 20000 });
+    await p.getByText("No routes yet").waitFor({ timeout: 20000 });
     await p.close();
   });
 

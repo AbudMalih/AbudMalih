@@ -17,3 +17,5 @@ grant select, insert, update on auth.users to turvio_service;
 grant select, insert, update, delete on all tables in schema app_auth to turvio_service;
 grant usage, select on all sequences in schema app_auth to turvio_service;
 grant execute on function app.accept_invitation(text, uuid), app.invitation_info(text) to turvio_service;
+grant select, update, delete on app.storage_deletions to turvio_service;
+grant execute on function app.purge_expired_data() to turvio_service;

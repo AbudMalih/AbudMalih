@@ -17,7 +17,7 @@ Multi-tenant SaaS for route optimization and delivery management. Intended softw
 
 Branding: official logo files in [`branding/`](branding/README.md) (raster; no vector version yet).
 
-Docs: [Architecture](docs/ARCHITECTURE.md) · [Feature parity](docs/FEATURE_PARITY.md) · [Roadmap](docs/ROADMAP.md) · [Billing](docs/BILLING.md) · [Security & privacy](docs/SECURITY_PRIVACY.md) · [Design system](docs/DESIGN_SYSTEM.md)
+Docs: [Architecture](docs/ARCHITECTURE.md) · [Driver app](docs/DRIVER_APP.md) · [Feature parity](docs/FEATURE_PARITY.md) · [Roadmap](docs/ROADMAP.md) · [Billing](docs/BILLING.md) · [Security & privacy](docs/SECURITY_PRIVACY.md) · [Design system](docs/DESIGN_SYSTEM.md)
 
 All data in development is **synthetic** (fictional people, made-up `TVO…` tracking numbers). There is no connection to DHL or any other carrier.
 
@@ -141,11 +141,13 @@ python3 branding/build_assets.py
 | `packages/shared` | schemas, stop logic, offline heuristic, i18n completeness, permissions, billing rules |
 | `packages/db` | migrations + **tenant isolation**, **depot scope**, roles, plan limits, audit, retention (PGlite = real Postgres engine) |
 | `apps/api` | unit: JWT, authorization, config · **integration on PostgreSQL**: auth (rotation, reuse detection, throttling, reset), invitations, tenant/depot/driver/platform isolation, 25-stop workflow, version conflicts, change feed, plan limits |
-| `apps/driver` | store, stop form, optimizer client, Home screen, **server mode**: sign-in, sync, offline outbox, token refresh |
-| `apps/dispatch` | planning draft, server-side scoping, components (tour list, list view, planning, pickups); `e2e/smoke.mjs` browser tests incl. responsive checks at 1920/1440/1100/800/390 px |
+| `apps/driver` | store (outcomes, scans, locks, personal routes), offline outbox (persistence across restarts, interrupted uploads, rejected items), proof-of-delivery upload, on-device optimizer fallback, label review, navigation hand-off, Home / stop / outcome screens, address search |
+| `apps/dispatch` | planning helpers, server-side scoping, components (tour list, list view, planning, pickups) |
 | `apps/admin` | platform KPIs, company table logic and component tests |
 | `services/optimizer` | VRPTW constraints, OSRM client, HTTP contract |
-| `e2e/workflow.mjs` | Playwright across Dispatch, Driver (web build), Admin and API: the complete dispatcher → driver scenario and cross-tenant checks |
+| `packages/web-session` | cookie sessions, API proxy (refresh, binary proof files), page guard |
+| `e2e/workflow.mjs` | Playwright across Dispatch, Driver (web build), Admin and API: dispatcher → driver scenario incl. scanning (manual entry), proof of delivery (signature), not-delivered outcome, notes, offline queue, server optimization, personal route + import, cross-tenant checks |
+| `e2e/driver-screens.mjs` | Driver screenshots (light, dark, Arabic RTL) |
 
 ## External services and keys
 
@@ -154,7 +156,9 @@ python3 branding/build_assets.py
 | Supabase (EU region) | Auth, Postgres, Storage, Realtime | `SUPABASE_URL`, `SUPABASE_JWT_SECRET` (optional), `SUPABASE_SERVICE_ROLE_KEY` (server only) | schema ready, project not created |
 | Google Maps SDK for Android | Driver map on Android builds | `GOOGLE_MAPS_ANDROID_API_KEY` | needed for Android builds |
 | OSRM (self-hosted) | Road-network travel times | `OSRM_URL` | optional; falls back to labelled estimates |
-| Map tiles + geocoding provider | Dispatch map in production, address search | – | decision pending (OSM public tiles are dev-only) |
+| Map tiles | Dispatch map in production | – | decision pending (OSM public tiles are dev-only) |
+| Geocoding (self-hosted Nominatim or Photon) | Address autocomplete / geocoding in the driver app | `GEOCODER`, `GEOCODER_URL` | optional; without it addresses are saved and marked "needs map position" |
+| On-device OCR (e.g. Google ML Kit) | Reading address text from parcel labels | – | not bundled – needs a native module + dev build (see docs/DRIVER_APP.md) |
 | Stripe Billing | Subscriptions | – | intentionally not connected |
 | Expo / EAS | Mobile builds | `eas login` | account owned by Lunapact recommended |
 

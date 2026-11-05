@@ -1,7 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { formatClock, type Depot, type TourSummary, type UnassignedStop } from "@turvio/shared";
+import { formatClock, isNotDelivered, isOpen, type Depot, type TourSummary, type UnassignedStop } from "@turvio/shared";
 import { Button, Skeleton, Tooltip, cn } from "@turvio/web-ui/ds";
 import { CircleAlert, Layers, LocateFixed, Maximize2, Minus, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -144,7 +144,7 @@ export function RouteMap(props: RouteMapProps) {
       const dim = selectedTourId !== null && !selected;
       const located = s.stops.filter((x) => x.location);
       const path: [number, number][] = [[s.depot.location.lat, s.depot.location.lng], ...located.map((x) => [x.location!.lat, x.location!.lng] as [number, number])];
-      const doneCount = located.filter((x) => x.status !== "pending").length;
+      const doneCount = located.filter((x) => !isOpen(x.status)).length;
       // Completed part in grey, remaining part in the tour colour.
       if (doneCount > 0 && showCompleted) {
         Lf.polyline(path.slice(0, doneCount + 1), { color: "#94A3B8", weight: selected ? 3 : 2, opacity: dim ? 0.15 : 0.7, dashArray: "4 6" }).addTo(group);
@@ -161,7 +161,7 @@ export function RouteMap(props: RouteMapProps) {
       }
 
       located.forEach((stop) => {
-        const done = stop.status !== "pending";
+        const done = !isOpen(stop.status);
         if (done && !showCompleted) return;
         const idx = s.stops.indexOf(stop) + 1;
         const eta = s.timeline.projections.get(stop.id);
@@ -187,7 +187,7 @@ export function RouteMap(props: RouteMapProps) {
           return;
         }
         const isSel = stop.id === selectedStopId;
-        const failed = stop.status === "failed";
+        const failed = isNotDelivered(stop.status);
         const late = eta?.late;
         const shape = stop.type === "pickup" ? "border-radius:7px" : "border-radius:999px";
         const bg = failed ? "#fff" : done ? "#F1F5F9" : color;

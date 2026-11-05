@@ -1,72 +1,110 @@
-import { LOCALE_LABELS, SUPPORTED_LOCALES, colors, spacing } from "@turvio/shared";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { Button, Card, styles as ui } from "../../components/ui";
-import { applyLayoutDirection, useLocale, useT } from "../../lib/i18n";
+import { LOCALE_LABELS, SUPPORTED_LOCALES, isRtl, type Locale } from "@turvio/shared";
+import Constants from "expo-constants";
+import { useState } from "react";
+import { Alert, Platform, Text, View } from "react-native";
+import { Banner, Button, Card, ListRow, Pill, Screen, SectionTitle, Segmented } from "../../components/ui";
+import { useLocale, useT } from "../../lib/i18n";
+import { availableNavApps, type NavApp } from "../../lib/navigation";
 import { apiBaseUrl } from "../../lib/optimizer";
 import { isServerMode, useTourStore } from "../../store/tourStore";
+import { space, type as ty, useTheme } from "../../theme";
 
 export default function SettingsScreen() {
   const t = useT();
+  const { c } = useTheme();
   const locale = useLocale();
-  const setLocale = useTourStore((s) => s.setLocale);
-  const resetData = useTourStore((s) => s.resetData);
-  const user = useTourStore((s) => s.user);
-  const signOut = useTourStore((s) => s.signOut);
-  const orgName = useTourStore((s) => s.organizationName);
-  const api = apiBaseUrl();
+  const s = useTourStore();
+  const [rtlNote, setRtlNote] = useState(false);
+
+  const chooseLocale = (l: Locale) => {
+    if (isRtl(l) !== isRtl(locale)) setRtlNote(true);
+    s.setLocale(l);
+  };
+
+  const signOut = () => {
+    const pending = s.outbox.length;
+    if (!pending) return void s.signOut();
+    const msg = t("settings.signOutPending", { n: pending });
+    if (Platform.OS === "web") {
+      if (globalThis.confirm?.(msg)) void s.signOut();
+      return;
+    }
+    Alert.alert(t("settings.signOut"), msg, [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("settings.signOut"), style: "destructive", onPress: () => void s.signOut() },
+    ]);
+  };
 
   return (
-    <ScrollView style={ui.screen} contentContainerStyle={ui.content}>
+    <Screen testID="settings">
+      {isServerMode() && s.user && (
+        <Card>
+          <SectionTitle>{t("settings.account")}</SectionTitle>
+          <ListRow icon="person-outline" title={s.user.name ?? s.user.email} subtitle={[s.user.email, s.organizationName].filter(Boolean).join(" · ")} />
+          <Button label={t("settings.signOut")} variant="secondary" icon="log-out-outline" onPress={signOut} testID="sign-out" />
+        </Card>
+      )}
+
+      {isServerMode() && (
+        <Card testID="sync-card">
+          <SectionTitle>{t("settings.sync")}</SectionTitle>
+          <Text style={[ty.body, { color: c.text }]}>{s.outbox.length ? t("settings.outbox", { n: s.outbox.length }) : t("settings.outboxEmpty")}</Text>
+          {s.syncMessage && s.syncState !== "idle" && <Text style={[ty.small, { color: c.textMuted }]}>{s.syncMessage}</Text>}
+          <Button label={t("sync.refresh")} variant="secondary" icon="sync" onPress={() => void s.sync()} />
+          {s.failed.length > 0 && (
+            <>
+              <SectionTitle>{t("settings.failed")}</SectionTitle>
+              {s.failed.map((f) => (
+                <View key={f.item.id} style={{ gap: space.xs }}>
+                  <Banner text={`${f.item.kind}: ${f.error}`} tone="danger" />
+                  <View style={{ flexDirection: "row", gap: space.sm }}>
+                    <Button label={t("common.retry")} variant="secondary" onPress={() => s.retryFailed(f.item.id)} style={{ flex: 1 }} />
+                    <Button label={t("common.discard")} variant="danger" onPress={() => void s.discardFailed(f.item.id)} style={{ flex: 1 }} />
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+        </Card>
+      )}
+
       <Card>
-        <Text style={ui.h2}>{t("settings.language")}</Text>
+        <SectionTitle>{t("settings.language")}</SectionTitle>
         {SUPPORTED_LOCALES.map((l) => (
-          <Pressable
-            key={l}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: l === locale }}
-            onPress={() => {
-              setLocale(l);
-              if (applyLayoutDirection(l)) Alert.alert(t("settings.rtlRestart"));
-            }}
-            style={{
-              minHeight: 48,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-            }}
-          >
-            <Text style={ui.body}>{LOCALE_LABELS[l]}</Text>
-            {l === locale && <Text style={{ color: colors.primary, fontWeight: "700" }}>✓</Text>}
-          </Pressable>
+          <ListRow key={l} title={LOCALE_LABELS[l]} onPress={() => chooseLocale(l)} right={l === locale ? <Pill label="✓" tone="primary" /> : <View />} testID={`locale-${l}`} />
         ))}
-        <Text style={ui.muted}>{t("settings.rtlRestart")}</Text>
+        {rtlNote && <Banner text={t("settings.rtlRestart")} tone="primary" />}
       </Card>
 
       <Card>
-        <Text style={ui.h2}>{t("settings.apiStatus")}</Text>
-        <Text style={ui.body}>{api ?? t("settings.apiNotConfigured")}</Text>
+        <SectionTitle>{t("settings.navigation")}</SectionTitle>
+        <Segmented<NavApp | "ask">
+          value={s.prefs.navApp ?? "ask"}
+          onChange={(v) => s.setPrefs({ navApp: v === "ask" ? null : v })}
+          options={[{ value: "ask", label: t("settings.ask") }, ...availableNavApps().map((a) => ({ value: a, label: t(`nav.${a}`) }))]}
+        />
+        <SectionTitle>{t("settings.appearance")}</SectionTitle>
+        <Segmented
+          value={s.prefs.colorScheme}
+          onChange={(v) => s.setPrefs({ colorScheme: v })}
+          options={[
+            { value: "system", label: t("settings.system") },
+            { value: "light", label: t("settings.light") },
+            { value: "dark", label: t("settings.dark") },
+          ]}
+        />
       </Card>
 
-      <View style={{ marginTop: spacing.md }}>
-        {isServerMode() ? (
-          <Card>
-            <Text style={ui.h2}>{t("settings.account")}</Text>
-            <Text style={ui.body}>{user?.name ?? user?.email}</Text>
-            <Text style={ui.muted}>
-              {user?.email}
-              {orgName ? ` · ${orgName}` : ""}
-            </Text>
-            <Button label={t("settings.signOut")} variant="danger" onPress={() => void signOut()} testID="sign-out" />
-          </Card>
-        ) : (
-          <Button label={t("settings.resetData")} variant="danger" onPress={resetData} />
-        )}
-      </View>
-      <Text style={[ui.muted, { textAlign: "center", marginTop: spacing.lg }]}>
-        {t("app.name")} · {t("app.tagline")}
-      </Text>
-    </ScrollView>
+      <Card>
+        <SectionTitle>{t("settings.privacy")}</SectionTitle>
+        <Text style={[ty.small, { color: c.textSecondary, lineHeight: 20 }]}>{t("settings.privacyText")}</Text>
+      </Card>
+
+      <Card>
+        <ListRow icon="server-outline" title={t("settings.apiStatus")} subtitle={apiBaseUrl() ?? t("settings.apiNotConfigured")} />
+        <Text style={[ty.small, { color: c.textSubtle }]}>{t("settings.version", { v: Constants.expoConfig?.version ?? "dev" })}</Text>
+        {!isServerMode() && <Button label={t("settings.resetData")} variant="secondary" onPress={() => s.resetData()} />}
+      </Card>
+    </Screen>
   );
 }

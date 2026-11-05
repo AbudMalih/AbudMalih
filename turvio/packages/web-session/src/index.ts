@@ -39,9 +39,21 @@ async function api(path: string, init: RequestInit & { token?: string } = {}) {
   return fetch(`${API_URL()}${path}`, { ...init, headers, cache: "no-store" });
 }
 
+const PASS_HEADERS = ["cache-control", "content-security-policy", "content-disposition", "x-content-type-options"];
+
 async function forwardJson(res: Response): Promise<NextResponse> {
+  const type = res.headers.get("content-type") ?? "application/json";
+  if (type.startsWith("image/")) {
+    // Proof-of-delivery files: bytes unchanged, private caching and CSP from the API.
+    const headers: Record<string, string> = { "content-type": type };
+    for (const h of PASS_HEADERS) {
+      const v = res.headers.get(h);
+      if (v) headers[h] = v;
+    }
+    return new NextResponse(await res.arrayBuffer(), { status: res.status, headers });
+  }
   const text = await res.text();
-  return new NextResponse(text || null, { status: res.status, headers: { "content-type": res.headers.get("content-type") ?? "application/json" } });
+  return new NextResponse(text || null, { status: res.status, headers: { "content-type": type } });
 }
 
 const unavailable = () => NextResponse.json({ error: { code: "api_unavailable", message: "The TURVIO service is not reachable. Please try again." } }, { status: 503 });

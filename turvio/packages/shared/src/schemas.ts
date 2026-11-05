@@ -79,11 +79,20 @@ export type Address = z.infer<typeof Address>;
 export const StopType = z.enum(["delivery", "pickup", "break"]);
 export type StopType = z.infer<typeof StopType>;
 
+/**
+ * Stop lifecycle. `pending` and `in_progress` (driver arrived) are open;
+ * every other status closes the stop. `failed`, `attempted`, `rescheduled`
+ * and `returned` are "not delivered" outcomes and carry a failure reason.
+ */
 export const StopStatus = z.enum([
   "pending",
+  "in_progress",
   "delivered",
   "picked_up",
   "failed",
+  "attempted",
+  "rescheduled",
+  "returned",
   "skipped",
 ]);
 export type StopStatus = z.infer<typeof StopStatus>;
@@ -93,8 +102,28 @@ export const Parcel = z.object({
   trackingNumber: z.string().trim().min(1).max(64),
   barcode: z.string().trim().max(128).optional(),
   recipientName: z.string().trim().max(120).optional(),
+  /** Set when the parcel was scanned into the vehicle. */
+  loadedAt: z.iso.datetime().optional(),
 });
 export type Parcel = z.infer<typeof Parcel>;
+
+/** Where a stop's coordinates came from. `null` location = needs resolution. */
+export const LocationSource = z.enum(["geocoder", "manual_pin", "import", "dispatch"]);
+export type LocationSource = z.infer<typeof LocationSource>;
+
+export const ProofKind = z.enum(["photo", "signature"]);
+export type ProofKind = z.infer<typeof ProofKind>;
+
+/** Metadata of a proof-of-delivery record (the file itself is fetched separately, with access checks). */
+export const ProofSummary = z.object({
+  id: z.string().min(1),
+  kind: ProofKind,
+  capturedAt: z.iso.datetime(),
+  recipientName: z.string().max(120).nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+  hasLocation: z.boolean().optional(),
+});
+export type ProofSummary = z.infer<typeof ProofSummary>;
 
 export const Stop = z.object({
   id: z.string().min(1),
@@ -115,6 +144,16 @@ export const Stop = z.object({
   parcels: z.array(Parcel).default([]),
   status: StopStatus.default("pending"),
   completedAt: z.iso.datetime().optional(),
+  /** Note written by the driver (dispatch instructions are in `notes`). */
+  driverNotes: z.string().max(1000).optional(),
+  /** Code from the organization's failure-reason list (not-delivered outcomes). */
+  failureReason: z.string().max(40).optional(),
+  /** Keeps its position when the route is re-optimized. */
+  locked: z.boolean().optional(),
+  locationSource: LocationSource.nullable().optional(),
+  /** Recipient phone – only present when the organization shares it with drivers. */
+  recipientPhone: z.string().max(40).optional(),
+  proofs: z.array(ProofSummary).optional(),
 });
 export type Stop = z.infer<typeof Stop>;
 
@@ -172,6 +211,8 @@ export const Tour = z.object({
   /** Set when dispatch published the tour to the driver. */
   publishedAt: z.iso.datetime().nullable().optional(),
   optimizedAt: z.iso.datetime().nullable().optional(),
+  /** "driver" = personal route created in the driver app. */
+  origin: z.enum(["dispatch", "driver"]).optional(),
   optimization: z
     .object({ engine: z.string(), matrixSource: z.string(), unassignedStopIds: z.array(z.string()).optional() })
     .nullable()
@@ -179,9 +220,32 @@ export const Tour = z.object({
 });
 export type Tour = z.infer<typeof Tour>;
 
+/** Organization settings that affect the driver app. */
+export const DriverSettings = z.object({
+  failureReasons: z
+    .array(
+      z.object({
+        code: z.string().regex(/^[a-z0-9_]{2,40}$/),
+        label: z.string().trim().min(1).max(80).optional(),
+        requiresNote: z.boolean().optional(),
+      }),
+    )
+    .max(30)
+    .optional(),
+  /** Store the device position with proof of delivery (needs a DPIA / works-council agreement). */
+  podLocation: z.boolean().optional(),
+  /** Show recipient phone numbers to drivers. */
+  showRecipientPhone: z.boolean().optional(),
+});
+export type DriverSettings = z.infer<typeof DriverSettings>;
+
 /** Payload for manual stop entry (driver app and dispatch). */
 export const NewStopInput = z.object({
+  /** Client-generated id (UUID) – makes offline creation idempotent. */
+  id: z.uuid().optional(),
   type: StopType.exclude(["break"]).default("delivery"),
+  locationSource: LocationSource.nullable().optional(),
+  recipientPhone: z.string().trim().max(40).optional(),
   recipientName: z.string().trim().max(120).optional(),
   address: Address,
   location: GeoPoint.nullable().default(null),

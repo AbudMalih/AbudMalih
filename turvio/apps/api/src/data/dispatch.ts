@@ -83,6 +83,7 @@ export interface TourRow {
   published_at: Date | null;
   optimized_at: Date | null;
   optimization: Tour["optimization"];
+  origin?: "dispatch" | "driver";
 }
 export const toTour = (r: TourRow): Tour => ({
   id: r.id,
@@ -102,6 +103,7 @@ export const toTour = (r: TourRow): Tour => ({
   publishedAt: r.published_at ? r.published_at.toISOString() : null,
   optimizedAt: r.optimized_at ? r.optimized_at.toISOString() : null,
   optimization: r.optimization ?? null,
+  origin: r.origin ?? "dispatch",
 });
 
 export interface StopRow {
@@ -126,7 +128,13 @@ export interface StopRow {
   notes: string | null;
   status: Stop["status"];
   completed_at: Date | null;
-  parcels: { id: string; tracking_number: string; barcode: string | null; recipient_name: string | null }[] | null;
+  failure_reason?: string | null;
+  driver_notes?: string | null;
+  locked?: boolean;
+  location_source?: Stop["locationSource"];
+  recipient_phone?: string | null;
+  parcels: { id: string; tracking_number: string; barcode: string | null; recipient_name: string | null; loaded_at?: string | null }[] | null;
+  proofs?: { id: string; kind: "photo" | "signature"; captured_at: string; recipient_name: string | null; notes: string | null; has_location: boolean }[] | null;
 }
 function stopBase(r: StopRow) {
   return {
@@ -140,17 +148,38 @@ function stopBase(r: StopRow) {
     serviceSeconds: r.service_seconds,
     priority: r.priority,
     notes: r.notes ?? undefined,
-    parcels: (r.parcels ?? []).map((p) => ({ id: p.id, trackingNumber: p.tracking_number, barcode: p.barcode ?? undefined, recipientName: p.recipient_name ?? undefined })),
+    parcels: (r.parcels ?? []).map((p) => ({
+      id: p.id,
+      trackingNumber: p.tracking_number,
+      barcode: p.barcode ?? undefined,
+      recipientName: p.recipient_name ?? undefined,
+      ...(p.loaded_at ? { loadedAt: new Date(p.loaded_at).toISOString() } : {}),
+    })),
     status: r.status,
     completedAt: iso(r.completed_at),
+    failureReason: r.failure_reason ?? undefined,
+    driverNotes: r.driver_notes ?? undefined,
+    locked: r.locked ?? false,
+    locationSource: r.location_source ?? null,
+    recipientPhone: r.recipient_phone ?? undefined,
+    proofs: (r.proofs ?? []).map((p) => ({
+      id: p.id,
+      kind: p.kind,
+      capturedAt: new Date(p.captured_at).toISOString(),
+      recipientName: p.recipient_name,
+      notes: p.notes,
+      hasLocation: p.has_location,
+    })),
   };
 }
 export const toStop = (r: StopRow): Stop => ({ ...stopBase(r), tourId: r.tour_id!, sequence: r.sequence });
 export const toUnassigned = (r: StopRow): UnassignedStop => ({ ...stopBase(r), depotId: r.depot_id! });
 
 export const STOP_SELECT = `
-  select s.*, (select coalesce(json_agg(json_build_object('id', p.id, 'tracking_number', p.tracking_number, 'barcode', p.barcode, 'recipient_name', p.recipient_name) order by p.created_at), '[]'::json)
-                 from public.parcels p where p.stop_id = s.id) as parcels
+  select s.*, (select coalesce(json_agg(json_build_object('id', p.id, 'tracking_number', p.tracking_number, 'barcode', p.barcode, 'recipient_name', p.recipient_name, 'loaded_at', p.loaded_at) order by p.created_at), '[]'::json)
+                 from public.parcels p where p.stop_id = s.id) as parcels,
+              (select coalesce(json_agg(json_build_object('id', f.id, 'kind', f.kind, 'captured_at', f.captured_at, 'recipient_name', f.recipient_name, 'notes', f.notes, 'has_location', f.lat is not null) order by f.captured_at), '[]'::json)
+                 from public.proofs f where f.stop_id = s.id) as proofs
     from public.stops s`;
 
 export async function orgTimeZone(tx: Tx, orgId: string): Promise<string> {

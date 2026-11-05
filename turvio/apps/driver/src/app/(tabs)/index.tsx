@@ -1,161 +1,153 @@
-import { colors, estimateRoute, formatAddress, spacing, tourProgress } from "@turvio/shared";
+import { isOpen, routeMetrics, tourProgress } from "@turvio/shared";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
-import { Banner, Button, Card, Pill, styles as ui } from "../../components/ui";
+import { Image, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { StopCard } from "../../components/StopCard";
+import { SyncPill } from "../../components/SyncPill";
+import { Banner, Button, Card, EmptyState, HeroAction, Ionicons, Pill, ProgressBar, SectionTitle, Stat } from "../../components/ui";
+import { duration, km } from "../../lib/format";
 import { useT } from "../../lib/i18n";
-import { openNavigation } from "../../lib/navigation";
-import { useTourStore } from "../../store/tourStore";
+import { isServerMode, useTourStore } from "../../store/tourStore";
 import { useMyTour } from "../../store/useMyTour";
-import { SyncBar } from "../../components/SyncBar";
-import { RefreshControl } from "react-native";
-import { isServerMode } from "../../store/tourStore";
+import { radii, space, type as ty, useTheme } from "../../theme";
 
 export default function HomeScreen() {
   const t = useT();
-  const { tour, depot, driver, stops } = useMyTour();
+  const { c, dark } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { tours, tour, depot, driver, stops } = useMyTour();
   const tourAction = useTourStore((s) => s.tourAction);
-  const optimize = useTourStore((s) => s.optimize);
-  const optimizing = useTourStore((s) => s.optimizing);
-  const lastOptimization = useTourStore((s) => s.lastOptimization);
+  const selectTour = useTourStore((s) => s.selectTour);
   const sync = useTourStore((s) => s.sync);
-  const syncing = useTourStore((s) => s.syncState === "syncing");
-  const [optError, setOptError] = useState<string | null>(null);
+  const user = useTourStore((s) => s.user);
+  const syncState = useTourStore((s) => s.syncState);
+  const [refreshing, setRefreshing] = useState(false);
 
   const progress = useMemo(() => tourProgress(stops), [stops]);
-  const pending = useMemo(() => stops.filter((s) => s.status === "pending"), [stops]);
-  const estimate = useMemo(
-    () => (depot ? estimateRoute(depot.location, pending, depot.location) : null),
-    [depot, pending],
-  );
-  const next = pending[0];
+  const metrics = useMemo(() => (depot ? routeMetrics(tour?.startLocation ?? depot.location, stops, tour?.endLocation ?? depot.location) : null), [depot, stops, tour]);
+  const next = stops.find((s) => isOpen(s.status));
+  const name = (user?.name ?? driver?.displayName ?? "").split(" ")[0] ?? "";
+  const unlocated = stops.filter((s) => isOpen(s.status) && !s.location).length;
+  const running = tour?.status === "in_progress" || tour?.status === "paused";
 
-  if (!tour || !depot) {
-    return (
-      <View style={[ui.screen, ui.content]}>
-        <SyncBar />
-        <Text style={ui.body}>{isServerMode() ? t("home.noPublishedTour") : t("home.noTour")}</Text>
-      </View>
-    );
-  }
-
-  const runOptimize = async () => {
-    setOptError(null);
-    try {
-      await optimize(tour.id);
-    } catch (e) {
-      setOptError(e instanceof Error ? e.message : String(e));
-    }
+  const refresh = async () => {
+    setRefreshing(true);
+    await sync();
+    setRefreshing(false);
   };
 
-  const lastOpt = lastOptimization?.tourId === tour.id ? lastOptimization : null;
-  const ratio = progress.total ? progress.done / progress.total : 0;
-
   return (
-    <ScrollView style={ui.screen} contentContainerStyle={ui.content} refreshControl={isServerMode() ? <RefreshControl refreshing={syncing} onRefresh={() => void sync()} /> : undefined}>
-      {isServerMode() ? <SyncBar /> : <Banner text={t("home.syntheticBanner")} />}
-      <Text style={ui.h1}>{t("home.greeting", { name: driver?.displayName.split(" ")[0] ?? "" })}</Text>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: c.bg }}
+      contentContainerStyle={{ paddingTop: insets.top + space.md, paddingHorizontal: space.lg, paddingBottom: space.xxl * 2, gap: space.md }}
+      refreshControl={isServerMode() ? <RefreshControl refreshing={refreshing || syncState === "syncing"} onRefresh={refresh} /> : undefined}
+      testID="home"
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <Image source={dark ? require("../../../assets/brand/turvio-lockup-dark.png") : require("../../../assets/brand/turvio-lockup-light.png")} style={{ width: 118, height: 21 }} resizeMode="contain" accessibilityLabel="TURVIO" />
+        <SyncPill />
+      </View>
+      <View>
+        <Text style={[ty.display, { color: c.text }]}>{name ? t("home.greeting", { name }) : t("tabs.today")}</Text>
+        {!isServerMode() && <Text style={[ty.small, { color: c.warningInk, marginTop: 2 }]}>{t("home.syntheticBanner")}</Text>}
+      </View>
 
-      <Card>
-        <View style={[ui.row, { justifyContent: "space-between" }]}>
-          <Text style={ui.muted}>{t("home.todaysTour")}</Text>
-          <Pill label={t(`status.${tour.status}`)} tone={tour.status === "in_progress" ? "primary" : "neutral"} />
-        </View>
-        <Text style={ui.h2}>{tour.name}</Text>
-        <Text style={ui.muted}>{depot.name}</Text>
-        <View style={{ height: 8, backgroundColor: colors.surface, borderRadius: 4, overflow: "hidden", marginTop: spacing.sm }}>
-          <View
-            testID="progress-bar"
-            style={{ width: `${Math.round(ratio * 100)}%`, height: "100%", backgroundColor: colors.primary }}
-          />
-        </View>
-        <Text style={ui.body} testID="progress-text">
-          {t("home.progress", { done: progress.done, total: progress.total })} · {t("home.parcels", { n: progress.parcels })}
-        </Text>
-        {estimate && pending.length > 0 && (
-          <View style={[ui.row, { gap: spacing.xl }]}>
-            <View>
-              <Text style={ui.muted}>{t("home.estimatedDrive")}</Text>
-              <Text style={ui.body}>{t("common.minutes", { n: Math.round(estimate.driveSeconds / 60) })}</Text>
+      <HeroAction tone="primary" icon="scan" title={t("home.scan")} subtitle={tour ? t("home.loaded", { loaded: progress.parcelsLoaded, total: progress.parcels }) : t("home.scanHint")} onPress={() => router.push("/scan")} testID="hero-scan" />
+      <HeroAction
+        tone="dark"
+        icon="git-network-outline"
+        title={t("home.optimize")}
+        subtitle={tour ? `${t("home.remaining", { n: progress.pending })} · ${t("home.optimizeHint")}` : t("home.optimizeHint")}
+        onPress={() => router.push("/optimize")}
+        disabled={!tour || progress.pending === 0}
+        testID="hero-optimize"
+      />
+
+      {tour ? (
+        <Card testID="active-tour">
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <View style={{ flex: 1 }}>
+              <Text style={[ty.caption, { color: c.textMuted }]}>{t("home.todaysTour").toUpperCase()}</Text>
+              <Text style={[ty.title, { color: c.text }]} numberOfLines={1}>
+                {tour.name}
+              </Text>
             </View>
-            <View>
-              <Text style={ui.muted}>{t("home.estimatedDistance")}</Text>
-              <Text style={ui.body}>{t("common.km", { n: (estimate.distanceMeters / 1000).toFixed(1) })}</Text>
-            </View>
+            {tour.origin === "driver" && <Pill label={t("home.personal")} tone="neutral" />}
+            <Pill label={t(`status.${tour.status}`)} tone={tour.status === "in_progress" ? "primary" : tour.status === "completed" ? "success" : "neutral"} />
           </View>
-        )}
-      </Card>
-
-      {next && (
+          <ProgressBar value={progress.total ? progress.done / progress.total : 0} />
+          <Text style={[ty.small, { color: c.textSecondary }]} testID="progress-text">
+            {t("home.progress", { done: progress.done, total: progress.total })}
+            {progress.failed ? ` · ${progress.failed} ✕` : ""}
+          </Text>
+          {metrics && progress.total > 0 && (
+            <View style={{ flexDirection: "row", gap: space.md, marginTop: space.xs }}>
+              <Stat label={t("home.openStops")} value={String(progress.pending)} hint={t("home.parcels", { n: progress.parcels })} />
+              <Stat label={t("home.remainingDistance")} value={`${km(metrics.remainingMeters)} km`} hint={t("home.ofTotal", { total: `${km(metrics.totalMeters)} km` })} />
+              <Stat label={t("home.remainingTime")} value={duration(metrics.remainingDriveSeconds)} hint={t("common.straightLine")} />
+            </View>
+          )}
+          {unlocated > 0 && <Banner text={t("home.needsLocation", { n: unlocated })} tone="warning" icon="location-outline" />}
+          {next ? (
+            <>
+              <SectionTitle>{t("home.nextStop")}</SectionTitle>
+              <StopCard stop={next} index={stops.indexOf(next)} current onPress={() => router.push(`/stop/${next.id}`)} testID="open-next-stop" />
+            </>
+          ) : progress.total > 0 ? (
+            <Banner text={t("home.allDone")} tone="success" />
+          ) : null}
+          <View style={{ flexDirection: "row", gap: space.sm, marginTop: space.xs }}>
+            {tour.status === "planned" && <Button label={t("home.startTour")} icon="play" onPress={() => tourAction(tour.id, "start")} style={{ flex: 1 }} testID="start-tour" />}
+            {running && next && <Button label={t("home.continue")} icon="arrow-forward" onPress={() => router.push(`/stop/${next.id}`)} style={{ flex: 1 }} testID="continue-tour" />}
+            {tour.status === "in_progress" && <Button label={t("home.pauseTour")} variant="secondary" onPress={() => tourAction(tour.id, "pause")} testID="pause-tour" />}
+            {tour.status === "paused" && <Button label={t("home.resumeTour")} variant="secondary" onPress={() => tourAction(tour.id, "resume")} testID="resume-tour" />}
+          </View>
+          {running && !next && <Button label={t("home.finishTour")} variant="success" icon="flag" onPress={() => tourAction(tour.id, "finish")} testID="finish-tour" />}
+        </Card>
+      ) : (
         <Card>
-          <Text style={ui.muted}>#{next.sequence + 1}</Text>
-          <Text style={ui.h2}>{next.recipientName ?? formatAddress(next)}</Text>
-          <Text style={ui.body}>{formatAddress(next)}</Text>
-          <View style={[ui.row, { marginTop: spacing.sm }]}>
-            <Button
-              label={t("stop.navigate")}
-              style={{ flex: 1 }}
-              onPress={() =>
-                openNavigation({ location: next.location, addressText: formatAddress(next) }).catch((e) =>
-                  Alert.alert(String(e)),
-                )
-              }
-            />
-            <Button
-              label={t("stops.title")}
-              variant="secondary"
-              style={{ flex: 1 }}
-              onPress={() => router.push({ pathname: "/stop/[id]", params: { id: next.id } })}
-              testID="open-next-stop"
-            />
-          </View>
+          <EmptyState icon="calendar-clear-outline" title={t("home.noRoutes")} text={isServerMode() ? t("home.noRoutesText") : t("home.noTour")} />
         </Card>
       )}
 
-      {tour.status === "planned" && <Button label={t("home.startTour")} onPress={() => tourAction(tour.id, "start")} testID="start-tour" />}
-      {tour.status === "in_progress" && (
-        <View style={ui.row}>
-          <Button label={t("home.pauseTour")} variant="secondary" style={{ flex: 1 }} onPress={() => tourAction(tour.id, "pause")} />
-          <Button label={t("home.finishTour")} variant="success" style={{ flex: 1 }} onPress={() => tourAction(tour.id, "finish")} />
-        </View>
-      )}
-      {tour.status === "paused" && (
-        <View style={ui.row}>
-          <Button label={t("home.resumeTour")} style={{ flex: 1 }} onPress={() => tourAction(tour.id, "resume")} />
-          <Button label={t("home.finishTour")} variant="success" style={{ flex: 1 }} onPress={() => tourAction(tour.id, "finish")} />
-        </View>
-      )}
-
-      <View style={ui.row}>
-        <Button
-          label={optimizing ? t("home.optimizing") : t("home.optimize")}
-          variant="secondary"
-          loading={optimizing}
-          disabled={pending.length < 2 || tour.status === "completed"}
-          style={{ flex: 1 }}
-          onPress={runOptimize}
-          testID="optimize"
-        />
-        <Button
-          label={t("home.addStop")}
-          variant="secondary"
-          style={{ flex: 1 }}
-          disabled={tour.status === "completed"}
-          onPress={() => router.push("/add-stop")}
-          testID="add-stop"
-        />
+      <View style={{ flexDirection: "row", gap: space.sm }}>
+        {[
+          { icon: "add-circle-outline" as const, label: t("home.addStop"), href: "/add-stop" as const, disabled: !tour, id: "quick-add" },
+          { icon: "document-text-outline" as const, label: t("home.import"), href: "/import" as const, disabled: !tour, id: "quick-import" },
+          { icon: "trail-sign-outline" as const, label: t("home.newRoute"), href: "/new-route" as const, disabled: false, id: "quick-route" },
+        ].map((q) => (
+          <Pressable
+            key={q.id}
+            testID={q.id}
+            disabled={q.disabled}
+            onPress={() => router.push(q.href)}
+            accessibilityRole="button"
+            accessibilityLabel={q.label}
+            style={({ pressed }) => ({ flex: 1, minHeight: 76, borderRadius: radii.lg, borderWidth: 1, borderColor: c.border, backgroundColor: c.card, alignItems: "center", justifyContent: "center", gap: 6, opacity: q.disabled ? 0.4 : pressed ? 0.8 : 1 })}
+          >
+            <Ionicons name={q.icon} size={24} color={c.primary} />
+            <Text style={[ty.small, { color: c.text, fontWeight: "700" }]} numberOfLines={1}>
+              {q.label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
-      {lastOpt && (
-        <Text style={ui.muted} testID="optimization-note">
-          {lastOpt.engine === "server"
-            ? t("home.optimizedServer", { source: lastOpt.matrixSource ?? "" })
-            : t("home.optimizedLocally")}
-          {lastOpt.fallbackReason ? ` (${lastOpt.fallbackReason})` : ""}
-          {lastOpt.unlocatedStopIds.length > 0 ? `\n${t("home.unlocated", { n: lastOpt.unlocatedStopIds.length })}` : ""}
-        </Text>
+      {tours.length > 1 && (
+        <>
+          <SectionTitle>{t("home.todaysTours")}</SectionTitle>
+          {tours.map((x) => (
+            <Card key={x.id} onPress={() => selectTour(x.id)} testID={`route-${x.id}`} style={{ borderColor: x.id === tour?.id ? c.primary : c.border, flexDirection: "row", alignItems: "center", gap: space.md }}>
+              <Ionicons name={x.origin === "driver" ? "person-outline" : "business-outline"} size={20} color={c.textMuted} />
+              <Text style={[ty.bodyStrong, { color: c.text, flex: 1 }]} numberOfLines={1}>
+                {x.name}
+              </Text>
+              <Pill label={t(`status.${x.status}`)} tone={x.status === "in_progress" ? "primary" : "neutral"} />
+            </Card>
+          ))}
+        </>
       )}
-      {optError && <Banner text={optError} />}
     </ScrollView>
   );
 }

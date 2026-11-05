@@ -1,6 +1,6 @@
 "use client";
 
-import { formatAddress, formatClock, formatDuration, minuteOfDay, type Stop, type TourSummary } from "@turvio/shared";
+import { formatAddress, formatClock, formatDuration, isNotDelivered, isOpen, minuteOfDay, type Stop, type TourSummary } from "@turvio/shared";
 import { Avatar, Badge, Button, Sheet, cn, toast } from "@turvio/web-ui/ds";
 import {
   AlertTriangle,
@@ -32,7 +32,8 @@ import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { STOP_STATUS, TourStatusBadge, deadlineLabel } from "./StatusBadge";
+import { ProofList } from "./ProofViewer";
+import { FAILURE_REASON, STOP_STATUS, TourStatusBadge, deadlineLabel } from "./StatusBadge";
 
 function Fact({ icon, label, value, sub }: { icon: ReactNode; label: string; value: ReactNode; sub?: ReactNode }) {
   return (
@@ -48,14 +49,15 @@ function Fact({ icon, label, value, sub }: { icon: ReactNode; label: string; val
 }
 
 function StopMarker({ stop, color, index }: { stop: Stop; color: string; index: number }) {
-  const done = stop.status !== "pending";
-  const failed = stop.status === "failed";
+  const done = !isOpen(stop.status);
+  const failed = isNotDelivered(stop.status);
   return (
     <span
       className={cn(
         "inline-flex size-6 shrink-0 items-center justify-center text-[11px] font-semibold tabular",
         stop.type === "pickup" ? "rounded-md" : "rounded-full",
         failed ? "border-2 border-danger bg-surface text-danger-ink" : done ? "border border-line-strong bg-surface-2 text-muted" : "text-white",
+        stop.status === "in_progress" && "ring-2 ring-brand-300 ring-offset-1",
       )}
       style={!done && !failed ? { backgroundColor: color } : undefined}
       aria-hidden="true"
@@ -77,7 +79,7 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
         <StopMarker stop={stop} color={color} index={index} />
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
-            <span className={cn("truncate text-[13px] font-medium", stop.status === "pending" ? "text-ink" : "text-muted")}>{stop.recipientName ?? formatAddress(stop)}</span>
+            <span className={cn("truncate text-[13px] font-medium", isOpen(stop.status) ? "text-ink" : "text-muted")}>{stop.recipientName ?? formatAddress(stop)}</span>
             {stop.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-violet-600" aria-label="Pickup" />}
             {stop.priority && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-500" aria-label="Priority" />}
           </span>
@@ -85,7 +87,7 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
         </span>
         <span className="shrink-0 text-end">
           <span className={cn("block text-xs font-medium tabular", p?.late ? "text-danger-ink" : p?.atRisk ? "text-warning-ink" : "text-ink-2")}>{p ? formatClock(p.etaMinute) : "–"}</span>
-          <span className="block text-2xs text-subtle">{stop.status === "pending" ? "ETA" : st.label}</span>
+          <span className={cn("block text-2xs", isNotDelivered(stop.status) ? "text-danger-ink" : "text-subtle")}>{stop.status === "pending" ? "ETA" : st.label}</span>
         </span>
         <ChevronDown className={cn("size-4 shrink-0 text-subtle transition-transform", expanded && "rotate-180")} />
       </button>
@@ -102,18 +104,36 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
                 {p?.atRisk && <Badge tone="warning">Close to deadline</Badge>}
                 {!stop.location && <Badge tone="danger">No map position</Badge>}
               </div>
+              {stop.failureReason && (
+                <div className="font-medium text-danger-ink" data-testid="failure-reason">
+                  Reason: {FAILURE_REASON[stop.failureReason] ?? stop.failureReason}
+                </div>
+              )}
               {stop.timeWindow && (
                 <div className="flex items-center gap-1.5">
                   <Clock className="size-3.5" /> Window {formatClock(stop.timeWindow.start)}–{formatClock(stop.timeWindow.end)}
-                  {stop.status === "pending" && <span className="text-subtle">· closes {deadlineLabel(stop.timeWindow.end - scoped.asOfMinute)}</span>}
+                  {isOpen(stop.status) && <span className="text-subtle">· closes {deadlineLabel(stop.timeWindow.end - scoped.asOfMinute)}</span>}
                 </div>
               )}
               {stop.parcels.length > 0 && (
-                <div className="flex items-center gap-1.5">
-                  <Package className="size-3.5" /> {stop.parcels.length} {stop.parcels.length === 1 ? "parcel" : "parcels"} · <span className="font-mono text-2xs">{stop.parcels.map((x) => x.trackingNumber).join(", ")}</span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Package className="size-3.5" /> {stop.parcels.length} {stop.parcels.length === 1 ? "parcel" : "parcels"}
+                  {stop.parcels.some((x) => x.loadedAt) && (
+                    <Badge tone="success">
+                      {stop.parcels.filter((x) => x.loadedAt).length}/{stop.parcels.length} scanned in
+                    </Badge>
+                  )}
+                  · <span className="font-mono text-2xs">{stop.parcels.map((x) => x.trackingNumber).join(", ")}</span>
                 </div>
               )}
               {stop.notes && <div>{stop.notes}</div>}
+              {stop.driverNotes && (
+                <div className="rounded-md border border-line bg-surface px-2.5 py-1.5 text-ink-2" data-testid="driver-note">
+                  <span className="text-2xs font-semibold uppercase tracking-[0.06em] text-subtle">Driver note</span>
+                  <div>{stop.driverNotes}</div>
+                </div>
+              )}
+              {(stop.proofs?.length ?? 0) > 0 && <ProofList stop={stop} />}
               {stop.status === "pending" && summary.tour.status !== "completed" && (
                 <div>
                   <Button
@@ -148,7 +168,7 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
 interface TourEvent {
   source: "tour" | "stop";
   kind: string;
-  detail: { notes?: string | null } | null;
+  detail: { notes?: string | null; failureReason?: string | null; applied?: boolean; recipientName?: string | null } | null;
   at: string;
 }
 
@@ -165,8 +185,15 @@ const EVENT_LABEL: Record<string, string> = {
   delivered: "Stop delivered",
   picked_up: "Pickup collected",
   failed: "Stop failed",
+  attempted: "Delivery attempted",
+  rescheduled: "Stop rescheduled",
+  returned: "Parcel returned",
   skipped: "Stop skipped",
+  in_progress: "Driver arrived",
   pending: "Stop reopened",
+  note: "Driver note",
+  proof_photo: "Delivery photo captured",
+  proof_signature: "Signature captured",
 };
 
 function Activity({ tourId, version, stopsDone }: { tourId: string; version?: number; stopsDone: number }) {
@@ -197,9 +224,12 @@ function Activity({ tourId, version, stopsDone }: { tourId: string; version?: nu
         <ol className="flex flex-col gap-1.5">
           {events.slice(0, 12).map((e, i) => (
             <li key={i} className="flex items-baseline justify-between gap-3 text-xs">
-              <span className={cn("text-ink-2", e.kind === "failed" && "text-danger-ink")}>
+              <span className={cn("text-ink-2", ["failed", "attempted", "returned"].includes(e.kind) && "text-danger-ink", e.detail?.applied === false && "line-through opacity-60")}>
                 {EVENT_LABEL[e.kind] ?? e.kind}
+                {e.detail?.failureReason ? <span className="text-muted"> ({FAILURE_REASON[e.detail.failureReason] ?? e.detail.failureReason})</span> : null}
+                {e.detail?.recipientName ? <span className="text-muted"> – {e.detail.recipientName}</span> : null}
                 {e.detail?.notes ? <span className="text-muted"> – {e.detail.notes}</span> : null}
+                {e.detail?.applied === false ? <span className="text-subtle"> (late offline update, not applied)</span> : null}
               </span>
               <time className="shrink-0 text-2xs text-subtle tabular" dateTime={e.at}>
                 {new Date(e.at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
@@ -247,6 +277,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
       <div className="flex flex-wrap items-center gap-2">
         <span className="size-2.5 rounded-full" style={{ backgroundColor: tourColor(scoped, s.tour.id) }} aria-hidden="true" />
         <TourStatusBadge status={s.status} />
+        {s.tour.origin === "driver" && <Badge tone="outline">Driver's own route</Badge>}
         {s.tour.publishedAt ? (
           <Badge tone="success">
             <Send className="size-3" /> Published
@@ -293,7 +324,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
           </span>
           <span>
             <span className="me-1 inline-block size-2 rounded-full bg-danger" />
-            {s.failed} failed
+            {s.failed} not delivered
           </span>
           <span>
             <span className="me-1 inline-block size-2 rounded-full bg-surface-3" />
@@ -313,8 +344,13 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         <Fact icon={<Warehouse />} label="Start depot" value={s.depot.name} sub={formatAddress(s.depot)} />
         <Fact icon={<Clock />} label="Start" value={startLabel} sub={`Est. return ${formatClock(t.projectedEndMinute)}`} />
         <Fact icon={<Gauge />} label="Est. duration" value={formatDuration(t.durationMinutes)} sub="estimate" />
-        <Fact icon={<Route />} label="Est. distance" value={`${(t.distanceMeters / 1000).toFixed(1)} km`} sub="straight-line × 1.35, not road distance" />
-        <Fact icon={<MapPin />} label="Stops" value={`${s.total} total`} sub={`${s.delivered} done · ${s.failed} failed`} />
+        <Fact
+          icon={<Route />}
+          label="Est. distance"
+          value={`${(t.distanceMeters / 1000).toFixed(1)} km total`}
+          sub={`${(t.remainingMeters / 1000).toFixed(1)} km remaining · straight-line × 1.35`}
+        />
+        <Fact icon={<MapPin />} label="Stops" value={`${s.total} total`} sub={`${s.delivered} done · ${s.failed} not delivered`} />
         <Fact
           icon={<ArrowUpFromLine />}
           label="Pickups"
@@ -336,7 +372,8 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
             {busy === "optimize" ? <Loader2 className="animate-spin" /> : <Sparkles />}
             {busy === "optimize" ? "Optimizing…" : "Optimize & save"}
           </Button>
-          {s.tour.publishedAt ? (
+          {s.tour.origin === "driver" && <Badge tone="outline">Driver's own route</Badge>}
+        {s.tour.publishedAt ? (
             s.tour.status === "planned" && (
               <Button variant="secondary" onClick={() => setConfirm("withdraw")}>
                 <EyeOff /> Withdraw

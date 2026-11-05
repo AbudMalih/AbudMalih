@@ -24,6 +24,7 @@ beforeEach(() => {
       }
       if (url.endsWith("/v1/auth/logout")) return new Response(null, { status: 204 });
       if (auth !== `Bearer ${accessOk}`) return Response.json({ error: { code: "unauthenticated" } }, { status: 401 });
+      if (url.includes("/file")) return new Response(new Uint8Array([0xff, 0xd8, 0xff, 0x00, 0x80]), { headers: { "content-type": "image/jpeg", "cache-control": "private, no-store", "x-content-type-options": "nosniff" } });
       return Response.json({ ok: true, url });
     }),
   );
@@ -70,6 +71,13 @@ describe("API proxy", () => {
     expect(res.status).toBe(200);
     expect(calls.map((c) => c.url)).toEqual(["http://api.test/v1/me", "http://api.test/v1/auth/refresh", "http://api.test/v1/me"]);
     expect(res.headers.get("set-cookie")).toContain(`${COOKIES.access}=access-2`);
+  });
+
+  it("passes proof images through byte-for-byte with private caching headers", async () => {
+    const res = await proxyHandler(req("http://app.test/api/turvio/v1/orgs/o/proofs/p/file", { cookies: { [COOKIES.access]: "access-1" } }), ["v1", "orgs", "o", "proofs", "p", "file"]);
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(new Uint8Array([0xff, 0xd8, 0xff, 0x00, 0x80]));
+    expect(res.headers.get("cache-control")).toBe("private, no-store");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
   });
 
   it("refuses paths outside /v1 and clears cookies when the session is gone", async () => {

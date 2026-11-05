@@ -1,14 +1,16 @@
-import { colors, spacing } from "@turvio/shared";
+import { router } from "expo-router";
 import { Redirect } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
-import { Banner, Button, Card, styles as ui } from "../components/ui";
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Banner, Button, Field } from "../components/ui";
 import { createAuthClient } from "../lib/auth";
 import { useT } from "../lib/i18n";
 import { useTourStore } from "../store/tourStore";
+import { radii, space, type as ty, useTheme } from "../theme";
 
 export default function LoginScreen() {
   const t = useT();
+  const { c, dark } = useTheme();
   const user = useTourStore((s) => s.user);
   const signIn = useTourStore((s) => s.signIn);
   const [email, setEmail] = useState("");
@@ -25,6 +27,7 @@ export default function LoginScreen() {
     setInfo(null);
     try {
       await signIn(email, password);
+      router.replace("/");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -44,52 +47,27 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={ui.screen} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: spacing.xl, gap: spacing.lg }} keyboardShouldPersistTaps="handled">
-        <View style={{ alignItems: "center", gap: spacing.sm, marginBottom: spacing.md }}>
-          <Image source={require("../../assets/icon.png")} style={{ width: 72, height: 72, borderRadius: 18 }} accessibilityIgnoresInvertColors />
-          <Text style={[ui.h1, { textAlign: "center" }]}>TURVIO Driver</Text>
-          <Text style={[ui.muted, { textAlign: "center" }]}>{t("app.tagline")}</Text>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: space.xl, gap: space.xl }} keyboardShouldPersistTaps="handled">
+        <View style={{ alignItems: "center", gap: space.sm }}>
+          <Image source={dark ? require("../../assets/brand/turvio-lockup-dark.png") : require("../../assets/brand/turvio-lockup-light.png")} style={{ width: 190, height: 34 }} resizeMode="contain" accessibilityLabel="TURVIO" />
+          <Text style={[ty.caption, { color: c.textMuted, letterSpacing: 2 }]}>DRIVER</Text>
         </View>
-        <Card>
-          <Text style={ui.h2}>{t("login.title")}</Text>
-          <Text style={ui.muted}>{t("login.subtitle")}</Text>
-          {error && <Banner text={error} />}
+        <View style={{ backgroundColor: c.card, borderRadius: radii.xl, borderWidth: 1, borderColor: c.border, padding: space.xl, gap: space.md }}>
+          <View style={{ gap: 4 }}>
+            <Text style={[ty.title, { color: c.text }]}>{t("login.title")}</Text>
+            <Text style={[ty.small, { color: c.textMuted }]}>{t("login.subtitle")}</Text>
+          </View>
+          {error && <Banner text={error} tone="danger" />}
           {info && <Banner text={info} tone="primary" />}
-          <View style={{ gap: 4 }}>
-            <Text style={ui.label}>{t("login.email")}</Text>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              style={ui.input}
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              textContentType="username"
-              accessibilityLabel={t("login.email")}
-              testID="login-email"
-            />
-          </View>
-          <View style={{ gap: 4 }}>
-            <Text style={ui.label}>{t("login.password")}</Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              style={ui.input}
-              secureTextEntry
-              autoComplete="password"
-              textContentType="password"
-              onSubmitEditing={submit}
-              accessibilityLabel={t("login.password")}
-              testID="login-password"
-            />
-          </View>
-          <Button label={busy ? "…" : t("login.submit")} onPress={submit} disabled={busy || !email || !password} testID="login-submit" />
-          {busy && <ActivityIndicator color={colors.primary} />}
-          <Pressable onPress={forgot} accessibilityRole="button" style={{ alignSelf: "center", padding: spacing.sm }}>
-            <Text style={{ color: colors.primary, fontWeight: "600" }}>{t("login.forgot")}</Text>
+          <Field label={t("login.email")} value={email} onChangeText={setEmail} autoCapitalize="none" autoComplete="email" keyboardType="email-address" textContentType="username" testID="login-email" />
+          <Field label={t("login.password")} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} testID="login-password" />
+          <Button label={t("login.submit")} size="lg" onPress={submit} loading={busy} disabled={!email || !password} testID="login-submit" />
+          <Pressable onPress={forgot} accessibilityRole="button" style={{ alignSelf: "center", padding: space.sm }}>
+            <Text style={[ty.small, { color: c.primary, fontWeight: "700" }]}>{t("login.forgot")}</Text>
           </Pressable>
-        </Card>
+        </View>
+        <Text style={[ty.small, { color: c.textSubtle, textAlign: "center" }]}>{t("app.tagline")}</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
