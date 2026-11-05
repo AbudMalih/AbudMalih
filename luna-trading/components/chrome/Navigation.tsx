@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NAV, LEGAL_NAV, COMPANY } from "@/content/site";
+import { NAV, LEGAL_NAV, COMPANY, CONTACT_EMAIL } from "@/content/site";
 import { LunaLogo } from "@/components/brand/Logos";
 import { lockScroll } from "@/lib/motion/scroll";
 import { formatLat, formatLon } from "@/lib/globe/coords";
@@ -13,28 +13,28 @@ import LanguageSelector from "./LanguageSelector";
 import styles from "./Navigation.module.css";
 
 /**
- * Floating navigation inside a protected header zone (--header-h).
- *  - Top of page: reverse wordmark (no plate), quiet links, DE · EN · AR.
- *  - After the first viewport: links and languages retract into the "+".
- *  - The "+" opens a full-screen index; it rotates 45° into the close "×".
- *  - Mobile uses the "+" from the start; languages live in the index.
- *  - One commercial action, always at the far right: a compact Luna-red
- *    "Let's talk +" (contact). In the compact state the menu "+" sits just
- *    before it. On mobile it lives inside the index instead.
- *  - Light / dark treatment follows <html data-tone> (set from the page's
- *    scroll state by Atmosphere), with crossfades rather than switches.
+ * The corporate header: one architectural axis.
+ *  - Desktop (≥1024px): wordmark · Leistungen, Marken, Unternehmen ·
+ *    DE / EN / AR · the framed "Kontakt +" action. Links never retract; the
+ *    current page carries a short red rule (not colour alone).
+ *  - On scroll a solid plate fades in under the bar (no blur, no shadow):
+ *    mineral on light grounds, graphite on dark ones (<html data-tone>).
+ *  - Mobile / tablet: "Menü +" is the trigger; the "+" turns into the "×".
+ *    The index is a light editorial page: numbered links (current one marked
+ *    with the red +), a direct contact block, languages, company line, legal.
+ *  - Dialog semantics, focus trap, Escape, scroll lock, focus return.
  */
 export default function Navigation() {
   const { dict, href } = useI18n();
   const contactHref = href(NAV.find((n) => n.key === "contact")?.href ?? "/contact");
-  const [compact, setCompact] = useState(false);
+  const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setCompact(window.scrollY > window.innerHeight * 0.6);
+    const onScroll = () => setSolid(window.scrollY > 24);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -63,10 +63,12 @@ export default function Navigation() {
   }, [open, close]);
 
   useEffect(() => setOpen(false), [pathname]);
+  const current = canonicalPath(stripLocale(pathname || "/"));
 
   return (
     <>
-      <header className={`${styles.bar} ${compact ? styles.compact : ""} ${open ? styles.isOpen : ""}`}>
+      <header className={`${styles.bar} ${solid ? styles.solid : ""} ${open ? styles.isOpen : ""}`}>
+        <span className={styles.plate} aria-hidden="true" />
         <Link href={href("/")} className={styles.brand} aria-label={dict.a11y.home} data-cursor="link" id="nav-brand">
           <LunaLogo height="100%" priority className={styles.logoDark} />
           {/* light chapters use the master wordmark (its native ground) */}
@@ -77,15 +79,9 @@ export default function Navigation() {
           <div className={styles.group}>
           <nav className={styles.links} aria-label={dict.a11y.primaryNav}>
             <ul>
-              {NAV.slice(1).map((n) => (
+              {NAV.filter((n) => n.key !== "home" && n.key !== "contact").map((n) => (
                 <li key={n.href}>
-                  <Link
-                    href={href(n.href)}
-                    className="link-line t-label"
-                    data-cursor="link"
-                    tabIndex={compact ? -1 : 0}
-                    aria-current={canonicalPath(stripLocale(pathname || "/")) === n.href ? "page" : undefined}
-                  >
+                  <Link href={href(n.href)} className="link-line t-label" data-cursor="link" aria-current={current === n.href ? "page" : undefined}>
                     {dict.nav[n.key]}
                   </Link>
                 </li>
@@ -94,7 +90,7 @@ export default function Navigation() {
           </nav>
           <div className={styles.lang}>
             <span className={styles.divider} aria-hidden="true" />
-            <LanguageSelector tabIndex={compact ? -1 : 0} />
+            <LanguageSelector />
           </div>
 
           <button
@@ -114,7 +110,7 @@ export default function Navigation() {
           </button>
           </div>
 
-          <Link href={contactHref} className={styles.cta} data-cursor="invert">
+          <Link href={contactHref} className={styles.cta} data-cursor="invert" aria-current={current === "/contact" ? "page" : undefined}>
             <span className={styles.ctaLabel}>{dict.nav.cta}</span>
             <span className={styles.ctaPlus} aria-hidden="true" />
           </Link>
@@ -134,17 +130,24 @@ export default function Navigation() {
           <ol className={styles.big}>
             {NAV.map((n, i) => (
               <li key={n.href} style={{ ["--i" as string]: i }}>
-                <Link href={href(n.href)} onClick={close} data-cursor="link" aria-current={canonicalPath(stripLocale(pathname || "/")) === n.href ? "page" : undefined}>
+                <Link href={href(n.href)} onClick={close} data-cursor="link" aria-current={current === n.href ? "page" : undefined}>
                   <span className={`t-label ${styles.num}`}>{String(i).padStart(2, "0")}</span>
                   <span className={styles.word}>{dict.nav[n.key]}</span>
+                  <span className={styles.mark} aria-hidden="true" />
                 </Link>
               </li>
             ))}
           </ol>
-          <Link href={contactHref} onClick={close} className={`${styles.cta} ${styles.ctaPanel}`} data-cursor="invert">
-            <span className={styles.ctaLabel}>{dict.nav.cta}</span>
-            <span className={styles.ctaPlus} aria-hidden="true" />
-          </Link>
+          <div className={styles.direct}>
+            <a href={`mailto:${CONTACT_EMAIL}`} className={styles.mail} dir="ltr" data-cursor="link">
+              {CONTACT_EMAIL}
+            </a>
+            <Link href={contactHref} onClick={close} className={`${styles.cta} ${styles.ctaPanel}`} data-cursor="invert">
+              {/* the index already lists "Kontakt": the action says what happens there */}
+              <span className={styles.ctaLabel}>{dict.contactPage.inquiry.title}</span>
+              <span className={styles.ctaPlus} aria-hidden="true" />
+            </Link>
+          </div>
           <div className={styles.panelFoot}>
             <LanguageSelector size="l" />
             <p className="t-label">
