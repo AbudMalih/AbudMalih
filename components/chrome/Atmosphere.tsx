@@ -279,6 +279,12 @@ export default function Atmosphere() {
       <div ref={mineralRef} className={styles.mineral}>
         <div ref={mineralTexRef} className={styles.mineralTex}>
           {/* daylight moving slowly over the brushed steel behind the planet */}
+          {/* a living sky behind the planet: dusk over the steel, cloud banks
+              drifting slowly, and a warm sun rising behind the globe's limb */}
+          <div className={styles.sky} />
+          <div className={styles.sun} />
+          <div className={`${styles.clouds} ${styles.cloudsFar}`} />
+          <div className={`${styles.clouds} ${styles.cloudsNear}`} />
           <div className={styles.daylight} />
           <div className={styles.daylightWarm} />
         </div>

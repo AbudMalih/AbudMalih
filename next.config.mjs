@@ -64,6 +64,7 @@ const nextConfig = {
       // icons: revalidate, so a changed favicon is never stuck in caches
       { source: "/:icon(favicon.ico|favicon-lt.svg|apple-touch-icon.png|apple-touch-icon-lt.png|site.webmanifest)", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
       { source: "/brand/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
+      { source: "/sky/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
     ];
   },
 };
