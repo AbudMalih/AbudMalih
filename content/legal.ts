@@ -22,4 +22,4 @@ export const LEGAL_ENTITY = {
 } as const;
 
 /** Review date of the privacy policy (real implementation / review month). */
-export const PRIVACY_REVIEWED = "Oktober 2026";
+export const PRIVACY_REVIEWED = "November 2026";

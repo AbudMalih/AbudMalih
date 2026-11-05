@@ -64,8 +64,9 @@ export default async function Page({ params }: P) {
 
         <h2>3. Hosting und Server-Logdaten</h2>
         <p>
-          Diese Website wird bei der Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA, gehostet. Vercel verarbeitet die
-          Daten als Auftragsverarbeiter in unserem Auftrag (Art. 28 DSGVO).
+          Diese Website wird bei der Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA, gehostet. Vercel stellt die
+          Server und die Infrastruktur bereit, über die diese Website ausgeliefert wird, und ist dabei als technischer Dienstleister
+          für uns tätig.
         </p>
         <p>
           Beim Aufruf der Website werden technisch notwendige Daten verarbeitet, die Ihr Browser automatisch übermittelt: IP-Adresse,
@@ -95,8 +96,8 @@ export default async function Page({ params }: P) {
           berechtigtes Interesse liegt in der Beantwortung Ihrer Anfrage.
         </p>
         <p>
-          Für den Empfang und die Speicherung von E-Mails setzen wir einen E-Mail-Dienstleister ein, der die Daten in unserem Auftrag
-          verarbeitet.
+          Für den Empfang, den Versand und die Speicherung von E-Mails nutzen wir den E-Mail-Dienst von Hostinger. Ihre Nachrichten
+          werden dabei auf den Servern dieses Anbieters gespeichert und verarbeitet.
         </p>
 
         <h2>5. Kontaktformular</h2>
@@ -106,9 +107,11 @@ export default async function Page({ params }: P) {
           Angaben können wir Ihre Anfrage nicht bearbeiten. Alternativ können Sie uns jederzeit direkt per E-Mail schreiben.
         </p>
         <p>
-          Die Angaben werden verschlüsselt an den Server dieser Website übertragen, dort auf Vollständigkeit geprüft und per E-Mail an{" "}
-          {L.email} weitergeleitet. Die Website selbst speichert die Inhalte des Formulars nicht in einer Datenbank. Zweck und
-          Rechtsgrundlagen entsprechen denen der Kontaktaufnahme per E-Mail (Abschnitt 4).
+          Die Angaben werden verschlüsselt an den Server dieser Website übertragen, dort auf Vollständigkeit geprüft und über eine
+          verschlüsselte, authentifizierte Verbindung zum Mailserver unseres E-Mail-Anbieters (Hostinger, Abschnitt 4) als E-Mail an{" "}
+          {L.email} übermittelt. Ihre E-Mail-Adresse wird dabei als Antwortadresse gesetzt, damit wir Ihnen direkt antworten können.
+          Die Website selbst speichert die Inhalte des Formulars nicht in einer Datenbank. Zweck und Rechtsgrundlagen entsprechen denen
+          der Kontaktaufnahme per E-Mail (Abschnitt 4).
         </p>
         <h3>Schutz vor Missbrauch</h3>
         <p>
@@ -134,8 +137,9 @@ export default async function Page({ params }: P) {
         </p>
         <p>
           Damit Animationen und die 3D-Darstellung auf Ihrem Gerät flüssig laufen, prüft die Website ausschließlich lokal in Ihrem
-          Browser die Bildschirmgröße, Ihre Einstellung für reduzierte Bewegung, die Eingabeart (Maus oder Touch) sowie die Zahl der
-          Prozessorkerne und den ungefähren Arbeitsspeicher Ihres Geräts. Diese Werte dienen allein der Anpassung der Darstellung; sie
+          Browser die Bildschirmgröße, Ihre Einstellung für reduzierte Bewegung, die Eingabeart (Maus oder Touch) und ob Ihr Browser
+          3D-Grafik (WebGL) darstellen kann, und misst kurz, wie flüssig die Seite gerade gezeichnet wird. Eigenschaften Ihres Geräts
+          wie Prozessor oder Arbeitsspeicher werden nicht ausgelesen. Diese Werte dienen allein der Anpassung der Darstellung; sie
           werden weder gespeichert noch an uns oder Dritte übermittelt.
         </p>
 
