@@ -1,20 +1,20 @@
 /* KONTAKT / CONTACT
-   One graphite room: hero, direct e-mail, the inquiry drawn straight into the
-   dark, a quiet signature, then the footer in the same graphite. Hierarchy
-   comes from tone (off-white, silver, muted silver), hairlines and the red +.
+   One light mineral room: hero, direct e-mail, the inquiry drawn straight onto
+   the ground, a quiet signature, then the paper footer. Hierarchy comes from
+   tone (ink, graphite, muted graphite), hairlines and the red +.
    Shell, tones, reveals and the button come from the approved system
    (Services.module.css). Typography is planted; only lines and the + move. */
 
-.page [data-tone="dark"] {
-  --rule: rgba(214, 216, 220, 0.16);
-  --rule-strong: rgba(214, 216, 220, 0.34);
-  --ink: #ecebe6;
-  --muted: #b3b5ba;
-  --soft: #8a8c91;
-  --err: #f0838a;
+.page [data-tone="light"] {
+  --rule: rgba(20, 21, 24, 0.14);
+  --rule-strong: rgba(20, 21, 24, 0.32);
+  --ink: #141518;
+  --muted: #4f5156;
+  --soft: #55575c;
+  --err: #a3000f;
 }
 .dim {
-  color: #8d8f94;
+  color: #6b6c71;
 }
 .period {
   color: var(--luna-red);
@@ -33,8 +33,8 @@
   padding-top: calc(var(--safe-top) + clamp(30px, 8vh, 110px));
   padding-bottom: clamp(56px, 9vh, 100px);
 }
-/* the same graphite throughout: a brushed-metal grain on every section and
-   one faint charcoal lift over the hero, so no edge between them shows */
+/* the same mineral throughout: a fine brushed grain on every section and one
+   soft daylight lift over the hero, so no edge between them shows */
 .room::after {
   content: "";
   position: absolute;
@@ -43,10 +43,10 @@
   pointer-events: none;
   background:
     var(--lift, linear-gradient(transparent, transparent)),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 3px);
+    repeating-linear-gradient(90deg, rgba(20, 21, 24, 0.016) 0 1px, transparent 1px 3px);
 }
 .hero {
-  --lift: radial-gradient(90% 80% at 82% 0%, rgba(120, 124, 132, 0.16), transparent 70%);
+  --lift: radial-gradient(90% 80% at 82% 0%, rgba(255, 254, 250, 0.7), transparent 70%);
 }
 .heroCopy {
   display: grid;
@@ -89,7 +89,7 @@
 }
 .heroLead {
   grid-column: 9 / span 4;
-  color: #b9bbbf;
+  color: #4f5156;
   padding-bottom: 0.4em;
 }
 
@@ -189,7 +189,7 @@
 
 /* form: topic on one side, the few fields on the other */
 .form {
-  color-scheme: dark;
+  color-scheme: light;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   column-gap: var(--gutter);
@@ -408,7 +408,7 @@
 /* keep browser autofill inside the room */
 .input:-webkit-autofill {
   -webkit-text-fill-color: var(--ink);
-  box-shadow: 0 0 0 1000px #151619 inset;
+  box-shadow: 0 0 0 1000px #ecebe6 inset;
   caret-color: var(--ink);
 }
 .input:focus + .rule::before {
@@ -503,7 +503,7 @@
 }
 /* the approved CTA on graphite: a hairline frame, the red fill sweeps in */
 .submit {
-  --cta-line: rgba(236, 235, 230, 0.4);
+  --cta-line: rgba(20, 21, 24, 0.36);
   cursor: pointer;
   background: transparent;
   font-family: inherit;

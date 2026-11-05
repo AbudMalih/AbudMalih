@@ -457,7 +457,7 @@
   opacity: calc(1 - var(--fromOut));
 }
 .pCoord {
-  color: #6a6c71;
+  color: #55575c;
 }
 .pTo {
   inset-inline-end: var(--margin);
@@ -766,7 +766,7 @@
   font-family: var(--font-lv);
   font-size: 0.6rem;
   letter-spacing: 0.18em;
-  color: rgba(60, 54, 42, 0.62);
+  color: rgba(60, 54, 42, 0.78);
   direction: ltr;
 }
 .collection {

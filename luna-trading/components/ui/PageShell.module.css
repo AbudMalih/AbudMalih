@@ -1,6 +1,18 @@
+/* one light mineral page; tokens re-inked (paper = primary type) */
 .page {
   min-height: 100svh;
   padding-top: clamp(140px, 22vh, 240px);
+  background:
+    radial-gradient(90% 60% at 85% 0%, rgba(255, 254, 250, 0.7), transparent 70%),
+    #ecebe6;
+  --paper: #141518;
+  --fg: #141518;
+  --fg-muted: #4f5156;
+  --graphite-300: #55575c;
+  --graphite-400: #6b6c71;
+  --hairline: rgba(20, 21, 24, 0.12);
+  --hairline-strong: rgba(20, 21, 24, 0.26);
+  color: var(--fg);
 }
 .head {
   padding-bottom: clamp(48px, 8vh, 96px);

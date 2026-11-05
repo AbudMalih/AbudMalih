@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { getDictionary, localePath, type Locale } from "@/content/i18n";
+import LightTone from "./LightTone";
 import styles from "./PageShell.module.css";
 
 /**
- * Template for secondary pages (each gets its own choreography later).
- * Same typographic system as the homepage; no cinematic layers.
+ * Template for document pages (legal, 404, error): one light mineral page in
+ * the Luna typographic system; no cinematic layers.
  */
 export default function PageShell({
   locale,
@@ -28,6 +29,7 @@ export default function PageShell({
   const dict = getDictionary(locale);
   return (
     <article className={styles.page}>
+      <LightTone />
       <header className={`frame ${styles.head}`}>
         <p className={`t-label ${styles.eyebrow}`}>
           <span className={styles.idx}>{index}</span>
