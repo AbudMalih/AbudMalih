@@ -6,12 +6,13 @@ import { onFrame, damp } from "@/lib/stage/ticker";
 import styles from "./HeroSky.module.css";
 
 /**
- * The opening's sky: the page opens at night over the steel, then the sun
- * breaks over the globe's limb. Rays fan out, the dusk warms, a great moon
- * (Luna) hangs over the trade route and cloud banks drift across it.
- * Depth: every layer answers the pointer at its own distance (desktop),
- * and the moon climbs as the story begins. The headline never moves.
- * Lives inside the steel texture, so it fades out with the opening.
+ * The opening's sky, lit like a product film: the planet is backlit, a fine
+ * line of light traces its limb (atmosphere seen from orbit, warm white, no
+ * blue), steel-grey cloud masses drift at two depths and a broad, slow band
+ * of light passes over them. The scene opens in shadow and the backlight
+ * comes up once the intro hands over. Depth: each plane answers the pointer
+ * a little (desktop). The headline never moves. It lives inside the steel
+ * texture, so it fades out with the opening.
  */
 export default function HeroSky() {
   const ref = useRef<HTMLDivElement>(null);
@@ -60,27 +61,17 @@ export default function HeroSky() {
   return (
     <div ref={ref} className={styles.root} aria-hidden="true">
       <div className={styles.sky} />
-      <div className={`${styles.depth} ${styles.d1}`}>
-        <div className={styles.moon}>
-          <i className={styles.moonHalo} />
-          <i className={styles.moonDisc} />
-        </div>
-      </div>
       <div className={`${styles.depth} ${styles.d2}`}>
         <div className={`${styles.clouds} ${styles.cloudsFar}`} />
       </div>
       <div className={`${styles.depth} ${styles.d3}`}>
-        <div className={styles.sunrise}>
-          <div className={styles.rays}>
-            <i />
-          </div>
-          <div className={styles.sun} />
-          <div className={styles.flare} />
-        </div>
+        <div className={styles.backlight} />
+        <div className={styles.rim} />
       </div>
       <div className={`${styles.depth} ${styles.d4}`}>
         <div className={`${styles.clouds} ${styles.cloudsNear}`} />
       </div>
+      <div className={styles.sweep} />
       <div className={styles.night} />
     </div>
   );
