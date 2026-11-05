@@ -1,7 +1,10 @@
 .layer {
   visibility: hidden;
   opacity: 0;
-  background: var(--ink-950);
+  /* the line-world is drawn in daylight: mineral ground, ink labels and pins */
+  background: #dcdad5;
+  --paper: #1c1d20;
+  --graphite-300: #55575c;
 }
 .canvas {
   position: absolute;

@@ -11,6 +11,7 @@
 .brand,
 .light,
 .warm,
+.ground,
 .forest,
 .veil,
 .key,
@@ -142,13 +143,19 @@
   background: radial-gradient(50% 50% at 50% 60%, rgba(241, 236, 226, 0.07), transparent 75%);
   filter: blur(20px);
 }
-/* brighter, calm closing: a silver dawn behind the world, leading to the paper footer */
+/* ecosystem + closing: warm mineral daylight, a fine stone texture */
+.ground {
+  inset: 0;
+  background:
+    radial-gradient(90% 70% at 18% 0%, rgba(255, 253, 248, 0.55), transparent 70%),
+    linear-gradient(180deg, #e9e7e2 0%, #e2e0da 100%);
+}
+/* calm closing: soft daylight gathering behind the world, leading to the paper footer */
 .dawn {
   inset: 0;
   background:
-    radial-gradient(60% 55% at 70% 62%, rgba(214, 216, 220, 0.22), transparent 70%),
-    radial-gradient(120% 60% at 50% 120%, rgba(242, 242, 240, 0.2), transparent 65%),
-    linear-gradient(180deg, #0c0d0f 0%, #1b1c1f 100%);
+    radial-gradient(60% 55% at 70% 62%, rgba(255, 255, 252, 0.6), transparent 70%),
+    radial-gradient(120% 60% at 50% 120%, rgba(242, 242, 240, 0.7), transparent 65%);
 }
 :global([dir="rtl"]) .dawn {
   transform: scaleX(-1);
