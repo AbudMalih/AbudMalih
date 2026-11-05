@@ -50,6 +50,7 @@ export default function Atmosphere() {
   const gridRef = useRef<HTMLDivElement>(null);
   const warmRef = useRef<HTMLDivElement>(null);
   const forestRef = useRef<HTMLDivElement>(null);
+  const groundRef = useRef<HTMLDivElement>(null);
   const veilRef = useRef<HTMLDivElement>(null);
   const keyRef = useRef<HTMLDivElement>(null);
   const hazeRef = useRef<HTMLDivElement>(null);
@@ -164,6 +165,10 @@ export default function Atmosphere() {
       const grow = smooth(range(X, 0.2, 0.92));
       const R = far * 1.6 * grow;
       const lvOut = 1 - smooth(range(lv, 0.76, 0.94));
+      // ecosystem + closing stand on warm mineral daylight: it rises beneath the
+      // emerald exactly as the emerald leaves (a crossfade, never black between)
+      const { ecosystem: eco } = stage.p;
+      const groundO = eco > 0 || cl > 0 ? 1 : lv > 0 ? 1 - lvOut : 0;
       const forestO = (X > 0 && R > 1 ? smooth(range(X, 0.2, 0.5)) : 0) * lvOut;
       // a wide, very soft dusk rather than a disc: stretched along the air,
       // closing to full cover before the light environments are removed
@@ -184,7 +189,7 @@ export default function Atmosphere() {
 
       // daylight moves slowly across the room while the brand is built
       const sweep = 0.6 * b + 1.4 * ch + 0.5 * Math.min(1, cm * 4);
-      const k = [brandColor, lit, sweep, lightO, reveal, gridO, warmO, forestO, R | 0, veilO, key, haze, dawn, lv, node.x | 0, node.y | 0].map((v) => (typeof v === "number" ? v.toFixed(3) : v)).join("|");
+      const k = [brandColor, lit, sweep, lightO, reveal, gridO, warmO, forestO, groundO, R | 0, veilO, key, haze, dawn, lv, node.x | 0, node.y | 0].map((v) => (typeof v === "number" ? v.toFixed(3) : v)).join("|");
       if (k !== last) {
         last = k;
         brandRef.current!.style.backgroundColor = brandColor;
@@ -196,6 +201,7 @@ export default function Atmosphere() {
         lightRef.current!.style.webkitMaskImage = lightMask;
         set(gridRef.current!, gridO);
         set(warmRef.current!, warmO);
+        set(groundRef.current!, groundO);
         set(forestRef.current!, forestO);
         forestRef.current!.style.maskImage = forestMask;
         forestRef.current!.style.webkitMaskImage = forestMask;
@@ -264,8 +270,11 @@ export default function Atmosphere() {
         soft[3].style.opacity = (mainO * smooth(range(X, 0.12, 0.4)) * 0.55).toFixed(3);
       }
 
-      const lightTone =
-        (env.active && env.light > 0.5 && b === 0) || (lit > 0.5 && b > 0 && X < 0.72 && lv < 0.3) || (lightO > 0.45 && X < 0.72);
+      // the whole film is light now except the steel opening and the LUVISCENT
+      // emerald: ink chrome everywhere else
+      const openingDark = env.active && env.light < 0.5 && b === 0;
+      const emerald = forestO > 0.5 && groundO < 0.5;
+      const lightTone = !openingDark && !emerald;
       const tn = lightTone ? "light" : "dark";
       if (tn !== tone) {
         tone = tn;
@@ -288,6 +297,7 @@ export default function Atmosphere() {
         <div ref={gridRef} className={styles.grid} />
       </div>
       <div ref={warmRef} className={styles.warm} />
+      <div ref={groundRef} className={styles.ground} />
       <div ref={forestRef} className={styles.forest} />
       <div ref={veilRef} className={styles.veil} />
       <div ref={keyRef} className={styles.key} />

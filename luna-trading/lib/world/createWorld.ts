@@ -29,9 +29,9 @@ import { toneAt, lightness } from "./tones";
  * Parameterised by a single journey value t ∈ [0, 1].
  */
 
-const BG = 0x060607;
+const BG = 0xdcdad5;
 
-const COL = { dim: 0x2b2c30, mid: 0x5d5e63, hi: 0xd2d3d6, red: 0xc90216 };
+const COL = { dim: 0xb2b1ad, mid: 0x7c7d81, hi: 0x2a2b2f, red: 0xc90216 };
 
 export type WorldAnchor = { id: string; x: number; y: number; visible: boolean };
 export type WorldHandle = {
@@ -572,8 +572,8 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     fog.far = a[2] + (b[2] - a[2]) * u;
   }
 
-  const dimLit = new THREE.Color(0x4c4d52);
-  const midLit = new THREE.Color(0x8a8b90);
+  const dimLit = new THREE.Color(0xa3a3a0);
+  const midLit = new THREE.Color(0x6a6b70);
   const ink = new THREE.Color(0x1b1c1f);
   const tone = new THREE.Color();
   const rgb: [number, number, number] = [0, 0, 0];
