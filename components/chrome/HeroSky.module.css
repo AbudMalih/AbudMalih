@@ -1,0 +1,208 @@
+/* the opening's sky; see HeroSky.tsx. --gx/--gy/--gr: the globe's framing
+   (GlobeLayer). --px/--py: pointer −1..1, damped. --hp: hero progress. */
+.root {
+  --dir: 1;
+  --sx: calc(var(--gx, 70vw) - var(--dir) * var(--gr, 40vh) * 0.62);
+  --sy: calc(var(--gy, 100vh) - var(--gr, 40vh) * 0.86);
+  --rise: 5.2s;
+  --ease: cubic-bezier(0.22, 0.61, 0.2, 1);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+:global(html[dir="rtl"]) .root {
+  --dir: -1;
+}
+.root i {
+  display: block;
+}
+
+/* dusk: slate upper air warming to amber behind the planet */
+.sky {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 70% at var(--sx) var(--sy), rgba(206, 146, 92, 0.42), rgba(150, 100, 76, 0.16) 40%, transparent 72%),
+    linear-gradient(180deg, rgba(28, 33, 43, 0.6) 0%, rgba(44, 46, 52, 0.2) 38%, rgba(124, 92, 70, 0.2) 78%, rgba(60, 46, 40, 0.32) 100%);
+}
+
+/* depth planes: each answers the pointer at its own distance */
+.depth {
+  position: absolute;
+  inset: -4%;
+  will-change: transform;
+}
+.d1 { transform: translate3d(calc(var(--px, 0) * -8px), calc(var(--py, 0) * -6px), 0); }
+.d2 { transform: translate3d(calc(var(--px, 0) * -16px), calc(var(--py, 0) * -10px), 0); }
+.d3 { transform: translate3d(calc(var(--px, 0) * -24px), calc(var(--py, 0) * -14px), 0); }
+.d4 { transform: translate3d(calc(var(--px, 0) * -44px), calc(var(--py, 0) * -22px), 0); }
+
+/* Luna: a great moon over the route, climbing as the story begins */
+.moon {
+  position: absolute;
+  inset-inline-end: 17%;
+  top: 11%;
+  width: clamp(120px, 21vmin, 260px);
+  aspect-ratio: 1;
+  transform: translate3d(0, calc(var(--hp, 0) * -16vh), 0);
+}
+.moonHalo {
+  position: absolute;
+  inset: -70%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(236, 232, 222, 0.22), rgba(220, 214, 200, 0.08) 45%, transparent 100%);
+  animation: halo 9s ease-in-out infinite alternate;
+}
+.moonDisc {
+  position: absolute;
+  inset: 0;
+  background: url("/sky/moon.webp") center / contain no-repeat;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 18px rgba(236, 232, 222, 0.25));
+}
+@keyframes halo {
+  to { transform: scale(1.12); opacity: 0.7; }
+}
+@media (max-width: 720px) {
+  .moon {
+    top: 13%;
+    inset-inline-end: 12%;
+    width: 78px;
+  }
+}
+
+/* cloud banks, drifting at different speeds */
+.clouds {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  background-repeat: repeat-x;
+  background-size: 50% 100%;
+  will-change: transform;
+  animation: drift linear infinite;
+}
+.cloudsFar {
+  top: 6%;
+  height: 62%;
+  opacity: 0.26;
+  background-image: url("/sky/cloud-far.webp");
+  animation-duration: 220s;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+}
+.cloudsNear {
+  top: 36%;
+  height: 70%;
+  opacity: 0.34;
+  background-image: url("/sky/cloud-near.webp");
+  animation-duration: 130s;
+  filter: sepia(0.4);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 34%, #000 64%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 34%, #000 64%, transparent 100%);
+}
+@keyframes drift {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+:global(html[dir="rtl"]) .clouds {
+  animation-direction: reverse;
+}
+
+/* the sunrise over the globe's limb */
+.sunrise {
+  position: absolute;
+  left: 4%;
+  top: 4%;
+  width: 0;
+  height: 0;
+  transform: translate3d(var(--sx), var(--sy), 0);
+}
+.sun,
+.rays,
+.flare {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transition:
+    opacity var(--rise) var(--ease),
+    transform var(--rise) var(--ease);
+}
+.sun {
+  width: calc(var(--gr, 40vh) * 1.6);
+  height: calc(var(--gr, 40vh) * 1.6);
+  margin: calc(var(--gr, 40vh) * -0.8) 0 0 calc(var(--gr, 40vh) * -0.8);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 236, 200, 0.75), rgba(244, 186, 116, 0.32) 26%, rgba(206, 132, 84, 0.1) 58%, transparent 100%);
+  opacity: 0;
+  transform: translate3d(0, calc(var(--gr, 40vh) * 0.4), 0) scale(0.6);
+}
+.rays {
+  width: 260vmax;
+  height: 260vmax;
+  margin: -130vmax 0 0 -130vmax;
+  opacity: 0;
+  transform: scale(0.7);
+  mask-image: radial-gradient(closest-side, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 62%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0, 0, 0, 0.5) 22%, transparent 62%);
+  mix-blend-mode: screen;
+}
+.rays i {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 4deg, rgba(255, 214, 160, 0) 0deg, rgba(255, 214, 160, 0.11) 2.2deg, rgba(255, 214, 160, 0) 4.4deg, transparent 4.4deg 11deg),
+    repeating-conic-gradient(from 0deg, rgba(255, 232, 200, 0) 0deg, rgba(255, 232, 200, 0.07) 3deg, rgba(255, 232, 200, 0) 6deg, transparent 6deg 17deg);
+  animation: spin 240s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.flare {
+  width: 110vw;
+  height: 3px;
+  margin: -1.5px 0 0 -55vw;
+  background: linear-gradient(90deg, transparent, rgba(255, 214, 170, 0.25) 30%, rgba(255, 240, 220, 0.8) 50%, rgba(255, 214, 170, 0.25) 70%, transparent);
+  filter: blur(1px);
+  opacity: 0;
+  transform: scaleX(0.1);
+  mix-blend-mode: screen;
+}
+.root[data-risen] .sun {
+  opacity: 1;
+  transform: none;
+}
+.root[data-risen] .rays {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.6s;
+}
+.root[data-risen] .flare {
+  opacity: 0.55;
+  transform: none;
+  transition-delay: 1.1s;
+}
+
+/* night: the page opens before dawn */
+.night {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(90% 80% at var(--sx) var(--sy), rgba(8, 9, 12, 0.5), rgba(6, 7, 10, 0.78) 70%);
+  transition: opacity var(--rise) var(--ease);
+}
+.root[data-risen] .night {
+  opacity: 0;
+}
+
+/* still: the risen frame, no movement */
+.root[data-still] *,
+.root[data-still] *::before {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .root * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

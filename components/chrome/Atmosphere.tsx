@@ -5,6 +5,7 @@ import { stage, range, smooth, journeyT } from "@/lib/stage/store";
 import { onFrame } from "@/lib/stage/ticker";
 import { toneAt, lightness } from "@/lib/world/tones";
 import { heroEnv } from "@/lib/stage/heroEnv";
+import HeroSky from "./HeroSky";
 import styles from "./Atmosphere.module.css";
 
 /**
@@ -279,12 +280,7 @@ export default function Atmosphere() {
       <div ref={mineralRef} className={styles.mineral}>
         <div ref={mineralTexRef} className={styles.mineralTex}>
           {/* daylight moving slowly over the brushed steel behind the planet */}
-          {/* a living sky behind the planet: dusk over the steel, cloud banks
-              drifting slowly, and a warm sun rising behind the globe's limb */}
-          <div className={styles.sky} />
-          <div className={styles.sun} />
-          <div className={`${styles.clouds} ${styles.cloudsFar}`} />
-          <div className={`${styles.clouds} ${styles.cloudsNear}`} />
+          <HeroSky />
           <div className={styles.daylight} />
           <div className={styles.daylightWarm} />
         </div>
