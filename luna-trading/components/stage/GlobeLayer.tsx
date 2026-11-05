@@ -67,12 +67,25 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
     const TILT = (-16 * Math.PI) / 180;
     const RINGS = [1.08, 1.2, 1.34];
     let lastOrbit = "";
+    let lastGlobe = "";
     const drawOrbits = (f: GlobeDerived) => {
       const back = orbitBackRef.current;
       const front = orbitFrontRef.current;
       const plus = orbitPlusRef.current;
       if (!back || !front || !plus) return;
       const show = (1 - smooth(range(stage.p.hero, 0, 0.3))) * f.reveal * (stage.p.closing > 0 ? 0 : 1);
+      const r = ((vh / 2) * Math.tan(Math.asin(Math.min(1, 1 / f.dist)))) / Math.tan((13 * Math.PI) / 180);
+      const cx = vw * (0.5 + f.ox);
+      const cy = vh * (0.5 + f.oy);
+      // the sky behind the planet (Atmosphere) follows the globe's framing
+      const gk = `${cx.toFixed(0)}|${cy.toFixed(0)}|${r.toFixed(0)}`;
+      if (gk !== lastGlobe && stage.p.closing <= 0) {
+        lastGlobe = gk;
+        const rs = document.documentElement.style;
+        rs.setProperty("--gx", `${cx.toFixed(0)}px`);
+        rs.setProperty("--gy", `${cy.toFixed(0)}px`);
+        rs.setProperty("--gr", `${r.toFixed(0)}px`);
+      }
       if (show < 0.002) {
         if (lastOrbit !== "off") {
           lastOrbit = "off";
@@ -80,9 +93,6 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
         }
         return;
       }
-      const r = ((vh / 2) * Math.tan(Math.asin(Math.min(1, 1 / f.dist)))) / Math.tan((13 * Math.PI) / 180);
-      const cx = vw * (0.5 + f.ox);
-      const cy = vh * (0.5 + f.oy);
       const key = `${cx.toFixed(1)}|${cy.toFixed(1)}|${r.toFixed(1)}|${show.toFixed(3)}`;
       if (key !== lastOrbit) {
         lastOrbit = key;
