@@ -19,7 +19,7 @@ import {
 } from "./models";
 import type { Tier } from "@/lib/stage/store";
 import { ANCHOR_DEFS } from "./anchors";
-import { toneAt, lightness, skyAt } from "./tones";
+import { toneAt, lightness } from "./tones";
 
 /**
  * THE LINE-WORLD
@@ -29,9 +29,9 @@ import { toneAt, lightness, skyAt } from "./tones";
  * Parameterised by a single journey value t ∈ [0, 1].
  */
 
-const BG = 0x8a8682;
+const BG = 0x060607;
 
-const COL = { dim: 0x6f747c, mid: 0xa3a7ae, hi: 0xe9eaec, red: 0xd5061c };
+const COL = { dim: 0x2b2c30, mid: 0x5d5e63, hi: 0xd2d3d6, red: 0xc90216 };
 
 export type WorldAnchor = { id: string; x: number; y: number; visible: boolean };
 export type WorldHandle = {
@@ -94,8 +94,7 @@ const rg = (x: number, a: number, b: number) => cl((x - a) / (b - a));
 const io = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
 export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle {
-  // transparent: under the open sky the DOM sky shows through (Atmosphere)
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
   renderer.setClearColor(BG, 1);
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(BG, 40, 500);
@@ -573,22 +572,17 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     fog.far = a[2] + (b[2] - a[2]) * u;
   }
 
-  const dimLit = new THREE.Color(0x7d828b);
-  const midLit = new THREE.Color(0xb9bcc2);
+  const dimLit = new THREE.Color(0x4c4d52);
+  const midLit = new THREE.Color(0x8a8b90);
   const ink = new THREE.Color(0x1b1c1f);
   const tone = new THREE.Color();
-  const slate = new THREE.Color(0x2a2f37);
   const rgb: [number, number, number] = [0, 0, 0];
   function placeTone(t: number) {
     toneAt(t, rgb);
     tone.setRGB(rgb[0], rgb[1], rgb[2], THREE.SRGBColorSpace);
-    // open sky: clear to transparent (the sky layer shows); indoors: opaque
-    const sky = skyAt(t);
-    renderer.setClearColor(tone, 1 - sky);
+    renderer.setClearColor(tone, 1);
     (scene.fog as THREE.Fog).color.copy(tone);
-    // structures read as dark dusk silhouettes against the sky (fog still
-    // lifts the distant ones into the horizon haze)
-    mats.occ.color.copy(tone).lerp(slate, 0.82 * sky);
+    mats.occ.color.copy(tone);
     // metallic warehouse: lines lift with the background
     const metal = sm(cl((t - 0.58) / 0.12)) * (1 - sm(cl((t - 0.86) / 0.12)));
     mats.dim.color.setHex(COL.dim).lerp(dimLit, metal);

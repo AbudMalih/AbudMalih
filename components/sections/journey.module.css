@@ -9,10 +9,9 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* a soft dusk scrim: light type stays clear of the sky and the line-world */
   background:
-    linear-gradient(0deg, rgba(20, 23, 28, 0.62) 0%, rgba(20, 23, 28, 0) 46%),
-    linear-gradient(var(--scrim-dir, 90deg), rgba(20, 23, 28, 0.42) 0%, rgba(20, 23, 28, 0) 50%);
+    linear-gradient(0deg, rgba(6, 6, 7, 0.78) 0%, rgba(6, 6, 7, 0) 46%),
+    linear-gradient(var(--scrim-dir, 90deg), rgba(6, 6, 7, 0.55) 0%, rgba(6, 6, 7, 0) 50%);
 }
 .tag {
   position: absolute;

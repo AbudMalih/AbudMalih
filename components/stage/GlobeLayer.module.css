@@ -68,3 +68,54 @@
 .home[data-quiet] .coord {
   display: none;
 }
+
+/* the opening's orbits: hairline trade lanes around the planet */
+.orbits {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+}
+.ring {
+  fill: none;
+  stroke: rgba(236, 237, 239, 0.3);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 2 7;
+  animation: lane 90s linear infinite;
+}
+.ring:nth-child(2) {
+  stroke: rgba(236, 237, 239, 0.22);
+  stroke-dasharray: 1 11;
+  animation-duration: 130s;
+  animation-direction: reverse;
+}
+.ring:nth-child(3) {
+  stroke: rgba(236, 237, 239, 0.18);
+  stroke-dasharray: 40 18 2 18;
+  animation-duration: 160s;
+}
+@keyframes lane {
+  to {
+    stroke-dashoffset: -900;
+  }
+}
+.orbitPlus {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  will-change: transform;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    animation: none;
+  }
+  .orbitPlus {
+    display: none;
+  }
+}

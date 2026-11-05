@@ -1,24 +1,11 @@
 .layer {
   visibility: hidden;
   opacity: 0;
-  /* transparent: the sky (Atmosphere) shows behind the line-world */
-  background: transparent;
+  background: var(--ink-950);
 }
 .canvas {
   position: absolute;
   inset: 0;
-}
-/* lens depth over the line-world: the near ground and the edges settle into
-   shadow, as a camera sees dusk (strength = --vig, 0 in the brand light) */
-.layer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: var(--vig, 0);
-  background:
-    linear-gradient(180deg, rgba(14, 16, 20, 0) 52%, rgba(14, 16, 20, 0.46) 100%),
-    radial-gradient(130% 90% at 50% 38%, transparent 58%, rgba(14, 16, 20, 0.34) 100%);
 }
 .seq {
   opacity: 0;

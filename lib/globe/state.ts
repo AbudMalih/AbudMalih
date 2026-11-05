@@ -39,8 +39,7 @@ function globeStateLtr(): GlobeDerived {
       // on through the held CTA
       reveal: smooth(range(c, 0.01, 0.2)) * 0.95,
       route: 1,
-      // the closing world stands on mineral daylight: lit graphite, like the opening
-      env: 0.45,
+      env: 0,
       opacity: smooth(range(c, 0.01, 0.16)) * (m ? 0.6 : 0.9),
       labels: range(c, 0.16, 0.22),
     };

@@ -27,6 +27,9 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
   const headRef = useRef<HTMLDivElement>(null);
   const headTextRef = useRef<HTMLSpanElement>(null);
   const homeRef = useRef<HTMLDivElement>(null);
+  const orbitBackRef = useRef<SVGSVGElement>(null);
+  const orbitFrontRef = useRef<SVGSVGElement>(null);
+  const orbitPlusRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (mode === "fixed" && !isCine()) return;
@@ -42,12 +45,77 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
     let lastVersion = -1;
     let lastHeadText = "";
 
+    let vw = 1;
+    let vh = 1;
     const size = () => {
       if (!globe) return;
       const r = wrap.getBoundingClientRect();
+      vw = Math.max(1, r.width);
+      vh = Math.max(1, r.height);
       const dpr = Math.min(window.devicePixelRatio || 1, stage.tier === "high" ? 2 : 1.5);
       globe.setSize(Math.max(1, r.width), Math.max(1, r.height), dpr);
       dirty = true;
+    };
+
+    /*
+     * The opening's orbits: three hairline rings around the planet, like trade
+     * lanes around the world, with the red + travelling the outer one. Sized
+     * and centred from the globe's real camera framing (26° fov, view offset),
+     * so they stay locked to the planet on every screen. Back halves behind
+     * the globe, front halves in front. They fade out as the story begins.
+     */
+    const TILT = (-16 * Math.PI) / 180;
+    const RINGS = [1.08, 1.2, 1.34];
+    let lastOrbit = "";
+    const drawOrbits = (f: GlobeDerived) => {
+      const back = orbitBackRef.current;
+      const front = orbitFrontRef.current;
+      const plus = orbitPlusRef.current;
+      if (!back || !front || !plus) return;
+      const show = (1 - smooth(range(stage.p.hero, 0, 0.3))) * f.reveal * (stage.p.closing > 0 ? 0 : 1);
+      if (show < 0.002) {
+        if (lastOrbit !== "off") {
+          lastOrbit = "off";
+          back.style.opacity = front.style.opacity = plus.style.opacity = "0";
+        }
+        return;
+      }
+      const r = ((vh / 2) * Math.tan(Math.asin(Math.min(1, 1 / f.dist)))) / Math.tan((13 * Math.PI) / 180);
+      const cx = vw * (0.5 + f.ox);
+      const cy = vh * (0.5 + f.oy);
+      const key = `${cx.toFixed(1)}|${cy.toFixed(1)}|${r.toFixed(1)}|${show.toFixed(3)}`;
+      if (key !== lastOrbit) {
+        lastOrbit = key;
+        for (const svg of [back, front]) {
+          svg.querySelector("g")!.setAttribute("transform", `translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${((TILT * 180) / Math.PI).toFixed(1)})`);
+          svg.querySelectorAll("ellipse").forEach((e, i) => {
+            e.setAttribute("rx", (r * RINGS[i]).toFixed(1));
+            e.setAttribute("ry", (r * RINGS[i] * 0.3).toFixed(1));
+          });
+          const clip = svg.querySelector("clipPath rect");
+          if (clip) clip.setAttribute("width", String(r * 4)), clip.setAttribute("x", String(-r * 2)), clip.setAttribute("height", String(r * 2));
+        }
+        back.style.opacity = (show * 0.9).toFixed(3);
+        front.style.opacity = show.toFixed(3);
+      }
+      // the red +: one slow lap of the outer lane (48 s), front half bright
+      // phones: the + would cross the headline and the footer line, so only the rings
+      if (stage.tier === "low" || stage.mobile) {
+        plus.style.opacity = "0";
+        return;
+      }
+      const t = stage.ambientClock ?? performance.now() / 1000;
+      const a = (t * Math.PI * 2) / 48;
+      const rx = r * RINGS[2];
+      const ry = rx * 0.3;
+      const ex = rx * Math.cos(a);
+      const ey = ry * Math.sin(a);
+      const x = cx + ex * Math.cos(TILT) - ey * Math.sin(TILT);
+      const y = cy + ex * Math.sin(TILT) + ey * Math.cos(TILT);
+      const inFront = Math.sin(a) > 0;
+      plus.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+      plus.style.opacity = (show * (inFront ? 1 : 0.28)).toFixed(3);
+      plus.style.zIndex = inFront ? "2" : "0";
     };
 
     const place = (el: HTMLElement | null, x: number, y: number, show: boolean) => {
@@ -123,21 +191,12 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
         wrap.style.opacity = cur.opacity.toFixed(3);
         wrap.style.visibility = visible ? "visible" : "hidden";
         if (!visible) return;
-        // a very slow orbit while the world rests (opening, end of the closing):
-        // it eases out as soon as the visitor scrolls, so every scroll state
-        // (and the route's arrival at Köln) stays exact. Never on the low tier.
-        const rest = stage.tier === "low" ? 0 : Math.max(1 - smooth(range(stage.p.hero, 0, 0.12)), smooth(range(stage.p.closing, 0.55, 0.9)));
-        if (rest > 0.001) {
-          const t = stage.ambientClock ?? performance.now() / 1000;
-          const f = { ...cur, lon: cur.lon + rest * 3 * Math.sin((t * Math.PI * 2) / 40), lat: cur.lat + rest * Math.sin((t * Math.PI * 2) / 57) };
-          globe.render(f);
-          drawMarkers(f);
-          dirty = false;
-        } else if (moving || dirty) {
+        if (moving || dirty) {
           globe.render(cur);
           drawMarkers(cur);
           dirty = false;
         }
+        drawOrbits(cur);
       });
     })();
 
@@ -156,7 +215,35 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       aria-hidden="true"
       dir="ltr"
     >
+      {mode === "fixed" && (
+        <svg ref={orbitBackRef} className={styles.orbits} aria-hidden="true">
+          <g>
+            <ellipse className={styles.ring} />
+            <ellipse className={styles.ring} />
+            <ellipse className={styles.ring} />
+          </g>
+        </svg>
+      )}
       <canvas ref={canvasRef} className={styles.canvas} />
+      {mode === "fixed" && (
+        <svg ref={orbitFrontRef} className={`${styles.orbits} ${styles.front}`} aria-hidden="true">
+          <defs>
+            <clipPath id="orbit-front">
+              <rect y="0" />
+            </clipPath>
+          </defs>
+          <g clipPath="url(#orbit-front)">
+            <ellipse className={styles.ring} />
+            <ellipse className={styles.ring} />
+            <ellipse className={styles.ring} />
+          </g>
+        </svg>
+      )}
+      {mode === "fixed" && (
+        <div ref={orbitPlusRef} className={styles.orbitPlus}>
+          <i className={styles.plus} />
+        </div>
+      )}
       <div ref={originRef} className={styles.marker}>
         <i className={styles.plus} />
       </div>
