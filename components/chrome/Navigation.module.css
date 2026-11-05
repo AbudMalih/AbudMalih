@@ -41,20 +41,45 @@
   top: 0;
   opacity: 0;
 }
-/* light grounds: the master wordmark; the open index is always dark */
-:global(html[data-tone="light"]) .bar:not(.isOpen) .logoDark {
+/* light grounds (and the open index, which is a light page): master wordmark, ink */
+:global(html[data-tone="light"]) .bar .logoDark,
+.isOpen .logoDark {
   opacity: 0;
 }
-:global(html[data-tone="light"]) .bar:not(.isOpen) .logoLight {
+:global(html[data-tone="light"]) .bar .logoLight,
+.isOpen .logoLight {
   opacity: 1;
 }
-:global(html[data-tone="light"]) .bar:not(.isOpen) {
+:global(html[data-tone="light"]) .bar,
+.bar.isOpen {
   --paper: #0b0b0d;
   --graphite-400: #47484d;
   --hairline-strong: rgba(11, 11, 13, 0.26);
+  --plate: rgba(243, 242, 238, 0.96);
+  --plate-line: rgba(11, 11, 13, 0.1);
 }
-.compact .brand {
-  transform: scale(0.88);
+
+/* the solid state: a plate fades in under the bar once the page scrolls;
+   it matches the ground (mineral or graphite). No blur, no shadow. */
+.bar {
+  --plate: rgba(21, 22, 25, 0.94);
+  --plate-line: rgba(242, 242, 240, 0.1);
+}
+.plate {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none !important;
+  background: var(--plate);
+  border-bottom: 1px solid var(--plate-line);
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out), background-color 0.35s var(--ease-out);
+}
+.solid .plate {
+  opacity: 1;
+}
+.isOpen .plate {
+  opacity: 0;
 }
 html:global(.intro-pending) .brand {
   opacity: 0;
@@ -69,8 +94,7 @@ html:global(.intro-pending) .brand {
   gap: clamp(28px, 3vw, 52px);
   min-height: 44px;
 }
-/* links + languages + the compact "+" (absolute at this group's end, so in
-   the compact state it sits right before the CTA) */
+/* links + languages (desktop) or the menu trigger (mobile / tablet) */
 .group {
   position: relative;
   display: flex;
@@ -90,6 +114,7 @@ html:global(.intro-pending) .brand {
   transition: transform var(--dur-3) var(--ease-out), opacity var(--dur-2) var(--ease-out);
 }
 .links a {
+  position: relative;
   display: inline-block;
   /* navigation, not metadata: the brand sans, a touch of weight, moderate tracking */
   font-family: var(--font-sans);
@@ -112,15 +137,28 @@ html:global(.intro-pending) .brand {
   background: var(--hairline-strong);
   transition: background var(--dur-3);
 }
-.compact .links a,
-.compact .lang {
-  transform: translateY(-120%);
-  opacity: 0;
-  pointer-events: none;
+/* the current page: a short red rule under the label (not colour alone) */
+.links a::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: -1px;
+  width: 14px;
+  height: 2px;
+  background: var(--luna-red);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.35s var(--ease-out);
 }
-.links li:nth-child(2) a { transition-delay: 30ms; }
-.links li:nth-child(3) a { transition-delay: 60ms; }
-.links li:nth-child(4) a { transition-delay: 90ms; }
+:global([dir="rtl"]) .links a::before {
+  transform-origin: right center;
+}
+.links a[aria-current="page"]::before {
+  transform: none;
+}
+.links li {
+  overflow: visible;
+}
 
 .toggle {
   position: absolute;
@@ -136,10 +174,11 @@ html:global(.intro-pending) .brand {
   color: var(--paper);
   transition: opacity var(--dur-2), transform var(--dur-3) var(--ease-out), color var(--dur-3);
 }
-.bar:not(.compact):not(.isOpen) .toggle {
-  opacity: 0;
-  transform: translateX(10px);
-  pointer-events: none;
+/* the menu trigger exists only below the desktop breakpoint */
+@media (min-width: 1024px) {
+  .toggle {
+    display: none;
+  }
 }
 .plus {
   position: relative;
@@ -163,10 +202,14 @@ html:global(.intro-pending) .brand {
   left: 7.5px;
   width: 3px;
 }
-.toggle:hover .plus {
-  transform: rotate(90deg);
+/* hover turn only for real pointers (a tap leaves :hover stuck on touch) */
+@media (hover: hover) and (pointer: fine) {
+  .toggle:hover .plus {
+    transform: rotate(90deg);
+  }
 }
-.isOpen .plus {
+/* open: the "+" becomes the "×" (wins over any hover state) */
+.bar.isOpen .toggle .plus {
   transform: rotate(45deg);
 }
 
@@ -175,14 +218,21 @@ html:global(.intro-pending) .brand {
   position: fixed;
   inset: 0;
   z-index: calc(var(--z-menu) - 1);
-  background: var(--ink-950);
+  /* a light editorial page in the Luna mineral, ink type */
+  background: #ecebe6;
+  color: #1c1d20;
+  --paper: #1c1d20;
+  --hairline: rgba(20, 21, 24, 0.12);
+  --hairline-strong: rgba(20, 21, 24, 0.26);
+  --graphite-300: #55575c;
+  --graphite-400: #6b6c71;
   clip-path: inset(0 0 100% 0);
-  transition: clip-path 0.9s var(--ease-in-out);
+  transition: clip-path 0.6s var(--ease-in-out);
 }
 .panel[hidden] {
   display: block;
   visibility: hidden;
-  transition: clip-path 0.9s var(--ease-in-out), visibility 0s 0.9s;
+  transition: clip-path 0.5s var(--ease-in-out), visibility 0s 0.5s;
 }
 .panelOpen {
   clip-path: inset(0 0 0 0);
@@ -193,7 +243,8 @@ html:global(.intro-pending) .brand {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: clamp(110px, 16vh, 180px) var(--margin) clamp(24px, 4vh, 48px);
+  padding: calc(var(--header-h) + clamp(12px, 4vh, 48px)) var(--margin) calc(clamp(20px, 4vh, 44px) + env(safe-area-inset-bottom));
+  overflow-y: auto;
 }
 .big li {
   border-top: 1px solid var(--hairline);
@@ -208,8 +259,8 @@ html:global(.intro-pending) .brand {
   gap: clamp(16px, 3vw, 56px);
   padding-block: clamp(6px, 1.2vh, 14px);
   transform: translateY(105%);
-  transition: transform 0.9s var(--ease-out), color var(--dur-2);
-  transition-delay: calc(var(--i) * 45ms + 250ms);
+  transition: transform 0.7s var(--ease-out), color var(--dur-2);
+  transition-delay: calc(var(--i) * 45ms + 160ms);
 }
 .panelOpen .big a {
   transform: none;
@@ -225,13 +276,57 @@ html:global(.intro-pending) .brand {
   font-weight: 700;
   letter-spacing: -0.045em;
   text-transform: uppercase;
-  color: var(--graphite-400);
+  color: #8a8b8f;
   transition: color var(--dur-2);
 }
 .big a:hover .word,
 .big a:focus-visible .word,
 .big a[aria-current="page"] .word {
-  color: var(--paper);
+  color: #141518;
+}
+/* the current page: the red + beside its name */
+.mark {
+  position: relative;
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  margin-inline-start: auto;
+  flex: none;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+  transition: opacity 0.3s var(--ease-out), transform 0.45s var(--ease-out);
+}
+.big a[aria-current="page"] .mark {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.5s;
+}
+/* direct contact inside the index */
+.direct {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-top: clamp(20px, 4vh, 40px);
+}
+.mail {
+  font-size: clamp(1.05rem, 4.6vw, 1.5rem);
+  font-weight: 650;
+  font-variation-settings: "wght" 650;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #141518;
+  border-bottom: 2px solid #141518;
+  padding-bottom: 6px;
+  transition: border-color 0.3s var(--ease-out);
+}
+.mail:hover,
+.mail:focus-visible {
+  border-color: var(--luna-red);
 }
 .panelFoot {
   display: flex;
@@ -247,15 +342,10 @@ html:global(.intro-pending) .brand {
   margin-inline-start: auto;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1023px) {
   .links,
   .lang {
     display: none;
-  }
-  .bar:not(.compact):not(.isOpen) .toggle {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
   }
   .legal {
     margin-inline-start: 0;
@@ -358,6 +448,10 @@ html:global(.intro-pending) .brand {
   outline: 1px solid var(--paper);
   outline-offset: 3px;
 }
+/* on the contact page the action carries the current-page signal */
+.cta[aria-current="page"] {
+  --cta-line: var(--luna-red);
+}
 @media (prefers-reduced-motion: reduce) {
   .cta::before,
   .ctaPlus,
@@ -372,12 +466,10 @@ html:global(.intro-pending) .brand {
 }
 /* inside the index (all sizes, the only CTA on mobile) */
 .ctaPanel {
-  align-self: flex-start;
   height: 52px;
   padding-inline: 22px 20px;
-  margin-top: clamp(20px, 4vh, 40px);
   font-size: 0.86rem;
-  --cta-line: rgba(242, 242, 240, 0.3);
+  --cta-line: rgba(20, 21, 24, 0.3);
 }
 .ctaPanel .ctaPlus {
   width: 11px;
@@ -389,12 +481,17 @@ html:global(.intro-pending) .brand {
 .ctaPanel .ctaPlus::after {
   left: 4.75px;
 }
-@media (max-width: 860px) {
+@media (max-width: 1023px) {
   .bar .cta:not(.ctaPanel) {
     display: none;
   }
+}
+@media (max-width: 600px) {
+  .direct {
+    flex-direction: column;
+    align-items: stretch;
+  }
   .ctaPanel {
-    align-self: stretch;
     justify-content: space-between;
   }
 }
@@ -403,7 +500,7 @@ html:global(.intro-pending) .cta:not(.ctaPanel) {
 }
 
 /* desktop: the wordmark gains ~12 % presence against the scale of the hero */
-@media (min-width: 861px) {
+@media (min-width: 1024px) {
   .brand {
     --logo-h: clamp(24px, 2.07vw, 34px);
   }
