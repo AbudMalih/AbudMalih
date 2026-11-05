@@ -954,39 +954,48 @@
 .lvCta {
   display: inline-flex;
   align-items: center;
-  gap: 18px;
-  padding-block: 14px;
-  padding-inline: 0 22px;
+  gap: 14px;
+  height: 52px;
+  padding-inline: 24px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(205, 182, 138, 0.55);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.22em;
+  font-size: 0.74rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--lv-ivory);
-  border-bottom: 1px solid rgba(205, 182, 138, 0.6);
+  transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+}
+.lvCta:hover,
+.lvCta:focus-visible {
+  background: rgba(205, 182, 138, 0.12);
+  border-color: var(--lv-champagne);
 }
 .lvPlus {
   position: relative;
-  width: 12px;
-  height: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--lv-champagne);
   transition: transform var(--dur-3) var(--ease-out);
 }
 .lvPlus::before,
 .lvPlus::after {
   content: "";
   position: absolute;
-  background: var(--lv-champagne);
+  background: #0f1c16;
 }
 .lvPlus::before {
-  left: 0;
-  right: 0;
-  top: 5.5px;
-  height: 1px;
+  left: 12px;
+  right: 12px;
+  top: 17.5px;
+  height: 1.5px;
 }
 .lvPlus::after {
-  top: 0;
-  bottom: 0;
-  left: 5.5px;
-  width: 1px;
+  top: 12px;
+  bottom: 12px;
+  left: 17.5px;
+  width: 1.5px;
 }
 .lvCta:hover .lvPlus,
 .lvCta:focus-visible .lvPlus {
@@ -1054,86 +1063,70 @@
   align-items: center;
   gap: 18px 36px;
 }
-/* the commercial control, large: the header CTA's language */
+/* the commercial control: a pill with the "+" in a red badge */
 .ctaButton {
-  --cta-line: rgba(242, 242, 240, 0.32);
   position: relative;
-  isolation: isolate;
   display: inline-flex;
   align-items: center;
   gap: 16px;
-  height: 58px;
-  padding-inline: 26px 22px;
-  border: 1px solid var(--cta-line);
-  color: var(--ink);
-  font-size: 0.95rem;
-  font-weight: 500;
-  font-variation-settings: "wght" 500;
-  letter-spacing: 0.075em;
-  text-transform: uppercase;
-  overflow: hidden;
-  transition: color 0.28s var(--ease-out), border-color 0.28s var(--ease-out);
-}
-.ctaButton::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  z-index: -1;
-  background: var(--luna-red);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.32s cubic-bezier(0.65, 0, 0.35, 1);
-}
-:global([dir="rtl"]) .ctaButton::before {
-  transform-origin: right center;
+  height: 60px;
+  padding-inline: 28px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #141518;
+  color: #f6f5f2;
+  font-size: 1rem;
+  font-weight: 550;
+  font-variation-settings: "wght" 550;
+  letter-spacing: 0.005em;
+  box-shadow: 0 14px 34px -16px rgba(20, 21, 24, 0.55);
+  transition: background-color 0.25s var(--ease-out), transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
 }
 .ctaPlus {
   position: relative;
-  width: 12px;
-  height: 12px;
-  color: var(--luna-red);
-  transition: transform 0.32s var(--ease-out), color 0.28s;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--luna-red);
+  color: #fff;
+  transition: transform 0.35s var(--ease-out);
 }
 .ctaPlus::before,
 .ctaPlus::after {
   content: "";
   position: absolute;
   background: currentColor;
+  border-radius: 1px;
 }
 .ctaPlus::before {
-  left: 0;
-  right: 0;
-  top: 5px;
+  left: 15px;
+  right: 15px;
+  top: 21px;
   height: 2px;
 }
 .ctaPlus::after {
-  top: 0;
-  bottom: 0;
-  left: 5px;
+  top: 15px;
+  bottom: 15px;
+  left: 21px;
   width: 2px;
 }
 .ctaButton:hover,
 .ctaButton:focus-visible {
-  color: #fbfaf8;
-  --cta-line: var(--luna-red);
-}
-.ctaButton:hover::before,
-.ctaButton:focus-visible::before {
-  transform: scaleX(1);
+  background: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px -16px rgba(20, 21, 24, 0.7);
 }
 .ctaButton:hover .ctaPlus,
 .ctaButton:focus-visible .ctaPlus {
-  color: #fbfaf8;
-  transform: translateX(2px) rotate(90deg);
+  transform: rotate(90deg);
 }
 .ctaButton:focus-visible {
-  outline: 1px solid var(--ink);
+  outline: 2px solid var(--luna-red);
   outline-offset: 4px;
 }
 :global(html[lang="ar"]) .ctaButton {
-  letter-spacing: 0;
-  text-transform: none;
-  font-size: 1.02rem;
+  font-size: 1.04rem;
 }
 .ctaMore {
   color: var(--muted);

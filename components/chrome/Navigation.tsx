@@ -81,7 +81,7 @@ export default function Navigation() {
             <ul>
               {NAV.filter((n) => n.key !== "home" && n.key !== "contact").map((n) => (
                 <li key={n.href}>
-                  <Link href={href(n.href)} className="link-line t-label" data-cursor="link" aria-current={current === n.href ? "page" : undefined}>
+                  <Link href={href(n.href)} data-cursor="link" aria-current={current === n.href ? "page" : undefined}>
                     {dict.nav[n.key]}
                   </Link>
                 </li>

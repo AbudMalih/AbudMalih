@@ -221,17 +221,19 @@
   border: 0;
   margin: 0;
   padding: 0;
-  display: grid;
-  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .type {
   position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 52px;
-  padding: 12px 14px 12px 0;
-  border-bottom: 1px solid var(--rule);
+  min-height: 46px;
+  padding: 10px 20px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
   cursor: pointer;
   color: var(--soft);
   transition:
@@ -240,7 +242,11 @@
     transform 0.6s var(--ease-out) var(--d, 0ms);
 }
 :global([dir="rtl"]) .type {
-  padding: 12px 0 12px 14px;
+  padding: 10px 20px;
+}
+.type:has(.typeInput:focus-visible) {
+  outline: 2px solid var(--luna-red);
+  outline-offset: 2px;
 }
 .typeInput {
   position: absolute;
@@ -273,7 +279,9 @@
   color: var(--ink);
 }
 .typeOn {
-  color: var(--ink);
+  color: #f6f5f2;
+  background: #141518;
+  border-color: #141518;
 }
 .typeOn .typeName {
   font-weight: 650;
@@ -283,17 +291,9 @@
   opacity: 1;
   transform: none;
 }
-/* selected: a heavier rule draws under the option (not colour alone) */
+/* selected: the chip fills (shape and fill, not colour alone) */
 .type::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: -1px;
-  height: 2px;
-  background: var(--ink);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+  display: none;
 }
 :global([dir="rtl"]) .type::after {
   transform-origin: right center;
@@ -503,9 +503,7 @@
 }
 /* the approved CTA on graphite: a hairline frame, the red fill sweeps in */
 .submit {
-  --cta-line: rgba(20, 21, 24, 0.36);
   cursor: pointer;
-  background: transparent;
   font-family: inherit;
 }
 .submit:disabled {
@@ -599,9 +597,10 @@
 }
 .textButton {
   margin-top: clamp(28px, 4vh, 40px);
-  padding: 0 0 8px;
-  border: 0;
-  border-bottom: 1px solid var(--rule-strong);
+  height: 46px;
+  padding: 0 22px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
   background: none;
   color: var(--ink);
   font: inherit;
@@ -814,4 +813,10 @@
   .mailArrow {
     transition: none;
   }
+}
+.typeOn:hover {
+  color: #f6f5f2;
+}
+.type:not(.typeOn):hover {
+  background: rgba(20, 21, 24, 0.04);
 }

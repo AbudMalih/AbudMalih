@@ -139,39 +139,48 @@
 .ctaLink {
   display: inline-flex;
   align-items: center;
-  gap: 18px;
-  padding-block: 18px;
-  padding-inline: 0 26px;
+  gap: 14px;
+  height: 54px;
+  padding-inline: 24px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(205, 182, 138, 0.55);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.22em;
+  font-size: 0.76rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--lv-ivory);
-  border-bottom: 1px solid rgba(205, 182, 138, 0.6);
+  transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+}
+.ctaLink:hover,
+.ctaLink:focus-visible {
+  background: rgba(205, 182, 138, 0.12);
+  border-color: var(--lv-gold);
 }
 .ctaPlus {
   position: relative;
-  width: 12px;
-  height: 12px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--lv-gold);
   transition: transform var(--dur-3) var(--ease-out);
 }
 .ctaPlus::before,
 .ctaPlus::after {
   content: "";
   position: absolute;
-  background: var(--lv-gold);
+  background: #0f1c16;
 }
 .ctaPlus::before {
-  left: 0;
-  right: 0;
-  top: 5.5px;
-  height: 1px;
+  left: 13px;
+  right: 13px;
+  top: 18.25px;
+  height: 1.5px;
 }
 .ctaPlus::after {
-  top: 0;
-  bottom: 0;
-  left: 5.5px;
-  width: 1px;
+  top: 13px;
+  bottom: 13px;
+  left: 18.25px;
+  width: 1.5px;
 }
 .ctaLink:hover .ctaPlus,
 .ctaLink:focus-visible .ctaPlus {
