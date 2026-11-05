@@ -85,16 +85,22 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
 
   const onSubmit = handleSubmit((values) => submit(values, files, { kind: mode }));
 
+  // Keep the step header in view; jump instantly for reduced motion.
+  const toTop = () =>
+    top.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
   const next = async () => {
     const ok = await trigger(STEPS[step]!.fields);
     if (ok) {
       setStep((s) => Math.min(s + 1, STEPS.length - 1));
-      top.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      toTop();
     }
   };
   const back = () => {
     setStep((s) => Math.max(0, s - 1));
-    top.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    toTop();
   };
 
   if (state.status === "success") {
@@ -180,7 +186,7 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
     return (
       <form onSubmit={onSubmit} noValidate className="relative text-ink" aria-label="Kurzbewerbung">
         <Honeypot reg={register("website")} />
-        <div className="sticky top-0 z-10 -mx-5 mb-8 border-b border-ink/10 bg-paper/95 px-5 py-3 backdrop-blur-sm sm:mx-0 sm:px-0">
+        <div className="sticky top-0 z-10 -mx-5 mb-8 border-b border-ink/10 bg-paper px-5 py-3 sm:mx-0 sm:px-0">
           <div className="flex items-center justify-between font-mono text-[0.68rem] uppercase tracking-[0.14em] text-steel-600">
             <span>Kurzbewerbung · ca. 2 Minuten</span>
             <span aria-live="polite">
@@ -188,7 +194,10 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
             </span>
           </div>
           <div className="mt-2 h-1 bg-ink/10" role="progressbar" aria-label="Fortschritt" aria-valuemin={0} aria-valuemax={QUICK_REQUIRED.length} aria-valuenow={done}>
-            <div className="h-full bg-red transition-[width] duration-500" style={{ width: `${(done / QUICK_REQUIRED.length) * 100}%` }} />
+            <div
+              className="h-full origin-left bg-red transition-transform duration-(--motion-standard)"
+              style={{ transform: `scaleX(${done / QUICK_REQUIRED.length})` }}
+            />
           </div>
         </div>
 
@@ -238,7 +247,7 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
         <ol className="grid grid-cols-5 gap-1.5" aria-label="Fortschritt">
           {STEPS.map((s, i) => (
             <li key={s.title} aria-current={i === step ? "step" : undefined}>
-              <span className={`block h-1 ${i <= step ? "bg-red" : "bg-ink/15"} transition-colors`} />
+              <span className={`block h-1 ${i <= step ? "bg-red" : "bg-ink/15"} transition-colors duration-(--motion-standard)`} />
               <span className={`mt-2 hidden font-mono text-[0.65rem] uppercase tracking-[0.12em] sm:block ${i === step ? "text-ink" : "text-steel-600"}`}>
                 {String(i + 1).padStart(2, "0")} {s.title}
               </span>
@@ -254,20 +263,26 @@ export function ApplicationForm({ mode, positions, locations, careersEmail, defa
         <p className="sr-only" aria-live="polite">
           Schritt {step + 1}: {STEPS[step]!.title}
         </p>
-        <div hidden={step !== 0}>{contactFields}</div>
-        <div hidden={step !== 1}>{jobFields}</div>
-        <div hidden={step !== 2} className="space-y-5">
+        {/* All steps stay mounted (values persist going back); the visible
+            one settles in over ~220ms via .motion-step. */}
+        <div hidden={step !== 0} className="motion-step">
+          {contactFields}
+        </div>
+        <div hidden={step !== 1} className="motion-step">
+          {jobFields}
+        </div>
+        <div hidden={step !== 2} className="motion-step space-y-5">
           <TextArea reg={register("workExperience")} label="Berufserfahrung" hint="Tätigkeiten und Zeiträume in Stichpunkten" error={errors.workExperience} />
           <TextArea reg={register("employers")} label="Bisherige Arbeitgeber" rows={3} error={errors.employers} />
           <TextArea reg={register("qualifications")} label="Qualifikationen" hint="z. B. Staplerschein, Schulungen, Weiterbildungen" rows={3} error={errors.qualifications} />
           <TextField reg={register("languages")} label="Sprachen" placeholder="z. B. Deutsch, Englisch" error={errors.languages} />
           <CheckboxGroup reg={register("licences")} label="Zusätzliche Führerscheinklassen" options={licenceClasses} columns={4} />
         </div>
-        <div hidden={step !== 3} className="space-y-5">
+        <div hidden={step !== 3} className="motion-step space-y-5">
           <FileDrop label="Dokumente" files={files} onChange={setFiles} hint="Lebenslauf, Zeugnisse, Nachweise · PDF, Word, JPG oder PNG · bis zu 5 Dateien" />
           <TextArea reg={register("message")} label="Nachricht" rows={5} error={errors.message} />
         </div>
-        <div hidden={step !== 4} className="space-y-6">
+        <div hidden={step !== 4} className="motion-step space-y-6">
           <dl className="divide-y divide-ink/10 border-y border-ink/15">
             {summary.map(([k, val]) => (
               <div key={k} className="grid grid-cols-[8.5rem_1fr] gap-4 py-3 text-sm sm:grid-cols-[11rem_1fr]">

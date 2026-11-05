@@ -3,7 +3,6 @@ import { Geist_Mono, Inter_Tight } from "next/font/google";
 import { CookieConsent } from "@/components/layout/CookieConsent";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { PageTransition } from "@/components/layout/PageTransition";
 import { site } from "@/content/site";
 import { jsonLdScript, organizationJsonLd } from "@/lib/structured-data";
 import "./globals.css";
@@ -52,7 +51,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </main>
         <Footer />
         <CookieConsent />
-        <PageTransition />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(organizationJsonLd()) }} />
       </body>
     </html>

@@ -87,7 +87,7 @@ export function JobBoard({ jobs, facets }: { jobs: JobRow[]; facets: Facets }) {
         <ul>
           {list.map((j) => (
             <li key={j.slug} className="border-b border-ink/15">
-              <Link href={`/karriere/jobs/${j.slug}`} className="group grid gap-4 py-7 sm:grid-cols-[1fr_auto] sm:items-center lg:py-9">
+              <Link href={`/karriere/jobs/${j.slug}`} className="group motion-lift grid gap-4 py-7 sm:grid-cols-[1fr_auto] sm:items-center lg:py-9">
                 <span>
                   <span className="block text-2xl font-extrabold uppercase leading-tight tracking-[-0.02em] transition-colors group-hover:text-red-ink sm:text-3xl">
                     {j.title}

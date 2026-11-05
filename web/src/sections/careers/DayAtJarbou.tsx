@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import type { ProcessStep } from "@/content/types";
 
 /**
- * "Ein Tag bei JARBOU" – quiet scroll storytelling. A sticky counter and a
- * route line follow the reader through the eight stations of a working day.
- * No pinning or scroll hijacking; fully readable without JS.
+ * "Ein Tag bei JARBOU" – the eight stations of a working day. A sticky
+ * counter marks the station being read (IntersectionObserver, no scroll
+ * listener); no pinning, no moving route line, fully readable without JS.
  */
 export function DayAtJarbou({ steps }: { steps: ProcessStep[] }) {
   const [active, setActive] = useState(0);
@@ -35,11 +35,11 @@ export function DayAtJarbou({ steps }: { steps: ProcessStep[] }) {
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-steel-400">
             Station <span className="text-white">{current.index}</span> / {String(steps.length).padStart(2, "0")}
           </p>
-          <p key={current.id} className="display mt-4 text-[clamp(2.5rem,4.6vw,4.5rem)] text-white [animation:rise_0.5s_var(--ease-out-expo)_both]" aria-hidden="true">
+          <p key={current.id} className="display mt-4 text-[clamp(2.5rem,4.6vw,4.5rem)] text-white motion-swap" aria-hidden="true">
             {current.title}
           </p>
           <div className="mt-8 h-0.5 w-full bg-white/15">
-            <div className="h-full origin-left bg-red transition-transform duration-500" style={{ transform: `scaleX(${progress})` }} />
+            <div className="h-full origin-left bg-red transition-transform duration-(--motion-standard)" style={{ transform: `scaleX(${progress})` }} />
           </div>
           <div className="mt-3 flex justify-between font-mono text-[0.65rem] uppercase tracking-[0.14em] text-steel-500">
             <span>Tourbeginn</span>
@@ -50,11 +50,6 @@ export function DayAtJarbou({ steps }: { steps: ProcessStep[] }) {
 
       <ol className="relative lg:col-span-7">
         <span aria-hidden="true" className="absolute bottom-6 left-[7px] top-6 w-px bg-white/15" />
-        <span
-          aria-hidden="true"
-          className="absolute left-[7px] top-6 w-px origin-top bg-red transition-transform duration-500"
-          style={{ height: "calc(100% - 3rem)", transform: `scaleY(${progress})` }}
-        />
         {steps.map((s, i) => (
           <li
             key={s.id}
@@ -66,7 +61,7 @@ export function DayAtJarbou({ steps }: { steps: ProcessStep[] }) {
           >
             <span
               aria-hidden="true"
-              className={`absolute left-0 top-10 block size-[15px] border transition-colors duration-300 [transform:skewX(-28deg)] lg:top-16 ${
+              className={`absolute left-0 top-10 block size-[15px] border transition-colors [transform:skewX(-28deg)] lg:top-16 ${
                 i <= active ? "border-red bg-red" : "border-white/50 bg-ink"
               }`}
             />

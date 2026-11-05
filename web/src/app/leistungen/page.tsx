@@ -8,7 +8,6 @@ import { ScrollSpyNav } from "@/components/layout/ScrollSpyNav";
 import { ButtonLink } from "@/components/ui/Button";
 import { media } from "@/content/media";
 import { serviceDetails, services } from "@/content/services";
-import { InView } from "@/motion/InView";
 import { OperatingModel } from "@/sections/home/OperatingModel";
 
 export const metadata: Metadata = pageMeta({
@@ -42,25 +41,24 @@ export default function ServicesPage() {
               const d = serviceDetails[s.id]!;
               const m = media[s.media];
               return (
-                <InView
-                  as="section"
+                <section
                   key={s.id}
                   id={s.id}
                   aria-labelledby={`${s.id}-title`}
                   className="scroll-mt-24 border-t border-ink/15 py-16 first:border-t-0 first:pt-0 lg:py-24"
                 >
-                  <p className="reveal font-mono text-xs text-red-ink">{s.index} / 06</p>
-                  <h2 id={`${s.id}-title`} className="reveal h-section mt-4 break-words [hyphens:auto]" style={{ "--d": "80ms" } as React.CSSProperties}>
+                  <p className="font-mono text-xs text-red-ink">{s.index} / 06</p>
+                  <h2 id={`${s.id}-title`} className="h-section mt-4 break-words [hyphens:auto]">
                     {s.title}
                   </h2>
                   <div className="mt-10 grid gap-10 xl:grid-cols-9">
                     <div className={`min-w-0 xl:col-span-4 ${i % 2 ? "xl:order-2" : ""}`}>
-                      <p className="reveal text-lg leading-relaxed text-graphite-600" style={{ "--d": "160ms" } as React.CSSProperties}>
+                      <p className="text-lg leading-relaxed text-graphite-600">
                         {d.intro}
                       </p>
                       <ul className="mt-8 border-t border-ink">
                         {d.tasks.map((t, j) => (
-                          <li key={t} className="reveal flex gap-4 border-b border-ink/10 py-4" style={{ "--d": `${220 + j * 70}ms` } as React.CSSProperties}>
+                          <li key={t} className="flex gap-4 border-b border-ink/10 py-4">
                             <span className="font-mono text-xs text-steel-600">{String(j + 1).padStart(2, "0")}</span>
                             <span className="font-medium">{t}</span>
                           </li>
@@ -68,7 +66,7 @@ export default function ServicesPage() {
                       </ul>
                     </div>
                     <div className={`min-w-0 xl:col-span-5 ${i % 2 ? "xl:order-1" : ""}`}>
-                      <figure className="reveal relative aspect-[16/12] overflow-hidden bg-steel-100" style={{ "--d": "120ms" } as React.CSSProperties}>
+                      <figure className="relative aspect-[16/12] overflow-hidden bg-steel-100">
                         {m.src ? (
                           <Image src={m.src} alt={m.alt} fill sizes="(min-width: 1280px) 40vw, 100vw" className="object-cover" />
                         ) : (
@@ -80,12 +78,12 @@ export default function ServicesPage() {
                           {s.index} — {s.title}
                         </figcaption>
                       </figure>
-                      <p className="reveal mt-6 border-l-2 border-red pl-5 text-xl font-semibold leading-snug tracking-[-0.01em]" style={{ "--d": "300ms" } as React.CSSProperties}>
+                      <p className="mt-6 border-l-2 border-red pl-5 text-xl font-semibold leading-snug tracking-[-0.01em]">
                         {d.result}
                       </p>
                     </div>
                   </div>
-                </InView>
+                </section>
               );
             })}
           </div>

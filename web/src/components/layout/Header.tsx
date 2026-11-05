@@ -82,9 +82,9 @@ export function Header() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[transform,background-color,border-color] duration-500 ease-[var(--ease-out-expo)] ${
+      className={`fixed inset-x-0 top-0 z-50 transition-[transform,background-color,border-color] duration-(--motion-standard) ${
         hidden && !open ? "-translate-y-full" : "translate-y-0"
-      } ${scrolled || open ? "border-b border-white/10 bg-ink/95 backdrop-blur-sm" : "border-b border-transparent bg-transparent"}`}
+      } ${scrolled || open ? "border-b border-white/10 bg-ink" : "border-b border-transparent bg-transparent"}`}
     >
       <div className="shell flex h-16 items-center justify-between gap-6 lg:h-20">
         <Logo link height={30} className="lg:!h-[34px]" />
@@ -101,7 +101,7 @@ export function Header() {
                   {item.label}
                   <span
                     aria-hidden="true"
-                    className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 bg-red transition-transform duration-300 group-hover:scale-x-100 group-aria-[current=page]:scale-x-100"
+                    className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 bg-red transition-transform duration-(--motion-standard) group-hover:scale-x-100 group-aria-[current=page]:scale-x-100"
                   />
                 </Link>
               </li>
@@ -112,7 +112,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link
             href={ctas.apply.href}
-            className="hidden min-h-11 items-center px-3 text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-white underline-offset-8 hover:underline md:inline-flex"
+            className="hidden min-h-11 items-center px-3 text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-white underline-offset-8 transition-colors hover:underline md:inline-flex"
           >
             {ctas.apply.label}
           </Link>
@@ -131,8 +131,8 @@ export function Header() {
             onClick={() => setOpen((v) => !v)}
           >
             <span aria-hidden="true" className="relative block h-3 w-6">
-              <span className={`absolute left-0 top-0 h-0.5 w-6 bg-white transition-transform duration-300 ${open ? "translate-y-[5px] rotate-45" : ""}`} />
-              <span className={`absolute bottom-0 left-0 h-0.5 w-6 bg-white transition-transform duration-300 ${open ? "-translate-y-[5px] -rotate-45" : ""}`} />
+              <span className={`absolute left-0 top-0 h-0.5 w-6 bg-white transition-transform duration-(--motion-standard) ${open ? "translate-y-[5px] rotate-45" : ""}`} />
+              <span className={`absolute bottom-0 left-0 h-0.5 w-6 bg-white transition-transform duration-(--motion-standard) ${open ? "-translate-y-[5px] -rotate-45" : ""}`} />
             </span>
           </button>
         </div>
@@ -142,7 +142,7 @@ export function Header() {
         id="mobile-menu"
         ref={menuRef}
         hidden={!open}
-        className="h-[calc(100svh-4rem)] overflow-y-auto border-t border-white/10 bg-ink xl:hidden"
+        className="motion-swap h-[calc(100svh-4rem)] overflow-y-auto border-t border-white/10 bg-ink xl:hidden"
       >
         <nav aria-label="Mobile Navigation" className="shell flex min-h-full flex-col justify-between py-8">
           <ul className="space-y-1">

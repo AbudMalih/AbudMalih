@@ -57,7 +57,7 @@ export function OperationsMap({ locations, explorer = false, jobsByLocation = {}
       <div className="relative min-w-0 lg:col-span-7">
         <svg viewBox={GERMANY_VIEWBOX} className="mx-auto w-full max-w-[560px]" role="img" aria-label="Deutschlandkarte mit JARBOU-Standorten">
           <path d={GERMANY_PATH} fill="#121417" stroke="#3a3f45" strokeWidth="1.5" strokeLinejoin="round" />
-          {edges.map(([a, b], i) => (
+          {edges.map(([a, b]) => (
             <line
               key={`${a.id}-${b.id}`}
               x1={a.x}
@@ -68,12 +68,11 @@ export function OperationsMap({ locations, explorer = false, jobsByLocation = {}
               strokeWidth="1.5"
               strokeDasharray="1"
               pathLength={1}
-              className="map-route transition-opacity duration-300 group-data-[inview=true]/iv:[animation:draw_1.2s_var(--ease-in-out-quart)_forwards]"
-              style={{ animationDelay: `${0.5 + i * 0.22}s` }}
+              className="transition-opacity duration-(--motion-standard)"
               opacity={filter === "all" ? 0.75 : 0.2}
             />
           ))}
-          {pts.map((p, i) => {
+          {pts.map((p) => {
             const on = active === p.id;
             const dim = !matches(p);
             return (
@@ -86,8 +85,8 @@ export function OperationsMap({ locations, explorer = false, jobsByLocation = {}
                 onMouseLeave={() => setHover(null)}
                 opacity={dim ? 0.25 : 1}
               >
-                <circle r={on ? 22 : 0} fill="#f0080f" opacity="0.18" className="transition-all duration-500" />
-                <g className="map-pin group-data-[inview=true]/iv:[animation:fade-up_0.6s_var(--ease-out-expo)_both]" style={{ animationDelay: `${0.4 + i * 0.16}s` }}>
+                <circle r={on ? 22 : 0} fill="#f0080f" opacity="0.18" className="transition-[r] duration-(--motion-standard)" />
+                <g>
                   <rect x={-6} y={-6} width={12} height={12} fill={on || (p.type && !dim && filter !== "all") ? "#f0080f" : "#f5f4f0"} transform="rotate(45)" />
                   <text
                     x={LABEL[p.id] === "left" ? -12 : LABEL[p.id] === "below" ? 0 : 12}

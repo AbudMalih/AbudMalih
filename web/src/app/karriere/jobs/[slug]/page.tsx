@@ -58,7 +58,7 @@ export default async function JobPage({ params }: Params) {
               Jobs
             </Link>
           </nav>
-          <h1 className="display mt-6 max-w-5xl text-[clamp(2.3rem,5.6vw,5.25rem)] text-white [animation:rise_0.8s_var(--ease-out-expo)_both]">{job.title}</h1>
+          <h1 className="display mt-6 max-w-5xl text-[clamp(2.3rem,5.6vw,5.25rem)] text-white motion-enter">{job.title}</h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-steel-300">{job.description}</p>
           <dl className="mt-10 grid grid-cols-2 border-t border-white/15 md:grid-cols-4">
             {facts.map(([k, v]) => (

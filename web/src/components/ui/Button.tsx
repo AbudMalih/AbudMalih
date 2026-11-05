@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 type Variant = "primary" | "outline" | "outline-dark" | "text";
 
 const base =
-  "group relative inline-flex min-h-12 items-center justify-center gap-3 overflow-hidden px-6 text-[0.8rem] font-semibold uppercase tracking-[0.12em] transition-colors duration-300";
+  "group relative inline-flex min-h-12 items-center justify-center gap-3 px-6 text-[0.8rem] font-semibold uppercase tracking-[0.12em] transition-colors duration-(--motion-fast)";
 
 const variants: Record<Variant, string> = {
   primary: "bg-red-cta text-white hover:bg-red-ink",
@@ -21,20 +21,12 @@ type Props = {
   arrow?: boolean;
 };
 
-/** Link-button. The slash accent sweeps across on hover. */
+/** Link-button: colour/border change and a small arrow nudge on hover (150–220ms). */
 export function ButtonLink({ href, children, variant = "primary", className = "", arrow = true }: Props) {
   return (
     <Link href={href} className={`${base} ${variants[variant]} ${className}`}>
-      {variant !== "text" && (
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute inset-y-0 -left-1/3 w-1/4 -translate-x-full skew-x-[-28deg] transition-transform duration-500 ease-[var(--ease-out-expo)] group-hover:translate-x-[520%] ${
-            variant === "primary" ? "bg-white/15" : "bg-red/25"
-          }`}
-        />
-      )}
       <span className="relative">{children}</span>
-      {arrow && <Arrow className="relative size-4 transition-transform duration-300 group-hover:translate-x-1" />}
+      {arrow && <Arrow className="relative size-4 transition-transform duration-(--motion-standard) group-hover:translate-x-1" />}
     </Link>
   );
 }

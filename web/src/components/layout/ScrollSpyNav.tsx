@@ -36,7 +36,7 @@ export function ScrollSpyNav({ items, label, tone = "dark" }: { items: Item[]; l
             >
               <span
                 aria-hidden="true"
-                className={`h-2.5 w-4 shrink-0 bg-red transition-transform duration-500 ease-[var(--ease-out-expo)] [transform:skewX(-28deg)_scaleX(var(--sx))] ${
+                className={`h-2.5 w-4 shrink-0 bg-red transition-transform duration-(--motion-standard) [transform:skewX(-28deg)_scaleX(var(--sx))] ${
                   active === i.id ? "[--sx:1]" : "[--sx:0]"
                 }`}
               />

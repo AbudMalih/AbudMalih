@@ -11,7 +11,7 @@ const ApplicationExperience = dynamic(() => import("./ApplicationExperience").th
 
 function FormSkeleton() {
   return (
-    <div aria-hidden="true" className="min-h-[70rem] animate-pulse space-y-4">
+    <div aria-hidden="true" className="min-h-[70rem] space-y-4">
       <div className="h-16 border border-ink/10 bg-white" />
       <div className="h-1 bg-ink/10" />
       {Array.from({ length: 6 }, (_, i) => (

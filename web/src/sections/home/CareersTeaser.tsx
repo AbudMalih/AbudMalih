@@ -41,7 +41,7 @@ export function CareersTeaser() {
             <ul className="mt-6 border-t border-ink">
               {jobs.map((job) => (
                 <li key={job.slug} className="border-b border-ink/15">
-                  <Link href={`/karriere/jobs/${job.slug}`} className="group grid gap-3 py-7 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <Link href={`/karriere/jobs/${job.slug}`} className="group motion-lift grid gap-3 py-7 sm:grid-cols-[1fr_auto] sm:items-center">
                     <span>
                       <span className="block text-xl font-bold tracking-[-0.015em] sm:text-2xl">{job.title}</span>
                       <span className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[0.72rem] uppercase tracking-[0.12em] text-graphite-600">
@@ -52,7 +52,7 @@ export function CareersTeaser() {
                     </span>
                     <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-red-ink">
                       Details
-                      <Arrow className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      <Arrow className="size-4 transition-transform duration-(--motion-standard) group-hover:translate-x-1" />
                     </span>
                   </Link>
                 </li>

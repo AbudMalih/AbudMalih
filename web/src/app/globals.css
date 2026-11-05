@@ -31,8 +31,11 @@
   /* Signature slash angle, measured from the official logo. */
   --slash-skew: -28deg;
 
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  /* Motion: one calm ease-out curve for everything (Tailwind `ease-out`),
+     and a short default for every `transition-*` utility. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 
   --breakpoint-3xl: 112rem;
 }
@@ -97,31 +100,61 @@
   }
 }
 
-/* Hero intro (CSS-only so it runs before hydration). */
-@keyframes slash-sweep {
-  0% { transform: translate3d(-120vw, 0, 0) skewX(var(--slash-skew)); }
-  100% { transform: translate3d(0, 0, 0) skewX(var(--slash-skew)); }
-}
-@keyframes line-rise {
-  0% { transform: translate3d(0, 105%, 0); }
-  100% { transform: translate3d(0, 0, 0); }
-}
-@keyframes fade-up {
-  0% { opacity: 0; transform: translate3d(0, 16px, 0); }
-  100% { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-@keyframes rise {
-  0% { transform: translate3d(0, 18px, 0); }
-  100% { transform: translate3d(0, 0, 0); }
-}
-@keyframes draw {
-  to { stroke-dashoffset: 0; }
-}
-@keyframes transition-cross {
-  0% { transform: translate3d(-60vw, 0, 0) skewX(var(--slash-skew)); opacity: 1; }
-  100% { transform: translate3d(160vw, 0, 0) skewX(var(--slash-skew)); opacity: 1; }
+/* ------------------------------------------------------------------
+   JARBOU motion system – three signature experiences only:
+   A. hero entrance  B. buttons & cards  C. application steps.
+   CSS only, transform + opacity only, nothing hidden without CSS support.
+   ------------------------------------------------------------------ */
+:root {
+  --motion-fast: 150ms;     /* hover, colour, small controls */
+  --motion-standard: 220ms; /* steps, tabs, menus, lifts */
+  --motion-slow: 400ms;     /* rare larger state changes */
+  --motion-hero: 480ms;     /* hero entrance (max 500ms) */
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+@keyframes motion-enter {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+}
+@keyframes motion-fade {
+  from { opacity: 0; }
+}
+@keyframes motion-step {
+  from { opacity: 0; transform: translate3d(0, 4px, 0); }
+}
+
+/* A. Hero entrance – headline (no delay, so LCP is not held back),
+   supporting text and CTAs follow with --d. */
+.motion-enter {
+  animation: motion-enter var(--motion-hero) var(--motion-ease) both;
+  animation-delay: var(--d, 0ms);
+}
+.motion-fade {
+  animation: motion-fade var(--motion-hero) var(--motion-ease) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* B. Cards – subtle 2px lift, pointer devices only. */
+.motion-lift {
+  transition: transform var(--motion-standard) var(--motion-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .motion-lift:hover {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+/* C. Application steps, tab panels and the mobile menu: a short settle
+   whenever the element becomes visible. */
+.motion-step {
+  animation: motion-step var(--motion-standard) var(--motion-ease) both;
+}
+.motion-swap {
+  animation: motion-fade var(--motion-standard) var(--motion-ease) both;
+}
+
+/* Reduced motion: no movement, content immediately visible; colour and
+   state feedback stays (instant). */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -129,55 +162,13 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  .motion-enter, .motion-fade, .motion-step, .motion-swap {
+    animation: none !important;
+  }
+  .motion-lift:hover {
+    transform: none;
+  }
 }
-
-
-@keyframes hero-slash {
-  0% { transform: translate3d(-160vw, 0, 0); }
-  100% { transform: translate3d(0, 0, 0); }
-}
-@keyframes scroll-cue {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(200%); }
-}
-
-/* ------------------------------------------------------------------
-   Calm reveals (used between the three signature moments).
-   Only hidden when JS is available (html.js) – content never depends on JS.
-   ------------------------------------------------------------------ */
-.js .reveal {
-  opacity: 0;
-  transform: translate3d(0, 28px, 0);
-  transition: opacity 0.9s var(--ease-out-expo), transform 1.1s var(--ease-out-expo);
-  transition-delay: var(--d, 0ms);
-}
-.js [data-inview="true"] .reveal {
-  opacity: 1;
-  transform: none;
-}
-.js .reveal-line {
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 1.6s var(--ease-in-out-quart);
-  transition-delay: var(--d, 0ms);
-}
-.js [data-inview="true"] .reveal-line {
-  transform: scaleX(1);
-}
-.js .reveal-y {
-  transform: scaleY(0);
-  transform-origin: top center;
-  transition: transform 1.6s var(--ease-in-out-quart);
-  transition-delay: var(--d, 0ms);
-}
-.js [data-inview="true"] .reveal-y {
-  transform: scaleY(1);
-}
-@media (prefers-reduced-motion: reduce) {
-  .js .reveal, .js .reveal-line, .js .reveal-y { opacity: 1; transform: none; }
-}
-.js .map-pin { opacity: 0; }
-.js .map-route { stroke-dashoffset: 1; }
 
 /* Skip rendering work for sections far below the fold. */
 .defer-render {
@@ -185,19 +176,9 @@
   contain-intrinsic-size: auto 1200px;
 }
 
-/* Film grain over the pre-rendered journey (kept out of the frames so they compress well) */
+/* Film grain over the pre-rendered journey (kept out of the frames so they
+   compress well). Static texture – no animation loop. */
 .film-grain {
-  /* transparent noise, normal blending: composited on the GPU, no repaints */
   background-image: url("/journey-grain.png");
   background-size: 128px 128px;
-  inset: -80px;
-  will-change: transform;
-  animation: grain 0.5s steps(4) infinite;
-}
-@keyframes grain {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(-37px, 21px); }
-  50% { transform: translate(18px, -44px); }
-  75% { transform: translate(-12px, 33px); }
-  100% { transform: translate(0, 0); }
 }

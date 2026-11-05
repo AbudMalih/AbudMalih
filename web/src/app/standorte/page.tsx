@@ -7,7 +7,6 @@ import { ButtonLink } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { getPublishedJobs } from "@/content/jobs";
 import { labelFor, publishedLocations } from "@/content/locations";
-import { InView } from "@/motion/InView";
 
 export const metadata: Metadata = pageMeta({
   title: "Standorte",
@@ -35,9 +34,9 @@ export default function LocationsPage() {
 
       <section aria-label="Interaktive Standortkarte" className="bg-ink pb-24 lg:pb-32">
         <div className="shell">
-          <InView threshold={0.15}>
+          <div>
             <OperationsMap locations={publishedLocations} explorer jobsByLocation={jobsByLocation} />
-          </InView>
+          </div>
         </div>
       </section>
 

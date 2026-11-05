@@ -2,7 +2,6 @@ import { OperationsMap } from "@/components/data/OperationsMap";
 import { ButtonLink } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { publishedLocations } from "@/content/locations";
-import { InView } from "@/motion/InView";
 
 export function LocationsTeaser() {
   return (
@@ -17,9 +16,9 @@ export function LocationsTeaser() {
             Unsere Teams arbeiten in mehreren Regionen Deutschlands. Die Karte zeigt, wo JARBOU heute im Einsatz ist.
           </p>
         </div>
-        <InView className="mt-16 lg:mt-20" threshold={0.2}>
+        <div className="mt-16 lg:mt-20">
           <OperationsMap locations={publishedLocations} />
-        </InView>
+        </div>
         <div className="mt-14">
           <ButtonLink href="/standorte" variant="outline">
             Zur Standortübersicht

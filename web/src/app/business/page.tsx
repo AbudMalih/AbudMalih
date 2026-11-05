@@ -9,7 +9,6 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { businessPage, serviceTypeOptions, vehicleNeedOptions } from "@/content/business";
 import { company } from "@/content/company";
 import { services } from "@/content/services";
-import { InView } from "@/motion/InView";
 
 export const metadata: Metadata = pageMeta({
   title: "Für Unternehmen",
@@ -105,11 +104,11 @@ export default function BusinessPage() {
           <h2 id="start-title" className="h-section mt-6">
             Von der Anfrage zum laufenden Betrieb.
           </h2>
-          <InView as="ol" className="relative mt-16 grid md:grid-cols-5" threshold={0.3}>
-            <span aria-hidden="true" className="reveal-line absolute left-0 right-0 top-[7px] hidden h-0.5 bg-ink md:block" />
-            <span aria-hidden="true" className="reveal-y absolute bottom-0 left-[7px] top-0 w-0.5 bg-ink md:hidden" />
+          <ol className="relative mt-16 grid md:grid-cols-5">
+            <span aria-hidden="true" className="absolute left-0 right-0 top-[7px] hidden h-0.5 bg-ink md:block" />
+            <span aria-hidden="true" className="absolute bottom-0 left-[7px] top-0 w-0.5 bg-ink md:hidden" />
             {businessPage.projectSteps.map((s, i) => (
-              <li key={s.id} className="reveal relative pb-10 pl-10 md:pb-0 md:pl-0 md:pr-6" style={{ "--d": `${200 + i * 180}ms` } as React.CSSProperties}>
+              <li key={s.id} className="relative pb-10 pl-10 md:pb-0 md:pl-0 md:pr-6">
                 <span
                   aria-hidden="true"
                   className={`absolute left-0 top-0 block size-4 border-2 border-ink [transform:skewX(-28deg)] ${i === 4 ? "bg-red" : "bg-paper"}`}
@@ -119,7 +118,7 @@ export default function BusinessPage() {
                 <p className="mt-2 max-w-xs text-sm leading-relaxed text-graphite-600">{s.text}</p>
               </li>
             ))}
-          </InView>
+          </ol>
         </div>
       </section>
 

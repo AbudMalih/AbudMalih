@@ -1,6 +1,5 @@
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { measuredMetrics, qualityLoop } from "@/content/quality";
-import { InView } from "@/motion/InView";
 
 /**
  * Quality as a control loop – how deviations are handled, without
@@ -20,19 +19,18 @@ export function Performance() {
           </p>
         </div>
 
-        <InView className="mt-16 lg:mt-24" threshold={0.3}>
+        <div className="mt-16 lg:mt-24">
           <h3 className="eyebrow text-steel-400">Regelkreis im Einsatz</h3>
           <ol className="relative mt-10 grid gap-0 md:grid-cols-5">
             {/* Loop track: forward line on desktop, vertical on mobile */}
-            <span aria-hidden="true" className="reveal-line absolute left-0 right-0 top-[7px] hidden h-px bg-white/40 md:block" />
-            <span aria-hidden="true" className="reveal-y absolute bottom-0 left-[7px] top-0 w-px bg-white/25 md:hidden" />
+            <span aria-hidden="true" className="absolute left-0 right-0 top-[7px] hidden h-px bg-white/40 md:block" />
+            <span aria-hidden="true" className="absolute bottom-0 left-[7px] top-0 w-px bg-white/25 md:hidden" />
             {qualityLoop.map((step, i) => {
               const alert = step.id === "abweichung";
               return (
                 <li
                   key={step.id}
-                  className="reveal relative pb-10 pl-10 md:pb-0 md:pl-0 md:pr-8"
-                  style={{ "--d": `${250 + i * 180}ms` } as React.CSSProperties}
+                  className="relative pb-10 pl-10 md:pb-0 md:pl-0 md:pr-8"
                 >
                   <span
                     aria-hidden="true"
@@ -50,8 +48,7 @@ export function Performance() {
           {/* Return path: Reporting feeds the next day's planning */}
           <div
             aria-hidden="true"
-            className="reveal mt-12 hidden items-center gap-4 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-steel-500 md:flex"
-            style={{ "--d": "1300ms" } as React.CSSProperties}
+            className="mt-12 hidden items-center gap-4 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-steel-500 md:flex"
           >
             <svg viewBox="0 0 24 12" className="h-3 w-6 text-red">
               <path d="M22 1 V6 H3 M7 2 L3 6 L7 10" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -60,7 +57,7 @@ export function Performance() {
             <span>Rückfluss in die Planung des nächsten Einsatztags</span>
           </div>
           <p className="sr-only">Die Ergebnisse aus dem Reporting fließen in die Planung des nächsten Einsatztags zurück.</p>
-        </InView>
+        </div>
 
         <div className="mt-20 border-t border-white/10 pt-10 lg:mt-24">
           <h3 className="eyebrow text-steel-400">Was wir messen</h3>

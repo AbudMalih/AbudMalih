@@ -7,7 +7,6 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { MediaSlot } from "@/components/ui/MediaSlot";
 import { StatRow } from "@/components/ui/StatRow";
 import { company, companyPage, timeline } from "@/content/company";
-import { InView } from "@/motion/InView";
 
 export const metadata: Metadata = pageMeta({
   title: "Unternehmen",
@@ -37,11 +36,11 @@ export default function CompanyPage() {
           <h2 id="timeline-title" className="h-section mt-6 max-w-3xl">
             Von der Gründung bis heute.
           </h2>
-          <InView as="ol" className="relative mt-16 grid gap-12 md:grid-cols-2 lg:mt-20" threshold={0.3}>
-            <span aria-hidden="true" className="reveal-line absolute left-0 right-0 top-[9px] hidden h-0.5 bg-ink md:block" />
-            <span aria-hidden="true" className="reveal-y absolute bottom-0 left-[8px] top-0 w-0.5 bg-ink md:hidden" />
+          <ol className="relative mt-16 grid gap-12 md:grid-cols-2 lg:mt-20">
+            <span aria-hidden="true" className="absolute left-0 right-0 top-[9px] hidden h-0.5 bg-ink md:block" />
+            <span aria-hidden="true" className="absolute bottom-0 left-[8px] top-0 w-0.5 bg-ink md:hidden" />
             {entries.map((e, i) => (
-              <li key={e.id} className="reveal relative pl-10 md:pl-0" style={{ "--d": `${300 + i * 300}ms` } as React.CSSProperties}>
+              <li key={e.id} className="relative pl-10 md:pl-0">
                 <span
                   aria-hidden="true"
                   className={`absolute left-0 top-0 block size-[18px] border-2 border-ink [transform:skewX(-28deg)] ${i === entries.length - 1 ? "bg-red" : "bg-paper"}`}
@@ -51,7 +50,7 @@ export default function CompanyPage() {
                 <p className="mt-3 max-w-md leading-relaxed text-graphite-600">{e.text}</p>
               </li>
             ))}
-          </InView>
+          </ol>
         </div>
       </section>
 
@@ -59,18 +58,18 @@ export default function CompanyPage() {
       <section aria-label="Wofür JARBOU steht" className="defer-render bg-ink py-24 lg:py-32">
         <div className="shell">
           {companyPage.chapters.map((c, i) => (
-            <InView key={c.id} className="grid gap-6 border-t border-white/10 py-14 first:border-t-0 first:pt-0 lg:grid-cols-12 lg:gap-12 lg:py-20">
-              <p className="reveal eyebrow text-steel-400 lg:col-span-3">
+            <div key={c.id} className="grid gap-6 border-t border-white/10 py-14 first:border-t-0 first:pt-0 lg:grid-cols-12 lg:gap-12 lg:py-20">
+              <p className="eyebrow text-steel-400 lg:col-span-3">
                 <span className="text-red-glow">0{i + 1}</span> <span className="ml-2">{c.eyebrow}</span>
               </p>
-              <h2 className="reveal h-section lg:col-span-5" style={{ "--d": "100ms" } as React.CSSProperties}>
+              <h2 className="h-section lg:col-span-5">
                 {c.title}
               </h2>
-              <p className="reveal max-w-md text-lg leading-relaxed text-steel-300 lg:col-span-4" style={{ "--d": "200ms" } as React.CSSProperties}>
+              <p className="max-w-md text-lg leading-relaxed text-steel-300 lg:col-span-4">
                 {c.text}
               </p>
               <MediaSlot id={c.media} className="aspect-[3/2] lg:col-span-9 lg:col-start-4" sizes="(min-width: 1024px) 70vw, 100vw" />
-            </InView>
+            </div>
           ))}
         </div>
       </section>

@@ -1,8 +1,8 @@
 import { stats } from "@/content/company";
 
 /**
- * The four verified company figures. Numbers are rendered in full on the
- * server; `data-count` elements may be animated once by the client.
+ * The four verified company figures, rendered in full on the server and
+ * shown immediately (no count-up).
  */
 export function StatRow({ className = "" }: { className?: string }) {
   return (
@@ -11,10 +11,8 @@ export function StatRow({ className = "" }: { className?: string }) {
         <div key={s.id} className="flex flex-col border-t border-white/20 pt-5">
           <dt className="eyebrow order-2 mt-3 text-steel-300">{s.label}</dt>
           <dd className="order-1 text-[clamp(3rem,7.5vw,7rem)] font-bold leading-none tracking-[-0.045em] tabular-nums text-white">
-            <span data-count={s.animate ? s.value : undefined} data-suffix={s.suffix}>
-              {s.value}
-              {s.suffix}
-            </span>
+            {s.value}
+            {s.suffix}
           </dd>
         </div>
       ))}

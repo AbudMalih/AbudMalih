@@ -1,16 +1,15 @@
 import Image from "next/image";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import type { EmployeeStory, Faq, ProcessStep } from "@/content/types";
-import { InView } from "@/motion/InView";
 
 /** Recruitment journey – a route line with six stations. No response-time promises. */
 export function ApplicationProcess({ steps }: { steps: ProcessStep[] }) {
   return (
-    <InView as="ol" className="relative grid gap-0 md:grid-cols-3 lg:grid-cols-6" threshold={0.25}>
-      <span aria-hidden="true" className="reveal-line absolute left-0 right-0 top-[7px] hidden h-0.5 bg-ink lg:block" />
-      <span aria-hidden="true" className="reveal-y absolute bottom-0 left-[7px] top-0 w-0.5 bg-ink md:hidden" />
+    <ol className="relative grid gap-0 md:grid-cols-3 lg:grid-cols-6">
+      <span aria-hidden="true" className="absolute left-0 right-0 top-[7px] hidden h-0.5 bg-ink lg:block" />
+      <span aria-hidden="true" className="absolute bottom-0 left-[7px] top-0 w-0.5 bg-ink md:hidden" />
       {steps.map((s, i) => (
-        <li key={s.id} className="reveal relative pb-10 pl-10 md:pl-0 md:pr-6 lg:pb-0" style={{ "--d": `${200 + i * 160}ms` } as React.CSSProperties}>
+        <li key={s.id} className="relative pb-10 pl-10 md:pl-0 md:pr-6 lg:pb-0">
           <span
             aria-hidden="true"
             className={`absolute left-0 top-0 block size-4 border-2 border-ink [transform:skewX(-28deg)] ${i === steps.length - 1 ? "bg-red" : "bg-paper"}`}
@@ -20,7 +19,7 @@ export function ApplicationProcess({ steps }: { steps: ProcessStep[] }) {
           <p className="mt-2 max-w-xs text-sm leading-relaxed text-graphite-600">{s.text}</p>
         </li>
       ))}
-    </InView>
+    </ol>
   );
 }
 
@@ -28,9 +27,9 @@ export function ApplicationProcess({ steps }: { steps: ProcessStep[] }) {
 export function DevelopmentPath({ path, disclaimer }: { path: { id: string; title: string }[]; disclaimer: string }) {
   return (
     <div className="grid gap-12 lg:grid-cols-12">
-      <InView as="ol" className="lg:col-span-7" threshold={0.2}>
+      <ol className="lg:col-span-7">
         {path.map((p, i) => (
-          <li key={p.id} className="reveal" style={{ "--d": `${i * 140}ms`, paddingLeft: `calc(${i} * clamp(0.4rem, 2.5vw, 2.75rem))` } as React.CSSProperties}>
+          <li key={p.id} className="" style={{ paddingLeft: `calc(${i} * clamp(0.4rem, 2.5vw, 2.75rem))` } as React.CSSProperties}>
             <div className="flex items-center gap-5 border-t border-white/15 py-5">
               <span className="font-mono text-xs text-steel-500">0{i + 1}</span>
               <span className={`min-w-0 break-words text-[clamp(1.5rem,3.6vw,3rem)] font-extrabold uppercase leading-none tracking-[-0.03em] ${i === path.length - 1 ? "text-white" : "text-steel-300"}`}>
@@ -44,7 +43,7 @@ export function DevelopmentPath({ path, disclaimer }: { path: { id: string; titl
             </div>
           </li>
         ))}
-      </InView>
+      </ol>
       <div className="self-end lg:col-span-4 lg:col-start-9">
         <p className="border-l-2 border-red pl-5 text-lg leading-relaxed text-steel-200">{disclaimer}</p>
       </div>
@@ -94,7 +93,7 @@ export function FaqList({ faqs }: { faqs: Faq[] }) {
             {f.question}
             <span aria-hidden="true" className="relative size-4 shrink-0">
               <span className="absolute left-0 top-1/2 h-0.5 w-4 -translate-y-1/2 bg-ink" />
-              <span className="absolute left-1/2 top-0 h-4 w-0.5 -translate-x-1/2 bg-ink transition-transform duration-300 group-open:scale-y-0" />
+              <span className="absolute left-1/2 top-0 h-4 w-0.5 -translate-x-1/2 bg-ink transition-transform duration-(--motion-standard) group-open:scale-y-0" />
             </span>
           </summary>
           <p className="max-w-3xl pb-6 leading-relaxed text-graphite-600">{f.answer}</p>

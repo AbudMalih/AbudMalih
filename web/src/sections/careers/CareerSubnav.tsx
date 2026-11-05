@@ -33,7 +33,7 @@ export function CareerSubnav({ items, applyHref }: { items: readonly Item[]; app
   }, [items]);
 
   return (
-    <nav aria-label="Karriere" className="sticky top-0 z-40 border-y border-white/10 bg-ink/95 backdrop-blur-sm">
+    <nav aria-label="Karriere" className="sticky top-0 z-40 border-y border-white/10 bg-ink">
       <div className="shell flex items-center gap-2">
         <ul className="-mx-2 flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((i) => (
@@ -46,7 +46,7 @@ export function CareerSubnav({ items, applyHref }: { items: readonly Item[]; app
                 {i.label}
                 <span
                   aria-hidden="true"
-                  className={`absolute inset-x-3 bottom-0 h-0.5 origin-left bg-red transition-transform duration-300 ${active === i.id ? "scale-x-100" : "scale-x-0"}`}
+                  className={`absolute inset-x-3 bottom-0 h-0.5 origin-left bg-red transition-transform duration-(--motion-standard) ${active === i.id ? "scale-x-100" : "scale-x-0"}`}
                 />
               </a>
             </li>

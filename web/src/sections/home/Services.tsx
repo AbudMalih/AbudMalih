@@ -118,7 +118,7 @@ export function Services() {
                   </span>
                   <span
                     aria-hidden="true"
-                    className={`h-3 w-5 shrink-0 self-center bg-red transition-transform duration-500 ease-[var(--ease-out-expo)] [transform:skewX(-28deg)_scaleX(var(--sx))] ${
+                    className={`h-3 w-5 shrink-0 self-center bg-red transition-transform duration-(--motion-standard) [transform:skewX(-28deg)_scaleX(var(--sx))] ${
                       selected ? "[--sx:1]" : "[--sx:0] group-hover:[--sx:0.5]"
                     }`}
                   />
@@ -133,7 +133,7 @@ export function Services() {
             aria-labelledby={`${base}-tab-${active}`}
             className="hidden lg:col-span-7 lg:block"
           >
-            <div key={current.id} className="grid gap-8 [animation:fade-up_0.6s_var(--ease-out-expo)_both] md:grid-cols-7">
+            <div key={current.id} className="motion-swap grid gap-8 md:grid-cols-7">
               <figure className="relative aspect-[16/11] overflow-hidden bg-steel-100 md:col-span-7">
                 {m.src ? (
                   <Image src={m.src} alt={m.alt} fill sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover" />
