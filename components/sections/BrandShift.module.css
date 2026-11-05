@@ -27,8 +27,7 @@
 .dot {
   color: var(--luna-red);
 }
-/* the whole chapter is in daylight now: ink on warm ivory */
-:global(html.cine) .first,
+/* the statement resolves in the light: ink on warm ivory */
 :global(html.cine) .second {
   color: var(--ink-950);
 }

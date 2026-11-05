@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import type { GlobeHandle, GlobeFrame } from "@/lib/globe/createGlobe";
 import { globeState, type GlobeDerived } from "@/lib/globe/state";
 import { formatLat, formatLon, ROUTE_WAYPOINTS } from "@/lib/globe/coords";
-import { stage, tierSettled } from "@/lib/stage/store";
+import { stage, tierSettled, range, smooth } from "@/lib/stage/store";
 import { onFrame, damp, markReady } from "@/lib/stage/ticker";
 import { COMPANY } from "@/content/site";
 import { isCine } from "@/lib/motion/env";
@@ -123,7 +123,17 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
         wrap.style.opacity = cur.opacity.toFixed(3);
         wrap.style.visibility = visible ? "visible" : "hidden";
         if (!visible) return;
-        if (moving || dirty) {
+        // a very slow orbit while the world rests (opening, end of the closing):
+        // it eases out as soon as the visitor scrolls, so every scroll state
+        // (and the route's arrival at Köln) stays exact. Never on the low tier.
+        const rest = stage.tier === "low" ? 0 : Math.max(1 - smooth(range(stage.p.hero, 0, 0.12)), smooth(range(stage.p.closing, 0.55, 0.9)));
+        if (rest > 0.001) {
+          const t = stage.ambientClock ?? performance.now() / 1000;
+          const f = { ...cur, lon: cur.lon + rest * 3 * Math.sin((t * Math.PI * 2) / 40), lat: cur.lat + rest * Math.sin((t * Math.PI * 2) / 57) };
+          globe.render(f);
+          drawMarkers(f);
+          dirty = false;
+        } else if (moving || dirty) {
           globe.render(cur);
           drawMarkers(cur);
           dirty = false;

@@ -251,15 +251,11 @@ html.cine .chapter-stage.is-active .interactive {
   pointer-events: auto;
 }
 
-/* Light chapters of the film (port, road, warehouse, ecosystem, closing):
+/* Light chapters of the film on mineral daylight (ecosystem):
    the same components, re-inked for mineral daylight. Tokens are remapped
    so every rule keeps its role (paper = primary type, graphite scale = the
    secondary steps, hairlines) with the polarity reversed. */
-[data-chapter="source"],
-[data-chapter="transport"],
-[data-chapter="warehouse"],
-[data-chapter="ecosystem"],
-[data-chapter="closing"] {
+[data-chapter="ecosystem"] {
   --paper: #1c1d20;
   --white: #141518;
   --fg: #1c1d20;

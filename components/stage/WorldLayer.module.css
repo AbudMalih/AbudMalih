@@ -1,14 +1,24 @@
 .layer {
   visibility: hidden;
   opacity: 0;
-  /* the line-world is drawn in daylight: mineral ground, ink labels and pins */
-  background: #dcdad5;
-  --paper: #1c1d20;
-  --graphite-300: #55575c;
+  /* transparent: the sky (Atmosphere) shows behind the line-world */
+  background: transparent;
 }
 .canvas {
   position: absolute;
   inset: 0;
+}
+/* lens depth over the line-world: the near ground and the edges settle into
+   shadow, as a camera sees dusk (strength = --vig, 0 in the brand light) */
+.layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--vig, 0);
+  background:
+    linear-gradient(180deg, rgba(14, 16, 20, 0) 52%, rgba(14, 16, 20, 0.46) 100%),
+    radial-gradient(130% 90% at 50% 38%, transparent 58%, rgba(14, 16, 20, 0.34) 100%);
 }
 .seq {
   opacity: 0;
