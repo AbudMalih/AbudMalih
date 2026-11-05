@@ -21,8 +21,10 @@ export interface DispatchDataset {
   organizationId: string;
   /** Operating day (YYYY-MM-DD). */
   date: string;
-  /** Synthetic operations clock, minutes since midnight. */
+  /** Operations clock (minutes since midnight in `timeZone`). */
   asOfMinute: number;
+  /** IANA zone used for times of day. Synthetic data uses "UTC" with local-time stamps. */
+  timeZone?: string;
   depots: Depot[];
   drivers: Driver[];
   vehicles: Vehicle[];
@@ -287,5 +289,5 @@ export function createDispatchDataset(now: Date = new Date()): DispatchDataset {
     }
   }
 
-  return { organizationId: org, date, asOfMinute: asOf, depots, drivers, vehicles, tours, stops, unassigned };
+  return { organizationId: org, date, asOfMinute: asOf, timeZone: "UTC", depots, drivers, vehicles, tours, stops, unassigned };
 }

@@ -1,0 +1,189 @@
+import { nowInZone, type Depot, type DispatchDataset, type Driver, type Stop, type Tour, type UnassignedStop, type Vehicle } from "@turvio/shared";
+import type { Tx } from "../db";
+
+/* Row -> domain mappers. Every query runs under RLS (Db.asUser). */
+
+const iso = (d: Date | null | undefined) => (d ? d.toISOString() : undefined);
+
+export interface DepotRow {
+  id: string;
+  organization_id: string;
+  name: string;
+  street: string;
+  house_number: string | null;
+  postal_code: string;
+  city: string;
+  country_code: string;
+  lat: number;
+  lng: number;
+}
+export const toDepot = (r: DepotRow): Depot => ({
+  id: r.id,
+  organizationId: r.organization_id,
+  name: r.name,
+  address: { street: r.street, houseNumber: r.house_number ?? undefined, postalCode: r.postal_code, city: r.city, countryCode: r.country_code.trim() },
+  location: { lat: r.lat, lng: r.lng },
+});
+
+export interface DriverRow {
+  id: string;
+  organization_id: string;
+  user_id: string | null;
+  depot_id: string | null;
+  display_name: string;
+  max_shift_minutes: number;
+  active: boolean;
+}
+export const toDriver = (r: DriverRow): Driver & { userId: string | null } => ({
+  id: r.id,
+  organizationId: r.organization_id,
+  displayName: r.display_name,
+  depotId: r.depot_id ?? "",
+  maxShiftMinutes: r.max_shift_minutes,
+  active: r.active,
+  userId: r.user_id,
+});
+
+export interface VehicleRow {
+  id: string;
+  organization_id: string;
+  depot_id: string | null;
+  label: string;
+  license_plate: string;
+  capacity_parcels: number | null;
+  active: boolean;
+}
+export const toVehicle = (r: VehicleRow): Vehicle & { active: boolean } => ({
+  id: r.id,
+  organizationId: r.organization_id,
+  label: r.label,
+  licensePlate: r.license_plate,
+  depotId: r.depot_id ?? "",
+  capacityParcels: r.capacity_parcels,
+  active: r.active,
+});
+
+export interface TourRow {
+  id: string;
+  organization_id: string;
+  depot_id: string;
+  driver_id: string | null;
+  vehicle_id: string | null;
+  name: string;
+  tour_date: string;
+  status: Tour["status"];
+  planned_start_minute: number;
+  start_lat: number | null;
+  start_lng: number | null;
+  end_lat: number | null;
+  end_lng: number | null;
+  started_at: Date | null;
+  finished_at: Date | null;
+  version: number;
+  published_at: Date | null;
+  optimized_at: Date | null;
+  optimization: Tour["optimization"];
+}
+export const toTour = (r: TourRow): Tour => ({
+  id: r.id,
+  organizationId: r.organization_id,
+  name: r.name,
+  date: r.tour_date,
+  depotId: r.depot_id,
+  driverId: r.driver_id,
+  vehicleId: r.vehicle_id,
+  status: r.status,
+  plannedStartMinute: r.planned_start_minute,
+  startLocation: r.start_lat != null && r.start_lng != null ? { lat: r.start_lat, lng: r.start_lng } : undefined,
+  endLocation: r.end_lat != null && r.end_lng != null ? { lat: r.end_lat, lng: r.end_lng } : undefined,
+  startedAt: iso(r.started_at),
+  finishedAt: iso(r.finished_at),
+  version: r.version,
+  publishedAt: r.published_at ? r.published_at.toISOString() : null,
+  optimizedAt: r.optimized_at ? r.optimized_at.toISOString() : null,
+  optimization: r.optimization ?? null,
+});
+
+export interface StopRow {
+  id: string;
+  organization_id: string;
+  tour_id: string | null;
+  depot_id: string | null;
+  type: Stop["type"];
+  sequence: number;
+  recipient_name: string | null;
+  street: string;
+  house_number: string | null;
+  postal_code: string;
+  city: string;
+  country_code: string;
+  lat: number | null;
+  lng: number | null;
+  tw_start_minute: number | null;
+  tw_end_minute: number | null;
+  service_seconds: number;
+  priority: boolean;
+  notes: string | null;
+  status: Stop["status"];
+  completed_at: Date | null;
+  parcels: { id: string; tracking_number: string; barcode: string | null; recipient_name: string | null }[] | null;
+}
+function stopBase(r: StopRow) {
+  return {
+    id: r.id,
+    organizationId: r.organization_id,
+    type: r.type,
+    recipientName: r.recipient_name ?? undefined,
+    address: { street: r.street, houseNumber: r.house_number ?? undefined, postalCode: r.postal_code, city: r.city, countryCode: r.country_code.trim() },
+    location: r.lat != null && r.lng != null ? { lat: r.lat, lng: r.lng } : null,
+    timeWindow: r.tw_start_minute != null && r.tw_end_minute != null ? { start: r.tw_start_minute, end: r.tw_end_minute } : undefined,
+    serviceSeconds: r.service_seconds,
+    priority: r.priority,
+    notes: r.notes ?? undefined,
+    parcels: (r.parcels ?? []).map((p) => ({ id: p.id, trackingNumber: p.tracking_number, barcode: p.barcode ?? undefined, recipientName: p.recipient_name ?? undefined })),
+    status: r.status,
+    completedAt: iso(r.completed_at),
+  };
+}
+export const toStop = (r: StopRow): Stop => ({ ...stopBase(r), tourId: r.tour_id!, sequence: r.sequence });
+export const toUnassigned = (r: StopRow): UnassignedStop => ({ ...stopBase(r), depotId: r.depot_id! });
+
+export const STOP_SELECT = `
+  select s.*, (select coalesce(json_agg(json_build_object('id', p.id, 'tracking_number', p.tracking_number, 'barcode', p.barcode, 'recipient_name', p.recipient_name) order by p.created_at), '[]'::json)
+                 from public.parcels p where p.stop_id = s.id) as parcels
+    from public.stops s`;
+
+export async function orgTimeZone(tx: Tx, orgId: string): Promise<string> {
+  const { rows } = await tx.query<{ time_zone: string }>(`select time_zone from public.organizations where id = $1`, [orgId]);
+  return rows[0]?.time_zone ?? "Europe/Berlin";
+}
+
+/** Everything Dispatch needs for one operating day, already scoped by RLS. */
+export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | undefined): Promise<DispatchDataset> {
+  const timeZone = await orgTimeZone(tx, orgId);
+  const now = nowInZone(timeZone);
+  const day = date ?? now.date;
+  const [depots, drivers, vehicles, tours] = await Promise.all([
+    tx.query<DepotRow>(`select * from public.depots where organization_id = $1 order by name`, [orgId]),
+    tx.query<DriverRow>(`select * from public.drivers where organization_id = $1 order by display_name`, [orgId]),
+    tx.query<VehicleRow>(`select * from public.vehicles where organization_id = $1 and active order by label`, [orgId]),
+    tx.query<TourRow>(`select * from public.tours where organization_id = $1 and tour_date = $2 order by name`, [orgId, day]),
+  ]);
+  const tourIds = tours.rows.map((t) => t.id);
+  const stops = await tx.query<StopRow>(
+    `${STOP_SELECT} where s.organization_id = $1 and (s.tour_id = any($2::uuid[]) or s.tour_id is null) order by s.tour_id nulls last, s.sequence`,
+    [orgId, tourIds],
+  );
+  return {
+    organizationId: orgId,
+    date: day,
+    asOfMinute: day === now.date ? now.minute : day < now.date ? 24 * 60 - 1 : 0,
+    timeZone,
+    depots: depots.rows.map(toDepot),
+    drivers: drivers.rows.map(toDriver),
+    vehicles: vehicles.rows.map(toVehicle),
+    tours: tours.rows.map(toTour),
+    stops: stops.rows.filter((s) => s.tour_id).map(toStop),
+    unassigned: stops.rows.filter((s) => !s.tour_id).map(toUnassigned),
+  };
+}

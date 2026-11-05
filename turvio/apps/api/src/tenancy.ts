@@ -8,28 +8,18 @@ import {
   type Plan,
   type Subscription,
 } from "@turvio/shared";
+import type { Db } from "./db";
 
-/**
- * Data access needed for authorization. The production implementation reads
- * from Supabase (PostgREST) with the service-role key; the in-memory one serves
- * tests and local development with synthetic tenants.
- */
+/** Data access needed for authorization decisions. */
 export interface TenancyRepository {
   getMembership(userId: string, organizationId: string): Promise<Membership | null>;
-  listMemberships(userId: string): Promise<Membership[]>;
-  getOrganization(organizationId: string): Promise<Organization | null>;
-  getSubscription(organizationId: string): Promise<{ subscription: Subscription; plan: Plan } | null>;
+  listMemberships(userId: string): Promise<(Membership & { organizationName?: string })[]>;
+  getOrganization(organizationId: string, userId?: string): Promise<Organization | null>;
+  getSubscription(organizationId: string, userId?: string): Promise<{ subscription: Subscription; plan: Plan } | null>;
 }
 
 export class InMemoryTenancyRepository implements TenancyRepository {
-  constructor(
-    private readonly data: {
-      organizations: Organization[];
-      memberships: Membership[];
-      subscriptions: Subscription[];
-    },
-  ) {}
-
+  constructor(private readonly data: { organizations: Organization[]; memberships: Membership[]; subscriptions: Subscription[] }) {}
   async getMembership(userId: string, organizationId: string) {
     return this.data.memberships.find((m) => m.userId === userId && m.organizationId === organizationId && m.active) ?? null;
   }
@@ -46,82 +36,86 @@ export class InMemoryTenancyRepository implements TenancyRepository {
   }
 }
 
+/** Synthetic tenants for unit tests and AUTH_PROVIDER=dev. */
 export function syntheticTenancy(now: Date = new Date()): InMemoryTenancyRepository {
-  return new InMemoryTenancyRepository({
-    organizations: SYNTHETIC_ORGANIZATIONS,
-    memberships: SYNTHETIC_MEMBERSHIPS,
-    subscriptions: syntheticSubscriptions(now),
-  });
+  return new InMemoryTenancyRepository({ organizations: SYNTHETIC_ORGANIZATIONS, memberships: SYNTHETIC_MEMBERSHIPS, subscriptions: syntheticSubscriptions(now) });
 }
 
-/** Reads tenancy data from Supabase's REST API using the service-role key (server-side only). */
-export class SupabaseTenancyRepository implements TenancyRepository {
-  constructor(
-    private readonly url: string,
-    private readonly serviceKey: string,
-    private readonly fetchImpl: typeof fetch = fetch,
-  ) {}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-  private async get<T>(path: string): Promise<T[]> {
-    const res = await this.fetchImpl(`${this.url.replace(/\/$/, "")}/rest/v1/${path}`, {
-      headers: { apikey: this.serviceKey, Authorization: `Bearer ${this.serviceKey}` },
+/**
+ * Reads tenancy data from Postgres AS THE USER (RLS applies): a user can only
+ * ever resolve their own memberships and the organizations they belong to.
+ */
+export class PgTenancyRepository implements TenancyRepository {
+  constructor(private readonly db: Db) {}
+
+  async getMembership(userId: string, organizationId: string): Promise<Membership | null> {
+    if (!UUID.test(organizationId)) return null;
+    return this.db.asUser({ sub: userId }, async (tx) => {
+      const { rows } = await tx.query<{ role: Membership["role"]; active: boolean; depot_ids: string[] | null }>(
+        `select m.role, m.active, (select array_agg(md.depot_id) from public.membership_depots md where md.membership_id = m.id) as depot_ids
+           from public.memberships m where m.user_id = $1 and m.organization_id = $2 and m.active`,
+        [userId, organizationId],
+      );
+      const r = rows[0];
+      return r ? { organizationId, userId, role: r.role, active: r.active, depotIds: r.depot_ids } : null;
     });
-    if (!res.ok) throw new Error(`Supabase query failed: HTTP ${res.status}`);
-    return (await res.json()) as T[];
-  }
-
-  async getMembership(userId: string, organizationId: string) {
-    const rows = await this.get<{ organization_id: string; user_id: string; role: Membership["role"]; active: boolean }>(
-      `memberships?select=organization_id,user_id,role,active&user_id=eq.${encodeURIComponent(userId)}&organization_id=eq.${encodeURIComponent(organizationId)}&active=is.true`,
-    );
-    const r = rows[0];
-    return r ? { organizationId: r.organization_id, userId: r.user_id, role: r.role, active: r.active } : null;
   }
 
   async listMemberships(userId: string) {
-    const rows = await this.get<{ organization_id: string; user_id: string; role: Membership["role"]; active: boolean }>(
-      `memberships?select=organization_id,user_id,role,active&user_id=eq.${encodeURIComponent(userId)}&active=is.true`,
-    );
-    return rows.map((r) => ({ organizationId: r.organization_id, userId: r.user_id, role: r.role, active: r.active }));
+    return this.db.asUser({ sub: userId }, async (tx) => {
+      const { rows } = await tx.query<{ organization_id: string; name: string; role: Membership["role"]; depot_ids: string[] | null; status: string }>(
+        `select m.organization_id, o.name, m.role, o.status,
+                (select array_agg(md.depot_id) from public.membership_depots md where md.membership_id = m.id) as depot_ids
+           from public.memberships m join public.organizations o on o.id = m.organization_id
+          where m.user_id = $1 and m.active order by o.name`,
+        [userId],
+      );
+      return rows.map((r) => ({ organizationId: r.organization_id, organizationName: r.name, userId, role: r.role, active: true, depotIds: r.depot_ids }));
+    });
   }
 
-  async getOrganization(organizationId: string) {
-    const rows = await this.get<Record<string, unknown>>(`organizations?id=eq.${encodeURIComponent(organizationId)}`);
-    const r = rows[0];
-    if (!r) return null;
-    return {
-      id: String(r.id),
-      name: String(r.name),
-      slug: String(r.slug),
-      countryCode: String(r.country_code),
-      status: r.status as Organization["status"],
-      defaultLocale: r.default_locale as Organization["defaultLocale"],
-      locationRetentionDays: Number(r.location_retention_days),
-      proofRetentionDays: Number(r.proof_retention_days),
-    };
+  async getOrganization(organizationId: string, userId?: string): Promise<Organization | null> {
+    if (!userId || !UUID.test(organizationId)) return null;
+    return this.db.asUser({ sub: userId }, async (tx) => {
+      const { rows } = await tx.query<Record<string, unknown>>(`select * from public.organizations where id = $1`, [organizationId]);
+      const r = rows[0];
+      if (!r) return null;
+      return {
+        id: String(r.id),
+        name: String(r.name),
+        slug: String(r.slug),
+        countryCode: String(r.country_code).trim(),
+        status: r.status as Organization["status"],
+        defaultLocale: r.default_locale as Organization["defaultLocale"],
+        locationRetentionDays: Number(r.location_retention_days),
+        proofRetentionDays: Number(r.proof_retention_days),
+      };
+    });
   }
 
-  async getSubscription(organizationId: string) {
-    const rows = await this.get<Record<string, unknown>>(`subscriptions?organization_id=eq.${encodeURIComponent(organizationId)}`);
-    const r = rows[0];
-    if (!r) return null;
-    // TODO(billing): read limits from public.plans instead of the bundled catalogue
-    // once plans are edited in the Admin app.
-    const plan = findPlan(String(r.plan_code));
-    if (!plan) return null;
-    return {
-      plan,
-      subscription: {
-        organizationId,
-        planCode: plan.code,
-        status: r.status as Subscription["status"],
-        interval: r.billing_interval as Subscription["interval"],
-        seats: Number(r.seats),
-        trialEndsAt: r.trial_ends_at ? new Date(String(r.trial_ends_at)).toISOString() : null,
-        currentPeriodEnd: new Date(String(r.current_period_end)).toISOString(),
-        cancelAtPeriodEnd: Boolean(r.cancel_at_period_end),
-        limitOverrides: (r.limit_overrides ?? {}) as Subscription["limitOverrides"],
-      },
-    };
+  async getSubscription(organizationId: string, userId?: string) {
+    if (!userId) return null;
+    return this.db.asUser({ sub: userId }, async (tx) => {
+      const { rows } = await tx.query<Record<string, unknown>>(`select * from public.subscription_summary($1)`, [organizationId]);
+      const r = rows[0];
+      const plan = r && findPlan(String(r.plan_code));
+      if (!r || !plan) return null;
+      return {
+        plan,
+        subscription: {
+          organizationId,
+          planCode: plan.code,
+          status: r.status as Subscription["status"],
+          interval: r.billing_interval as Subscription["interval"],
+          seats: Number(r.seats),
+          trialEndsAt: r.trial_ends_at ? (r.trial_ends_at as Date).toISOString() : null,
+          currentPeriodEnd: (r.current_period_end as Date).toISOString(),
+          cancelAtPeriodEnd: Boolean(r.cancel_at_period_end),
+          limitOverrides: (r.limit_overrides ?? {}) as Subscription["limitOverrides"],
+        },
+      };
+    });
   }
 }

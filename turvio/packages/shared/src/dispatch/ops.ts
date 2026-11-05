@@ -36,13 +36,32 @@ export interface TourTimeline {
 
 export type DispatchTourStatus = Tour["status"] | "delayed";
 
-function minuteOf(iso: string | undefined): number | null {
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+/** Minutes since local midnight of an ISO timestamp in the given IANA time zone. */
+export function minuteOfDay(iso: string | null | undefined, timeZone = "UTC"): number | null {
   if (!iso) return null;
-  const m = /T(\d{2}):(\d{2})/.exec(iso);
-  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  let f = formatters.get(timeZone);
+  if (!f) {
+    f = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    formatters.set(timeZone, f);
+  }
+  const parts = f.formatToParts(d);
+  const h = Number(parts.find((p) => p.type === "hour")?.value);
+  const m = Number(parts.find((p) => p.type === "minute")?.value);
+  return h * 60 + m;
 }
 
-export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Driver | undefined, asOfMinute: number): TourTimeline {
+/** Current date (YYYY-MM-DD) and minute of day in a time zone. */
+export function nowInZone(timeZone: string, now: Date = new Date()): { date: string; minute: number } {
+  const date = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  return { date, minute: minuteOfDay(now.toISOString(), timeZone)! };
+}
+
+export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Driver | undefined, asOfMinute: number, timeZone = "UTC"): TourTimeline {
+  const minuteOf = (iso: string | undefined) => minuteOfDay(iso, timeZone);
   const ordered = sortBySequence(stops.filter((s) => s.type !== "break"));
   const startMinute = minuteOf(tour.startedAt) ?? tour.plannedStartMinute;
   const shiftEndMinute = tour.plannedStartMinute + (driver?.maxShiftMinutes ?? 480);
@@ -126,7 +145,7 @@ export function summarizeTour(data: DispatchDataset, tour: Tour): TourSummary {
   const vehicle = data.vehicles.find((v) => v.id === tour.vehicleId);
   const stops = sortBySequence(data.stops.filter((s) => s.tourId === tour.id));
   const work = stops.filter((s) => s.type !== "break");
-  const timeline = tourTimeline(tour, stops, depot, driver, data.asOfMinute);
+  const timeline = tourTimeline(tour, stops, depot, driver, data.asOfMinute, data.timeZone);
   const openPickups = work.filter((s) => s.type === "pickup" && s.status === "pending");
   return {
     tour,

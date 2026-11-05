@@ -19,7 +19,7 @@ export async function createSeededDb(): Promise<PGlite> {
 
 export async function createDb(): Promise<PGlite> {
   const db = new PGlite();
-  await db.exec(readFileSync(join(import.meta.dirname, "supabase-stubs.sql"), "utf8"));
+  await db.exec(readFileSync(join(import.meta.dirname, "../../../supabase/local/00_supabase_stubs.sql"), "utf8"));
   for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort()) {
     try {
       await db.exec(readFileSync(join(MIGRATIONS_DIR, file), "utf8"));
@@ -96,10 +96,10 @@ export async function seed(db: PGlite) {
       ('${i.drvRowA1}', '${i.orgJarbou}', '${i.driverA1}', '${i.depotA}', 'Lena Hoffmann'),
       ('${i.drvRowA2}', '${i.orgJarbou}', '${i.driverA2}', '${i.depotA}', 'Mihai Popescu'),
       ('${i.drvRowB}', '${i.orgOther}', '${i.driverB}', '${i.depotB}', 'Erika Muster');
-    insert into public.tours (id, organization_id, depot_id, driver_id, name, tour_date) values
-      ('${i.tourA1}', '${i.orgJarbou}', '${i.depotA}', '${i.drvRowA1}', 'Erfurt A', current_date),
-      ('${i.tourA2}', '${i.orgJarbou}', '${i.depotA}', '${i.drvRowA2}', 'Erfurt B', current_date),
-      ('${i.tourB}', '${i.orgOther}', '${i.depotB}', '${i.drvRowB}', 'Leipzig 1', current_date);
+    insert into public.tours (id, organization_id, depot_id, driver_id, name, tour_date, published_at) values
+      ('${i.tourA1}', '${i.orgJarbou}', '${i.depotA}', '${i.drvRowA1}', 'Erfurt A', current_date, now()),
+      ('${i.tourA2}', '${i.orgJarbou}', '${i.depotA}', '${i.drvRowA2}', 'Erfurt B', current_date, now()),
+      ('${i.tourB}', '${i.orgOther}', '${i.depotB}', '${i.drvRowB}', 'Leipzig 1', current_date, now());
     insert into public.stops (id, organization_id, tour_id, sequence, recipient_name, street, postal_code, city, lat, lng) values
       ('${i.stopA1}', '${i.orgJarbou}', '${i.tourA1}', 0, 'Anna Krüger', 'Anger', '99084', 'Erfurt', 50.9762, 11.0329),
       ('${i.stopA2}', '${i.orgJarbou}', '${i.tourA2}', 0, 'Klaus Richter', 'Nordhäuser Straße', '99089', 'Erfurt', 50.9918, 11.0151),

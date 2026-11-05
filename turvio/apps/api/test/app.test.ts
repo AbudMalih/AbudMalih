@@ -1,7 +1,7 @@
 import { SignJWT } from "jose";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildApp } from "../src/app";
-import { SupabaseTokenVerifier } from "../src/auth";
+import { SupabaseTokenVerifier } from "../src/auth/tokens";
 import { loadConfig } from "../src/config";
 import { syntheticTenancy } from "../src/tenancy";
 
@@ -63,7 +63,7 @@ describe("authentication", () => {
     const { app } = makeApp();
     const res = await app.inject({ method: "GET", url: "/v1/me", headers: { authorization: `Bearer ${await token("usr_owner_jarbou")}` } });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ userId: "usr_owner_jarbou", memberships: [{ organizationId: "org_jarbou", role: "owner" }] });
+    expect(res.json()).toMatchObject({ userId: "usr_owner_jarbou", platformAdmin: false, memberships: [{ organizationId: "org_jarbou", role: "owner" }] });
   });
 });
 
@@ -139,9 +139,12 @@ describe("optimize gateway", () => {
 });
 
 describe("config", () => {
-  it("refuses dev auth in production and requires Supabase settings", () => {
-    expect(() => loadConfig({ NODE_ENV: "production", AUTH_MODE: "dev" })).toThrow(/not allowed in production/);
-    expect(() => loadConfig({ NODE_ENV: "production", AUTH_MODE: "supabase" })).toThrow(/SUPABASE_URL/);
-    expect(loadConfig({ AUTH_MODE: "dev" }).AUTH_MODE).toBe("dev");
+  it("refuses unsafe production settings and requires what each provider needs", () => {
+    expect(() => loadConfig({ NODE_ENV: "production", AUTH_PROVIDER: "dev" })).toThrow(/not allowed in production/);
+    expect(() => loadConfig({ NODE_ENV: "production", AUTH_PROVIDER: "local", DATABASE_URL: "postgres://x", JWT_SECRET: "x".repeat(40), DEV_MAILBOX: "true" })).toThrow(/DEV_MAILBOX/);
+    expect(() => loadConfig({ AUTH_PROVIDER: "local" })).toThrow(/DATABASE_URL/);
+    expect(() => loadConfig({ AUTH_PROVIDER: "local", DATABASE_URL: "postgres://x" })).toThrow(/JWT_SECRET/);
+    expect(() => loadConfig({ AUTH_PROVIDER: "supabase", DATABASE_URL: "postgres://x" })).toThrow(/SUPABASE_URL/);
+    expect(loadConfig({ AUTH_PROVIDER: "dev" }).AUTH_PROVIDER).toBe("dev");
   });
 });

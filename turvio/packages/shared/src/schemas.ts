@@ -167,6 +167,15 @@ export const Tour = z.object({
   plannedStartMinute: MinuteOfDay.default(8 * 60),
   startedAt: z.iso.datetime().optional(),
   finishedAt: z.iso.datetime().optional(),
+  /** Optimistic-concurrency version (persisted tours). */
+  version: z.number().int().min(1).optional(),
+  /** Set when dispatch published the tour to the driver. */
+  publishedAt: z.iso.datetime().nullable().optional(),
+  optimizedAt: z.iso.datetime().nullable().optional(),
+  optimization: z
+    .object({ engine: z.string(), matrixSource: z.string(), unassignedStopIds: z.array(z.string()).optional() })
+    .nullable()
+    .optional(),
 });
 export type Tour = z.infer<typeof Tour>;
 
