@@ -6,18 +6,18 @@ import { stage, range, smooth } from "./store";
  * background, type, header, rail and globe always agree (forward = reverse):
  *
  *   graphite steel with a silver daylight sheen (light from the upper left)
- *   → the dive into Europe brightens into warm mineral daylight, where the
- *   line-world takes over (its first tone is 0xdcdad5).
+ *   → the dive into Europe settles into the slate top of the dusk sky over
+ *   the port, where the sky layer and the line-world take over.
  */
 const KEYS: [number, number][] = [
   // graphite steel with a silver daylight sheen (texture in Atmosphere)
   [0.0, 0x46484c],
   [0.38, 0x414347],
-  [0.6, 0x4b4d51],
-  [0.8, 0x8c8d90],
-  [1.0, 0xc6c5c1],
-  [1.1, 0xd6d4cf],
-  [1.2, 0xdcdad5],
+  [0.6, 0x3e4147],
+  [0.8, 0x373b42],
+  [1.0, 0x343941],
+  [1.1, 0x323741],
+  [1.2, 0x30353e],
 ];
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -46,9 +46,8 @@ export function heroEnv(): HeroEnv {
   const rgb = [16, 8, 0].map((sh) => Math.round(lerp((ca >> sh) & 255, (cb >> sh) & 255, t))) as [number, number, number];
   return {
     rgb,
-    // dark steel on the opening, mineral daylight from the dive on:
-    // type and header turn to ink as the ground passes mid-grey
-    light: smooth(range(u, 0.72, 0.9)),
+    // a dark ground throughout the opening: light type and header
+    light: 0,
     sheen: 1 - smooth(range(u, 0.55, 1.0)),
     // the globe stays a lit, metallic graphite throughout the opening and dive
     globe: 0.45,

@@ -9,10 +9,10 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  /* light daylight scrim: keeps ink type clear of the line-world */
+  /* a soft dusk scrim: light type stays clear of the sky and the line-world */
   background:
-    linear-gradient(0deg, rgba(232, 230, 225, 0.86) 0%, rgba(232, 230, 225, 0) 46%),
-    linear-gradient(var(--scrim-dir, 90deg), rgba(232, 230, 225, 0.62) 0%, rgba(232, 230, 225, 0) 50%);
+    linear-gradient(0deg, rgba(20, 23, 28, 0.62) 0%, rgba(20, 23, 28, 0) 46%),
+    linear-gradient(var(--scrim-dir, 90deg), rgba(20, 23, 28, 0.42) 0%, rgba(20, 23, 28, 0) 50%);
 }
 .tag {
   position: absolute;

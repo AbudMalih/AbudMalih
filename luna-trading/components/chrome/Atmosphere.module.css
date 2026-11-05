@@ -12,6 +12,7 @@
 .light,
 .warm,
 .ground,
+.sky,
 .forest,
 .veil,
 .key,
@@ -143,7 +144,77 @@
   background: radial-gradient(50% 50% at 50% 60%, rgba(241, 236, 226, 0.07), transparent 75%);
   filter: blur(20px);
 }
-/* ecosystem + closing: warm mineral daylight, a fine stone texture */
+/* the open sky over port, road and the closing: deep slate above, a warm
+   hazy horizon (matching the line-world's fog), the ground in shadow below.
+   Never "NASA blue": a desaturated, graphite-leaning dusk. */
+.sky {
+  inset: 0;
+  background:
+    radial-gradient(70% 22% at 62% 60%, rgba(214, 176, 132, 0.28), transparent 75%),
+    linear-gradient(180deg, #262b34 0%, #353b45 24%, #565b63 46%, #807d79 58%, #8a8682 62%, #6c6b6a 74%, #4a4b4d 100%);
+}
+/* the road runs into a lighter morning haze */
+.skyDay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(80% 26% at 40% 60%, rgba(240, 226, 204, 0.3), transparent 75%),
+    linear-gradient(180deg, #3d4652 0%, #56606c 26%, #7d838b 46%, #a29f98 58%, #9a9890 62%, #7b7b79 76%, #5b5c5e 100%);
+}
+/* two slow cloud bands: environmental life behind the drawing, never the type */
+.cloudsFar,
+.cloudsNear {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  pointer-events: none;
+  background-repeat: repeat-x;
+  will-change: transform;
+}
+.cloudsFar {
+  top: 6%;
+  height: 34%;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(18% 22% at 12% 40%, rgba(236, 232, 226, 0.16), transparent 70%),
+    radial-gradient(22% 18% at 34% 62%, rgba(236, 232, 226, 0.12), transparent 70%),
+    radial-gradient(16% 20% at 58% 30%, rgba(236, 232, 226, 0.14), transparent 70%),
+    radial-gradient(24% 16% at 82% 56%, rgba(236, 232, 226, 0.1), transparent 70%);
+  background-size: 50% 100%;
+  animation: drift 260s linear infinite;
+}
+.cloudsNear {
+  top: 18%;
+  height: 30%;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(26% 16% at 20% 50%, rgba(245, 240, 232, 0.14), transparent 72%),
+    radial-gradient(20% 14% at 66% 40%, rgba(245, 240, 232, 0.12), transparent 72%);
+  background-size: 50% 100%;
+  animation: drift 170s linear infinite;
+}
+@keyframes drift {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+:global([dir="rtl"]) .cloudsFar,
+:global([dir="rtl"]) .cloudsNear {
+  animation-direction: reverse;
+}
+:global(html.static) .cloudsFar,
+:global(html.static) .cloudsNear {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cloudsFar,
+  .cloudsNear {
+    animation: none;
+  }
+}
+
+/* ecosystem: warm mineral daylight, a fine stone texture */
 .ground {
   inset: 0;
   background:
