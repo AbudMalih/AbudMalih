@@ -100,7 +100,8 @@ EOF
 # compose cannot pass those, so the images are built here and tagged for the commits under test.
 prebuild() { # prebuild <tag>: build all five images from the exported tree of $SHA
   local ctx="$T/ctx"
-  if [ ! -d "$ctx" ]; then mkdir -p "$ctx" && git -C "$TURVIO_ROOT/repo" archive "$SHA" turvio | tar -x -C "$ctx"; fi
+  # Same permissions as deploy.sh produces on the server (umask 077): files 600, directories 700.
+  if [ ! -d "$ctx" ]; then mkdir -p "$ctx" && git -C "$TURVIO_ROOT/repo" archive "$SHA" turvio | (umask 077 && tar --no-same-permissions -x -C "$ctx"); fi
   local b=(docker build -q)
   if [ -n "${HTTPS_PROXY:-}" ] && [ -f /root/.ccr/ca-bundle.crt ]; then
     b+=(--network host --build-arg "HTTPS_PROXY=$HTTPS_PROXY" --build-arg "HTTP_PROXY=$HTTPS_PROXY" --secret "id=build_ca,src=/root/.ccr/ca-bundle.crt")
@@ -115,6 +116,14 @@ retag() { for s in api optimizer osrm dispatch admin; do docker tag "turvio/$s:$
 
 step "build images for $SHA"
 prebuild "$SHA"
+
+step "image permissions: runtime users can read their files (umask 077 context)"
+for s in api optimizer osrm dispatch admin; do
+  d=/app; [ "$s" = osrm ] && d=/opt/osrm
+  bad=$(docker run --rm --entrypoint sh "turvio/$s:$SHA" -c "find $d \\( -type d \\( ! -readable -o ! -executable \\) \\) -o \\( ! -type d ! -readable \\) 2>/dev/null | wc -l")
+  [ "$bad" = 0 ] || { echo "FAIL: $s has $bad paths its runtime user cannot read"; exit 1; }
+  echo "$s: uid $(docker run --rm --entrypoint id "turvio/$s:$SHA" -u), all files readable"
+done
 
 step "deploy $SHA"
 "$DEPLOY" "$SHA"

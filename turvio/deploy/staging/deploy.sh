@@ -53,6 +53,8 @@ preflight() {
     die "$ENV_FILE still contains placeholders (CHANGE_ME / example.invalid)"
   fi
   [ -f "$ROOT/supabase-ca.crt" ] || die "$ROOT/supabase-ca.crt missing (runbook step 5)"
+  # Read inside the API container by its non-root user: must be world-readable (it is a public certificate).
+  [ "$(( 0$(stat -c %a "$ROOT/supabase-ca.crt") & 4 ))" -ne 0 ] || die "$ROOT/supabase-ca.crt must be readable by others: chmod 644 $ROOT/supabase-ca.crt"
   DEPLOY_BRANCH="$(sed -n 's/^DEPLOY_BRANCH=//p' "$ENV_FILE" | tail -1 | tr -d '"'"'"' ')"
   [ -n "$DEPLOY_BRANCH" ] || die "DEPLOY_BRANCH is not set in $ENV_FILE"
   [[ "$DEPLOY_BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]] || die "DEPLOY_BRANCH has unexpected characters"
@@ -85,7 +87,9 @@ fetch_and_export() {
   local tmp="$RELEASES/.tmp-$sha"
   rm -rf "$tmp"; mkdir -p "$tmp"
   # Only the TURVIO project – the rest of the repository (e.g. the JARBOU website) is not exported.
-  git -C "$REPO" archive --format=tar "$sha" turvio | tar -x -C "$tmp"
+  # --no-same-permissions: modes follow the umask (077) for every user, so images must set
+  # their own runtime permissions explicitly (as on the server).
+  git -C "$REPO" archive --format=tar "$sha" turvio | tar --no-same-permissions -x -C "$tmp"
   [ -f "$tmp/turvio/deploy/staging/compose.yml" ] || { rm -rf "$tmp"; die "commit $sha has no deploy/staging/compose.yml"; }
   echo "$sha" > "$tmp/turvio/RELEASE"
   mv "$tmp" "$RELEASES/$sha"

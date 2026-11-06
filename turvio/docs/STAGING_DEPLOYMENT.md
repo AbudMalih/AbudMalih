@@ -134,7 +134,7 @@ Supabase Dashboard → Project Settings → Database → **SSL Configuration →
 ```bash
 scp prod-ca-2021.crt turviodeploy@<vps>:/opt/turvio/supabase-ca.crt
 ```
-The API verifies the database certificate against it; verification is never disabled.
+Then `chmod 644 /opt/turvio/supabase-ca.crt`: the API reads it as a non-root container user, and `deploy.sh` refuses a CA file others cannot read. It is a public certificate. The API verifies the database certificate against it; verification is never disabled.
 
 ### Step 6 [turviodeploy] – secrets
 ```bash

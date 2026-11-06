@@ -30,7 +30,9 @@ ENV NEXT_TELEMETRY_DISABLED=1 NEXT_OUTPUT=standalone NEXT_PUBLIC_TURVIO_ENV=${TU
 RUN NODE_OPTIONS=--max-old-space-size=1536 pnpm --filter "@turvio/${APP}" build
 RUN mkdir -p /out && cp -r apps/${APP}/.next/standalone/. /out/ \
  && mkdir -p /out/apps/${APP}/.next && cp -r apps/${APP}/.next/static /out/apps/${APP}/.next/static \
- && if [ -d apps/${APP}/public ]; then cp -r apps/${APP}/public /out/apps/${APP}/public; fi
+ && if [ -d apps/${APP}/public ]; then cp -r apps/${APP}/public /out/apps/${APP}/public; fi \
+ # Sources may arrive with umask 077 (deploy export): readable + traversable for the node user.
+ && chmod -R u=rwX,go=rX /out
 
 FROM ${NODE_IMAGE} AS runtime
 ARG APP
