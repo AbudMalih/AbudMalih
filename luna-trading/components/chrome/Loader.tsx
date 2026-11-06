@@ -97,14 +97,31 @@ export default function Loader() {
           setGone(true);
         },
       });
-      // a short hand-over: the line closes, the + turns away, the page appears
-      tl.to([lineL.current, lineR.current], { scaleX: 0, duration: 0.35 }, 0);
+      // the original hand-over, tightened: the line closes, the logo opens
+      // from the + and travels to its place in the navigation
+      tl.to([lineL.current, lineR.current], { scaleX: 0, duration: 0.4 }, 0);
       tl.to(count.current, { opacity: 0, duration: 0.2 }, 0);
-      tl.to(plus.current, { scale: 0, rotate: 90, duration: 0.35, ease: "power3.in" }, 0.05);
-      tl.to(root.current, { backgroundColor: "rgba(6,6,7,0)", duration: 0.45, ease: "power2.out" }, 0.2);
-      tl.add(() => finishIntro(), 0.15);
-      void seen;
-      void brand;
+      if (!seen) {
+        tl.fromTo(plate.current, { clipPath: "inset(50% 50% 50% 50%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6 }, 0.2);
+        tl.to(plus.current, { scale: 0, duration: 0.35, ease: "power3.in" }, 0.2);
+        tl.to({}, { duration: 0.2 });
+        if (brand && plate.current) {
+          const b = brand.getBoundingClientRect();
+          const p = plate.current.getBoundingClientRect();
+          tl.to(plate.current, {
+            x: b.left + b.width / 2 - (p.left + p.width / 2),
+            y: b.top + b.height / 2 - (p.top + p.height / 2),
+            scale: b.width / p.width,
+            duration: 0.7,
+          });
+        }
+        tl.to(root.current, { backgroundColor: "rgba(6,6,7,0)", duration: 0.5, ease: "power2.out" }, "<0.2");
+      } else {
+        tl.to(plus.current, { scale: 0, duration: 0.35, ease: "power3.in" }, 0.1);
+        tl.to(root.current, { backgroundColor: "rgba(6,6,7,0)", duration: 0.45, ease: "power2.out" }, 0.25);
+      }
+      tl.add(() => finishIntro(), seen ? 0.3 : "-=0.45");
+      if (!seen) tl.set(plate.current, { opacity: 0 });
     }
 
     return () => {
