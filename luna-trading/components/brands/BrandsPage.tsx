@@ -8,7 +8,6 @@ import { OWNED_BRANDS, type OwnedBrand } from "@/content/brands";
 import { LuviscentLogo } from "@/components/brand/Logos";
 import BrandMediaSlot from "@/components/ui/BrandMediaSlot";
 import { usePageMotion } from "@/components/services/usePageMotion";
-import { usePassage } from "./usePassage";
 import svc from "@/components/services/Services.module.css";
 import s from "./Brands.module.css";
 import "./panchang.css";
@@ -37,7 +36,6 @@ export default function BrandsPage() {
   const t = dict.brandsPage;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
-  usePassage(root);
 
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
@@ -116,13 +114,10 @@ export default function BrandsPage() {
       {OWNED_BRANDS.map((b, i) => {
         const copy = t.brands[b.id];
         if (!copy) return null;
-        const before = i === 0 ? LUNA.principle : OWNED_BRANDS[i - 1].palette.world;
         return (
           <Fragment key={b.id}>
-            <Passage dir="in" brand={b} mineral={before} from={t.passage.from} to={`${b.name}${b.mark} · ${copy.category}`} />
             <BrandScene brand={b} copy={copy} />
             <BrandWorld brand={b} copy={copy} />
-            {i === OWNED_BRANDS.length - 1 && <Passage dir="out" brand={b} mineral={LUNA.system} from={t.passage.back} to={`${b.name}${b.mark}`} />}
           </Fragment>
         );
       })}
@@ -246,7 +241,6 @@ function HeroVisual({ luna, brand, compact }: { luna: string; brand: string; com
   );
 }
 
-/** The scrubbed passage between Luna Trading and a brand world (and back). */
 function Passage({ dir, brand, mineral, from, to }: { dir: "in" | "out"; brand: OwnedBrand; mineral: string; from: string; to: string }) {
   const style = {
     ["--min" as string]: mineral,

@@ -1161,3 +1161,14 @@
   width: 28px;
   border-radius: 2px;
 }
+.owner {
+  max-width: 100%;
+  white-space: normal;
+  line-height: 1.45;
+}
+@media (max-width: 767px) {
+  .owner {
+    letter-spacing: 0.12em;
+    border-radius: 18px;
+  }
+}
