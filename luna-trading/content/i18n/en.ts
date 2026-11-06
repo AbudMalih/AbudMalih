@@ -128,6 +128,10 @@ const en: Dictionary = {
     sign: "Luna Trading GmbH · Cologne",
   },
   footer: {
+    localTime: "Local time",
+    top: "Back to top",
+    language: "Language",
+    write: "Write to us",
     statement:
       "Global sourcing, import and export, product and brand development, e-commerce and distribution. From Cologne, for Europe.",
     company: "Company",

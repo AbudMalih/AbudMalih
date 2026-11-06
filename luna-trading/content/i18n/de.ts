@@ -128,6 +128,10 @@ const de: Dictionary = {
     sign: "Luna Trading GmbH · Köln",
   },
   footer: {
+    localTime: "Ortszeit",
+    top: "Nach oben",
+    language: "Sprache",
+    write: "Schreiben Sie uns",
     statement:
       "Globale Beschaffung, Import und Export, Produkt- und Markenentwicklung, E-Commerce und Distribution. Aus Köln für Europa.",
     company: "Unternehmen",
