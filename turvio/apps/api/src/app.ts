@@ -59,6 +59,13 @@ declare module "fastify" {
   }
 }
 
+/** User-facing text for road-routing failures reported by the optimizer. */
+function routingMessage(code: string, detail?: string): string {
+  if (code === "routing_out_of_coverage") return `Road routing does not cover these locations – not optimized. ${detail ?? ""}`.trim();
+  if (code === "routing_degenerate") return "Road routing returned no usable distances for these locations – not optimized.";
+  return "Road routing is unavailable – not optimized. Try again later.";
+}
+
 /** Fastify accepts a hop count at runtime but not in its types; express it as a trust function. */
 function trustProxySetting(v: boolean | number | undefined): boolean | ((addr: string, hop: number) => boolean) {
   if (typeof v === "number") return (_addr, hop) => hop < v;
@@ -82,7 +89,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   }
 
   app.setErrorHandler((err: { statusCode?: number; message: string; validation?: unknown }, req, reply) => {
-    if (err instanceof ApiError) return problem(reply, err.status, err.code, err.message);
+    if (err instanceof ApiError) return problem(reply, err.status, err.code, err.message, err.details);
     req.log.error(err);
     const status = err.statusCode && err.statusCode < 500 ? err.statusCode : 500;
     return problem(reply, status, status === 500 ? "internal_error" : "bad_request", status === 500 ? "Something went wrong on our side" : err.message);
@@ -133,6 +140,14 @@ export function buildApp(deps: AppDeps): FastifyInstance {
       body: JSON.stringify(body),
       signal: AbortSignal.timeout((timeLimitSeconds + 30) * 1000),
     }).catch(() => null);
+    if (res && (res.status === 422 || res.status === 503)) {
+      // Road routing failed inside the optimizer: never turn that into a "successful" plan.
+      const body = (await res.json().catch(() => ({}))) as { detail?: { code?: string; message?: string; points?: unknown[] } };
+      const d = body.detail;
+      if (d?.code?.startsWith("routing_")) {
+        throw new ApiError(res.status === 422 ? 422 : 503, d.code, routingMessage(d.code, d.message), { points: Array.isArray(d.points) ? d.points : [] });
+      }
+    }
     if (!res || !res.ok) throw new ApiError(502, "optimizer_unavailable", "Optimization service unavailable");
     const parsed = OptimizeResponse.safeParse(await res.json());
     if (!parsed.success) throw new ApiError(502, "optimizer_bad_response", "Unexpected optimizer response");

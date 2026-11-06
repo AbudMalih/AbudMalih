@@ -4,7 +4,11 @@
 #   deploy.sh <40-character commit SHA>   build + start exactly this commit
 #   deploy.sh --rollback                  switch back to the previous release
 #   deploy.sh --status                    show releases and container state
-#   deploy.sh --osrm-refresh              rebuild the Region Hannover routing graph
+#   deploy.sh --osrm-refresh              (re)build the routing graph (OSRM_REGION in .env)
+#   deploy.sh --osrm-import FILE SHA256   load a graph prepared on a bigger machine (Germany)
+#   deploy.sh --osrm-check                real road routes in Suhl, Hannover, Kassel, Bremen, Cologne
+#   deploy.sh --osrm-revert               switch back to the previous routing graph
+#   deploy.sh --server-check              RAM, swap, disk and routing-graph information
 #
 # Layout under TURVIO_ROOT (default /opt/turvio), owned by the deploy user:
 #   .env               secrets (mode 600) – see deploy/staging/.env.example
@@ -123,7 +127,7 @@ start_release() { # start_release <sha>: up + wait for healthchecks + smoke test
 
 osrm_ready() {
   local sha="$1"
-  compose "$sha" run --rm --no-deps --entrypoint test osrm-prepare -e /data/current/map.osrm.hsgr >/dev/null 2>&1
+  compose "$sha" run --rm --no-deps --entrypoint test osrm-prepare -e /data/current/map.osrm.properties >/dev/null 2>&1
 }
 
 # ---------------------------------------------------------------- commands
@@ -152,6 +156,7 @@ deploy() {
     if [ -n "$current" ] && [ "$current" != "$sha" ]; then echo "$current" > "$STATE/previous"; fi
     echo "$sha" > "$STATE/current"
     log "DEPLOYED $sha"
+    osrm_check "$sha" || log "WARNING: the routing graph does not cover all required cities – optimizations there fail with routing_out_of_coverage (deploy.sh --osrm-import / --osrm-refresh)"
     prune
     return 0
   fi
@@ -202,16 +207,70 @@ status() {
   [ -n "$cur" ] && compose "$cur" ps
 }
 
-osrm_refresh() {
+current_release() {
   local cur; cur="$(cat "$STATE/current" 2>/dev/null || true)"
   [ -n "$cur" ] || die "deploy a release first"
-  compose "$cur" run --rm osrm-prepare
-  compose "$cur" up -d --no-deps --force-recreate --wait --wait-timeout "$WAIT_TIMEOUT" osrm
-  log "routing graph refreshed"
+  echo "$cur"
+}
+
+osrm_restart() { compose "$1" up -d --no-deps --force-recreate --wait --wait-timeout "$WAIT_TIMEOUT" osrm; }
+
+osrm_check() { # osrm_check <release>: real road routes for the required cities
+  compose "$1" exec -T osrm /opt/osrm/check.sh
+}
+
+# After a new graph: verify it; if the required cities are not covered, go back to the previous graph.
+verify_new_graph() {
+  local cur="$1"
+  if osrm_restart "$cur" && osrm_check "$cur"; then log "routing graph active and verified"; return 0; fi
+  if [ "${OSRM_CHECK_REQUIRED:-$(value_of OSRM_CHECK_REQUIRED)}" = "false" ]; then
+    log "WARNING: routing check failed, kept anyway (OSRM_CHECK_REQUIRED=false)"; return 0
+  fi
+  log "routing check failed – reverting to the previous graph"
+  compose "$cur" run --rm --no-deps --entrypoint /opt/osrm/revert.sh osrm-prepare && osrm_restart "$cur" || true
+  die "new routing graph rejected (see check output above)"
+}
+
+osrm_refresh() {
+  local cur; cur="$(current_release)"
+  compose "$cur" run --rm osrm-prepare || die "routing graph preparation failed or was refused (see preflight above)"
+  verify_new_graph "$cur"
+}
+
+osrm_import() { # osrm_import <file> <sha256>
+  local cur file="$1" sum="$2"; cur="$(current_release)"
+  [[ "$sum" =~ ^[0-9a-f]{64}$ ]] || die "give the SHA-256 of the archive (64 hex characters)"
+  [ -f "$file" ] || die "$file not found"
+  log "verifying $file"
+  echo "$sum  $file" | sha256sum -c --quiet - || die "SHA-256 mismatch – archive not imported"
+  local cat_cmd=(cat "$file")
+  case "$file" in *.zst) cat_cmd=(zstd -dc "$file") ;; *.gz) cat_cmd=(gzip -dc "$file") ;; esac
+  "${cat_cmd[@]}" | compose "$cur" run --rm -T --no-deps --entrypoint /opt/osrm/import.sh osrm-prepare || die "import failed"
+  verify_new_graph "$cur"
+}
+
+osrm_revert() {
+  local cur; cur="$(current_release)"
+  compose "$cur" run --rm --no-deps --entrypoint /opt/osrm/revert.sh osrm-prepare || die "revert failed"
+  osrm_restart "$cur"
+  log "routing graph reverted"
+}
+
+server_check() {
+  echo "== host"; free -m; nproc | sed 's/^/vCPUs: /'
+  echo "== disk (Docker data: $(docker info --format '{{.DockerRootDir}}'))"; df -h "$(docker info --format '{{.DockerRootDir}}')" "$ROOT"
+  local cur; cur="$(cat "$STATE/current" 2>/dev/null || true)"
+  if [ -n "$cur" ]; then
+    echo "== routing graph"
+    compose "$cur" run --rm --no-deps --entrypoint sh osrm-prepare -c 'cat /data/current/META 2>/dev/null || echo "no META (prepared before this version)"; du -sh /data/current/ 2>/dev/null; readlink /data/current; readlink /data/previous || true'
+    echo "== container memory"; docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' | grep "^$PROJECT-" || true
+  fi
+  echo "Germany (estimates, docs/MAP_DATA_PLAN.md): prepare >= 16 GB RAM (CH) / 12 GB (MLD), ~25 GB free disk;"
+  echo "serve: graph files ~6-10 GB on disk; with OSRM_MMAP=true RAM use stays small."
 }
 
 main() {
-  [ $# -eq 1 ] || { sed -n '3,8p' "$0"; exit 2; }
+  [ $# -ge 1 ] || { sed -n '3,13p' "$0"; exit 2; }
   preflight
   exec 9>"$STATE/deploy.lock"
   flock -n 9 || die "another deployment is running"
@@ -219,8 +278,12 @@ main() {
     --rollback) rollback ;;
     --status) status ;;
     --osrm-refresh) osrm_refresh ;;
+    --osrm-import) [ $# -eq 3 ] || die "usage: --osrm-import FILE SHA256"; osrm_import "$2" "$3" ;;
+    --osrm-check) osrm_check "$(current_release)" ;;
+    --osrm-revert) osrm_revert ;;
+    --server-check) server_check ;;
     -*) die "unknown option $1" ;;
-    *) deploy "$1" ;;
+    *) [ $# -eq 1 ] || die "usage: deploy.sh <commit-sha>"; deploy "$1" ;;
   esac
 }
 

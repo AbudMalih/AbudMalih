@@ -1,6 +1,6 @@
 import { DriverSettings, defaultFailureReasons, nowInZone, roadMetrics, sortBySequence } from "@turvio/shared";
 import { STOP_SELECT, orgTimeZone, toStop, type StopRow, type TourRow } from "../data/dispatch";
-import { RoutingUnavailable, type RoutingProvider } from "../routing";
+import { RoutingOutOfCoverage, RoutingUnavailable, type RoutingProvider } from "../routing";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { ApiError, type Tx } from "../db";
@@ -242,7 +242,21 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
       const metrics = roadMetrics(data.stops, { legs: r.legs, waypointStopIds }, running ? data.now : data.tour.planned_start_minute);
       return { source: "osrm", waypointStopIds, legs: r.legs, geometry: r.geometry, metrics, unlocatedStopIds: unlocated, computedAt: new Date().toISOString() };
     } catch (e) {
-      if (e instanceof RoutingUnavailable) return reply.send({ source: "none", note: `${e.message} – figures are straight-line estimates`, waypointStopIds, unlocatedStopIds: unlocated });
+      if (e instanceof RoutingOutOfCoverage) {
+        const ids = e.points.map((p) => waypointStopIds[p.index]);
+        req.log.warn({ tourId: id, points: e.points }, "road routing: locations outside the routing data");
+        return reply.send({
+          source: "none",
+          note: `${e.message} – the map shows straight lines, distances and times are not road values`,
+          routingError: { code: "routing_out_of_coverage", stopIds: ids.filter((x): x is string => !!x), depotAffected: ids.some((x) => x === null) },
+          waypointStopIds,
+          unlocatedStopIds: unlocated,
+        });
+      }
+      if (e instanceof RoutingUnavailable) {
+        req.log.warn({ tourId: id, err: e.message }, "road routing unavailable");
+        return reply.send({ source: "none", note: `${e.message} – figures are straight-line estimates`, routingError: { code: "routing_unavailable" }, waypointStopIds, unlocatedStopIds: unlocated });
+      }
       throw e;
     }
   });

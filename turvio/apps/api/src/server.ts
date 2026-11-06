@@ -67,7 +67,7 @@ if (config.AUTH_PROVIDER === "dev") {
     rateLimitPerMinute: config.RATE_LIMIT_PER_MINUTE,
     trustProxy: config.TRUST_PROXY === "true" ? true : config.TRUST_PROXY === "false" ? false : Number(config.TRUST_PROXY),
     requireAdminMfa: config.requireAdminMfa,
-    routing: config.OSRM_URL ? new OsrmRouting(config.OSRM_URL, { timeoutMs: config.OSRM_TIMEOUT_MS }) : undefined,
+    routing: config.OSRM_URL ? new OsrmRouting(config.OSRM_URL, { timeoutMs: config.OSRM_TIMEOUT_MS, maxSnapMeters: config.OSRM_MAX_SNAP_METERS }) : undefined,
   });
   // Background jobs: retention purge (hourly) and deletion of files of removed proofs.
   let jobs: NodeJS.Timeout | undefined;

@@ -169,10 +169,59 @@ The script:
 
 A deployment takes a lock (no parallel runs) and logs to `/opt/turvio/state/deploy.log`.
 
+### 4a. Road routing for all of Germany
+**Why:** OSRM answers `Ok` even for places outside its map data: it snaps every point to the nearest road it knows, however far away. With the Region Hannover graph, a tour in Suhl was snapped ~165 km onto one node at the edge of the extract, so every distance and time was 0. That gave 0.0 km, ETAs of service time only, and straight lines. The optimizer and API now reject such results (`routing_out_of_coverage`, naming the stops), and staging needs a Germany graph.
+
+| | Region Hannover (measured) | Germany (estimate, see MAP_DATA_PLAN.md) |
+|---|---|---|
+| Download | 80 MB | ~4.5 GB (Geofabrik) |
+| Prepare: peak RAM | extract 437–456 MB, ~16 s–1.5 min | ≥ 16 GB (CH) / ≥ 12 GB (MLD) – **not possible on the 4 GB VPS** |
+| Graph on disk | ~120 MB | ~6–10 GB |
+| Serve | 83 MB private RAM; with `OSRM_MMAP=true` 2 MB private + reclaimable file cache | `OSRM_MMAP=true`, `OSRM_MEM_LIMIT=1536m` on the 4 GB VPS – **unverified** |
+
+**Check the server first** (as turviodeploy). Needs ~15 GB free disk for the archive plus the graph:
+```bash
+/opt/turvio/bin/deploy --server-check
+```
+
+**Prepare on a bigger machine** (your Mac with Docker Desktop memory ≥ 16 GB, or a temporary Linux server). The script refuses to package a graph that fails the city check:
+```bash
+deploy/staging/osrm/prepare-offline.sh ~/turvio-osrm
+```
+
+**Copy it to the VPS and import it:**
+```bash
+scp ~/turvio-osrm/osrm-graph.tar.gz turviodeploy@<vps>:/opt/turvio/
+```
+```bash
+ssh turviodeploy@<vps> /opt/turvio/bin/deploy --osrm-import /opt/turvio/osrm-graph.tar.gz <sha256 from osrm-graph.tar.gz.sha256>
+```
+The import:
+1. verifies the SHA-256 and that the graph was built with the same OSRM version;
+2. switches atomically and restarts OSRM;
+3. runs the city check (Suhl, Hannover, Kassel, Bremen, Cologne, Suhl→Hannover). On failure it **reverts to the previous graph**.
+
+Afterwards delete the archive:
+```bash
+rm /opt/turvio/osrm-graph.tar.gz
+```
+
+**End-to-end check of a real tour** (a dispatcher account; it re-optimizes only that tour):
+```bash
+API_URL=https://<api host> EMAIL=<dispatcher e-mail> PASSWORD='<password>' TOUR=HER-01 node e2e/verify-road-routing.mjs
+```
+It checks:
+- the optimization ran on road data (`matrixSource=osrm`);
+- total km > 1 and driving minutes > 3;
+- every leg has a road distance;
+- the geometry has many more points than stops;
+- ETA gaps contain travel time.
+
 Other commands:
 - `deploy --status`: current and previous release, container state.
 - `deploy --rollback`: return to the previous release, using its existing images.
-- `deploy --osrm-refresh`: download and rebuild the Region Hannover graph, then restart OSRM. Weekly is enough.
+- `deploy --osrm-refresh`: download and rebuild the graph for `OSRM_REGION` on the server. The preflight refuses regions the server is too small for. Then restart and city check.
+- `deploy --osrm-import FILE SHA256`, `deploy --osrm-check`, `deploy --osrm-revert`, `deploy --server-check`: see 4a.
 
 The first deployment takes longer: about 10–20 min building on 2 vCPU, plus a few minutes for the graph.
 

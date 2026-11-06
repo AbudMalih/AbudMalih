@@ -340,6 +340,20 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         </div>
       </div>
 
+      {road?.routingError ? (
+        <div role="alert" data-testid="routing-warning" className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-ink">
+          <p className="font-semibold">
+            {road.routingError.code === "routing_out_of_coverage" ? "Road routing does not cover this tour" : "Road routing is unavailable"}
+          </p>
+          <p>
+            {road.routingError.code === "routing_out_of_coverage"
+              ? `${road.routingError.depotAffected ? "The depot and " : ""}${road.routingError.stopIds?.length ?? 0} stop(s) lie outside the road map data. `
+              : ""}
+            The map shows straight lines; distances and times below are estimates, not road values.
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-2">
         <Fact
           icon={<Avatar name={s.driver?.displayName ?? "?"} size="sm" className="size-4 text-[8px]" />}

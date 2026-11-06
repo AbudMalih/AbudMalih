@@ -4,7 +4,7 @@
 # Secrets come only from /opt/turvio/.env (mode 600) – never from this file or Git.
 #
 # Memory budget (limits; typical use is lower):
-#   caddy 128M · api 512M · optimizer 768M · osrm 512M · dispatch 384M · admin 320M = ~2.6 GB
+#   caddy 128M · api 512M · optimizer 768M · osrm 512M (OSRM_MEM_LIMIT) · dispatch 384M · admin 320M = ~2.6 GB
 #   leaving headroom for the OS, Docker and image builds on a 4 GB server (plus 2 GB swap).
 
 name: turvio-staging
@@ -83,6 +83,7 @@ services:
       PROOF_BUCKET: proofs
       OPTIMIZER_URL: http://optimizer:8000
       OSRM_URL: http://osrm:5000
+      OSRM_MAX_SNAP_METERS: ${OSRM_MAX_SNAP_METERS:-1000}
       GEOCODER: ${GEOCODER:-none}
       MAILER: smtp
       SMTP_URL: ${SMTP_URL:?set SMTP_URL (EU SMTP provider)}
@@ -108,6 +109,10 @@ services:
       OSRM_URL: http://osrm:5000
       OSRM_TIMEOUT_SECONDS: "8"
       OSRM_TABLE_CHUNK: "100"
+      # Never report an optimization as successful on straight-line guesses: if road routing
+      # fails or a location is outside the routing data, the optimization fails with the stops named.
+      ROUTING_REQUIRED: "true"
+      OSRM_MAX_SNAP_METERS: ${OSRM_MAX_SNAP_METERS:-1000}
     networks: [internal]
     mem_limit: 768m
     cpus: 2
@@ -116,10 +121,18 @@ services:
     <<: *hardening
     image: turvio/osrm:${TURVIO_RELEASE:?set by deploy.sh}
     build: { context: ../.., dockerfile: deploy/docker/osrm.Dockerfile }
+    environment:
+      OSRM_MMAP: ${OSRM_MMAP:-false}       # true: serve a large graph (Germany) from disk-backed memory
     volumes:
       - osrm-data:/data:ro
     networks: [internal]
-    mem_limit: 512m
+    mem_limit: ${OSRM_MEM_LIMIT:-512m}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:5000/nearest/v1/driving/9.7409,52.3766"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 300s                  # a Germany graph takes minutes to load without mmap
 
   # One-off: builds/refreshes the routing graph.  deploy.sh osrm-refresh
   osrm-prepare:
@@ -131,10 +144,14 @@ services:
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     tmpfs: ["/tmp:size=64m"]
+    environment:
+      OSRM_REGION: ${OSRM_REGION:-hannover}
+      OSRM_ALGORITHM: ${OSRM_ALGORITHM:-ch}
+      OSRM_THREADS: ${OSRM_THREADS:-2}
     volumes:
       - osrm-data:/data
     networks: [edge]                       # needs internet for the download only
-    mem_limit: 1536m
+    mem_limit: ${OSRM_PREPARE_MEM_LIMIT:-1536m}
     restart: "no"
 
   dispatch:

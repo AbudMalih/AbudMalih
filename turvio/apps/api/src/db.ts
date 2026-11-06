@@ -8,6 +8,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    /** Extra fields for the error body (e.g. which stops are outside the routing area). */
+    readonly details: Record<string, unknown> = {},
   ) {
     super(message);
   }

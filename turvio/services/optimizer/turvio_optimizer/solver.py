@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
 
-from .matrix import Matrix, build_matrix
+from .matrix import Matrix, RoutingError, build_matrix
 from .models import OptimizeRequest, OptimizeResponse, Route, Visit
 
 DAY_SECONDS = 24 * 3600
@@ -44,7 +44,16 @@ def solve(req: OptimizeRequest, matrix: Matrix | None = None) -> OptimizeRespons
     points.extend(s.location for s in stops)
 
     if matrix is None:
-        matrix = build_matrix(points)
+        try:
+            matrix = build_matrix(points)
+        except RoutingError as e:
+            # Name the affected depot positions / stops for the caller.
+            for idx, snap in e.point_snaps:
+                if idx < stop_offset:
+                    e.points.append({"kind": "vehicle_end" if idx % 2 else "vehicle_start", "vehicleId": vehicles[idx // 2].id, "snapMeters": round(snap)})
+                else:
+                    e.points.append({"kind": "stop", "stopId": stops[idx - stop_offset].id, "snapMeters": round(snap)})
+            raise
     dur, dist = matrix.durations_s, matrix.distances_m
 
     starts = [2 * i for i in range(n_vehicles)]

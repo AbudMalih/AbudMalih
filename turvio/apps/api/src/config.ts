@@ -55,6 +55,8 @@ const Env = z.object({
   // ("1" = exactly one reverse proxy, e.g. Caddy) or "false".
   TRUST_PROXY: z.string().regex(/^(true|false|\d{1,2})$/).default("true"),
   OSRM_TIMEOUT_MS: z.coerce.number().int().min(500).max(60000).default(8000),
+  /** A point further than this from any road in the OSRM data is "outside the routing area". */
+  OSRM_MAX_SNAP_METERS: z.coerce.number().int().min(50).max(50000).default(1000),
   /** Run the retention purge and proof-file deletion worker inside the API process. */
   BACKGROUND_JOBS: z.enum(["true", "false"]).default("true"),
   /**

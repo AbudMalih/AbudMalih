@@ -42,7 +42,7 @@ up() {
   # Optional services (development): TURVIO_OSRM_URL (see scripts/osrm-local.sh), TURVIO_GEOCODER=postgres.
   # TURVIO_RATE_LIMIT: the pilot simulation sends every driver from 127.0.0.1, so it needs more than the
   # per-IP default of 600/min (e.g. 5000). Real devices have their own addresses; keep the default there.
-  start optimizer "$ROOT/services/optimizer" env OSRM_URL="${TURVIO_OSRM_URL:-}" .venv/bin/uvicorn turvio_optimizer.app:app --port 8000
+  start optimizer "$ROOT/services/optimizer" env OSRM_URL="${TURVIO_OSRM_URL:-}" ROUTING_REQUIRED="${TURVIO_ROUTING_REQUIRED:-false}" .venv/bin/uvicorn turvio_optimizer.app:app --port 8000
   start api "$ROOT/apps/api" env NODE_ENV=development AUTH_PROVIDER=local DATABASE_URL="$DB_URL" JWT_SECRET="$JWT_SECRET" \
     OPTIMIZER_URL=http://localhost:8000 DEV_MAILBOX=true MAILER=outbox ${TURVIO_OSRM_URL:+OSRM_URL=$TURVIO_OSRM_URL} GEOCODER="${TURVIO_GEOCODER:-none}" \
     ${TURVIO_RATE_LIMIT:+RATE_LIMIT_PER_MINUTE=$TURVIO_RATE_LIMIT} \

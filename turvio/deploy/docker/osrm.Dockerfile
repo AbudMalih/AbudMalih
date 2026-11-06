@@ -24,17 +24,18 @@ RUN --mount=type=secret,id=build_ca,required=false,mode=0444 \
       sed -i 's#http://#https://#g' /etc/apt/sources.list.d/ubuntu.sources; \
       APT_OPTS="-o Acquire::https::CAInfo=/run/secrets/build_ca"; fi \
  && apt-get $APT_OPTS update \
- && apt-get $APT_OPTS install -y --no-install-recommends libtbb12 libtbbmalloc2 curl ca-certificates \
+ && apt-get $APT_OPTS install -y --no-install-recommends libtbb12 libtbbmalloc2 curl ca-certificates jq time \
  && sed -i 's#https://#http://#g' /etc/apt/sources.list.d/ubuntu.sources \
  && rm -rf /var/lib/apt/lists/* \
  && useradd --system --uid 10002 --no-create-home osrm \
  && mkdir -p /data && chown osrm:osrm /data
 COPY --from=fetch /opt/osrm /opt/osrm
-COPY --chmod=755 deploy/staging/osrm/prepare.sh /opt/osrm/prepare.sh
+COPY --chmod=755 deploy/staging/osrm/prepare.sh deploy/staging/osrm/import.sh deploy/staging/osrm/switch.sh deploy/staging/osrm/revert.sh deploy/staging/osrm/serve.sh deploy/staging/osrm/check.sh /opt/osrm/
 ENV PATH=/opt/osrm/bin:$PATH
 USER 10002
 EXPOSE 5000
 # Coordinates inside Region Hannover (Hannover Hbf area).
 HEALTHCHECK --interval=20s --timeout=4s --start-period=30s --retries=3 \
   CMD ["curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:5000/nearest/v1/driving/9.7409,52.3766"]
-CMD ["osrm-routed", "--algorithm", "ch", "--max-table-size", "1000", "--max-viaroute-size", "1000", "--port", "5000", "/data/current/map.osrm"]
+# Algorithm (ch/mld) comes from the prepared graph; OSRM_MMAP=true for low-RAM servers.
+CMD ["/opt/osrm/serve.sh"]

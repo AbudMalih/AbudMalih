@@ -193,3 +193,21 @@ describe("staging configuration guards", () => {
     expect(() => loadConfig({ ...base, MAILER: "outbox" })).toThrow(/MAILER=smtp/);
   });
 });
+
+describe("road-routing failures from the optimizer", () => {
+  it("are passed on as 422 with the affected stops – never as a successful plan", async () => {
+    const detail = { code: "routing_out_of_coverage", message: "6 location(s) are outside the road-routing area (nearest routable road up to 167.0 km away)", points: [{ kind: "stop", stopId: "s1", snapMeters: 165258 }] };
+    const { app } = makeApp(vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail }), { status: 422 })));
+    const res = await app.inject({ method: "POST", url: "/v1/orgs/org_jarbou/optimize", headers: { authorization: `Bearer ${await token("usr_drv_01")}` }, payload: optimizeBody });
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error).toMatchObject({ code: "routing_out_of_coverage", points: detail.points });
+    expect(res.json().error.message).toMatch(/not optimized/);
+  });
+
+  it("routing service down -> 503 routing_unavailable", async () => {
+    const { app } = makeApp(vi.fn().mockResolvedValue(new Response(JSON.stringify({ detail: { code: "routing_unavailable", message: "x", points: [] } }), { status: 503 })));
+    const res = await app.inject({ method: "POST", url: "/v1/orgs/org_jarbou/optimize", headers: { authorization: `Bearer ${await token("usr_drv_01")}` }, payload: optimizeBody });
+    expect(res.statusCode).toBe(503);
+    expect(res.json().error.code).toBe("routing_unavailable");
+  });
+});

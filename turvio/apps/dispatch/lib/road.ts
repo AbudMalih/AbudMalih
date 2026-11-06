@@ -12,6 +12,8 @@ export interface RoadRouteResponse {
   geometry?: [number, number][];
   metrics?: { totalMeters: number; totalDriveSeconds: number; remainingMeters: number; remainingDriveSeconds: number; etas: Record<string, number> };
   unlocatedStopIds: string[];
+  /** Present when road routing failed, e.g. locations outside the prepared map region. */
+  routingError?: { code: "routing_out_of_coverage" | "routing_unavailable"; stopIds?: string[]; depotAffected?: boolean };
 }
 
 export { routeKey };
