@@ -1,322 +1,175 @@
 "use client";
 
-import Link from "next/link";
-import { useRef, type CSSProperties } from "react";
+import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
-import type { ServiceId } from "@/content/i18n/services/types";
 import { PLATFORMS } from "@/content/platforms";
 import { BRANDS } from "@/content/site";
-import { LuviscentLogo } from "@/components/brand/Logos";
+import type { ServiceId } from "@/content/i18n/services/types";
+import type { StepId } from "@/content/i18n/types";
 import { usePageMotion } from "./usePageMotion";
-import { BrandVisual, DevelopmentVisual, DistributionVisual, SourcingVisual, TradeVisual } from "./Visuals";
-import s from "./Services.module.css";
+import ChainArt from "@/components/sections/ChainArt";
+import Showcase from "@/components/kit/Showcase";
+import { PageHero, Band, Cta, Tag, RedButton, GhostButton, d, kit as s } from "@/components/kit/Kit";
+import svc from "./Services.module.css";
 
 /**
- * LEISTUNGEN / SERVICES: a premium editorial page, not a film.
- * One red route is the thread: it is drawn in the hero, activates across the
- * operating model, runs down the six chapters and completes at MARKET.
- * Tones follow the business story (light mineral → silver → graphite trade →
- * industrial development → warm brand → bright commerce → graphite
- * distribution → emerald LUVISCENT → dark CTA), blended at each seam.
+ * LEISTUNGEN / SERVICES on the site kit: port hero with the route, a band of
+ * what we do, the six disciplines as cards, one section per discipline,
+ * the whole route, LUVISCENT as the proof, and the call to action.
  */
-
 const IDS: ServiceId[] = ["sourcing", "trade", "development", "brand", "ecommerce", "distribution"];
-
-// section grounds (light / dark tone drives type, header and lines)
-const TONE: Record<string, { bg: string; tone: "light" | "dark" }> = {
-  hero: { bg: "#e4e2dd", tone: "light" },
-  model: { bg: "#dcdcda", tone: "light" },
-  sourcing: { bg: "#d4d5d4", tone: "light" },
-  trade: { bg: "#d7d8d7", tone: "light" },
-  development: { bg: "#e0dfdb", tone: "light" },
-  brand: { bg: "#ebe6dc", tone: "light" },
-  ecommerce: { bg: "#f1f2f1", tone: "light" },
-  distribution: { bg: "#d9dad8", tone: "light" },
-  payoff: { bg: "#dedcd6", tone: "light" },
-  luviscent: { bg: "#0a1b15", tone: "dark" },
-  cta: { bg: "#e9e7e2", tone: "light" },
-};
-const ORDER = ["hero", "model", ...IDS, "payoff", "luviscent", "cta"];
-const ground = (key: string): CSSProperties => {
-  const i = ORDER.indexOf(key);
-  return { ["--bg" as string]: TONE[key].bg, ["--from" as string]: TONE[ORDER[Math.max(0, i - 1)]].bg };
-};
+const ART: Record<ServiceId, StepId> = { sourcing: "sourcing", trade: "import", development: "development", brand: "brand", ecommerce: "ecommerce", distribution: "distribution" };
+const num = (i: number) => String(i + 1).padStart(2, "0");
 
 export default function ServicesPage() {
   const { dict, href } = useI18n();
   const t = dict.services;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
-  const luviscent = BRANDS.luviscent;
-  const luviscentHref = luviscent.url ?? href(luviscent.internal);
-  const num = (i: number) => String(i + 1).padStart(2, "0");
+  const lvHref = BRANDS.luviscent.url ?? href("/brands");
+  const channels = PLATFORMS.filter((p) => p.useMark);
 
   return (
-    <article ref={root} className={s.page}>
-      {/* ------------------------------------------------------------ HERO */}
-      <section className={`${s.section} ${s.hero}`} style={ground("hero")} data-tone="light" aria-labelledby="svc-title">
-        <div className={`frame ${s.heroInner}`}>
-          <p className={`t-label ${s.eyebrow}`} data-reveal>
-            <span className={s.idx}>01</span>
-            <span className={s.redRule} />
-            {t.hero.eyebrow}
-            <a href="#modell" className={s.scrollCue} data-cursor="link">
-              {t.hero.scroll}
-              <span className={s.cueLine} aria-hidden="true" />
-            </a>
-          </p>
-          <h1 id="svc-title" className={s.heroTitle}>
-            <span className="mask">
-              <span className={s.rise} data-reveal>
-                {t.hero.h1a}
-              </span>
-            </span>
-            <span className="mask">
-              <span className={`${s.rise} ${s.dimLine}`} data-reveal style={{ ["--d" as string]: "90ms" }}>
-                {t.hero.h1b.replace(/\.$/, "")}
-                <span className={s.period}>.</span>
-              </span>
-            </span>
-          </h1>
-          <p className={`t-lead ${s.heroLead}`} data-reveal style={{ ["--d" as string]: "220ms" }}>
-            {t.hero.lead}
-          </p>
-        </div>
+    <article ref={root} className={`${svc.page} ${s.page}`}>
+      <PageHero
+        id="svc-title"
+        eyebrow={t.hero.eyebrow}
+        a={t.hero.h1a}
+        b={t.hero.h1b}
+        lead={t.hero.lead}
+        actions={
+          <>
+            <RedButton href={href("/contact")}>{t.cta.button}</RedButton>
+            <GhostButton href="#modell">{t.hero.scroll}</GhostButton>
+          </>
+        }
+        aside={
+          <div className={s.glass}>
+            <ol className={s.stack}>
+              {t.route.map((stop, i) => (
+                <li key={stop} className={s.stackItem} style={{ ["--i" as string]: i }}>
+                  <span className={s.num}>{num(i)}</span>
+                  {stop}
+                </li>
+              ))}
+            </ol>
+          </div>
+        }
+      />
 
-        {/* the route: source → market, drawn once */}
-        <div className={`frame ${s.heroRoute}`} data-reveal aria-hidden="true">
-          <ol className={s.stops}>
-            {t.route.map((r, i) => (
-              <li key={r} className={s.stop} style={{ ["--i" as string]: i }}>
-                <span className={s.stopNode} data-first={i === 0 ? "" : undefined} data-last={i === t.route.length - 1 ? "" : undefined} />
-                <span className={s.stopIdx}>{String(i).padStart(2, "0")}</span>
-                <span className={s.stopName}>{r}</span>
-              </li>
-            ))}
-          </ol>
-          <span className={s.heroLine} />
-          <span className={s.heroLineRed} />
-        </div>
-      </section>
+      <Band title={t.model.tag} items={IDS.flatMap((id) => t.chapters[id].focus)} />
 
-      {/* -------------------------------------------------- OPERATING MODEL */}
-      <section id="modell" className={`${s.section} ${s.model}`} style={ground("model")} data-tone="light" aria-labelledby="svc-model">
-        <div className={`frame ${s.modelHead}`}>
-          <p className={`t-label ${s.tag}`} data-reveal>
-            {t.model.tag}
-          </p>
+      {/* the six disciplines */}
+      <section id="modell" className={s.light} data-tone="light" aria-labelledby="svc-model">
+        <div className="frame">
+          <Tag>{t.model.tag}</Tag>
           <h2 id="svc-model" className={s.h2} data-reveal>
             {t.model.title}
           </h2>
-          <p className={`t-lead ${s.intro}`} data-reveal>
+          <p className={s.body} data-reveal>
             {t.model.intro}
           </p>
-        </div>
-        <div className={`frame ${s.map}`} data-track>
-          <div className={s.mapLine} aria-hidden="true">
-            <span className={s.mapFill} data-fill data-start="top 70%" data-end="bottom 70%" />
-          </div>
-          <ol className={s.mapList}>
+          <div className={s.bento}>
             {IDS.map((id, i) => (
-              <li key={id} className={s.mapItem} data-node data-at={`top ${78 - i * 3}%`}>
-                <span className={s.mapNode} aria-hidden="true" />
-                <span className={s.mapNum} aria-hidden="true">
-                  {num(i)}
-                </span>
-                <h3 className={s.mapTitle}>{t.chapters[id].title}</h3>
-                <p className={s.mapText}>{t.model.lines[id]}</p>
-                <a href={`#${id}`} className={`t-label ${s.mapJump}`} data-cursor="link" aria-label={`${t.model.jump}: ${t.chapters[id].title}`}>
-                  {t.model.jump} <span aria-hidden="true">↓</span>
-                </a>
-              </li>
+              <a key={id} href="#disziplinen" className={i === 0 ? s.bentoHero : s.card} data-reveal style={d(i * 70)}>
+                <span className={s.num}>{num(i)}</span>
+                {i > 0 && (
+                  <div style={{ marginTop: 18 }}>
+                    <ChainArt id={ART[id]} className={s.cardArt} redClass={s.cardArtRed} />
+                  </div>
+                )}
+                <h3 className={s.h3}>{t.chapters[id].title}</h3>
+                <p className={i === 0 ? s.textDark : s.text}>{t.model.lines[id]}</p>
+                <span className={s.link}>{t.model.jump}</span>
+              </a>
             ))}
-          </ol>
+          </div>
         </div>
       </section>
 
-      {/* ------------------------------------------------------- CHAPTERS */}
-      <div className={s.chapters} data-track>
-        <div className={s.thread} aria-hidden="true">
-          <span className={s.threadFill} data-fill data-start="top 60%" data-end="bottom 60%" />
-        </div>
-
-        {IDS.map((id, i) => {
-          const ch = t.chapters[id];
-          const tone = TONE[id].tone;
-          return (
-            <section key={id} id={id} className={`${s.section} ${s.chapter} ${s[`c_${id}`] ?? ""}`} style={ground(id)} data-tone={tone} aria-labelledby={`svc-${id}`}>
-              <span className={s.threadNode} data-node aria-hidden="true" />
-              <div className={`frame ${s.chapterGrid} ${i % 2 ? s.flip : ""}`}>
-                <div className={s.copy}>
-                  <p className={`t-label ${s.tag}`} data-reveal>
-                    <span className={s.tagNum}>{num(i)}</span> / 06 <span className={s.tagStop}>· {ch.stop}</span>
-                  </p>
-                  <h2 id={`svc-${id}`} className={s.h2} data-reveal>
-                    {ch.title}
-                  </h2>
-                  <p className={s.statement} data-reveal>
-                    {ch.statement}
-                  </p>
-                  <p className={s.body} data-reveal>
-                    {ch.body}
-                  </p>
-                  <ul className={s.focus} data-reveal>
-                    {ch.focus.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                {id !== "ecommerce" && (
-                  <figure className={s.figure} data-reveal>
-                    {id === "sourcing" && <SourcingVisual c={t.sourcing} />}
-                    {id === "trade" && <TradeVisual c={t.trade} />}
-                    {id === "development" && <DevelopmentVisual c={t.development} />}
-                    {id === "brand" && <BrandVisual c={t.brand} />}
-                    {id === "distribution" && <DistributionVisual c={t.distribution} />}
-                  </figure>
-                )}
-
-                {id === "ecommerce" && (
-                  <div className={s.commerce} data-reveal>
-                    <ol className={s.flow} aria-label={t.ecommerce.flow.join(" → ")}>
-                      {t.ecommerce.flow.map((f, k) => (
-                        <li key={f} className={s.flowStep} style={{ ["--i" as string]: k }}>
-                          <span className={s.flowNode} aria-hidden="true" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ol>
-                    <ul className={s.channels}>
-                      {t.ecommerce.channels.map((c, k) => (
-                        <li key={c} style={{ ["--i" as string]: k }}>
-                          <span className={s.channelIdx} aria-hidden="true">
-                            {`K-0${k + 1}`}
-                          </span>
-                          {c}
+      {/* the disciplines, one panel */}
+      <section id="disziplinen" className={`${s.light} ${s.alt}`} data-tone="light" aria-labelledby="svc-disc">
+        <div className="frame">
+          <Tag>{t.model.tag}</Tag>
+          <h2 id="svc-disc" className={s.h2} data-reveal>
+            {t.payoff.title}
+          </h2>
+          <div data-reveal>
+            <Showcase
+              label={t.model.tag}
+              items={IDS.map((id, n) => ({
+                key: id,
+                label: t.chapters[id].stop,
+                title: t.chapters[id].title.replace(/\u00AD/g, ""),
+                statement: t.chapters[id].statement,
+                body: t.chapters[id].body,
+                chips: id === "distribution" ? [...t.chapters[id].focus, ...t.distribution.destinations] : t.chapters[id].focus,
+                art: <ChainArt id={ART[id]} redClass={s.cardArtRed} />,
+                pos: `center, ${[12, 30, 48, 62, 78, 94][n]}% ${[70, 45, 60, 35, 55, 40][n]}%`,
+                extra:
+                  id === "ecommerce" ? (
+                    <ul className={s.chips}>
+                      {channels.map((p) => (
+                        <li key={p.id} className={s.chipDark}>
+                          {p.name}
                         </li>
                       ))}
                     </ul>
-                    <div className={s.platforms}>
-                      <p className={`t-label ${s.platformsTitle}`}>
-                        <span className={s.plus} aria-hidden="true" />
-                        {t.ecommerce.platforms}
-                      </p>
-                      {(["store", "marketplace"] as const).map((g) => (
-                        <div key={g} className={s.platformGroup}>
-                          <p className={`t-label ${s.groupName}`}>{t.ecommerce.groups[g]}</p>
-                          <ul>
-                            {PLATFORMS.filter((p) => p.group === g).map((p) => (
-                              <li key={p.id} className={s.platform}>
-                                {p.name}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-
-      {/* ------------------------------------------------- COMPLETE ROUTE */}
-      <section className={`${s.section} ${s.payoff}`} style={ground("payoff")} data-tone="light" aria-labelledby="svc-payoff">
-        <div className={`frame ${s.payoffGrid}`}>
-          <div className={s.payoffCopy}>
-            <p className={`t-label ${s.tag}`} data-reveal>
-              {t.payoff.tag}
-            </p>
-            <h2 id="svc-payoff" className={s.h2} data-reveal>
-              {t.payoff.title}
-            </h2>
-            <p className={`t-lead ${s.intro}`} data-reveal>
-              {t.payoff.body}
-            </p>
+                  ) : undefined,
+              }))}
+            />
           </div>
-          <ol className={s.complete} data-reveal aria-label={t.route.join(" → ")}>
-            {t.route.map((r, i) => (
-              <li key={r} className={s.completeStop} style={{ ["--i" as string]: i }} data-end={i === t.route.length - 1 ? "" : undefined}>
-                <span className={s.completeNode} aria-hidden="true" />
-                <span className={s.completeIdx} aria-hidden="true">
-                  {String(i).padStart(2, "0")}
-                </span>
-                <span className={s.completeName}>{r}</span>
+        </div>
+      </section>
+
+      {/* the whole route */}
+      <section className={s.dark} data-tone="dark" aria-labelledby="svc-payoff">
+        <div className="frame">
+          <Tag dark>{t.payoff.tag}</Tag>
+          <h2 id="svc-payoff" className={`${s.h2} ${s.h2Dark}`} style={{ maxWidth: "22ch" }} data-reveal>
+            {t.payoff.body}
+          </h2>
+          <ol className={s.chips} data-reveal>
+            {t.route.map((stop, i) => (
+              <li key={stop} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {i > 0 && <span className={s.arrowSep} aria-hidden="true" />}
+                <span className={i === t.route.length - 1 ? s.chipRed : s.chipDark}>{stop}</span>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      {/* ------------------------------------------------------ LUVISCENT */}
-      <section className={`${s.section} ${s.luviscent}`} style={ground("luviscent")} data-tone="dark" aria-labelledby="svc-lv">
-        <div className={`frame ${s.lvGrid}`}>
-          <div className={s.lvArch} aria-hidden="true" data-reveal>
-            <span className={s.lvLight} />
-            <span className={s.lvLedge} />
-          </div>
-          <div className={s.lvCopy}>
-            <p className={`t-label ${s.lvTag}`} data-reveal>
-              {t.luviscent.tag}
+      {/* LUVISCENT */}
+      <section className={s.emerald} aria-labelledby="svc-lv" data-tone="dark">
+        <div className={`frame ${s.split}`}>
+          <div>
+            <p className={`t-label ${s.tag} ${s.gold}`} data-reveal>
+              <span className={s.tagRule} /> {t.luviscent.tag}
             </p>
-            <div className={s.lvLogo} data-reveal>
-              <LuviscentLogo />
-            </div>
-            <h2 id="svc-lv" className={s.lvTitle} data-reveal>
-              {t.luviscent.title1} <span>{t.luviscent.title2}</span>
+            <h2 id="svc-lv" className={`${s.h2} ${s.h2Dark}`} data-reveal>
+              {t.luviscent.title1} <span className={s.gold}>{t.luviscent.title2}</span>
             </h2>
-            <p className={s.lvBody} data-reveal>
+            <p className={s.bodyDark} data-reveal>
               {t.luviscent.body}
             </p>
-            <div className={s.lvLinks} data-reveal>
-              <a href={luviscentHref} className={s.lvCta} data-cursor="link" {...(luviscent.url ? { target: "_blank", rel: "noopener" } : {})}>
-                <span>{t.luviscent.cta}</span>
-                <span className={s.lvPlus} aria-hidden="true" />
+            <div className={s.actions} data-reveal>
+              <a href={lvHref} className={s.btnGold} {...(BRANDS.luviscent.url ? { target: "_blank", rel: "noopener" } : {})}>
+                {t.luviscent.cta}
+                <span className={s.badge} aria-hidden="true" />
               </a>
-              <Link href={href("/brands")} className={`link-line t-label ${s.lvMore}`} data-cursor="link">
+              <a href={href("/brands")} className={s.btnGhostGold}>
                 {t.luviscent.brands}
-              </Link>
+              </a>
             </div>
           </div>
+          <figure className={s.media} data-reveal style={d(120)}>
+            <img src="/brand/luviscent/diffuser-tower.webp" alt="LUVISCENT" width={778} height={1400} loading="lazy" style={{ maxHeight: 440 }} />
+          </figure>
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ CTA */}
-      <section className={`${s.section} ${s.cta}`} style={ground("cta")} data-tone="light" aria-labelledby="svc-cta">
-        <div className={`frame ${s.ctaInner}`}>
-          <p className={`t-label ${s.tag}`} data-reveal>
-            {t.cta.tag}
-          </p>
-          <h2 id="svc-cta" className={s.ctaTitle}>
-            <span className="mask">
-              <span className={s.rise} data-reveal>
-                {t.cta.h1}
-              </span>
-            </span>
-            <span className="mask">
-              <span className={`${s.rise} ${s.dimLine}`} data-reveal style={{ ["--d" as string]: "90ms" }}>
-                {t.cta.h2.replace(/\.$/, "")}
-                <span className={s.period}>.</span>
-              </span>
-            </span>
-          </h2>
-          <div className={s.ctaRow} data-reveal>
-            <p className={`t-lead ${s.ctaLead}`}>{t.cta.lead}</p>
-            <div className={s.ctaActions}>
-              <Link href={href("/contact")} className={s.ctaButton} data-cursor="invert">
-                <span className={s.ctaLabel}>{t.cta.button}</span>
-                <span className={s.ctaPlus} aria-hidden="true" />
-              </Link>
-              <Link href={href("/company")} className={`link-line t-label ${s.ctaMore}`} data-cursor="link">
-                {t.cta.company} <span className={s.arrow} aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Cta id="svc-cta" title={`${t.cta.h1} ${t.cta.h2}`} text={t.cta.lead} button={t.cta.button} href={href("/contact")} more={{ label: t.cta.company, href: href("/company") }} />
     </article>
   );
 }

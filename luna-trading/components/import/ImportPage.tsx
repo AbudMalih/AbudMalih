@@ -8,7 +8,7 @@ import { PLATFORMS } from "@/content/platforms";
 import { usePageMotion } from "@/components/services/usePageMotion";
 import { FlagCN, FlagDE, FlagEU } from "./Flags";
 import svc from "@/components/services/Services.module.css";
-import s from "./Import.module.css";
+import s from "@/components/kit/Kit.module.css";
 
 /**
  * IMPORT: the trade lane from China to Germany, made tangible.
