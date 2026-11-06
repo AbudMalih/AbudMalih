@@ -119,3 +119,24 @@ Then the hosted-only files (never run locally):
    I'll ask for both at that step.
 
 **Rollback** (only with your explicit go-ahead at that moment): drop schemas `app` and `geo` with cascade, drop the TURVIO tables and types in `public`, drop role `turvio_service`, delete the `proofs` bucket, unschedule the cron job, delete the migration-history rows, and restore the auth JSON values read in the audit.
+
+## 5. Execution log – 2026-11-06 (approved by the owner)
+
+| Step | Result |
+|---|---|
+| 0 Gate | project empty (0 tables, 0 users, no history) – passed |
+| 1 Migrations 1–11 | all applied (HTTP 200 each). After file 1, all 14 tables were owned by `postgres` – passed. Supabase recorded the time of application as the version; the 11 history rows were changed to the filename versions (metadata only), so `supabase db push` sees them as applied |
+| Structure | 19 public tables, all with RLS; 39 policies (same as local); `app.storage_deletions`, `geo.addresses` |
+| 2 Service role | `turvio_service`: login, no RLS bypass, not superuser, can switch to `authenticated`. **No password set** – the owner sets it in the dashboard |
+| 3 Bucket | `proofs`: private, 5 MB, JPEG/PNG/SVG, no client policies |
+| 4 Retention | `pg_cron` enabled; job `turvio-retention` daily 03:17 UTC |
+| 5 Auth | **not applied**: `PATCH /config/auth` needs `project_admin_write` (403, nothing changed). Sign-up is still open, minimum length 6 |
+| 6 Verification | `hosted/90_verify.sql`: **14/14 passed** on hosted. Covers tenant isolation, depot isolation, anon access, TRUNCATE, RLS, ownership, service role, bucket. Rolled back: 0 orgs, users and tours remain |
+| 7 Data API | `db_schema` changed from `public,graphql_public` to `graphql_public`. TURVIO tables are no longer served over Supabase REST/GraphQL |
+| 8 Hosted sign-in tests | postponed until step 5 is done (they need sign-up off) |
+
+**Supabase security advisor** after deployment: 6 WARN `function_search_path_mutable`, nothing else. A fix is prepared as `20261111000100_function_search_path.sql` and tested locally. It is **not applied**, because it was not part of the approved set.
+
+**Incident.** `GET /v1/projects/{ref}/postgrest` returns the project's *legacy JWT secret*. While recording the "before" state, it was printed in the session's tool output and briefly stored in a scratchpad file. The file was cleaned and nothing is in Git. Action for the owner: rotate the legacy JWT secret / switch to the new JWT signing keys in the dashboard. Nothing uses the current keys yet, so this has no impact. In future, only read single fields from that endpoint.
+
+**Permission correction.** Changing the auth config requires `project_admin_write`, not an Auth-Config-only permission as the table in section 2 assumed. The Data API change worked with the granted permissions.
