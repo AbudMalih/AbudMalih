@@ -10,6 +10,7 @@ const androidGoogleMapsApiKey = process.env.GOOGLE_MAPS_ANDROID_API_KEY;
  * - production:  store build
  * EXPO_PUBLIC_API_URL is baked into the JS bundle per profile (not a secret).
  */
+const EAS_PROJECT_ID = "9ebfcd40-ab6a-4bff-90aa-3f02f9101d22";
 const variant = (process.env.APP_VARIANT ?? "production") as "development" | "preview" | "production";
 const ID = "com.lunapact.turvio.driver";
 const appId = variant === "production" ? ID : `${ID}.${variant === "development" ? "dev" : "preview"}`;
@@ -18,8 +19,10 @@ const appName = variant === "production" ? "TURVIO Driver" : variant === "develo
 const config: ExpoConfig = {
   name: appName,
   slug: "turvio-driver",
+  owner: "lunapact-technologies",
   scheme: variant === "production" ? "turvio" : `turvio-${variant}`,
   version: "0.1.0",
+  runtimeVersion: { policy: "appVersion" },
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
@@ -91,8 +94,8 @@ const config: ExpoConfig = {
   extra: {
     supportsRTL: true,
     variant,
-    // Filled by `eas init` (links the project to the Lunapact Expo account). Not a secret.
-    ...(process.env.EAS_PROJECT_ID ? { eas: { projectId: process.env.EAS_PROJECT_ID } } : {}),
+    // EAS project lunapact-technologies/turvio-driver (registered with `eas init`). Not a secret.
+    eas: { projectId: EAS_PROJECT_ID },
   },
 };
 
