@@ -1,5 +1,7 @@
 # TURVIO – hosting and deployment (EU)
 
+> Staging on a Hetzner VPS (rootless Docker, Caddy, commit-pinned deploys): see [STAGING_DEPLOYMENT.md](STAGING_DEPLOYMENT.md).
+
 Nothing below has been provisioned. Locally verified (2026-11-06) with **real OpenStreetMap data for Region Hannover** (BBBike extract `Hannover.osm.pbf`, data as of 2026-10-31, bbox 9.18–10.15 E / 52.07–52.67 N, MD5 checked):
 - OSRM car routing: graph built in 46 s. Hannover Hbf → Messe is 11.8 km / 14.8 min.
 - PostgreSQL geocoder: 326,599 addresses imported in 11 s.

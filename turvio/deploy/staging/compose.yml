@@ -126,6 +126,7 @@ services:
     image: turvio/osrm:${TURVIO_RELEASE:?set by deploy.sh}
     profiles: ["tools"]
     command: ["/opt/osrm/prepare.sh"]
+    healthcheck: { disable: true }         # one-off job, not the routing server
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]

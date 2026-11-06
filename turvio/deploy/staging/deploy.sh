@@ -101,7 +101,8 @@ smoke() { # end-to-end through Caddy (TLS) on this host, independent of public D
   for pair in "TURVIO_API_HOST:/health" "TURVIO_DISPATCH_HOST:/login" "TURVIO_ADMIN_HOST:/login"; do
     host="$(value_of "${pair%%:*}")"; path="${pair#*:}"
     for _ in $(seq 1 20); do
-      code=$(curl "${curl_tls[@]}" -s -o /dev/null -w '%{http_code}' --max-time 10 \
+      # --noproxy: always talk to the local Caddy directly, even if a proxy is configured.
+      code=$(curl "${curl_tls[@]}" --noproxy '*' -s -o /dev/null -w '%{http_code}' --max-time 10 \
         --resolve "$host:443:127.0.0.1" "https://$host$path" || true)
       [[ "$code" =~ ^(200|30[0-9])$ ]] && break
       sleep 6

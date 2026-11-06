@@ -126,7 +126,7 @@ step "seed synthetic pilot data"
 step "pilot through Caddy (HTTPS, internal CA)"
 docker compose -p turvio-staging cp caddy:/data/caddy/pki/authorities/local/root.crt "$T/caddy-root.crt" >/dev/null
 grep -q "api.staging.example.invalid" /etc/hosts || echo "127.0.0.1 api.staging.example.invalid dispatch.staging.example.invalid admin.staging.example.invalid" >> /etc/hosts
-(cd "$SRC/turvio" && NODE_EXTRA_CA_CERTS="$T/caddy-root.crt" API_URL=https://api.staging.example.invalid PILOT_REPORT="$T/pilot.json" node e2e/pilot.mjs | tail -12)
+(cd "$SRC/turvio" && NO_PROXY="*" no_proxy="*" NODE_EXTRA_CA_CERTS="$T/caddy-root.crt" API_URL=https://api.staging.example.invalid PILOT_REPORT="$T/pilot.json" node e2e/pilot.mjs | tail -12)
 
 step "broken release -> automatic rollback"
 git clone --quiet --branch "$BRANCH" "$T/remote.git" "$T/work"
@@ -136,7 +136,7 @@ BROKEN="$(git -C "$T/work" rev-parse HEAD)"
 retag "$BROKEN"   # images are identical: only compose.yml changed
 if "$DEPLOY" "$BROKEN"; then echo "FAIL: broken release was reported healthy"; exit 1; fi
 [ "$(cat "$TURVIO_ROOT/state/current")" = "$SHA" ] || { echo "FAIL: current is not $SHA after rollback"; exit 1; }
-curl -sk --resolve api.staging.example.invalid:443:127.0.0.1 https://api.staging.example.invalid/health
+curl -sk --noproxy "*" --resolve api.staging.example.invalid:443:127.0.0.1 https://api.staging.example.invalid/health
 
 step "second good release, then manual --rollback"
 (cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit -q HEAD && git push -q origin "$BRANCH")
