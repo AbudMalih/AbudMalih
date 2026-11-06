@@ -49,6 +49,8 @@ export default function RootLayout() {
         <Stack.Screen name="label" options={{ title: t("label.title"), ...modal }} />
         <Stack.Screen name="edit-stop/[id]" options={{ title: t("stop.editAddress"), ...modal }} />
         <Stack.Screen name="add-stop" options={{ title: t("addStop.title"), ...modal }} />
+        <Stack.Screen name="photo-import/index" options={{ title: t("photoImport.title"), ...modal }} />
+        <Stack.Screen name="photo-import/[key]" options={{ title: t("photoImport.edit"), ...modal }} />
         <Stack.Screen name="import" options={{ title: t("import.title"), ...modal }} />
         <Stack.Screen name="new-route" options={{ title: t("route.newTitle"), ...modal }} />
         <Stack.Screen name="optimize" options={{ title: t("optimize.title"), ...modal }} />

@@ -51,6 +51,13 @@ const config: ExpoConfig = {
       "android.permission.SYSTEM_ALERT_WINDOW",
       "android.permission.USE_BIOMETRIC",
       "android.permission.USE_FINGERPRINT",
+      // Screenshots/photos come only through the system photo picker (or a share from another
+      // app): no broad gallery or storage access.
+      "android.permission.READ_EXTERNAL_STORAGE",
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+      "android.permission.READ_MEDIA_IMAGES",
+      "android.permission.READ_MEDIA_VIDEO",
+      "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
     ],
   },
   web: { favicon: "./assets/favicon.png" },

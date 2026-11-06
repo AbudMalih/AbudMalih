@@ -121,6 +121,7 @@ export default function HomeScreen() {
 
       <View style={{ flexDirection: "row", gap: space.sm }}>
         {[
+          { icon: "camera-outline" as const, label: t("photoImport.home"), href: "/photo-import" as const, disabled: !tour, id: "quick-photo" },
           { icon: "add-circle-outline" as const, label: t("home.addStop"), href: "/add-stop" as const, disabled: !tour, id: "quick-add" },
           { icon: "document-text-outline" as const, label: t("home.import"), href: "/import" as const, disabled: !tour, id: "quick-import" },
           { icon: "trail-sign-outline" as const, label: t("home.newRoute"), href: "/new-route" as const, disabled: false, id: "quick-route" },

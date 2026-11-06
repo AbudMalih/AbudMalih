@@ -114,3 +114,39 @@ Create routes with 50, 100, 150 and 250 stops (Dispatch paste import or `e2e/pil
 - [ ] Dark mode; Arabic (restart → right-to-left).
 
 Report results in a copy of this file; anything failing is a pilot blocker.
+
+### 6. Stops from photo, screenshot or text (Phase 6)
+Test material (synthetic only): `docs/testing/capture-samples/`. It holds DHL, Hermes, DPD, GLS and Packstation labels with real Code 128 barcodes, a rotated Hermes label, two WhatsApp-style screenshots (one and three addresses) and a maps-share screenshot. Expected results are in `expected.json`. Regenerate them with `python3 tools/synthetic_capture_samples.py docs/testing/capture-samples`.
+
+Preparation:
+- Print the labels (A6 or A4).
+- Put the screenshots in the phone's gallery: send them to yourself, or open them on a second screen and take screenshots.
+- Use a route of today. Use a server build with the address search on (`GEOCODER=postgres` with addresses for the test area) and also a build without it.
+
+- [ ] Home → **From photo** → **Take photo** of each printed label:
+  - one card per label: recipient, street, house no., postcode and city correct;
+  - the tracking number shown with its carrier (DHL / HERMES / DPD / GLS);
+  - the sender is never taken.
+- [ ] Rotated Hermes label (hold the phone sideways): still read.
+- [ ] **Screenshots / photos** → select `whatsapp_single`, `whatsapp_multi` and `maps_share` together:
+  - 5 cards ("Image 1–3");
+  - time stamps, "online", phone number and greetings are ignored.
+- [ ] **Paste copied text**: copy a WhatsApp message with two addresses, paste it, get 2 cards ("Text").
+- [ ] Packstation label: card marked "Packstation"; the notes contain "Postnummer: 12345678".
+- [ ] Map positions:
+  - with the address search on, an exact address shows "Map position found";
+  - a street with an unknown house number shows "Only the street was found – confirm". **Confirm** opens the correction screen with the pin; saving confirms it.
+  - an unknown street shows "set the pin";
+  - with the address search off or in airplane mode, every card asks for a decision (pin, or "Save without position"). No position is ever filled in automatically.
+- [ ] Duplicates:
+  - an address already on the route shows "parcels will be added to that stop", and saving merges it (no second stop);
+  - a tracking number already on another stop shows a warning;
+  - the same address twice in one import shows a warning.
+- [ ] Correct a field (tap the card), switch a card to **Skip**, then **Add N stops**. The stops appear on the route; in airplane mode they sync after reconnecting.
+- [ ] After saving, **Re-optimize**: road routing, and completed and locked stops keep their place. Outside the routing data, an error is shown, not a straight-line order.
+- [ ] Privacy:
+  - no gallery permission is requested (Android 13+: system photo picker; iOS: PHPicker);
+  - after reading, the copies are gone and the originals in the gallery are unchanged;
+  - the import list is empty after saving or leaving the screen.
+
+Record per run: phone model, OS version, build, number of images, addresses found vs. expected, and fields corrected by hand.

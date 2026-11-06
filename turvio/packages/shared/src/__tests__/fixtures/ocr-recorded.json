@@ -1,0 +1,972 @@
+{
+ "engine": "tesseract 5.3.4",
+ "samples": {
+  "dhl_label.png": {
+   "lines": [
+    {
+     "text": "DHL PAKET",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 67,
+      "y": 65,
+      "width": 440,
+      "height": 52
+     }
+    },
+    {
+     "text": "Von:",
+     "confidence": 0.97,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 176,
+      "width": 58,
+      "height": 20
+     }
+    },
+    {
+     "text": "Online-Shop AG",
+     "confidence": 0.97,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 215,
+      "width": 232,
+      "height": 29
+     }
+    },
+    {
+     "text": "Lagerweg 3",
+     "confidence": 0.95,
+     "block": 2,
+     "frame": {
+      "x": 63,
+      "y": 258,
+      "width": 171,
+      "height": 28
+     }
+    },
+    {
+     "text": "04109 Leipzig",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 299,
+      "width": 205,
+      "height": 29
+     }
+    },
+    {
+     "text": "An:",
+     "confidence": 0.95,
+     "block": 3,
+     "frame": {
+      "x": 60,
+      "y": 443,
+      "width": 53,
+      "height": 25
+     }
+    },
+    {
+     "text": "Jonas Becker",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 56,
+      "y": 502,
+      "width": 466,
+      "height": 62
+     }
+    },
+    {
+     "text": "Friedrich-König-Str. 7",
+     "confidence": 0.94,
+     "block": 3,
+     "frame": {
+      "x": 66,
+      "y": 587,
+      "width": 757,
+      "height": 64
+     }
+    },
+    {
+     "text": "98527 Suhl",
+     "confidence": 0.97,
+     "block": 3,
+     "frame": {
+      "x": 63,
+      "y": 674,
+      "width": 396,
+      "height": 50
+     }
+    },
+    {
+     "text": "JJDO 0039 0007 9123 4567 8",
+     "confidence": 0.92,
+     "block": 4,
+     "frame": {
+      "x": 68,
+      "y": 1137,
+      "width": 633,
+      "height": 42
+     }
+    }
+   ],
+   "barcodes": [
+    {
+     "data": "JJD000390007912345678",
+     "type": "code128"
+    }
+   ]
+  },
+  "dpd_label.png": {
+   "lines": [
+    {
+     "text": "DPD Classic",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 67,
+      "y": 62,
+      "width": 465,
+      "height": 56
+     }
+    },
+    {
+     "text": "Absender:",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 175,
+      "width": 139,
+      "height": 21
+     }
+    },
+    {
+     "text": "Sport & Co KG",
+     "confidence": 0.92,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 216,
+      "width": 211,
+      "height": 28
+     }
+    },
+    {
+     "text": "Ringstraße 9",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 63,
+      "y": 257,
+      "width": 186,
+      "height": 29
+     }
+    },
+    {
+     "text": "90402 Nürnberg",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 299,
+      "width": 241,
+      "height": 29
+     }
+    },
+    {
+     "text": "Empfänger:",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 63,
+      "y": 442,
+      "width": 191,
+      "height": 33
+     }
+    },
+    {
+     "text": "Paula Schmidt",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 66,
+      "y": 502,
+      "width": 508,
+      "height": 50
+     }
+    },
+    {
+     "text": "Steinweg 20",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 65,
+      "y": 588,
+      "width": 439,
+      "height": 63
+     }
+    },
+    {
+     "text": "98527 Suhl",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 63,
+      "y": 674,
+      "width": 396,
+      "height": 50
+     }
+    },
+    {
+     "text": "0123 4567 8901 23",
+     "confidence": 0.96,
+     "block": 4,
+     "frame": {
+      "x": 73,
+      "y": 1137,
+      "width": 427,
+      "height": 33
+     }
+    }
+   ],
+   "barcodes": [
+    {
+     "data": "01234567890123",
+     "type": "code128"
+    }
+   ]
+  },
+  "gls_label.png": {
+   "lines": [
+    {
+     "text": "GLS",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 64,
+      "y": 64,
+      "width": 148,
+      "height": 54
+     }
+    },
+    {
+     "text": "Absender:",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 175,
+      "width": 139,
+      "height": 21
+     }
+    },
+    {
+     "text": "Technik UG",
+     "confidence": 0.92,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 215,
+      "width": 164,
+      "height": 23
+     }
+    },
+    {
+     "text": "Am Hafen 2",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 257,
+      "width": 174,
+      "height": 23
+     }
+    },
+    {
+     "text": "28195 Bremen",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 300,
+      "width": 217,
+      "height": 22
+     }
+    },
+    {
+     "text": "Empfänger:",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 63,
+      "y": 442,
+      "width": 191,
+      "height": 33
+     }
+    },
+    {
+     "text": "Klaus Richter",
+     "confidence": 0.96,
+     "block": 4,
+     "frame": {
+      "x": 66,
+      "y": 502,
+      "width": 474,
+      "height": 50
+     }
+    },
+    {
+     "text": "Auenstraße 36",
+     "confidence": 0.94,
+     "block": 4,
+     "frame": {
+      "x": 60,
+      "y": 588,
+      "width": 525,
+      "height": 50
+     }
+    },
+    {
+     "text": "98529 Suhl",
+     "confidence": 0.96,
+     "block": 4,
+     "frame": {
+      "x": 63,
+      "y": 674,
+      "width": 396,
+      "height": 50
+     }
+    },
+    {
+     "text": "4123 4567 890",
+     "confidence": 0.97,
+     "block": 5,
+     "frame": {
+      "x": 72,
+      "y": 1137,
+      "width": 331,
+      "height": 33
+     }
+    }
+   ],
+   "barcodes": [
+    {
+     "data": "41234567890",
+     "type": "code128"
+    }
+   ]
+  },
+  "hermes_label.png": {
+   "lines": [
+    {
+     "text": "Hermes",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 67,
+      "y": 65,
+      "width": 300,
+      "height": 53
+     }
+    },
+    {
+     "text": "Absender:",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 175,
+      "width": 139,
+      "height": 21
+     }
+    },
+    {
+     "text": "Versand GmbH",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 215,
+      "width": 222,
+      "height": 23
+     }
+    },
+    {
+     "text": "Hauptstr. 1",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 63,
+      "y": 258,
+      "width": 160,
+      "height": 28
+     }
+    },
+    {
+     "text": "33100 Paderborn",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 299,
+      "width": 253,
+      "height": 23
+     }
+    },
+    {
+     "text": "Empfänger:",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 63,
+      "y": 442,
+      "width": 191,
+      "height": 33
+     }
+    },
+    {
+     "text": "Erika Musterfrau",
+     "confidence": 0.92,
+     "block": 4,
+     "frame": {
+      "x": 66,
+      "y": 502,
+      "width": 595,
+      "height": 50
+     }
+    },
+    {
+     "text": "Am Rimbach 4a",
+     "confidence": 0.93,
+     "block": 4,
+     "frame": {
+      "x": 60,
+      "y": 588,
+      "width": 554,
+      "height": 50
+     }
+    },
+    {
+     "text": "98529 Suhl",
+     "confidence": 0.96,
+     "block": 4,
+     "frame": {
+      "x": 63,
+      "y": 674,
+      "width": 396,
+      "height": 50
+     }
+    },
+    {
+     "text": "H100 3450 0123 4567 8901",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 74,
+      "y": 1137,
+      "width": 613,
+      "height": 33
+     }
+    }
+   ],
+   "barcodes": [
+    {
+     "data": "H1003450012345678901",
+     "type": "code128"
+    }
+   ]
+  },
+  "maps_share.png": {
+   "lines": [
+    {
+     "text": "Kunde",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 165,
+      "y": 79,
+      "width": 179,
+      "height": 41
+     }
+    },
+    {
+     "text": "online",
+     "confidence": 0.97,
+     "block": 2,
+     "frame": {
+      "x": 162,
+      "y": 141,
+      "width": 94,
+      "height": 24
+     }
+    },
+    {
+     "text": "Würzburger Str. 21, 98529 Suhl, Deutschlar",
+     "confidence": 0.95,
+     "block": 4,
+     "frame": {
+      "x": 82,
+      "y": 298,
+      "width": 998,
+      "height": 45
+     }
+    },
+    {
+     "text": "11:1",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 1015,
+      "y": 364,
+      "width": 61,
+      "height": 22
+     }
+    }
+   ],
+   "barcodes": []
+  },
+  "packstation_label.png": {
+   "lines": [
+    {
+     "text": "DHL PAKET",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 67,
+      "y": 65,
+      "width": 440,
+      "height": 52
+     }
+    },
+    {
+     "text": "Von:",
+     "confidence": 0.97,
+     "block": 2,
+     "frame": {
+      "x": 60,
+      "y": 176,
+      "width": 58,
+      "height": 20
+     }
+    },
+    {
+     "text": "Online-Shop AG",
+     "confidence": 0.97,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 215,
+      "width": 232,
+      "height": 29
+     }
+    },
+    {
+     "text": "Lagerweg 3",
+     "confidence": 0.95,
+     "block": 2,
+     "frame": {
+      "x": 63,
+      "y": 258,
+      "width": 171,
+      "height": 28
+     }
+    },
+    {
+     "text": "04109 Leipzig",
+     "confidence": 0.96,
+     "block": 2,
+     "frame": {
+      "x": 62,
+      "y": 299,
+      "width": 205,
+      "height": 29
+     }
+    },
+    {
+     "text": "An:",
+     "confidence": 0.97,
+     "block": 3,
+     "frame": {
+      "x": 60,
+      "y": 443,
+      "width": 53,
+      "height": 25
+     }
+    },
+    {
+     "text": "Max Mustermann",
+     "confidence": 0.97,
+     "block": 3,
+     "frame": {
+      "x": 66,
+      "y": 504,
+      "width": 614,
+      "height": 48
+     }
+    },
+    {
+     "text": "12345678",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 67,
+      "y": 589,
+      "width": 346,
+      "height": 49
+     }
+    },
+    {
+     "text": "Packstation 123",
+     "confidence": 0.94,
+     "block": 3,
+     "frame": {
+      "x": 66,
+      "y": 674,
+      "width": 567,
+      "height": 50
+     }
+    },
+    {
+     "text": "98527 Suhl",
+     "confidence": 0.96,
+     "block": 3,
+     "frame": {
+      "x": 63,
+      "y": 756,
+      "width": 396,
+      "height": 69
+     }
+    },
+    {
+     "text": "JJDO 0039 0007 9555 5555 5",
+     "confidence": 0.94,
+     "block": 4,
+     "frame": {
+      "x": 68,
+      "y": 1223,
+      "width": 632,
+      "height": 42
+     }
+    }
+   ],
+   "barcodes": [
+    {
+     "data": "JJD000390007955555555",
+     "type": "code128"
+    }
+   ]
+  },
+  "whatsapp_multi.png": {
+   "lines": [
+    {
+     "text": "Disposition",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 165,
+      "y": 79,
+      "width": 320,
+      "height": 51
+     }
+    },
+    {
+     "text": "online",
+     "confidence": 0.97,
+     "block": 2,
+     "frame": {
+      "x": 162,
+      "y": 141,
+      "width": 94,
+      "height": 24
+     }
+    },
+    {
+     "text": "Nachtrag für heute:",
+     "confidence": 0.96,
+     "block": 4,
+     "frame": {
+      "x": 84,
+      "y": 298,
+      "width": 444,
+      "height": 45
+     }
+    },
+    {
+     "text": "09:02",
+     "confidence": 0.97,
+     "block": 4,
+     "frame": {
+      "x": 425,
+      "y": 364,
+      "width": 82,
+      "height": 22
+     }
+    },
+    {
+     "text": "1) Anna Krüger",
+     "confidence": 0.95,
+     "block": 5,
+     "frame": {
+      "x": 85,
+      "y": 486,
+      "width": 344,
+      "height": 45
+     }
+    },
+    {
+     "text": "Steinweg 20",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 83,
+      "y": 544,
+      "width": 279,
+      "height": 45
+     }
+    },
+    {
+     "text": "98527 Suhl",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 83,
+      "y": 602,
+      "width": 254,
+      "height": 35
+     }
+    },
+    {
+     "text": "09:02",
+     "confidence": 0.97,
+     "block": 6,
+     "frame": {
+      "x": 321,
+      "y": 668,
+      "width": 81,
+      "height": 22
+     }
+    },
+    {
+     "text": "2) Klaus Richter",
+     "confidence": 0.96,
+     "block": 7,
+     "frame": {
+      "x": 83,
+      "y": 790,
+      "width": 362,
+      "height": 41
+     }
+    },
+    {
+     "text": "Auenstraße 36",
+     "confidence": 0.94,
+     "block": 7,
+     "frame": {
+      "x": 80,
+      "y": 848,
+      "width": 334,
+      "height": 35
+     }
+    },
+    {
+     "text": "98529 Suhl",
+     "confidence": 0.97,
+     "block": 7,
+     "frame": {
+      "x": 83,
+      "y": 906,
+      "width": 254,
+      "height": 35
+     }
+    },
+    {
+     "text": "09:03",
+     "confidence": 0.97,
+     "block": 8,
+     "frame": {
+      "x": 337,
+      "y": 972,
+      "width": 83,
+      "height": 22
+     }
+    },
+    {
+     "text": "3) Erika Muster",
+     "confidence": 0.96,
+     "block": 9,
+     "frame": {
+      "x": 83,
+      "y": 1094,
+      "width": 346,
+      "height": 41
+     }
+    },
+    {
+     "text": "Hoher Rain 5",
+     "confidence": 0.96,
+     "block": 9,
+     "frame": {
+      "x": 84,
+      "y": 1152,
+      "width": 290,
+      "height": 35
+     }
+    },
+    {
+     "text": "98527 Suhl",
+     "confidence": 0.97,
+     "block": 9,
+     "frame": {
+      "x": 83,
+      "y": 1210,
+      "width": 254,
+      "height": 35
+     }
+    },
+    {
+     "text": "09:03",
+     "confidence": 0.97,
+     "block": 10,
+     "frame": {
+      "x": 321,
+      "y": 1276,
+      "width": 83,
+      "height": 22
+     }
+    }
+   ],
+   "barcodes": []
+  },
+  "whatsapp_single.png": {
+   "lines": [
+    {
+     "text": "Disposition",
+     "confidence": 0.96,
+     "block": 1,
+     "frame": {
+      "x": 165,
+      "y": 79,
+      "width": 320,
+      "height": 51
+     }
+    },
+    {
+     "text": "online",
+     "confidence": 0.97,
+     "block": 2,
+     "frame": {
+      "x": 162,
+      "y": 141,
+      "width": 94,
+      "height": 24
+     }
+    },
+    {
+     "text": "Hallo Samir, bitte noch heute:",
+     "confidence": 0.95,
+     "block": 4,
+     "frame": {
+      "x": 84,
+      "y": 298,
+      "width": 681,
+      "height": 40
+     }
+    },
+    {
+     "text": "14:31",
+     "confidence": 0.97,
+     "block": 5,
+     "frame": {
+      "x": 663,
+      "y": 364,
+      "width": 80,
+      "height": 22
+     }
+    },
+    {
+     "text": "Max Mustermann",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 84,
+      "y": 487,
+      "width": 390,
+      "height": 34
+     }
+    },
+    {
+     "text": "Bahnhofstraße 12",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 84,
+      "y": 544,
+      "width": 403,
+      "height": 35
+     }
+    },
+    {
+     "text": "98527 Suhl",
+     "confidence": 0.97,
+     "block": 5,
+     "frame": {
+      "x": 83,
+      "y": 602,
+      "width": 254,
+      "height": 35
+     }
+    },
+    {
+     "text": "Tel. 0170 1234567",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 80,
+      "y": 660,
+      "width": 423,
+      "height": 35
+     }
+    },
+    {
+     "text": "14:32",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 400,
+      "y": 726,
+      "width": 81,
+      "height": 22
+     }
+    },
+    {
+     "text": "Ok, mache ich",
+     "confidence": 0.96,
+     "block": 5,
+     "frame": {
+      "x": 672,
+      "y": 848,
+      "width": 325,
+      "height": 40
+     }
+    },
+    {
+     "text": "14:33 vv",
+     "confidence": 0.94,
+     "block": 6,
+     "frame": {
+      "x": 893,
+      "y": 914,
+      "width": 138,
+      "height": 22
+     }
+    }
+   ],
+   "barcodes": []
+  }
+ }
+}

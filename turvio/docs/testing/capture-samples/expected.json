@@ -1,0 +1,114 @@
+{
+  "dhl_label.png": {
+    "addresses": [
+      {
+        "name": "Jonas Becker",
+        "street": "Friedrich-König-Str.",
+        "no": "7",
+        "plz": "98527",
+        "city": "Suhl"
+      }
+    ],
+    "tracking": [
+      "JJD000390007912345678"
+    ]
+  },
+  "hermes_label.png": {
+    "addresses": [
+      {
+        "name": "Erika Musterfrau",
+        "street": "Am Rimbach",
+        "no": "4a",
+        "plz": "98529",
+        "city": "Suhl"
+      }
+    ],
+    "tracking": [
+      "H1003450012345678901"
+    ]
+  },
+  "dpd_label.png": {
+    "addresses": [
+      {
+        "name": "Paula Schmidt",
+        "street": "Steinweg",
+        "no": "20",
+        "plz": "98527",
+        "city": "Suhl"
+      }
+    ],
+    "tracking": [
+      "01234567890123"
+    ]
+  },
+  "gls_label.png": {
+    "addresses": [
+      {
+        "name": "Klaus Richter",
+        "street": "Auenstraße",
+        "no": "36",
+        "plz": "98529",
+        "city": "Suhl"
+      }
+    ],
+    "tracking": [
+      "41234567890"
+    ]
+  },
+  "packstation_label.png": {
+    "addresses": [
+      {
+        "name": "Max Mustermann",
+        "street": "Packstation",
+        "no": "123",
+        "plz": "98527",
+        "city": "Suhl",
+        "kind": "packstation",
+        "postNumber": "12345678"
+      }
+    ],
+    "tracking": [
+      "JJD000390007955555555"
+    ]
+  },
+  "whatsapp_single.png": {
+    "addresses": [
+      {
+        "name": "Max Mustermann",
+        "street": "Bahnhofstraße",
+        "no": "12",
+        "plz": "98527",
+        "city": "Suhl"
+      }
+    ],
+    "tracking": []
+  },
+  "whatsapp_multi.png": {
+    "addresses": [
+      {
+        "name": "Anna Krüger",
+        "plz": "98527"
+      },
+      {
+        "name": "Klaus Richter",
+        "plz": "98529"
+      },
+      {
+        "name": "Erika Muster",
+        "plz": "98527"
+      }
+    ],
+    "tracking": []
+  },
+  "maps_share.png": {
+    "addresses": [
+      {
+        "street": "Würzburger Str.",
+        "no": "21",
+        "plz": "98529",
+        "city": "Suhl"
+      }
+    ],
+    "tracking": []
+  }
+}

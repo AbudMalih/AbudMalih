@@ -1,3 +1,4 @@
+import pg from "pg";
 import { readFileSync } from "node:fs";
 import { DevTokenVerifier } from "./auth/tokens";
 import { LocalAuthProvider } from "./auth/local";
@@ -42,7 +43,9 @@ if (config.AUTH_PROVIDER === "dev") {
       : new LocalProofStore(resolve(config.PROOF_STORAGE_DIR));
   const geocoder: Geocoder =
     config.GEOCODER === "postgres"
-      ? new PostgresGeocoder((sql, params) => db.asService((tx) => tx.query(sql, params)) as never)
+      ? config.GEOCODER_DATABASE_URL
+        ? new PostgresGeocoder(((pool) => (sql: string, params: unknown[]) => pool.query(sql, params) as never)(new pg.Pool({ connectionString: config.GEOCODER_DATABASE_URL, max: 4 })))
+        : new PostgresGeocoder((sql, params) => db.asService((tx) => tx.query(sql, params)) as never)
       : config.GEOCODER === "nominatim"
       ? new NominatimGeocoder(config.GEOCODER_URL!, config.GEOCODER_USER_AGENT)
       : config.GEOCODER === "photon"

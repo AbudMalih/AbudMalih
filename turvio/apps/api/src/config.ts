@@ -46,6 +46,11 @@ const Env = z.object({
   /** Address search: none (default – addresses are kept and marked "needs location"), nominatim or photon (self-hosted). */
   GEOCODER: z.enum(["none", "postgres", "nominatim", "photon"]).default("none"),
   GEOCODER_URL: z.url().optional(),
+  /**
+   * GEOCODER=postgres: a separate Postgres that holds geo.addresses (e.g. a self-hosted
+   * container with all of Germany, outside the Supabase plan's size limit). Default: DATABASE_URL.
+   */
+  GEOCODER_DATABASE_URL: z.string().optional(),
   GEOCODER_USER_AGENT: z.string().default("TURVIO (development)"),
   /** Self-hosted OSRM for road distances, times and geometry (same instance the optimizer uses). Empty = straight-line estimates, labelled. */
   OSRM_URL: z.url().optional(),

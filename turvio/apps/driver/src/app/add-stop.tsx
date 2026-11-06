@@ -33,6 +33,7 @@ export default function AddStopScreen() {
 
   return (
     <Screen testID="add-stop">
+      <Button label={t("photoImport.addFromPhoto")} icon="camera-outline" variant="secondary" onPress={() => router.replace("/photo-import")} disabled={!tour} testID="add-stop-photo" />
       <StopForm value={value} onChange={setValue} errors={errors} depot={depot} existing={stops} />
       {message && <Banner text={message} tone="warning" />}
       <Button label={t("common.save")} size="lg" icon="checkmark" onPress={save} disabled={!tour} testID="add-stop-save" />

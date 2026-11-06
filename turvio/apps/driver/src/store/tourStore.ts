@@ -477,7 +477,8 @@ export const useTourStore = create<TourState>()(
                     durationSeconds: r.result.durationSeconds,
                   };
                 } catch (e) {
-                  if (!isTransient(e)) throw e;
+                  // Road-routing problems are reported, never replaced by an on-device straight-line order.
+                  if (!isTransient(e) || (e as { code?: string }).code?.startsWith("routing_")) throw e;
                   outcome = null; // offline -> on-device fallback below
                 }
               }
