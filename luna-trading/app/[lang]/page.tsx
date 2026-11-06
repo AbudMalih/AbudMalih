@@ -3,7 +3,6 @@ import { getDictionary, isLocale } from "@/content/i18n";
 import { organizationJsonLd, pageMetadata } from "@/lib/seo";
 import Hero from "@/components/sections/Hero";
 import HomeSections from "@/components/sections/HomeSections";
-import Commerce from "@/components/sections/Commerce";
 import Atmosphere from "@/components/chrome/Atmosphere";
 import Loader from "@/components/chrome/Loader";
 import GlobeLayer from "@/components/stage/GlobeLayer";
@@ -28,9 +27,7 @@ export default function HomePage() {
       <GlobeLayer />
       <Loader />
       <Hero />
-      <HomeSections part="a" />
-      <Commerce />
-      <HomeSections part="b" />
+      <HomeSections />
     </>
   );
 }

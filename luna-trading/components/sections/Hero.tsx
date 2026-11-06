@@ -89,7 +89,7 @@ function HeroContent() {
         <p className={`t-lead ${styles.lead}`} data-meta>
           {dict.hero.lead}
         </p>
-        <div className={styles.actions} data-meta>
+        <div className={`${styles.actions} interactive`} data-meta>
           <Link href={href("/contact")} className={styles.btnRed} data-cursor="invert">
             {dict.nav.cta}
             <span className={styles.badge} aria-hidden="true" />

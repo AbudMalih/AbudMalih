@@ -4,3 +4,62 @@
   z-index: 2;
   background: #101113;
 }
+
+/* one company, many markets: Luna Trading at the centre of six capabilities */
+.eco {
+  position: relative;
+  aspect-ratio: 1;
+  width: min(100%, 520px);
+  justify-self: center;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+}
+.eco::before {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ecoCenter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--luna-red);
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 24px 50px -20px rgba(201, 2, 22, 0.7);
+}
+.ecoNode {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: rotate(var(--a)) translateX(min(42vw, 218px)) rotate(calc(-1 * var(--a)));
+  translate: -50% -50%;
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #1c1d21;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f2f2f0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .ecoNode {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    min-height: 30px;
+    transform: rotate(var(--a)) translateX(36vw) rotate(calc(-1 * var(--a)));
+  }
+}
