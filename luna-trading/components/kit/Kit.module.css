@@ -1023,13 +1023,13 @@ a.card:hover,
   isolation: isolate;
   overflow: hidden;
   padding: clamp(80px, 13vh, 150px) 0;
-  color: #f1ece2;
+  color: #f2f2f0;
   background:
-    radial-gradient(90% 80% at 80% 100%, rgba(212, 193, 155, 0.14), transparent 60%),
+    radial-gradient(90% 80% at 80% 100%, rgba(201, 204, 210, 0.14), transparent 60%),
     linear-gradient(180deg, #0d221b, #05110d);
 }
 .gold {
-  color: #d4c19b;
+  color: #c9ccd2;
 }
 .btnGold {
   display: inline-flex;
@@ -1038,19 +1038,19 @@ a.card:hover,
   height: 56px;
   padding-inline: 26px 7px;
   border-radius: 999px;
-  background: #d4c19b;
+  background: #c9ccd2;
   color: #0b1a14;
   font-weight: 650;
   transition: transform 0.25s var(--ease-out), background-color 0.25s;
 }
 .btnGold:hover {
-  background: #e3d3b2;
+  background: #dfe1e5;
   transform: translateY(-2px);
 }
 .btnGold .badge {
   background:
-    linear-gradient(#d4c19b, #d4c19b) center / 14px 2px no-repeat,
-    linear-gradient(#d4c19b, #d4c19b) center / 2px 14px no-repeat,
+    linear-gradient(#c9ccd2, #c9ccd2) center / 14px 2px no-repeat,
+    linear-gradient(#c9ccd2, #c9ccd2) center / 2px 14px no-repeat,
     #0b1a14;
 }
 .btnGold:hover .badge {
@@ -1062,19 +1062,19 @@ a.card:hover,
   height: 56px;
   padding-inline: 26px;
   border-radius: 999px;
-  border: 1px solid rgba(212, 193, 155, 0.4);
-  color: #f1ece2;
+  border: 1px solid rgba(201, 204, 210, 0.4);
+  color: #f2f2f0;
   font-weight: 600;
 }
 .btnGhostGold:hover {
-  border-color: #d4c19b;
+  border-color: #c9ccd2;
 }
 .media {
   margin: 0;
   border-radius: 28px;
   overflow: hidden;
   background: radial-gradient(80% 80% at 50% 40%, #1a3329, #07140f);
-  border: 1px solid rgba(212, 193, 155, 0.18);
+  border: 1px solid rgba(201, 204, 210, 0.18);
   display: grid;
   place-items: center;
   padding: clamp(16px, 3vw, 40px);

@@ -149,7 +149,7 @@ function Content() {
         .fromTo(q("[data-node-label]"), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.04 }, 0.78)
         .to(q("[data-trunk], [data-route]"), { opacity: 0, duration: 0.04 }, 0.79)
         // 6 · digital commerce becomes atmosphere: the node opens into air
-        .to(q("[data-node] i"), { backgroundColor: "#d4c19b", duration: 0.06 }, 0.8)
+        .to(q("[data-node] i"), { backgroundColor: "#c9ccd2", duration: 0.06 }, 0.8)
         .to(q("[data-carton]"), { opacity: 0, duration: 0.06 }, 0.82)
         .to(q("[data-node-label]"), { opacity: 0, duration: 0.05 }, 0.87)
         .to(q("[data-node]"), { scale: 2.4, opacity: 0, duration: 0.08, ease: "power1.in" }, 0.86);

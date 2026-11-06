@@ -34,7 +34,7 @@ export function airProgress() {
 }
 
 const RED = [201, 2, 22];
-const CHAMPAGNE = [212, 193, 155];
+const CHAMPAGNE = [201, 204, 210];
 const IVORY = [241, 236, 226];
 const mix = (a: number[], b: number[], t: number) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const rgba = (c: number[], a: number) => `rgba(${c[0]},${c[1]},${c[2]},${a.toFixed(3)})`;
@@ -173,7 +173,7 @@ export default function Atmosphere() {
         ? "none"
         : `radial-gradient(${(R * 2.1).toFixed(0)}px ${(R * 0.72).toFixed(0)}px at ${node.x.toFixed(0)}px ${node.y.toFixed(0)}px, #000 0%, rgba(0,0,0,${(0.85 + 0.15 * solid).toFixed(3)}) ${(30 + 70 * solid).toFixed(1)}%, rgba(0,0,0,${(0.35 + 0.65 * solid).toFixed(3)}) ${(62 + 38 * solid).toFixed(1)}%, transparent 100%)`;
       const veilO = Math.sin(Math.PI * Math.min(1, Math.max(0, (X - 0.18) / 0.8))) * 0.6;
-      const veilBg = `radial-gradient(${(R * 2.3).toFixed(0)}px ${(R * 0.85).toFixed(0)}px at ${node.x.toFixed(0)}px ${node.y.toFixed(0)}px, rgba(241,236,226,0) 40%, rgba(212,193,155,0.12) 62%, rgba(241,236,226,0.4) 84%, rgba(241,236,226,0) 100%)`;
+      const veilBg = `radial-gradient(${(R * 2.3).toFixed(0)}px ${(R * 0.85).toFixed(0)}px at ${node.x.toFixed(0)}px ${node.y.toFixed(0)}px, rgba(241,236,226,0) 40%, rgba(201, 204, 210,0.12) 62%, rgba(241,236,226,0.4) 84%, rgba(241,236,226,0) 100%)`;
 
       // ---- LUVISCENT light ---------------------------------------------------
       const key = Math.max(smooth(range(X, 0.55, 1)) * 0.7, smooth(range(lv, 0.1, 0.3))) * (1 - smooth(range(lv, 0.68, 0.88)));

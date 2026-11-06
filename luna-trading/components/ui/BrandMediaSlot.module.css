@@ -38,7 +38,7 @@
   translate: -50% 0;
   background:
     radial-gradient(34% 26% at 50% 4%, rgba(246, 238, 220, 0.55), transparent 80%),
-    radial-gradient(58% 78% at 50% 0%, rgba(232, 214, 176, 0.24), rgba(201, 154, 94, 0.07) 55%, transparent 78%);
+    radial-gradient(58% 78% at 50% 0%, rgba(232, 214, 176, 0.24), rgba(160, 163, 168, 0.07) 55%, transparent 78%);
   mix-blend-mode: screen;
 }
 /* a single olive sprig: only its cast shadow, very soft, nearly still */
@@ -74,7 +74,7 @@
   top: 34%;
   background:
     radial-gradient(50% 40% at 30% 50%, rgba(239, 233, 220, 0.07), transparent 70%),
-    radial-gradient(40% 50% at 70% 60%, rgba(205, 182, 138, 0.06), transparent 70%);
+    radial-gradient(40% 50% at 70% 60%, rgba(201, 204, 210, 0.06), transparent 70%);
   filter: blur(18px);
 }
 .mist2 {
@@ -139,7 +139,7 @@
   border-radius: inherit;
   border: 1px solid transparent;
   border-bottom: 0;
-  background: linear-gradient(180deg, rgba(212, 193, 155, 0.4), rgba(212, 193, 155, 0.08) 55%, transparent 80%) border-box;
+  background: linear-gradient(180deg, rgba(201, 204, 210, 0.4), rgba(201, 204, 210, 0.08) 55%, transparent 80%) border-box;
   mask: linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0) border-box;
   -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0) border-box;
   -webkit-mask-composite: xor;

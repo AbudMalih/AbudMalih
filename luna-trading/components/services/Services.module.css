@@ -958,7 +958,7 @@
   height: 52px;
   padding-inline: 24px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(205, 182, 138, 0.55);
+  border: 1px solid rgba(201, 204, 210, 0.55);
   font-family: var(--font-mono);
   font-size: 0.74rem;
   letter-spacing: 0.18em;
@@ -968,7 +968,7 @@
 }
 .lvCta:hover,
 .lvCta:focus-visible {
-  background: rgba(205, 182, 138, 0.12);
+  background: rgba(201, 204, 210, 0.12);
   border-color: var(--lv-champagne);
 }
 .lvPlus {
