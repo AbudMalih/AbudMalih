@@ -79,7 +79,7 @@ export default function Navigation() {
           <div className={styles.group}>
           <nav className={styles.links} aria-label={dict.a11y.primaryNav}>
             <ul>
-              {NAV.filter((n) => n.key !== "home" && n.key !== "contact").map((n) => (
+              {NAV.filter((n) => n.key !== "contact").map((n) => (
                 <li key={n.href}>
                   <Link href={href(n.href)} data-cursor="link" aria-current={current === n.href ? "page" : undefined}>
                     {dict.nav[n.key]}
