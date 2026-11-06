@@ -24,6 +24,7 @@ export const SLUGS: Record<string, Record<Locale, string>> = {
   "/brands": { de: "/marken", en: "/brands", ar: "/brands" },
   "/company": { de: "/unternehmen", en: "/company", ar: "/company" },
   "/contact": { de: "/kontakt", en: "/contact", ar: "/contact" },
+  "/quote": { de: "/angebot", en: "/quote", ar: "/quote" },
 };
 
 /** Canonical path → the localized slug for a locale (keeps sub-paths, query, hash). */

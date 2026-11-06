@@ -36,7 +36,7 @@ export default function Footer() {
   const toTop = () => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 
   return (
-    <footer className={styles.footer}>
+    <footer className={styles.footer} data-tone="dark">
       <div className={`frame ${styles.inner}`}>
         {/* brand row: who we are, and the two direct actions */}
         <div className={styles.invite}>

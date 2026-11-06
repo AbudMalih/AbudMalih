@@ -150,9 +150,7 @@ export default function HomeSections() {
                   <RedButton href={href("/import")}>
                     {dict.hero.ctaImport}
                   </RedButton>
-                  <GhostButton href={href("/contact")}>
-                    {im.ctaPrimary}
-                  </GhostButton>
+                  <GhostButton href={href("/quote")}>{im.ctaPrimary}</GhostButton>
                 </div>
               </div>
               <div data-reveal style={d(120)}>

@@ -409,3 +409,21 @@ html[lang="ar"] .t-mono {
 html[lang="ar"] body :not(.t-mono):not(.t-mono *) {
   letter-spacing: 0 !important;
 }
+
+/* classic pointers: the arrow over content, the hand on actions, the caret in fields */
+html {
+  cursor: default;
+}
+a,
+button,
+summary,
+select,
+label:has(input[type="radio"]),
+label:has(input[type="checkbox"]),
+[role="button"] {
+  cursor: pointer;
+}
+input:not([type="radio"]):not([type="checkbox"]),
+textarea {
+  cursor: text;
+}

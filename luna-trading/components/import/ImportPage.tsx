@@ -71,7 +71,7 @@ export default function ImportPage() {
               {t.lead}
             </p>
             <div className={s.actions} data-reveal style={{ ["--d" as string]: "280ms" }}>
-              <Link href={href("/contact")} className={s.btnRed} data-cursor="invert">
+              <Link href={href("/quote")} className={s.btnRed} data-cursor="invert">
                 {t.ctaPrimary}
                 <span className={s.badge} aria-hidden="true" />
               </Link>
@@ -211,7 +211,7 @@ export default function ImportPage() {
             {t.ctaText}
           </p>
           <div data-reveal>
-            <Link href={href("/contact")} className={s.btnRed} data-cursor="invert">
+            <Link href={href("/quote")} className={s.btnRed} data-cursor="invert">
               {t.ctaButton}
               <span className={s.badge} aria-hidden="true" />
             </Link>

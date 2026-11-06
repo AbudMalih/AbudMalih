@@ -1,4 +1,4 @@
-// Server-only module: imported solely by app/api/contact/route.ts.
+// Server-only module: imported solely by the API routes (contact, quote).
 import nodemailer from "nodemailer";
 import type { Inquiry, InquiryType } from "./schema";
 import { CONTACT_EMAIL } from "@/content/site";
@@ -47,10 +47,10 @@ export function isConfigured() {
   return config() !== null;
 }
 
-export async function deliver(inquiry: Inquiry, meta: { locale: string }): Promise<DeliveryResult> {
+/** Send one plain-text message to the fixed company inbox (Reply-To: the visitor). */
+export async function sendToInbox(mail: { subject: string; text: string; replyTo: { name: string; address: string } }): Promise<DeliveryResult> {
   const c = config();
   if (!c) return { ok: false, reason: "not_configured" };
-
   const implicitTls = c.port === 465;
   const transport = nodemailer.createTransport({
     host: c.host,
@@ -64,6 +64,32 @@ export async function deliver(inquiry: Inquiry, meta: { locale: string }): Promi
     socketTimeout: 15_000,
   });
 
+  try {
+    const info = await transport.sendMail({
+      from: { name: "Luna Trading Website", address: c.from },
+      to: RECIPIENT,
+      replyTo: mail.replyTo,
+      subject: mail.subject,
+      text: mail.text,
+      disableFileAccess: true,
+      disableUrlAccess: true,
+    });
+    // success only when the server accepted the fixed recipient
+    const accepted = (info.accepted ?? []).map(String).map((a) => a.toLowerCase());
+    if (accepted.includes(RECIPIENT.toLowerCase()) && !(info.rejected ?? []).length) return { ok: true };
+    console.error("[contact] SMTP did not accept the recipient");
+    return { ok: false, reason: "failed" };
+  } catch (err) {
+    // log only a classification, never credentials, message content or addresses
+    const e = err as { code?: string; responseCode?: number };
+    console.error(`[contact] SMTP delivery failed (${e.code ?? "error"}${e.responseCode ? ` ${e.responseCode}` : ""})`);
+    return { ok: false, reason: "failed" };
+  } finally {
+    transport.close();
+  }
+}
+
+export async function deliver(inquiry: Inquiry, meta: { locale: string }): Promise<DeliveryResult> {
   const type = TYPE_LABEL[inquiry.type];
   const subject = `[Luna Trading Website] ${type} — ${inquiry.company || inquiry.name}`;
   const text = [
@@ -82,27 +108,5 @@ export async function deliver(inquiry: Inquiry, meta: { locale: string }): Promi
     "Antworten Sie direkt auf diese E-Mail, um der anfragenden Person zu schreiben.",
   ].join("\n");
 
-  try {
-    const info = await transport.sendMail({
-      from: { name: "Luna Trading Website", address: c.from },
-      to: RECIPIENT,
-      replyTo: { name: inquiry.name, address: inquiry.email },
-      subject,
-      text,
-      disableFileAccess: true,
-      disableUrlAccess: true,
-    });
-    // success only when the server accepted the fixed recipient
-    const accepted = (info.accepted ?? []).map(String).map((a) => a.toLowerCase());
-    if (accepted.includes(RECIPIENT.toLowerCase()) && !(info.rejected ?? []).length) return { ok: true };
-    console.error("[contact] SMTP did not accept the recipient");
-    return { ok: false, reason: "failed" };
-  } catch (err) {
-    // log only a classification, never credentials, message content or addresses
-    const e = err as { code?: string; responseCode?: number };
-    console.error(`[contact] SMTP delivery failed (${e.code ?? "error"}${e.responseCode ? ` ${e.responseCode}` : ""})`);
-    return { ok: false, reason: "failed" };
-  } finally {
-    transport.close();
-  }
+  return sendToInbox({ subject, text, replyTo: { name: inquiry.name, address: inquiry.email } });
 }
