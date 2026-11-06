@@ -148,7 +148,7 @@ echo "invalid compose refused, running release untouched"
 (cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit HEAD >/dev/null && git push -q origin "$BRANCH")
 
 step "second good release, then manual --rollback"
-(cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit HEAD >/dev/null && git push -q origin "$BRANCH")
+(cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit "$BROKEN" >/dev/null && git push -q origin "$BRANCH")
 GOOD2="$(git -C "$T/work" rev-parse HEAD)"
 retag "$GOOD2"
 "$DEPLOY" "$GOOD2"
