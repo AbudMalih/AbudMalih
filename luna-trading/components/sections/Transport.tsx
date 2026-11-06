@@ -26,11 +26,11 @@ function Content() {
   useChapterTimeline(scope, (tl, q) => {
     tl.fromTo(q("[data-tag]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.05 }, 0.04)
       .fromTo(q("[data-tag-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.08 }, 0.04)
-      .fromTo(q("[data-l1]"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.4)
-      .fromTo(q("[data-l2]"), { yPercent: 135 }, { yPercent: 0, duration: 0.1, ease: "power3.out" }, 0.45)
+      .fromTo(q("[data-l1]"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.4)
+      .fromTo(q("[data-l2]"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.1, ease: "power2.out" }, 0.45)
       .fromTo(q("[data-lead]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06 }, 0.52)
       .fromTo(q("[data-scrim]"), { opacity: 0 }, { opacity: 1, duration: 0.08 }, 0.36)
-      .to(q("[data-l1], [data-l2]"), { yPercent: -135, duration: 0.08, ease: "power2.in", stagger: 0.02 }, 0.8)
+      .to(q("[data-l1], [data-l2]"), { opacity: 0, duration: 0.07 }, 0.8)
       .to(q("[data-lead], [data-tag]"), { opacity: 0, duration: 0.05 }, 0.8)
       .to(q("[data-scrim]"), { opacity: 0, duration: 0.08 }, 0.84);
   }, [locale]);
