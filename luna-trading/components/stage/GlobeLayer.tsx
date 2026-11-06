@@ -178,6 +178,11 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
         return;
       }
 
+      // the opening turns slowly by itself (one revolution ≈ 2 min); the
+      // turn eases out as the story begins, back into the scroll choreography
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let idle = 0;
+      const shown: GlobeDerived = { ...cur };
       stopFrame = onFrame((dt) => {
         if (!globe) return;
         const tgt = globeState();
@@ -201,9 +206,14 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
         wrap.style.opacity = cur.opacity.toFixed(3);
         wrap.style.visibility = visible ? "visible" : "hidden";
         if (!visible) return;
-        if (moving || dirty) {
-          globe.render(cur);
-          drawMarkers(cur);
+        const w = still || stage.p.closing > 0 ? 0 : 1 - smooth(range(stage.p.hero, 0, 0.22));
+        if (w > 0.001) idle = (idle + dt * 3) % 360;
+        const off = (((idle + 180) % 360) + 360) % 360 - 180;
+        Object.assign(shown, cur);
+        shown.lon = cur.lon - off * w;
+        if (moving || dirty || w > 0.001) {
+          globe.render(shown);
+          drawMarkers(shown);
           dirty = false;
         }
         drawOrbits(cur);
