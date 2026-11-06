@@ -345,7 +345,9 @@ export function RouteMap(props: RouteMapProps) {
                 <span className="inline-block size-3 rounded-[3px] bg-navy" /> Depot
               </span>
             </div>
-            <div className="mt-1 text-subtle">Lines show stop order, not road geometry · no live driver locations (none authorized)</div>
+            <div className="mt-1 text-subtle">
+              {props.road ? "Selected tour: road route (OSRM); other tours: stop order as straight lines" : "Lines show stop order, not road geometry"} · no live driver locations (none authorized)
+            </div>
           </div>
         </>
       )}

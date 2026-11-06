@@ -47,7 +47,7 @@ export const fakeOptimizerFetch: typeof fetch = async (_url, init) => {
   return new Response(JSON.stringify({ routes, unassignedStopIds: [], matrixSource: "haversine_estimate", status: "feasible", engine: "or-tools" }), { status: 200 });
 };
 
-export async function createTestEnv(name: string, opts: { geocoder?: Geocoder; routing?: RoutingProvider } = {}) {
+export async function createTestEnv(name: string, opts: { geocoder?: Geocoder; routing?: RoutingProvider; proofStore?: import("../../src/storage").ProofStore } = {}) {
   const dbName = `turvio_it_${name}_${process.pid}`;
   const admin = new pg.Client({ connectionString: adminUrl("postgres") });
   await admin.connect();
@@ -84,7 +84,7 @@ export async function createTestEnv(name: string, opts: { geocoder?: Geocoder; r
     events,
     urls: { dispatch: "http://dispatch.test", admin: "http://admin.test" },
     devMailbox: true,
-    proofStore: new LocalProofStore(proofDir),
+    proofStore: opts.proofStore ?? new LocalProofStore(proofDir),
     geocoder: opts.geocoder,
     routing: opts.routing,
   });

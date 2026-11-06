@@ -150,6 +150,31 @@ export function applyOutbox(snapshot: ServerSnapshot, outbox: OutboxItem[], loca
         stops = [...stops.filter((s) => s.tourId !== o.tourId), ...next];
         break;
       }
+      case "stop_edit":
+        stops = stops.map((s) => {
+          if (s.id !== o.stopId) return s;
+          const changed = s.address.street !== o.address.street || (s.address.houseNumber ?? "") !== (o.address.houseNumber ?? "") || s.address.postalCode !== o.address.postalCode || s.address.city !== o.address.city;
+          return {
+            ...s,
+            recipientName: o.recipientName ?? undefined,
+            address: { ...s.address, ...o.address },
+            location: o.location ?? (changed ? null : s.location),
+            locationSource: o.location ? (o.locationSource ?? "manual_pin") : changed ? null : s.locationSource,
+          };
+        });
+        break;
+      case "stop_remove":
+        stops = stops.filter((s) => s.id !== o.stopId);
+        break;
+      case "stop_merge": {
+        const from = stops.find((s) => s.id === o.stopId);
+        if (from) {
+          stops = stops
+            .filter((s) => s.id !== o.stopId)
+            .map((s) => (s.id === o.intoStopId ? { ...s, priority: s.priority || from.priority, parcels: [...s.parcels, ...from.parcels.filter((p) => !s.parcels.some((q) => q.trackingNumber === p.trackingNumber))] } : s));
+        }
+        break;
+      }
       case "proof":
         stops = stops.map((s) =>
           s.id === o.stopId && !(s.proofs ?? []).some((p) => p.id === o.proofId)

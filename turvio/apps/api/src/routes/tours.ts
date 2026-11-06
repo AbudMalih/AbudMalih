@@ -45,6 +45,9 @@ const UpdateStop = z.object({
     .optional(),
   serviceSeconds: z.number().int().min(0).max(10800).optional(),
   location: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }).nullable().optional(),
+  address: z
+    .object({ street: z.string().trim().min(1).max(200), houseNumber: z.string().trim().max(20).nullable().optional(), postalCode: z.string().trim().regex(/^[0-9A-Za-z -]{3,10}$/), city: z.string().trim().min(1).max(100) })
+    .optional(),
 });
 
 /** Throws 409 if the driver/vehicle already works on another open tour that day. */
@@ -325,9 +328,17 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         add("tw_start_minute = ?", b.timeWindow?.start ?? null);
         add("tw_end_minute = ?", b.timeWindow?.end ?? null);
       }
+      if (b.address) {
+        // A changed address without new coordinates loses the old ones (trigger stops_address_guard).
+        add("street = ?", b.address.street);
+        add("house_number = ?", b.address.houseNumber ?? null);
+        add("postal_code = ?", b.address.postalCode);
+        add("city = ?", b.address.city);
+      }
       if (b.location !== undefined) {
         add("lat = ?", b.location?.lat ?? null);
         add("lng = ?", b.location?.lng ?? null);
+        add("location_source = ?", b.location ? "dispatch" : null);
       }
       if (!sets.length) throw new ApiError(400, "validation_failed", "Nothing to update");
       const { rows } = await tx.query<{ id: string }>(`update stops set ${sets.join(", ")} where id = $1 and organization_id = $2 returning id`, vals);
@@ -364,7 +375,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
           [sid, orgId],
         )).rows[0];
         if (!cur) throw new ApiError(404, "not_found", "Stop not found");
-        if (cur.status !== "pending") throw new ApiError(422, "invalid_operation", "Only open stops can be moved");
+        if (cur.status !== "pending" && cur.status !== "in_progress") throw new ApiError(422, "invalid_operation", "Only open stops can be moved");
         const fromDepot = cur.tour_depot ?? cur.depot_id;
         if (b.tourId && fromDepot && fromDepot !== depotId) throw new ApiError(422, "invalid_operation", "Stops can only be assigned to tours of the same depot");
         const upd = await tx.query(`update stops set tour_id = $2, depot_id = $3, sequence = $4 where id = $1`, [sid, b.tourId, b.tourId ? null : fromDepot, b.tourId ? next++ : 0]);

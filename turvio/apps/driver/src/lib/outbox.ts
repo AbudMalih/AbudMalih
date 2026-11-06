@@ -28,6 +28,9 @@ export type OutboxItem = Base &
     | { kind: "create_stops"; tourId: string; stops: (NewStopInput & { id: string })[] }
     | { kind: "stop_update"; stopId: string; locked?: boolean; location?: GeoPoint; locationSource?: "geocoder" | "manual_pin" }
     | { kind: "sequence"; tourId: string; stopIds: string[] }
+    | { kind: "stop_edit"; stopId: string; recipientName?: string; address: { street: string; houseNumber?: string; postalCode: string; city: string }; location?: GeoPoint; locationSource?: "geocoder" | "manual_pin" }
+    | { kind: "stop_remove"; stopId: string }
+    | { kind: "stop_merge"; stopId: string; intoStopId: string }
     | {
         kind: "proof";
         proofId: string;
@@ -90,6 +93,15 @@ export async function sendItem(item: OutboxItem, deps: OutboxDeps): Promise<void
       return;
     case "sequence":
       await c.request("POST", `/v1/me/tours/${item.tourId}/sequence`, { stopIds: item.stopIds });
+      return;
+    case "stop_edit":
+      await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/edit`, { recipientName: item.recipientName ?? null, address: item.address, location: item.location, locationSource: item.locationSource });
+      return;
+    case "stop_remove":
+      await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/remove`, {});
+      return;
+    case "stop_merge":
+      await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/merge`, { intoStopId: item.intoStopId });
       return;
     case "proof": {
       const data = item.dataBase64 ?? (item.fileUri ? await deps.readFileBase64(item.fileUri) : null);

@@ -72,6 +72,9 @@ interface DispatchState {
   assignStops: (stopIds: string[], tourId: string | null) => Promise<void>;
   setPriority: (stopId: string, value: boolean) => Promise<void>;
   deleteStop: (stopId: string) => Promise<void>;
+  editStopAddress: (stopId: string, address: { street: string; houseNumber?: string | null; postalCode: string; city: string }, recipientName?: string | null) => Promise<void>;
+  /** New order of a tour's open stops. */
+  reorderStops: (tourId: string, openStopIds: string[]) => Promise<void>;
   switchWorkspace: (orgId: string) => void;
 }
 
@@ -195,6 +198,8 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     assignStops: (stopIds, tourId) => run(() => api<void>("POST", `/v1/orgs/${org}/stops/assign`, { stopIds, tourId })),
     setPriority: (stopId, v) => run(() => api<void>("PATCH", `/v1/orgs/${org}/stops/${stopId}`, { priority: v })),
     deleteStop: (stopId) => run(() => api<void>("DELETE", `/v1/orgs/${org}/stops/${stopId}`)),
+    editStopAddress: (stopId, address, recipientName) => run(() => api<void>("PATCH", `/v1/orgs/${org}/stops/${stopId}`, { address, ...(recipientName !== undefined ? { recipientName } : {}) })),
+    reorderStops: (tourId, ids) => run(() => api<void>("POST", `/v1/me/tours/${tourId}/sequence`, { stopIds: ids })),
     switchWorkspace: (orgId) => {
       document.cookie = `tv_org=${encodeURIComponent(orgId)}; path=/; samesite=lax; max-age=31536000`;
       window.location.assign("/map");

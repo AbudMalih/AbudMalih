@@ -2,7 +2,7 @@
 # Starts the complete local TURVIO stack (development only):
 #   PostgreSQL :54329 · optimizer :8000 · API :4000 · Dispatch :3000 · Admin :3001 · Driver (web build) :8081
 #
-#   scripts/dev-stack.sh up [--fresh] [--no-demo]   build + start everything (fresh = reset DB + seed)
+#   scripts/dev-stack.sh up [--fresh] [--no-demo] [--pilot]   build + start everything (fresh = reset DB + seed; pilot = 5 Hannover drivers, empty day)
 #   scripts/dev-stack.sh down                       stop the app processes (database keeps running)
 #
 # Logs and PID files: $TURVIO_RUN_DIR (default /tmp/turvio-run). Secrets below are
@@ -27,21 +27,22 @@ wait_for() { # url, name
 }
 
 up() {
-  local fresh=0 demo=true
-  for a in "$@"; do case $a in --fresh) fresh=1 ;; --no-demo) demo=false ;; esac; done
+  local fresh=0 demo=true pilot=false
+  for a in "$@"; do case $a in --fresh) fresh=1 ;; --no-demo) demo=false ;; --pilot) pilot=true; demo=false ;; esac; done
   "$ROOT/scripts/db.sh" start
   if [ $fresh = 1 ]; then
     "$ROOT/scripts/db.sh" reset
-    (cd "$ROOT/apps/api" && SEED_DEMO_DAY=$demo npx tsx src/scripts/seed.ts)
+    (cd "$ROOT/apps/api" && SEED_DEMO_DAY=$demo SEED_PILOT=$pilot npx tsx src/scripts/seed.ts)
   fi
   echo "Building web apps…"
   (cd "$ROOT/apps/dispatch" && NEXT_PUBLIC_TURVIO_ENV="Development · synthetic data" npx next build >"$RUN/dispatch-build.log" 2>&1)
   (cd "$ROOT/apps/admin" && NEXT_PUBLIC_TURVIO_ENV="Development · synthetic data" npx next build >"$RUN/admin-build.log" 2>&1)
   (cd "$ROOT/apps/driver" && EXPO_PUBLIC_API_URL=http://localhost:4000 EXPO_OFFLINE=1 CI=1 npx expo export --platform web --output-dir "$RUN/driver-web" >"$RUN/driver-build.log" 2>&1) || echo "  (driver web build failed – see $RUN/driver-build.log)"
   echo "Starting services…"
-  start optimizer "$ROOT/services/optimizer" .venv/bin/uvicorn turvio_optimizer.app:app --port 8000
+  # Optional services (development): TURVIO_OSRM_URL (see scripts/osrm-local.sh), TURVIO_GEOCODER=postgres.
+  start optimizer "$ROOT/services/optimizer" env OSRM_URL="${TURVIO_OSRM_URL:-}" .venv/bin/uvicorn turvio_optimizer.app:app --port 8000
   start api "$ROOT/apps/api" env NODE_ENV=development AUTH_PROVIDER=local DATABASE_URL="$DB_URL" JWT_SECRET="$JWT_SECRET" \
-    OPTIMIZER_URL=http://localhost:8000 DEV_MAILBOX=true MAILER=outbox \
+    OPTIMIZER_URL=http://localhost:8000 DEV_MAILBOX=true MAILER=outbox ${TURVIO_OSRM_URL:+OSRM_URL=$TURVIO_OSRM_URL} GEOCODER="${TURVIO_GEOCODER:-none}" \
     CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:8081 npx tsx src/server.ts
   start dispatch "$ROOT/apps/dispatch" env TURVIO_API_URL=http://localhost:4000 npx next start --port 3000
   start admin "$ROOT/apps/admin" env TURVIO_API_URL=http://localhost:4000 npx next start --port 3001

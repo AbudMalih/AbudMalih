@@ -34,6 +34,7 @@ import { useDispatch } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ProofList } from "./ProofViewer";
+import { StopEditActions } from "./StopEditActions";
 import { FAILURE_REASON, STOP_STATUS, TourStatusBadge, deadlineLabel } from "./StatusBadge";
 
 function Fact({ icon, label, value, sub }: { icon: ReactNode; label: string; value: ReactNode; sub?: ReactNode }) {
@@ -137,6 +138,7 @@ export function StopRow({ summary, stop, index, expanded, onToggle, roadEta }: {
                 </div>
               )}
               {(stop.proofs?.length ?? 0) > 0 && <ProofList stop={stop} />}
+              {summary.tour.status !== "completed" && <StopEditActions summary={summary} stop={stop} />}
               {stop.status === "pending" && summary.tour.status !== "completed" && (
                 <div>
                   <Button
@@ -417,7 +419,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
       <section aria-label="Stops in order">
         <div className="mb-1 flex items-baseline justify-between">
           <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">Stops in order</h3>
-          <span className="text-2xs text-subtle">ETA = estimate</span>
+          <span className="text-2xs text-subtle">{rm ? "ETA = road-network estimate" : "ETA = straight-line estimate"}</span>
         </div>
         {s.stops.length === 0 ? (
           <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-[13px] text-muted">No stops yet. Add stops or assign unassigned ones in Planning.</p>

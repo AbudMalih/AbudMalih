@@ -57,6 +57,13 @@ export const driverRo: Record<DriverMessageKey, string> = {
 
   "stop.title": "Oprirea {n}",
   "home.openStops": "Opriri deschise",
+  "stop.editAddress": "Editează adresa",
+  "stop.merge": "Combină cu altă oprire",
+  "stop.mergeHint": "Coletele acestei opriri sunt adăugate opririi alese.",
+  "stop.remove": "Elimină oprirea",
+  "stop.removeConfirm": "Elimini această oprire din traseu? Coletele ei sunt eliminate și ele.",
+  "stop.removeDispatchOnly": "Opririle turelor de dispecerat pot fi eliminate doar de dispecerat.",
+  "stops.dragHint": "Ține apăsat și trage mânerul pentru a reordona. Opririle blocate rămân pe loc.",
   "stop.arrived": "Am ajuns",
   "stop.deliver": "Livrat",
   "stop.pickup": "Ridicat",

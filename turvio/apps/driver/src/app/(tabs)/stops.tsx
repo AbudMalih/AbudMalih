@@ -2,6 +2,7 @@ import { isOpen, searchStops, type Stop } from "@turvio/shared";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { FlatList, Text, TextInput, View } from "react-native";
+import { ReorderList } from "../../components/ReorderList";
 import { StopCard } from "../../components/StopCard";
 import { EmptyState, IconButton, Ionicons, Segmented } from "../../components/ui";
 import { useT } from "../../lib/i18n";
@@ -15,7 +16,7 @@ export default function StopsScreen() {
   const t = useT();
   const { c } = useTheme();
   const { tour, stops } = useMyTour();
-  const moveStop = useTourStore((s) => s.moveStop);
+  const setOpenOrder = useTourStore((s) => s.setOpenOrder);
   const setLocked = useTourStore((s) => s.setLocked);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("open");
@@ -31,25 +32,9 @@ export default function StopsScreen() {
 
   const renderItem = ({ item }: { item: Stop }) => {
     const index = stops.indexOf(item);
-    return (
-      <StopCard
-        stop={item}
-        index={index}
-        current={item.id === current?.id}
-        onPress={() => router.push(`/stop/${item.id}`)}
-        testID={`stop-${index}`}
-        right={
-          reorder && isOpen(item.status) ? (
-            <View style={{ gap: 4 }}>
-              <IconButton size={38} icon="chevron-up" label={t("stops.moveUp")} onPress={() => moveStop(tour.id, index, index - 1)} />
-              <IconButton size={38} icon={item.locked ? "lock-closed" : "lock-open-outline"} label={item.locked ? t("stops.unlock") : t("stops.lock")} active={item.locked} onPress={() => setLocked(item.id, !item.locked)} />
-              <IconButton size={38} icon="chevron-down" label={t("stops.moveDown")} onPress={() => moveStop(tour.id, index, index + 1)} />
-            </View>
-          ) : undefined
-        }
-      />
-    );
+    return <StopCard stop={item} index={index} current={item.id === current?.id} onPress={() => router.push(`/stop/${item.id}`)} testID={`stop-${index}`} />;
   };
+  const closedCount = stops.filter((s) => !isOpen(s.status)).length;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -81,6 +66,19 @@ export default function StopsScreen() {
           <IconButton icon={reorder ? "checkmark" : "swap-vertical"} label={reorder ? t("stops.reorderDone") : t("stops.reorder")} active={reorder} onPress={() => setReorder(!reorder)} testID="reorder-toggle" />
         </View>
       </View>
+      {reorder ? (
+        <ReorderList
+          stops={stops}
+          firstNumber={closedCount + 1}
+          onMove={(from, to) => {
+            const ids = stops.filter((x) => isOpen(x.status)).map((x) => x.id);
+            const [moved] = ids.splice(from, 1);
+            ids.splice(to, 0, moved!);
+            setOpenOrder(tour.id, ids);
+          }}
+          onToggleLock={(st) => setLocked(st.id, !st.locked)}
+        />
+      ) : (
       <FlatList
         data={visible}
         keyExtractor={(s) => s.id}
@@ -89,6 +87,7 @@ export default function StopsScreen() {
         ListEmptyComponent={<Text style={[ty.body, { color: c.textMuted, textAlign: "center", marginTop: space.xl }]}>{query ? t("stops.noResults") : t("stops.empty")}</Text>}
         testID="stop-list"
       />
+      )}
     </View>
   );
 }

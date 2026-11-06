@@ -56,6 +56,13 @@ export const driverDe: Record<DriverMessageKey, string> = {
 
   "stop.title": "Stopp {n}",
   "home.openStops": "Offene Stopps",
+  "stop.editAddress": "Adresse bearbeiten",
+  "stop.merge": "Mit anderem Stopp zusammenführen",
+  "stop.mergeHint": "Die Pakete dieses Stopps werden dem gewählten Stopp hinzugefügt.",
+  "stop.remove": "Stopp entfernen",
+  "stop.removeConfirm": "Diesen Stopp aus Ihrer Tour entfernen? Seine Pakete werden ebenfalls entfernt.",
+  "stop.removeDispatchOnly": "Stopps von Dispositionstouren kann nur die Disposition entfernen.",
+  "stops.dragHint": "Griff halten und ziehen zum Sortieren. Fixierte Stopps bleiben an ihrem Platz.",
   "stop.arrived": "Bin angekommen",
   "stop.deliver": "Zugestellt",
   "stop.pickup": "Abgeholt",

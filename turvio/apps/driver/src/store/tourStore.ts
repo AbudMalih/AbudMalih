@@ -115,9 +115,14 @@ export interface TourState extends SyntheticDataset {
   addNote(stopId: string, note: string): void;
   captureProof(stopId: string, capture: ProofCapture): Promise<number>;
   moveStop(tourId: string, from: number, to: number): void;
+  /** New order of the open stops (closed stops keep their place first). */
+  setOpenOrder(tourId: string, openIds: string[]): void;
   setLocked(stopId: string, locked: boolean): void;
   setStopLocation(stopId: string, location: GeoPoint, source: "geocoder" | "manual_pin"): void;
   recordScans(tourId: string, entries: ScanEntry[]): void;
+  editStop(stopId: string, edit: { recipientName?: string; address: { street: string; houseNumber?: string; postalCode: string; city: string }; location?: GeoPoint | null; locationSource?: "geocoder" | "manual_pin" }): void;
+  removeStop(stopId: string): void;
+  mergeStops(fromId: string, intoId: string): void;
   tourAction(tourId: string, action: keyof typeof TOUR_TRANSITIONS): void;
   optimize(tourId: string, opts?: OptimizeOptions): Promise<OptimizationOutcome>;
   resetData(): void;
@@ -343,6 +348,16 @@ export const useTourStore = create<TourState>()(
           if (open.length) enqueue({ id: uuid(), kind: "sequence", orgId: orgOf(tourId), at: now(), tourId, stopIds: open });
         },
 
+        setOpenOrder: (tourId, openIds) => {
+          const tourStops = sortBySequence(get().stops.filter((x) => x.tourId === tourId));
+          const closed = tourStops.filter((x) => !isOpen(x.status));
+          const byId = new Map(tourStops.map((x) => [x.id, x]));
+          const open = openIds.map((id) => byId.get(id)).filter((x): x is Stop => !!x && isOpen(x.status));
+          const rest = tourStops.filter((x) => isOpen(x.status) && !openIds.includes(x.id));
+          set({ stops: replaceTourStops(get().stops, tourId, resequence([...closed, ...open, ...rest])) });
+          enqueue({ id: uuid(), kind: "sequence", orgId: orgOf(tourId), at: now(), tourId, stopIds: [...open, ...rest].map((x) => x.id) });
+        },
+
         setLocked: (stopId, locked) => {
           const stop = get().stops.find((s) => s.id === stopId);
           if (!stop) return;
@@ -355,6 +370,46 @@ export const useTourStore = create<TourState>()(
           if (!stop) return;
           updateStop(stopId, (s) => ({ ...s, location, locationSource: source }));
           enqueue({ id: uuid(), kind: "stop_update", orgId: stop.organizationId, at: now(), stopId, location, locationSource: source });
+        },
+
+        editStop: (stopId, edit) => {
+          const stop = get().stops.find((x) => x.id === stopId);
+          if (!stop) return;
+          if (!isOpen(stop.status)) throw new Error("Only open stops can be edited");
+          const item: OutboxItem = {
+            id: uuid(),
+            kind: "stop_edit",
+            orgId: stop.organizationId,
+            at: now(),
+            stopId,
+            recipientName: edit.recipientName,
+            address: edit.address,
+            location: edit.location ?? undefined,
+            locationSource: edit.location ? (edit.locationSource ?? "manual_pin") : undefined,
+          };
+          // Same rule as the server: a changed address without a new pin loses the old position.
+          const local = applyOutbox({ ...EMPTY_SERVER, driverId: "", settingsByOrg: {}, stops: [stop], tours: [] }, [item]).stops[0]!;
+          updateStop(stopId, () => local);
+          enqueue(item);
+        },
+
+        removeStop: (stopId) => {
+          const stop = get().stops.find((x) => x.id === stopId);
+          if (!stop) return;
+          const tour = get().tours.find((t) => t.id === stop.tourId);
+          if (tour?.origin !== "driver" && isServerMode()) throw new Error("Stops of dispatch tours are removed by dispatch");
+          set({ stops: replaceTourStops(get().stops, stop.tourId, resequence(sortBySequence(get().stops.filter((x) => x.tourId === stop.tourId && x.id !== stopId)))) });
+          enqueue({ id: uuid(), kind: "stop_remove", orgId: stop.organizationId, at: now(), stopId });
+        },
+
+        mergeStops: (fromId, intoId) => {
+          const a = get().stops.find((x) => x.id === fromId);
+          const b = get().stops.find((x) => x.id === intoId);
+          if (!a || !b || a.tourId !== b.tourId || !isOpen(a.status) || !isOpen(b.status) || a.type !== b.type) throw new Error("Only open stops of the same type and route can be merged");
+          const item: OutboxItem = { id: uuid(), kind: "stop_merge", orgId: a.organizationId, at: now(), stopId: fromId, intoStopId: intoId };
+          const merged = applyOutbox({ ...EMPTY_SERVER, driverId: "", settingsByOrg: {}, stops: get().stops.filter((x) => x.tourId === a.tourId), tours: [] }, [item]).stops;
+          set({ stops: replaceTourStops(get().stops, a.tourId, resequence(sortBySequence(merged))) });
+          enqueue(item);
         },
 
         recordScans: (tourId, entries) => {

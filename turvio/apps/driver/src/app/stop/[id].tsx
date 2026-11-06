@@ -1,9 +1,9 @@
 import { isOpen, isSuccess } from "@turvio/shared";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Linking, Text, TextInput, View } from "react-native";
+import { Alert, Linking, Platform, Text, TextInput, View } from "react-native";
 import { NavigateButton } from "../../components/NavigateButton";
-import { Banner, Button, Card, EmptyState, Ionicons, ListRow, Pill, Screen, SectionTitle } from "../../components/ui";
+import { Banner, Button, Card, EmptyState, Ionicons, ListRow, Pill, Screen, SectionTitle, Sheet } from "../../components/ui";
 import { addressLine, statusTone, timeOf, windowText } from "../../lib/format";
 import { feedback } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
@@ -20,6 +20,9 @@ export default function StopDetail() {
   const setStopStatus = useTourStore((s) => s.setStopStatus);
   const addNote = useTourStore((s) => s.addNote);
   const setLocked = useTourStore((s) => s.setLocked);
+  const removeStop = useTourStore((s) => s.removeStop);
+  const mergeStops = useTourStore((s) => s.mergeStops);
+  const [merging, setMerging] = useState(false);
   const outbox = useTourStore((s) => s.outbox);
   const stops = useTourStore((s) => s.stops);
   const [note, setNote] = useState<string | null>(null);
@@ -170,6 +173,53 @@ export default function StopDetail() {
           <Button label={stop.location ? t("stop.adjustLocation") : t("stop.setLocation")} variant="secondary" icon="pin-outline" onPress={() => router.push(`/pick-location/${stop.id}`)} style={{ flex: 1 }} />
         </View>
       )}
+      {open && (
+        <Card>
+          <Button label={t("stop.editAddress")} variant="secondary" icon="create-outline" onPress={() => router.push(`/edit-stop/${stop.id}`)} testID="edit-address" />
+          <Button label={t("stop.merge")} variant="secondary" icon="git-merge-outline" onPress={() => setMerging(true)} testID="merge-stop" />
+          {tour.origin === "driver" ? (
+            <Button
+              label={t("stop.remove")}
+              variant="danger"
+              icon="trash-outline"
+              testID="remove-stop"
+              onPress={() => {
+                const go = () => {
+                  removeStop(stop.id);
+                  router.back();
+                };
+                if (Platform.OS === "web") return globalThis.confirm?.(t("stop.removeConfirm")) && go();
+                Alert.alert(t("stop.remove"), t("stop.removeConfirm"), [
+                  { text: t("common.cancel"), style: "cancel" },
+                  { text: t("stop.remove"), style: "destructive", onPress: go },
+                ]);
+              }}
+            />
+          ) : (
+            <Text style={[ty.small, { color: c.textMuted }]}>{t("stop.removeDispatchOnly")}</Text>
+          )}
+        </Card>
+      )}
+      <Sheet visible={merging} onClose={() => setMerging(false)} title={t("stop.merge")}>
+        <Text style={[ty.small, { color: c.textMuted }]}>{t("stop.mergeHint")}</Text>
+        {stops
+          .filter((x) => x.tourId === stop.tourId && x.id !== stop.id && isOpen(x.status) && x.type === stop.type)
+          .sort((a, b) => a.sequence - b.sequence)
+          .map((x) => (
+            <ListRow
+              key={x.id}
+              icon="location-outline"
+              title={x.recipientName ?? addressLine(x)}
+              subtitle={addressLine(x)}
+              testID={`merge-into-${x.id}`}
+              onPress={() => {
+                act(() => mergeStops(stop.id, x.id));
+                setMerging(false);
+                router.replace(`/stop/${x.id}`);
+              }}
+            />
+          ))}
+      </Sheet>
       {isSuccess(stop.status) && <Text style={[ty.small, { color: c.textMuted, textAlign: "center" }]}>{t("pod.privacy")}</Text>}
     </Screen>
   );

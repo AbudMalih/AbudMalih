@@ -11,7 +11,7 @@ import { markerTone, type TourMapProps } from "./TourMap.shared";
  * for automated tests: a schematic projection of the stops (straight lines, no
  * map tiles), clearly labelled as such.
  */
-export function TourMap({ depot, stops, currentStopId, pendingPin, onMapPress, onStopPress }: TourMapProps) {
+export function TourMap({ depot, stops, currentStopId, pendingPin, onMapPress, onStopPress, roadGeometry }: TourMapProps) {
   const t = useT();
   const { c } = useTheme();
   const [size, setSize] = useState({ w: 360, h: 480 });
@@ -28,7 +28,7 @@ export function TourMap({ depot, stops, currentStopId, pendingPin, onMapPress, o
   const unproj = (x: number, y: number): GeoPoint => ({ lat: maxLat - (y - pad) / scale, lng: minLng + (x - pad - ((size.w - 2 * pad) - spanX * scale) / 2) / (kx * scale) });
   const open = located.filter((s) => isOpen(s.status));
   const lastDone = located.filter((s) => !isOpen(s.status)).at(-1)?.location ?? depot?.location;
-  const path = [...(lastDone ? [lastDone] : []), ...open.map((s) => s.location)].map(proj);
+  const path = (roadGeometry && roadGeometry.length > 1 ? roadGeometry.map(([lat, lng]) => ({ lat, lng })) : [...(lastDone ? [lastDone] : []), ...open.map((s) => s.location)]).map(proj);
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: c.surface2 }]} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} testID="tour-map">
       <Pressable style={StyleSheet.absoluteFill} onPress={(e) => onMapPress?.(unproj(e.nativeEvent.locationX, e.nativeEvent.locationY))} disabled={!onMapPress}>
@@ -39,7 +39,7 @@ export function TourMap({ depot, stops, currentStopId, pendingPin, onMapPress, o
               <Line y1={0} y2={size.h} x1={(size.w / 8) * i} x2={(size.w / 8) * i} stroke={c.border} strokeWidth={1} />
             </G>
           ))}
-          {path.length > 1 && <Polyline points={path.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={c.primary} strokeWidth={3} strokeDasharray="8 6" />}
+          {path.length > 1 && <Polyline points={path.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={c.primary} strokeWidth={3} strokeDasharray={roadGeometry ? undefined : "8 6"} />}
           {depot && (() => {
             const p = proj(depot.location);
             return (

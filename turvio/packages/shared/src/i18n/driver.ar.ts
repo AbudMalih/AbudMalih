@@ -57,6 +57,13 @@ export const driverAr: Record<DriverMessageKey, string> = {
 
   "stop.title": "المحطة {n}",
   "home.openStops": "محطات مفتوحة",
+  "stop.editAddress": "تعديل العنوان",
+  "stop.merge": "دمج مع محطة أخرى",
+  "stop.mergeHint": "تُضاف طرود هذه المحطة إلى المحطة المختارة.",
+  "stop.remove": "إزالة المحطة",
+  "stop.removeConfirm": "إزالة هذه المحطة من مسارك؟ ستُزال طرودها أيضًا.",
+  "stop.removeDispatchOnly": "لا يمكن إزالة محطات جولات الإرسال إلا من قسم الإرسال.",
+  "stops.dragHint": "اضغط مطولًا واسحب المقبض لإعادة الترتيب. تبقى المحطات المثبتة في مكانها.",
   "stop.arrived": "لقد وصلت",
   "stop.deliver": "تم التسليم",
   "stop.pickup": "تم الاستلام",

@@ -22,6 +22,9 @@ export const SEED_USERS = {
   musterDriver: "driver@muster.test",
 } as const;
 
+/** Extra synthetic driver accounts for the Hannover pilot scenario (SEED_PILOT=true). */
+export const PILOT_DRIVERS = ["samir.haddad@jarbou.test", "jonas.becker@jarbou.test", "paula.schmidt@jarbou.test"] as const;
+
 const DEPOTS = [
   { key: "hannover", name: "Hannover", street: "Logistikring", no: "12", postal: "30179", city: "Hannover", lat: 52.4189, lng: 9.7686 },
   { key: "bremen", name: "Bremen", street: "Logistikring", no: "60", postal: "28197", city: "Bremen", lat: 53.0921, lng: 8.7268 },
@@ -52,7 +55,7 @@ async function user(c: pg.ClientBase, email: string, password: string, name: str
 }
 
 /** Seeds an EMPTY database (as a superuser connection). */
-export async function seed(c: pg.ClientBase, opts: { password?: string; demoDay?: boolean; now?: Date } = {}): Promise<SeedResult> {
+export async function seed(c: pg.ClientBase, opts: { password?: string; demoDay?: boolean; now?: Date; pilot?: boolean } = {}): Promise<SeedResult> {
   const pw = opts.password ?? SEED_PASSWORD_DEFAULT;
   const U = SEED_USERS;
   const users = {} as SeedResult["users"];
@@ -118,6 +121,25 @@ export async function seed(c: pg.ClientBase, opts: { password?: string; demoDay?
   await c.query(`update drivers set user_id = $1 where id = $2`, [users.driverHannover1, drivers.hannover![0]]);
   await c.query(`update drivers set user_id = $1 where id = $2`, [users.driverHannover2, drivers.hannover![1]]);
   await c.query(`update drivers set user_id = $1 where id = $2`, [users.driverBremen1, drivers.bremen![0]]);
+
+  // Pilot (synthetic): five Hannover drivers with logins and five vehicles.
+  if (opts.pilot) {
+    const extra: { email: string; name: string; driver: string }[] = [
+      { email: PILOT_DRIVERS[0], name: "Samir Haddad", driver: drivers.hannover![2]! },
+      { email: PILOT_DRIVERS[1], name: "Jonas Becker", driver: drivers.hannover![3]! },
+    ];
+    const paula = (await c.query<{ id: string }>(`insert into drivers (organization_id, depot_id, display_name) values ($1,$2,'Paula Schmidt') returning id`, [jarbou, depots.hannover])).rows[0]!.id;
+    drivers.hannover!.push(paula);
+    extra.push({ email: PILOT_DRIVERS[2], name: "Paula Schmidt", driver: paula });
+    vehicles.hannover!.push(
+      (await c.query<{ id: string }>(`insert into vehicles (organization_id, depot_id, label, license_plate, capacity_parcels) values ($1,$2,'Sprinter 5','H-JL 105',180) returning id`, [jarbou, depots.hannover])).rows[0]!.id,
+    );
+    for (const e of extra) {
+      const uid = await user(c, e.email, pw, e.name);
+      await c.query(`update drivers set user_id = $1 where id = $2`, [uid, e.driver]);
+      await c.query(`insert into memberships (organization_id, user_id, role) values ($1,$2,'driver')`, [jarbou, uid]);
+    }
+  }
 
   // Memberships (+ depot scope for dispatchers)
   const member = async (org: string, uid: string, role: string) =>

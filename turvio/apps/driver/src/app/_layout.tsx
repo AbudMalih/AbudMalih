@@ -40,6 +40,7 @@ export default function RootLayout() {
         <Stack.Screen name="stop/[id]" options={{ title: "" }} />
         <Stack.Screen name="scan" options={{ headerShown: false, animation: "fade_from_bottom" }} />
         <Stack.Screen name="label" options={{ title: t("label.title"), ...modal }} />
+        <Stack.Screen name="edit-stop/[id]" options={{ title: t("stop.editAddress"), ...modal }} />
         <Stack.Screen name="add-stop" options={{ title: t("addStop.title"), ...modal }} />
         <Stack.Screen name="import" options={{ title: t("import.title"), ...modal }} />
         <Stack.Screen name="new-route" options={{ title: t("route.newTitle"), ...modal }} />

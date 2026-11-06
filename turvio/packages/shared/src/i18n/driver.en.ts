@@ -55,6 +55,13 @@ export const driverEn = {
 
   "stop.title": "Stop {n}",
   "home.openStops": "Open stops",
+  "stop.editAddress": "Edit address",
+  "stop.merge": "Merge with another stop",
+  "stop.mergeHint": "Parcels of this stop are added to the chosen stop.",
+  "stop.remove": "Remove stop",
+  "stop.removeConfirm": "Remove this stop from your route? Its parcels are removed too.",
+  "stop.removeDispatchOnly": "Stops of dispatch tours can only be removed by dispatch.",
+  "stops.dragHint": "Hold and drag the handle to reorder. Locked stops stay in place.",
   "stop.arrived": "I'm here",
   "stop.deliver": "Delivered",
   "stop.pickup": "Picked up",

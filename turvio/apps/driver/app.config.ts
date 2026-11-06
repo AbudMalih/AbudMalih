@@ -42,7 +42,13 @@ const config: ExpoConfig = {
     },
     predictiveBackGestureEnabled: false,
     // Only what the driver features need; no background location, no microphone.
-    blockedPermissions: ["android.permission.RECORD_AUDIO", "android.permission.ACCESS_BACKGROUND_LOCATION"],
+    blockedPermissions: [
+      "android.permission.RECORD_AUDIO",
+      "android.permission.ACCESS_BACKGROUND_LOCATION",
+      "android.permission.SYSTEM_ALERT_WINDOW",
+      "android.permission.USE_BIOMETRIC",
+      "android.permission.USE_FINGERPRINT",
+    ],
   },
   web: { favicon: "./assets/favicon.png" },
   plugins: [

@@ -73,6 +73,51 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
     return reply.status(204).send();
   });
 
+  // ------------------------------------------------------------ route editing (driver and staff)
+  const AddressBody = z.object({
+    street: z.string().trim().min(1).max(200),
+    houseNumber: z.string().trim().max(20).optional(),
+    postalCode: z.string().trim().regex(/^[0-9A-Za-z -]{3,10}$/),
+    city: z.string().trim().min(1).max(100),
+  });
+  app.post("/v1/orgs/:orgId/stops/:id/edit", { preHandler: guards.requireTenant("stops.update_status_own") }, async (req, reply) => {
+    const { orgId, id } = IdParams.parse(req.params);
+    const b = parse(z.object({ recipientName: z.string().trim().max(120).nullable().optional(), address: AddressBody, location: Point.optional(), locationSource: z.enum(["geocoder", "manual_pin"]).optional() }), req.body, reply);
+    if (!b) return;
+    const row = await db.asUser(claims(req), async (tx) => {
+      await tx.query(`select driver_edit_stop($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [
+        id,
+        b.recipientName ?? null,
+        b.address.street,
+        b.address.houseNumber ?? null,
+        b.address.postalCode,
+        b.address.city,
+        b.location?.lat ?? null,
+        b.location?.lng ?? null,
+        b.location ? (b.locationSource ?? "manual_pin") : null,
+      ]);
+      return (await tx.query<StopRow>(`${STOP_SELECT} where s.id = $1 and s.organization_id = $2`, [id, orgId])).rows[0]!;
+    });
+    return { stop: toStop(row) };
+  });
+
+  app.post("/v1/orgs/:orgId/stops/:id/remove", { preHandler: guards.requireTenant("stops.add_own") }, async (req, reply) => {
+    const { id } = IdParams.parse(req.params);
+    await db.asUser(claims(req), (tx) => tx.query(`select driver_delete_stop($1)`, [id]));
+    return reply.status(204).send();
+  });
+
+  app.post("/v1/orgs/:orgId/stops/:id/merge", { preHandler: guards.requireTenant("stops.add_own") }, async (req, reply) => {
+    const { orgId, id } = IdParams.parse(req.params);
+    const b = parse(z.object({ intoStopId: Uuid }), req.body, reply);
+    if (!b) return;
+    const row = await db.asUser(claims(req), async (tx) => {
+      await tx.query(`select merge_stops($1, $2)`, [id, b.intoStopId]);
+      return (await tx.query<StopRow>(`${STOP_SELECT} where s.id = $1 and s.organization_id = $2`, [b.intoStopId, orgId])).rows[0]!;
+    });
+    return { stop: toStop(row) };
+  });
+
   // ------------------------------------------------------------ driver settings (failure reasons, PoD location)
   app.get("/v1/orgs/:orgId/settings/driver", { preHandler: guards.requireTenant("tours.view_own") }, async (req) => {
     const { orgId } = OrgParams.parse(req.params);
