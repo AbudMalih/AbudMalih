@@ -5,61 +5,145 @@
   background: #101113;
 }
 
-/* one company, many markets: Luna Trading at the centre of six capabilities */
-.eco {
-  position: relative;
-  aspect-ratio: 1;
-  width: min(100%, 520px);
-  justify-self: center;
-  border-radius: 50%;
-  border: 1px dashed rgba(255, 255, 255, 0.16);
+/* one company, many markets: six capabilities joined by one bar */
+.hub {
+  margin-top: clamp(40px, 7vh, 72px);
+  display: grid;
+  gap: 28px;
 }
-.eco::before {
+.hubRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.hubCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 84px;
+  padding: 18px 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  color: #f2f2f0;
+  font-weight: 650;
+  font-size: 1.05rem;
+}
+.hubCard::after {
   content: "";
   position: absolute;
-  inset: 18%;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.ecoCenter {
-  position: absolute;
   left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  display: grid;
-  place-items: center;
-  width: 34%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--luna-red);
-  color: #fff;
-  font-weight: 700;
-  text-align: center;
-  box-shadow: 0 24px 50px -20px rgba(201, 2, 22, 0.7);
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.22);
 }
-.ecoNode {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: rotate(var(--a)) translateX(min(42vw, 218px)) rotate(calc(-1 * var(--a)));
-  translate: -50% -50%;
-  display: inline-flex;
+.hubTop .hubCard::after {
+  top: 100%;
+}
+.hubBottom .hubCard::after {
+  bottom: 100%;
+}
+.hubNum {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: #8d8e93;
+}
+.hubBar {
+  display: flex;
   align-items: center;
-  min-height: 38px;
-  padding: 6px 14px;
+  justify-content: center;
+  gap: 14px;
+  min-height: 72px;
   border-radius: 999px;
-  background: #1c1d21;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #f2f2f0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
+  background: #f2f2f0;
+  color: #141518;
+  font-weight: 750;
+  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
 }
-@media (max-width: 600px) {
-  .ecoNode {
-    font-size: 0.72rem;
-    padding: 4px 10px;
-    min-height: 30px;
-    transform: rotate(var(--a)) translateX(36vw) rotate(calc(-1 * var(--a)));
+.hubBar small {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b6c71;
+}
+.hubPlus {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+}
+@media (max-width: 767px) {
+  .hubRow {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
+  .hubCard::after {
+    display: none;
+  }
+  .hub {
+    gap: 14px;
+  }
+}
+
+/* to Europe: the four steps */
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+.steps li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 0;
+}
+.steps li + li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 21px;
+  top: -14px;
+  height: 28px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+.stepNum {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #141518;
+  color: #f2f2f0;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+}
+.steps li:last-child .stepNum {
+  background: var(--luna-red);
+  border-color: var(--luna-red);
+}
+.stepName {
+  font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+  font-weight: 650;
+  color: #f2f2f0;
+}
+.stepFoot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #b9babe;
+  font-weight: 600;
 }

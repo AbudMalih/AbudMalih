@@ -411,3 +411,15 @@
 .title :global(.tone-graphite) {
   color: var(--luna-red);
 }
+
+.eyeDot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+}

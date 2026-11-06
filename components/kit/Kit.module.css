@@ -1318,3 +1318,40 @@ a.card:hover,
   top: calc(-1 * var(--header-h) - 24px);
   height: 0;
 }
+
+/* the Luna "+" replaces dots and rules as the one small mark */
+.dot,
+.tagRule,
+.laneDot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+}
+.laneDot {
+  width: 8px;
+  height: 8px;
+  opacity: 0.85;
+}
+.chip::before,
+.chipDark::before {
+  display: none;
+}
+.chip,
+.chipDark {
+  padding-inline: 16px;
+}
+.live i {
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
+  animation: none;
+  background:
+    linear-gradient(#ff5a68, #ff5a68) center / 100% 2px no-repeat,
+    linear-gradient(#ff5a68, #ff5a68) center / 2px 100% no-repeat;
+}
