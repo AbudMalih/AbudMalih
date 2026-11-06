@@ -1,326 +1,171 @@
+/* 05 · a still composition: six disciplines on one red line */
 .wrap {
-  --chain-tick: var(--graphite-500);
-  --chain-tick-on: var(--paper);
   position: relative;
   height: 100%;
   min-height: inherit;
-  padding: 0 var(--margin);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(28px, 6vh, 72px);
+  padding: calc(var(--header-h) + 8px) var(--margin) clamp(24px, 5vh, 56px);
+  color: var(--ink-950, #0b0b0d);
+}
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-5);
+  flex-wrap: wrap;
 }
 .tag {
-  position: absolute;
-  inset-inline-start: var(--margin);
-  top: var(--safe-top);
+  color: var(--ink-950, #0b0b0d);
 }
-.intro {
-  position: absolute;
-  inset-inline-end: calc(var(--margin) + 40px);
-  top: calc(var(--safe-top) - 8px);
-  text-align: end;
-  font-size: clamp(1.5rem, 2.6vw, 2.8rem);
-}
-.stageWords {
-  position: absolute;
-  inset-inline: 4.5%;
-  bottom: calc(50% + clamp(18px, 3vh, 36px));
-}
-.stageWords > :global(.mask) {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-}
-.word {
-  display: block;
-  white-space: nowrap;
-  font-size: clamp(2.6rem, min(8.6vw, 16svh), 10rem);
-}
-
-/* ---- the line ---- */
-.line {
-  position: absolute;
-  inset-inline: 4.5%;
-  top: 50%;
-  height: 2px;
-  margin-top: -1px;
-}
-.rest {
-  position: absolute;
-  inset: 0.5px 0;
-  background: var(--graphite-600);
-}
-.fill {
-  position: absolute;
-  inset: 0;
-  background: var(--luna-red);
-  transform-origin: left;
-}
-:global([dir="rtl"]) .fill {
-  transform-origin: right;
-}
-.ticks li {
-  position: absolute;
-  top: 18px;
-  transform: translateX(-50%);
-  color: var(--graphite-500);
-  font-size: 10px;
-}
-:global([dir="rtl"]) .ticks li {
-  transform: translateX(50%);
-}
-.ticks li::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -18px;
-  width: 1px;
-  height: 9px;
-  background: currentColor;
-}
-.ticks li:first-child,
-:global([dir="rtl"]) .ticks li:first-child {
-  transform: none;
-}
-.ticks li:first-child::before {
-  left: 0;
-}
-:global([dir="rtl"]) .ticks li:first-child::before {
-  left: auto;
-  right: 0;
-}
-.ticks li:last-child {
-  transform: translateX(-100%);
-}
-:global([dir="rtl"]) .ticks li:last-child {
-  transform: translateX(100%);
-}
-.ticks li:last-child::before {
-  left: auto;
-  right: 0;
-}
-:global([dir="rtl"]) .ticks li:last-child::before {
-  right: auto;
-  left: 0;
-}
-.tickKey::after {
-  /* the e-commerce tick carries a second, longer mark: the branch point */
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -27px;
-  width: 1px;
-  height: 7px;
-  background: currentColor;
-  opacity: 0.6;
-}
-.marker {
-  --m: 0;
-  position: absolute;
-  top: 1px;
-  inset-inline-start: calc(var(--m) * 100%);
-  width: 22px;
-  height: 22px;
-  margin-top: -11px;
-  margin-inline-start: -11px;
-  background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 4px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 4px 100% no-repeat;
-}
-.descs {
-  position: absolute;
-  inset-inline: 4.5%;
-  top: calc(50% + 72px);
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: var(--gutter);
-}
-.count {
-  grid-column: 1 / span 3;
-  color: var(--graphite-300);
-  justify-self: start;
-}
-.desc {
-  grid-column: 7 / span 5;
-  grid-row: 1;
-  color: var(--paper);
-  font-size: clamp(1.1rem, 1.5vw, 1.55rem);
-  line-height: 1.38;
-  letter-spacing: -0.015em;
-}
-
-/* ---- static / accessible ---- */
-.list {
-  display: none;
-}
-:global(html:not(.cine)) .tag,
-:global(html:not(.cine)) .intro {
-  position: relative;
-  inset: auto;
-  text-align: start;
-  margin-bottom: var(--s-6);
-}
-:global(html:not(.cine)) .list {
-  display: grid;
-}
-.list li {
-  display: grid;
-  grid-template-columns: 4ch minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: var(--gutter);
-  padding-block: var(--s-4);
-  border-top: 1px solid var(--hairline);
-  align-items: baseline;
-}
-.list strong {
-  font-size: var(--fs-title);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-}
-.list span:last-child {
-  color: var(--fg-muted);
-}
-:global(html.cine) .list {
-  display: block;
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-}
-
-@media (max-width: 767px) {
-  .stageWords,
-  .line,
-  .descs {
-    inset-inline: 6%;
-  }
-  .intro {
-    inset-inline: var(--margin) auto;
-    text-align: start;
-    top: calc(var(--safe-top) + 34px);
-  }
-  .word {
-    font-size: clamp(2rem, 10.6vw, 3.8rem);
-    white-space: normal;
-  }
-  .count {
-    grid-column: 1 / -1;
-    margin-bottom: var(--s-3);
-  }
-  .desc {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-  .list li {
-    grid-template-columns: 4ch 1fr;
-  }
-  .list span:last-child {
-    grid-column: 2;
-  }
-}
-
-/* Cinematic: the chain lives in the warm ivory brand light (Atmosphere
-   "brand"), between the physical world and the cooler digital commerce. */
-:global(html.cine) .wrap {
-  --chain-tick: #a29d93;
-  --chain-tick-on: var(--ink-950);
-  color: var(--ink-950);
-}
-:global(html.cine) .tag {
-  color: var(--ink-950);
-}
-:global(html.cine) .tag :global([data-tag-rule]) {
+.tag :global([data-tag-rule]) {
   background: #a29d93;
 }
-:global(html.cine) .intro :global(.tone-graphite) {
+.title {
+  font-size: clamp(1.7rem, 3.2vw, 3.4rem);
+  text-align: end;
+}
+.titleDim {
   color: #8a857c;
 }
-:global(html.cine) .rest {
-  background: #cfc9bd;
+
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  column-gap: clamp(14px, 1.6vw, 28px);
+  row-gap: clamp(28px, 4vh, 44px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-:global(html.cine) .ticks li {
-  color: var(--chain-tick);
+/* the red line that joins the disciplines */
+.grid::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 5px;
+  height: 2px;
+  background: var(--luna-red);
 }
-:global(html.cine) .count {
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 28px;
+}
+.node {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f1ede5;
+  border: 2px solid var(--luna-red);
+}
+.key .node {
+  background: var(--luna-red);
+}
+.num {
   color: #8a857c;
-}
-:global(html.cine) .desc {
-  color: #2a2b2e;
-}
-
-/* letters of the discipline word (Latin scripts) */
-.ch {
-  display: inline-block;
-  white-space: pre;
-  will-change: transform;
-}
-
-/* goods moving along the line ahead of the marker */
-.flow {
-  --m: 0;
-  position: absolute;
-  top: -1px;
-  height: 4px;
-  inset-inline-start: calc(var(--m) * 100% + 14px);
-  inset-inline-end: 0;
-  background: repeating-linear-gradient(90deg, rgba(201, 2, 22, 0.55) 0 10px, transparent 10px 34px);
-  mask-image: linear-gradient(90deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
-  -webkit-mask-image: linear-gradient(90deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
-  animation: flow 2.4s linear infinite;
-}
-:global([dir="rtl"]) .flow {
-  mask-image: linear-gradient(270deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
-  -webkit-mask-image: linear-gradient(270deg, #000, rgba(0, 0, 0, 0.35) 40%, transparent 85%);
-  animation-direction: reverse;
-}
-@keyframes flow {
-  from { background-position: 0 0; }
-  to { background-position: 34px 0; }
-}
-
-/* one drawing per discipline, in the open field above the line */
-.arts {
-  position: absolute;
-  inset-inline-end: 6%;
-  bottom: calc(50% + clamp(28px, 5vh, 60px));
-  width: clamp(200px, 26vw, 420px);
-  aspect-ratio: 8 / 5;
 }
 .art {
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  opacity: 0;
+  max-width: 220px;
+  aspect-ratio: 8 / 5;
   fill: none;
   stroke: #6f6a62;
-  stroke-width: 1.15;
+  stroke-width: 1.1;
   stroke-linecap: round;
   stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
   overflow: visible;
 }
 .art path {
-  stroke-dasharray: 1 1;
-  stroke-dashoffset: 1;
   vector-effect: non-scaling-stroke;
 }
 .artRed {
   stroke: var(--luna-red);
-  stroke-width: 2;
+  stroke-width: 1.8;
 }
-:global([dir="rtl"]) .art {
-  transform: scaleX(-1);
+.name {
+  margin: 4px 0 0;
+  font-size: clamp(1.05rem, 1.35vw, 1.4rem);
+  font-weight: 700;
+  font-variation-settings: "wght" 700;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  line-height: 1.1;
 }
+.line {
+  margin: 0;
+  max-width: 26ch;
+  color: #4a4b50;
+  font-size: clamp(0.86rem, 0.95vw, 0.98rem);
+  line-height: 1.5;
+}
+
+/* tablet: three by two */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .grid::before {
+    display: none;
+  }
+  .step {
+    border-top: 2px solid var(--luna-red);
+    padding-top: 22px;
+  }
+  .node {
+    top: -7px;
+  }
+}
+/* phones: two by three, compact */
 @media (max-width: 767px) {
-  .arts {
-    inset-inline-end: 6%;
-    bottom: auto;
-    top: calc(50% + 150px);
-    width: 46vw;
-    opacity: 0.85;
+  .wrap {
+    justify-content: flex-start;
+    gap: 22px;
+    padding-top: calc(var(--header-h) + 4px);
+  }
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .title {
+    text-align: start;
+    font-size: clamp(1.5rem, 7vw, 2rem);
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 18px;
+  }
+  .step {
+    gap: 6px;
+    padding-top: 16px;
+  }
+  .art {
+    max-width: 110px;
+  }
+  .name {
+    font-size: 0.95rem;
+  }
+  .line {
+    font-size: 0.78rem;
+    line-height: 1.42;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .flow {
-    animation: none;
+@media (max-width: 767px) and (max-height: 700px) {
+  .art {
+    display: none;
   }
+}
+:global(html[lang="ar"]) .name {
+  text-transform: none;
+  letter-spacing: 0;
 }

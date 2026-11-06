@@ -27,7 +27,7 @@ export const CHAPTERS: Chapter[] = [
   { id: "transport", index: "02", len: 2.7, lenM: 2.1 },
   { id: "warehouse", index: "03", len: 1.8, lenM: 1.4 },
   { id: "brands", index: "04", len: 1.9, lenM: 1.5 },
-  { id: "chain", index: "05", len: 2.3, lenM: 1.9 },
+  { id: "chain", index: "05", len: 1.2, lenM: 1.2 },
   { id: "commerce", index: "06", len: 3.4, lenM: 2.8 },
   { id: "luviscent", index: "07", len: 2.3, lenM: 1.9 },
   { id: "ecosystem", index: "08", len: 2.1, lenM: 1.7 },

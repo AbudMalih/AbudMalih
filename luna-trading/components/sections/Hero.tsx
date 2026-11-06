@@ -35,9 +35,9 @@ function HeroContent() {
     gsap.set(q("[data-hrule]"), { scaleX: 0 });
     const play = () => {
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.to(q("[data-word]"), { yPercent: 0, duration: 1.6, stagger: 0.12 }, 0.1)
-        .to(q("[data-hrule]"), { scaleX: 1, duration: 1.4, ease: "expo.inOut" }, 0.2)
-        .to(q("[data-meta]"), { opacity: 1, duration: 1.0, stagger: 0.08, ease: "power2.out" }, 0.7);
+      tl.to(q("[data-word]"), { yPercent: 0, duration: 1.1, stagger: 0.08 }, 0)
+        .to(q("[data-hrule]"), { scaleX: 1, duration: 1.0, ease: "expo.inOut" }, 0.1)
+        .to(q("[data-meta]"), { opacity: 1, duration: 0.7, stagger: 0.06, ease: "power2.out" }, 0.4);
     };
     if (!document.documentElement.classList.contains("intro-pending")) play();
     else window.addEventListener("luna:intro", play, { once: true });
