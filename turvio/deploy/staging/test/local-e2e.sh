@@ -130,8 +130,8 @@ grep -q "api.staging.example.invalid" /etc/hosts || echo "127.0.0.1 api.staging.
 
 step "broken release -> automatic rollback"
 git clone --quiet --branch "$BRANCH" "$T/remote.git" "$T/work"
-(cd "$T/work" && sed -i 's/      MAILER: smtp/      MAILER: outbox/' turvio/deploy/staging/compose.yml \
-  && git -c user.email=test@example.invalid -c user.name=test commit -qam "test: broken release (API refuses MAILER=outbox)" && git push -q origin "$BRANCH")
+(cd "$T/work" && sed -i 's/      PORT: "4000"/      PORT: "4001"/' turvio/deploy/staging/compose.yml \
+  && git -c user.email=test@example.invalid -c user.name=test commit -qam "test: broken release (API listens on the wrong port, health check fails)" && git push -q origin "$BRANCH")
 BROKEN="$(git -C "$T/work" rev-parse HEAD)"
 retag "$BROKEN"   # images are identical: only compose.yml changed
 if "$DEPLOY" "$BROKEN"; then echo "FAIL: broken release was reported healthy"; exit 1; fi
