@@ -444,3 +444,24 @@
     animation: none;
   }
 }
+
+.mailBtn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 12px;
+  padding: 14px 20px;
+  border-radius: 999px;
+  background: #141518;
+  color: #fff;
+  font-weight: 650;
+}
+.mailBtn span {
+  color: #b9babe;
+  font-weight: 500;
+}
+.mailBtn:hover {
+  background: #000;
+}

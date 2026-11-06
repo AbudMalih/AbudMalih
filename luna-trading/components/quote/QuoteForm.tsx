@@ -87,6 +87,33 @@ export default function QuoteForm({ t, locale, privacyHref }: { t: QuoteCopy["fo
     }
   }
 
+  // fallback while server delivery is unavailable: the visitor's own mail app,
+  // addressed to the company inbox, with the complete request prefilled
+  const mailto = () => {
+    const n = normaliseQuote(q as unknown as Record<string, unknown>);
+    const lines = [
+      `${t.mode}: ${t.modes[n.mode].name}${n.mode === "sea_fcl" ? ` (${t.containers[n.container]})` : ""}`,
+      `${t.origin}: ${n.origin}`,
+      `${t.destination}: ${n.destination}`,
+      `${t.incoterm}: ${t.incoterms[n.incoterm]}`,
+      n.ready && `${t.ready}: ${n.ready}`,
+      `${t.goods}: ${n.goods}`,
+      n.packages && `${t.packages}: ${n.packages}`,
+      n.weight && `${t.weight}: ${n.weight}`,
+      n.volume && `${t.volume}: ${n.volume}`,
+      n.dangerous && t.dangerous,
+      n.services.length && `${t.services}: ${n.services.map((x) => t.serviceNames[x]).join(", ")}`,
+      " ",
+      `${t.name}: ${n.name}`,
+      n.company && `${t.company}: ${n.company}`,
+      `${t.email}: ${n.email}`,
+      n.phone && `${t.phone}: ${n.phone}`,
+      n.note && `\n${n.note}`,
+    ].filter(Boolean);
+    const subject = `${t.modes[n.mode].name} · ${n.origin} → ${n.destination}`;
+    return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
+  };
+
   if (status === "ok") {
     return (
       <div className={s.done} role="status">
@@ -269,11 +296,11 @@ export default function QuoteForm({ t, locale, privacyHref }: { t: QuoteCopy["fo
               t.rate
             ) : (
               <>
-                {t.failTitle} {t.failText}{" "}
-                <a href={`mailto:${CONTACT_EMAIL}`} dir="ltr">
-                  {CONTACT_EMAIL}
+                {t.failTitle} {t.mailHint}
+                <a href={mailto()} className={s.mailBtn}>
+                  {t.mailSend}
+                  <span dir="ltr">{CONTACT_EMAIL}</span>
                 </a>
-                .
               </>
             )}
           </p>

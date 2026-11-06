@@ -50,6 +50,8 @@ export type QuoteCopy = {
     errors: Record<QuoteError, string> & { summary: string };
     failTitle: string;
     failText: string;
+    mailHint: string;
+    mailSend: string;
     rate: string;
     okTitle: string;
     okText: string;
@@ -126,6 +128,8 @@ const de: QuoteCopy = {
     errors: { required: "Bitte ausfüllen.", email: "Bitte eine gültige E-Mail-Adresse angeben.", long: "Bitte kürzer fassen.", number: "Bitte eine Zahl angeben.", phone: "Bitte eine gültige Telefonnummer angeben.", summary: "Bitte prüfen Sie die markierten Felder." },
     failTitle: "Ihre Anfrage konnte nicht gesendet werden.",
     failText: "Bitte schreiben Sie uns direkt an",
+    mailHint: " Senden Sie sie mit einem Klick aus Ihrem E-Mail-Programm, alle Angaben sind bereits eingetragen.",
+    mailSend: "Per E-Mail senden",
     rate: "Zu viele Anfragen in kurzer Zeit. Bitte versuchen Sie es später erneut.",
     okTitle: "Danke. Ihre Anfrage ist eingegangen.",
     okText: "Wir prüfen Ihre Angaben und melden uns mit einem Angebot oder gezielten Rückfragen.",
@@ -215,6 +219,8 @@ const en: QuoteCopy = {
     errors: { required: "Please fill in.", email: "Please enter a valid e-mail address.", long: "Please keep it shorter.", number: "Please enter a number.", phone: "Please enter a valid phone number.", summary: "Please check the marked fields." },
     failTitle: "Your request could not be sent.",
     failText: "Please write to us directly at",
+    mailHint: " Send it with one click from your e-mail app, all details are already filled in.",
+    mailSend: "Send by e-mail",
     rate: "Too many requests in a short time. Please try again later.",
     okTitle: "Thank you. Your request has arrived.",
     okText: "We will review your details and come back with a quote or specific questions.",
@@ -304,6 +310,8 @@ const ar: QuoteCopy = {
     errors: { required: "يرجى التعبئة.", email: "يرجى إدخال بريد إلكتروني صحيح.", long: "يرجى الاختصار.", number: "يرجى إدخال رقم.", phone: "يرجى إدخال رقم هاتف صحيح.", summary: "يرجى مراجعة الحقول المعلّمة." },
     failTitle: "تعذّر إرسال طلبك.",
     failText: "يرجى مراسلتنا مباشرة على",
+    mailHint: " أرسله بنقرة واحدة من برنامج البريد لديك، جميع البيانات مُدخلة مسبقًا.",
+    mailSend: "إرسال بالبريد الإلكتروني",
     rate: "طلبات كثيرة في وقت قصير. يرجى المحاولة لاحقًا.",
     okTitle: "شكرًا. وصلنا طلبك.",
     okText: "سنراجع بياناتك ونعود إليك بعرض سعر أو بأسئلة محددة.",
