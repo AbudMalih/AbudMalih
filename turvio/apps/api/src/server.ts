@@ -1,10 +1,11 @@
+import { readFileSync } from "node:fs";
 import { DevTokenVerifier } from "./auth/tokens";
 import { LocalAuthProvider } from "./auth/local";
 import type { AuthProvider } from "./auth/provider";
 import { SupabaseAuthProvider } from "./auth/supabase";
 import { buildApp } from "./app";
 import { loadConfig } from "./config";
-import { Db } from "./db";
+import { Db, type PgSsl } from "./db";
 import { ChangeFeed } from "./events";
 import { OutboxMailer, SmtpMailer, type Mailer } from "./mail";
 import { PgTenancyRepository, syntheticTenancy } from "./tenancy";
@@ -22,7 +23,7 @@ if (config.AUTH_PROVIDER === "dev") {
   app = buildApp({ verifier: new DevTokenVerifier(), tenancy: syntheticTenancy(), optimizerUrl: config.OPTIMIZER_URL, corsOrigins, logger: true });
   app.log.warn("AUTH_PROVIDER=dev: synthetic identity, no database. Never use in production.");
 } else {
-  const ssl = config.DATABASE_SSL === "true";
+  const ssl: PgSsl = config.DATABASE_SSL !== "true" ? false : config.DATABASE_SSL_CA_FILE ? { ca: readFileSync(config.DATABASE_SSL_CA_FILE, "utf8") } : true;
   const db = new Db(config.DATABASE_URL!, ssl);
   const log = (m: string) => console.log(`[turvio-api] ${m}`);
   const mailer: Mailer = config.MAILER === "smtp" ? new SmtpMailer(config.SMTP_URL!, config.MAIL_FROM) : new OutboxMailer(db, log);
@@ -64,6 +65,7 @@ if (config.AUTH_PROVIDER === "dev") {
     proofStore,
     geocoder,
     rateLimitPerMinute: config.RATE_LIMIT_PER_MINUTE,
+    trustProxy: config.TRUST_PROXY === "true" ? true : config.TRUST_PROXY === "false" ? false : Number(config.TRUST_PROXY),
     requireAdminMfa: config.requireAdminMfa,
     routing: config.OSRM_URL ? new OsrmRouting(config.OSRM_URL, { timeoutMs: config.OSRM_TIMEOUT_MS }) : undefined,
   });

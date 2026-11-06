@@ -55,7 +55,9 @@ describe("proof stores", () => {
       `GET https://proj.supabase.co/storage/v1/object/authenticated/proofs/${P}`,
       `DELETE https://proj.supabase.co/storage/v1/object/proofs`,
     ]);
-    expect(calls[0]!.headers.authorization).toBe("Bearer service-key");
+    // A non-JWT (new-format) secret key travels only in the apikey header.
+    expect(calls[0]!.headers.apikey).toBe("service-key");
+    expect(calls[0]!.headers.authorization).toBeUndefined();
   });
 });
 

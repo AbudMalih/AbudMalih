@@ -31,8 +31,8 @@ export type Tx = pg.PoolClient;
 export class Db {
   readonly pool: pg.Pool;
 
-  constructor(connectionString: string, ssl = false) {
-    this.pool = new pg.Pool({ connectionString, max: 10, ssl: ssl ? { rejectUnauthorized: true } : undefined });
+  constructor(connectionString: string, ssl: PgSsl = false) {
+    this.pool = new pg.Pool({ connectionString, max: 10, ssl: pgSslOptions(ssl) });
   }
 
   async asUser<T>(claims: Claims, fn: (tx: Tx) => Promise<T>): Promise<T> {
@@ -106,4 +106,11 @@ export function mapPgError(e: unknown): unknown {
     default:
       return e;
   }
+}
+
+/** TLS for Postgres: false, true (system CAs) or { ca } (e.g. the Supabase root CA). Always verified. */
+export type PgSsl = boolean | { ca: string };
+export function pgSslOptions(ssl: PgSsl): { rejectUnauthorized: true; ca?: string } | undefined {
+  if (!ssl) return undefined;
+  return typeof ssl === "object" ? { rejectUnauthorized: true, ca: ssl.ca } : { rejectUnauthorized: true };
 }

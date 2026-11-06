@@ -1,0 +1,23 @@
+# Build context = the turvio/ directory. Keep it small and free of secrets.
+**/node_modules
+**/.next
+**/dist
+**/.expo
+**/coverage
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+**/.venv
+**/__pycache__
+**/.pytest_cache
+.git
+docs
+e2e
+branding
+tools
+supabase
+# The driver app is not deployed; only its manifest is needed for the pnpm lockfile.
+apps/driver/**
+!apps/driver/package.json
+routed.pid

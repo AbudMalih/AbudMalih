@@ -16,13 +16,14 @@ const session = (aal: string, factors: unknown[] = []) => ({
 });
 
 function mock(routes: Record<string, (body: Record<string, unknown>, auth: string) => [number, unknown]>) {
-  const calls: { method: string; path: string; auth: string; body: Record<string, unknown> }[] = [];
+  const calls: { method: string; path: string; auth: string; apikey: string; body: Record<string, unknown> }[] = [];
   const fetchImpl = (async (url: string, init: RequestInit = {}) => {
     const path = url.replace(`${BASE}/auth/v1`, "");
     const method = init.method ?? "GET";
     const auth = new Headers(init.headers).get("authorization") ?? "";
+    const apikey = new Headers(init.headers).get("apikey") ?? "";
     const body = init.body ? JSON.parse(String(init.body)) : {};
-    calls.push({ method, path, auth, body });
+    calls.push({ method, path, auth, apikey, body });
     const h = routes[`${method} ${path}`];
     const [status, data] = h ? h(body, auth) : [404, {}];
     return Response.json(data, { status });
@@ -91,7 +92,7 @@ describe("SupabaseAuthProvider password policy (mocked GoTrue)", () => {
   it("creates an account with a policy-compliant password via the admin API (works with sign-up disabled)", async () => {
     const { p, calls } = mock({ "POST /admin/users": () => [200, { id: "u-new" }] });
     await expect(p.ensureUser("new@x.test", "Long-enough-pw-2026", "New")).resolves.toEqual({ userId: "u-new", created: true });
-    expect(calls[0]).toMatchObject({ path: "/admin/users", auth: "Bearer service-role-key-service-role-key" });
+    expect(calls[0]).toMatchObject({ path: "/admin/users", apikey: "service-role-key-service-role-key" });
   });
 
   it("an existing account may still accept with its current (older) password", async () => {

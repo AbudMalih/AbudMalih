@@ -1,4 +1,5 @@
 import pg from "pg";
+import { pgSslOptions, type PgSsl } from "./db";
 
 export interface ChangeEvent {
   org: string;
@@ -24,12 +25,12 @@ export class ChangeFeed {
   constructor(
     private readonly connectionString: string,
     private readonly log: (msg: string) => void = () => undefined,
-    private readonly ssl = false,
+    private readonly ssl: PgSsl = false,
   ) {}
 
   async start(): Promise<void> {
     if (this.stopped) return;
-    const client = new pg.Client({ connectionString: this.connectionString, ssl: this.ssl ? { rejectUnauthorized: true } : undefined });
+    const client = new pg.Client({ connectionString: this.connectionString, ssl: pgSslOptions(this.ssl) });
     client.on("notification", (msg) => {
       if (msg.channel !== "turvio_changes" || !msg.payload) return;
       try {

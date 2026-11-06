@@ -1,0 +1,167 @@
+# TURVIO staging – Docker Compose (rootless Docker, 4 GB VPS).
+# Used by deploy/staging/deploy.sh; do not start by hand with a different project name.
+#   docker compose -p turvio-staging --env-file /opt/turvio/.env -f compose.yml up -d --wait
+# Secrets come only from /opt/turvio/.env (mode 600) – never from this file or Git.
+#
+# Memory budget (limits; typical use is lower):
+#   caddy 128M · api 512M · optimizer 768M · osrm 512M · dispatch 384M · admin 320M = ~2.6 GB
+#   leaving headroom for the OS, Docker and image builds on a 4 GB server (plus 2 GB swap).
+
+name: turvio-staging
+
+x-hardening: &hardening
+  restart: unless-stopped
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+  tmpfs:
+    - /tmp:size=64m,mode=1777
+
+networks:
+  edge: {}                 # Caddy ↔ public services; has internet access (ACME, Supabase)
+  internal:
+    internal: true         # no internet: optimizer and OSRM are reachable only from the API
+
+volumes:
+  caddy-data: {}           # TLS certificates and ACME account
+  caddy-config: {}
+  osrm-data: {}            # /data/current -> build-<timestamp> (see osrm/prepare.sh)
+
+services:
+  caddy:
+    <<: *hardening
+    image: caddy:2.10-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      TURVIO_API_HOST: ${TURVIO_API_HOST:?set TURVIO_API_HOST}
+      TURVIO_DISPATCH_HOST: ${TURVIO_DISPATCH_HOST:?set TURVIO_DISPATCH_HOST}
+      TURVIO_ADMIN_HOST: ${TURVIO_ADMIN_HOST:?set TURVIO_ADMIN_HOST}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+      TURVIO_TLS: ${TURVIO_TLS:-${ACME_EMAIL}}
+      ADMIN_ALLOWED_CIDRS: ${ADMIN_ALLOWED_CIDRS:-0.0.0.0/0 ::/0}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    cap_add: [NET_BIND_SERVICE]
+    networks: [edge]
+    mem_limit: 128m
+    depends_on:
+      api: { condition: service_healthy }
+      dispatch: { condition: service_healthy }
+      admin: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 20s
+      timeout: 4s
+      retries: 3
+
+  api:
+    <<: *hardening
+    image: turvio/api:${TURVIO_RELEASE:?set by deploy.sh}
+    build: { context: ../.., dockerfile: deploy/docker/api.Dockerfile }
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      HOST: 0.0.0.0
+      TRUST_PROXY: "1"                     # exactly one proxy hop: Caddy
+      AUTH_PROVIDER: supabase
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      DATABASE_SSL: "true"
+      DATABASE_SSL_CA_FILE: /etc/turvio/supabase-ca.crt   # certificate is verified, never skipped
+      SUPABASE_URL: ${SUPABASE_URL:?set SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_PUBLISHABLE_KEY:?set SUPABASE_PUBLISHABLE_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SECRET_KEY:?set SUPABASE_SECRET_KEY}
+      PROOF_STORAGE: supabase
+      PROOF_BUCKET: proofs
+      OPTIMIZER_URL: http://optimizer:8000
+      OSRM_URL: http://osrm:5000
+      GEOCODER: ${GEOCODER:-none}
+      MAILER: smtp
+      SMTP_URL: ${SMTP_URL:?set SMTP_URL (EU SMTP provider)}
+      MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM}
+      DISPATCH_URL: https://${TURVIO_DISPATCH_HOST}
+      ADMIN_URL: https://${TURVIO_ADMIN_HOST}
+      CORS_ORIGINS: https://${TURVIO_DISPATCH_HOST},https://${TURVIO_ADMIN_HOST}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-600}
+      REQUIRE_ADMIN_MFA: "true"
+      BACKGROUND_JOBS: "true"              # proof-file deletion worker; retention also runs via pg_cron
+    volumes:
+      - ${TURVIO_ROOT:-/opt/turvio}/supabase-ca.crt:/etc/turvio/supabase-ca.crt:ro
+    networks: [edge, internal]
+    mem_limit: 512m
+    depends_on:
+      optimizer: { condition: service_healthy }
+
+  optimizer:
+    <<: *hardening
+    image: turvio/optimizer:${TURVIO_RELEASE:?set by deploy.sh}
+    build: { context: ../.., dockerfile: deploy/docker/optimizer.Dockerfile }
+    environment:
+      OSRM_URL: http://osrm:5000
+      OSRM_TIMEOUT_SECONDS: "8"
+      OSRM_TABLE_CHUNK: "100"
+    networks: [internal]
+    mem_limit: 768m
+    cpus: 2
+
+  osrm:
+    <<: *hardening
+    image: turvio/osrm:${TURVIO_RELEASE:?set by deploy.sh}
+    build: { context: ../.., dockerfile: deploy/docker/osrm.Dockerfile }
+    volumes:
+      - osrm-data:/data:ro
+    networks: [internal]
+    mem_limit: 512m
+
+  # One-off: builds/refreshes the routing graph.  deploy.sh osrm-refresh
+  osrm-prepare:
+    image: turvio/osrm:${TURVIO_RELEASE:?set by deploy.sh}
+    profiles: ["tools"]
+    command: ["/opt/osrm/prepare.sh"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:size=64m"]
+    volumes:
+      - osrm-data:/data
+    networks: [edge]                       # needs internet for the download only
+    mem_limit: 1536m
+    restart: "no"
+
+  dispatch:
+    <<: *hardening
+    image: turvio/dispatch:${TURVIO_RELEASE:?set by deploy.sh}
+    build: { context: ../.., dockerfile: deploy/docker/web.Dockerfile, args: { APP: dispatch, TURVIO_ENV: staging } }
+    environment:
+      PORT: "3000"
+      TURVIO_API_URL: http://api:4000
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/apps/dispatch/.next/cache:size=128m,uid=1000,gid=1000
+    networks: [edge, internal]
+    mem_limit: 384m
+    depends_on:
+      api: { condition: service_healthy }
+
+  admin:
+    <<: *hardening
+    image: turvio/admin:${TURVIO_RELEASE:?set by deploy.sh}
+    build: { context: ../.., dockerfile: deploy/docker/web.Dockerfile, args: { APP: admin, TURVIO_ENV: staging } }
+    environment:
+      PORT: "3001"
+      TURVIO_API_URL: http://api:4000
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /app/apps/admin/.next/cache:size=64m,uid=1000,gid=1000
+    networks: [edge, internal]
+    mem_limit: 320m
+    depends_on:
+      api: { condition: service_healthy }

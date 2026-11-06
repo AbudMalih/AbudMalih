@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx src/scripts/seed.ts",
-    "test:integration": "vitest run test/integration"
+    "test:integration": "vitest run test/integration",
+    "build": "node scripts/build.mjs",
+    "start:prod": "node --enable-source-maps dist/server.mjs"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

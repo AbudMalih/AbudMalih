@@ -1,3 +1,4 @@
+import { supabaseHeaders } from "../supabase-keys";
 import { passwordProblem } from "./password";
 import { AuthFailure, type AuthProvider, type Caller, type LoginResult, type MfaEnrollment, type Session } from "./provider";
 import { SupabaseTokenVerifier } from "./tokens";
@@ -41,7 +42,7 @@ export class SupabaseAuthProvider implements AuthProvider {
     const key = init.admin ? this.opts.serviceRoleKey : this.opts.anonKey;
     const res = await this.fetchImpl(`${this.base}/auth/v1${path}`, {
       method: init.method ?? "POST",
-      headers: { apikey: key, Authorization: `Bearer ${init.token ?? key}`, "Content-Type": "application/json" },
+      headers: { ...supabaseHeaders(key, init.token), "Content-Type": "application/json" },
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
     const data = (await res.json().catch(() => ({}))) as Record<string, unknown>;

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, normalize, sep } from "node:path";
 import type { Db } from "./db";
+import { supabaseHeaders } from "./supabase-keys";
 
 /**
  * Private storage for proof-of-delivery files. Files are never served
@@ -62,7 +63,7 @@ export class SupabaseProofStore implements ProofStore {
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
   private headers(extra: Record<string, string> = {}) {
-    return { authorization: `Bearer ${this.serviceKey}`, apikey: this.serviceKey, ...extra };
+    return { ...supabaseHeaders(this.serviceKey), ...extra };
   }
   async put(path: string, bytes: Buffer, contentType: string) {
     assertSafePath(path);

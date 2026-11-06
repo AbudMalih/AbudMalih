@@ -2,7 +2,7 @@
  * Import addresses produced by tools/osm_addresses.py into geo.addresses.
  *   DATABASE_URL=… npx tsx src/scripts/import-addresses.ts addresses.csv [--replace]
  */
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 import pg from "pg";
 
@@ -11,7 +11,10 @@ if (!file || !process.env.DATABASE_URL) {
   console.error("usage: DATABASE_URL=… import-addresses.ts <file.csv> [--replace]");
   process.exit(1);
 }
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined });
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl:
+    process.env.DATABASE_SSL === "true"
+      ? { rejectUnauthorized: true, ...(process.env.DATABASE_SSL_CA_FILE ? { ca: readFileSync(process.env.DATABASE_SSL_CA_FILE, "utf8") } : {}) }
+      : undefined });
 await client.connect();
 // One transaction: a failed import never leaves the geocoder half-empty.
 await client.query("begin");

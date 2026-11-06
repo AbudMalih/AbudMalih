@@ -14,6 +14,8 @@ const Env = z.object({
   DATABASE_URL: z.string().optional(),
   /** Enable TLS to Postgres (required for Supabase). */
   DATABASE_SSL: z.enum(["true", "false"]).default("false"),
+  /** PEM file with the CA that signed the database certificate (Supabase: Database settings → SSL → download). Verification stays on. */
+  DATABASE_SSL_CA_FILE: z.string().optional(),
   /**
    * local    – TURVIO manages credentials in Postgres (dev, CI, self-hosted).
    * supabase – Supabase Auth (GoTrue) manages users, sessions and reset mails.
@@ -49,6 +51,9 @@ const Env = z.object({
   OSRM_URL: z.url().optional(),
   /** Requests per minute per client IP (0 disables; put a proxy/WAF in front in production as well). */
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).default(600),
+  // Which X-Forwarded-For hops to trust: "true" (any – development only), a hop count
+  // ("1" = exactly one reverse proxy, e.g. Caddy) or "false".
+  TRUST_PROXY: z.string().regex(/^(true|false|\d{1,2})$/).default("true"),
   OSRM_TIMEOUT_MS: z.coerce.number().int().min(500).max(60000).default(8000),
   /** Run the retention purge and proof-file deletion worker inside the API process. */
   BACKGROUND_JOBS: z.enum(["true", "false"]).default("true"),
@@ -69,6 +74,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (config.AUTH_PROVIDER === "dev" && prod) throw new Error("AUTH_PROVIDER=dev is not allowed in production");
   if (config.DEV_MAILBOX === "true" && prod) throw new Error("DEV_MAILBOX is not allowed in production");
   if (config.AUTH_PROVIDER !== "dev" && !config.DATABASE_URL) throw new Error("DATABASE_URL is required");
+  // node-postgres lets `sslmode` in the URL override the TLS options below (incl. the CA).
+  if (config.DATABASE_SSL === "true" && /[?&]sslmode=/.test(config.DATABASE_URL ?? "")) {
+    throw new Error("Remove sslmode from DATABASE_URL; use DATABASE_SSL=true and DATABASE_SSL_CA_FILE instead");
+  }
+  // Outbox mail lives in the local auth schema, which a Supabase project does not have.
+  if (config.AUTH_PROVIDER === "supabase" && config.MAILER === "outbox" && prod) {
+    throw new Error("MAILER=smtp (with SMTP_URL) is required for AUTH_PROVIDER=supabase in production");
+  }
   if (config.AUTH_PROVIDER === "local" && !config.JWT_SECRET) throw new Error("JWT_SECRET (min. 32 characters) is required for AUTH_PROVIDER=local");
   if (config.AUTH_PROVIDER === "supabase" && (!config.SUPABASE_URL || !config.SUPABASE_ANON_KEY || !config.SUPABASE_SERVICE_ROLE_KEY)) {
     throw new Error("SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY are required for AUTH_PROVIDER=supabase");

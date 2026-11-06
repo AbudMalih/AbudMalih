@@ -169,3 +169,27 @@ describe("IP rate limit", () => {
     expect((await app.inject({ method: "GET", url: "/health" })).statusCode).toBe(200);
   });
 });
+
+describe("trusted proxy hops", () => {
+  it("with one trusted hop the client IP comes from the last X-Forwarded-For entry (Caddy's), not a spoofed first one", async () => {
+    const { buildApp } = await import("../src/app");
+    const app = buildApp({ verifier: { verify: async () => ({ userId: "u" }) }, tenancy: {} as never, optimizerUrl: "http://x", corsOrigins: [], trustProxy: 1, rateLimitPerMinute: 0 });
+    app.get("/ip-probe", async (req) => ({ ip: req.ip }));
+    const r = await app.inject({ method: "GET", url: "/ip-probe", headers: { "x-forwarded-for": "6.6.6.6, 203.0.113.7" }, remoteAddress: "172.18.0.5" });
+    expect(r.json().ip).toBe("203.0.113.7");
+    await app.close();
+  });
+});
+
+describe("staging configuration guards", () => {
+  const base = { NODE_ENV: "production", AUTH_PROVIDER: "supabase", DATABASE_URL: "postgres://u:p@h:5432/postgres", DATABASE_SSL: "true", SUPABASE_URL: "https://p.supabase.co", SUPABASE_ANON_KEY: "sb_publishable_x", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_x", MAILER: "smtp", SMTP_URL: "smtps://u:p@smtp.example:465" } as NodeJS.ProcessEnv;
+  it("accepts the staging shape (new keys, CA file, SMTP)", () => {
+    expect(() => loadConfig({ ...base, DATABASE_SSL_CA_FILE: "/etc/turvio/supabase-ca.crt" })).not.toThrow();
+  });
+  it("refuses sslmode in DATABASE_URL (it would override the CA settings)", () => {
+    expect(() => loadConfig({ ...base, DATABASE_URL: "postgres://u:p@h:5432/postgres?sslmode=require" })).toThrow(/sslmode/);
+  });
+  it("refuses the outbox mailer with Supabase auth in production", () => {
+    expect(() => loadConfig({ ...base, MAILER: "outbox" })).toThrow(/MAILER=smtp/);
+  });
+});

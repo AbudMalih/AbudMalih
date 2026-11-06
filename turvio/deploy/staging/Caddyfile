@@ -1,0 +1,56 @@
+# TURVIO staging – Caddy (automatic HTTPS via Let's Encrypt).
+# Hostnames and the ACME e-mail come from /opt/turvio/.env (see .env.example).
+# Caddy is the only published service; it ignores incoming X-Forwarded-For from
+# clients and sets the real client address, which the API trusts as exactly one hop.
+{
+	email {$ACME_EMAIL}
+	admin 127.0.0.1:2019
+	servers {
+		protocols h1 h2 h3
+	}
+}
+
+(common) {
+	# Let's Encrypt with ACME_EMAIL by default; "internal" only for local tests.
+	tls {$TURVIO_TLS}
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+		-X-Powered-By
+	}
+	log {
+		output stdout
+		format json
+	}
+}
+
+{$TURVIO_API_HOST} {
+	import common
+	request_body {
+		max_size 3MB
+	}
+	reverse_proxy api:4000 {
+		# Live updates are server-sent events: stream without buffering.
+		flush_interval -1
+		health_uri /health
+		health_interval 30s
+	}
+}
+
+{$TURVIO_DISPATCH_HOST} {
+	import common
+	reverse_proxy dispatch:3000
+}
+
+{$TURVIO_ADMIN_HOST} {
+	import common
+	header X-Robots-Tag "noindex, nofollow"
+	# Optional allowlist (ADMIN_ALLOWED_CIDRS). Only restrict it after confirming that
+	# Caddy sees real client addresses (rootless port driver, see the runbook).
+	@blocked not remote_ip {$ADMIN_ALLOWED_CIDRS}
+	respond @blocked "Not available" 403
+	reverse_proxy admin:3001
+}

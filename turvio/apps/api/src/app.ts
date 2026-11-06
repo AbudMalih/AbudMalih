@@ -39,6 +39,8 @@ export interface AppDeps {
   routing?: RoutingProvider;
   /** Requests per minute per client IP (default 600; 0 = off). */
   rateLimitPerMinute?: number;
+  /** Fastify trustProxy: true, false or the number of trusted proxy hops. */
+  trustProxy?: boolean | number;
   /**
    * Require a second factor (aal2 session) for company-administration
    * permissions and all /v1/platform endpoints. Default: off (config turns it on
@@ -57,8 +59,14 @@ declare module "fastify" {
   }
 }
 
+/** Fastify accepts a hop count at runtime but not in its types; express it as a trust function. */
+function trustProxySetting(v: boolean | number | undefined): boolean | ((addr: string, hop: number) => boolean) {
+  if (typeof v === "number") return (_addr, hop) => hop < v;
+  return v ?? true;
+}
+
 export function buildApp(deps: AppDeps): FastifyInstance {
-  const app = Fastify({ logger: deps.logger ?? false, bodyLimit: 2 * 1024 * 1024, trustProxy: true });
+  const app = Fastify({ logger: deps.logger ?? false, bodyLimit: 2 * 1024 * 1024, trustProxy: trustProxySetting(deps.trustProxy) });
   const fetchImpl = deps.fetchImpl ?? fetch;
 
   app.register(cors, { origin: deps.corsOrigins ?? false, credentials: true });

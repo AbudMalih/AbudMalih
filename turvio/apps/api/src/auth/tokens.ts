@@ -30,16 +30,22 @@ export function hashToken(token: string): string {
  */
 export class JwtVerifier implements TokenVerifier {
   private readonly key: Uint8Array | JWTVerifyGetKey;
+  /** Shared secret → HS256 only; JWKS → asymmetric only (no algorithm confusion). */
+  private readonly algorithms: string[];
 
   constructor(private readonly opts: { issuer: string; secret?: string; jwksUrl?: string }) {
-    if (opts.secret) this.key = new TextEncoder().encode(opts.secret);
-    else if (opts.jwksUrl) this.key = createRemoteJWKSet(new URL(opts.jwksUrl));
-    else throw new Error("JwtVerifier needs a secret or a JWKS URL");
+    if (opts.secret) {
+      this.key = new TextEncoder().encode(opts.secret);
+      this.algorithms = ["HS256"];
+    } else if (opts.jwksUrl) {
+      this.key = createRemoteJWKSet(new URL(opts.jwksUrl), { cooldownDuration: 30_000, cacheMaxAge: 10 * 60_000 });
+      this.algorithms = ["ES256", "RS256", "EdDSA"];
+    } else throw new Error("JwtVerifier needs a secret or a JWKS URL");
   }
 
   async verify(token: string): Promise<AuthUser> {
     try {
-      const { payload } = await jwtVerify(token, this.key as Uint8Array, { issuer: this.opts.issuer, audience: "authenticated" });
+      const { payload } = await jwtVerify(token, this.key as Uint8Array, { issuer: this.opts.issuer, audience: "authenticated", algorithms: this.algorithms });
       if (!payload.sub) throw new AuthError("token has no subject");
       return { userId: payload.sub, email: typeof payload.email === "string" ? payload.email : undefined, aal: payload.aal === "aal2" ? "aal2" : "aal1" };
     } catch (e) {
