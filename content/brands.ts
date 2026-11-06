@@ -39,9 +39,9 @@ export const OWNED_BRANDS: OwnedBrand[] = [
       ground: "#0a1b15",
       deep: "#05110d",
       world: "#0d221b",
-      light: "#e8dcc0",
-      accent: "#d4c19b",
-      ink: "#f1ece2",
+      light: "#e6e8ec",
+      accent: "#c9ccd2",
+      ink: "#f2f2f0",
     },
     media: {
       hero: { type: "image", src: "/brand/luviscent/diffuser-tower.webp", alt: "LUVISCENT", width: 778, height: 1400 },

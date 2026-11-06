@@ -278,7 +278,7 @@ export default function CompanyPage() {
             </h2>
             <p className={s.chips} data-reveal>
               <span className={s.chipDark}>{t.brand.chain[0]}</span>
-              <span className={s.arrowSep} style={{ background: "#d4c19b" }} aria-hidden="true" />
+              <span className={s.arrowSep} style={{ background: "#c9ccd2" }} aria-hidden="true" />
               <span className={s.chipDark}>{t.brand.chain[1]}</span>
             </p>
             <p className={s.bodyDark} data-reveal>

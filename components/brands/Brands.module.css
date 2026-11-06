@@ -341,7 +341,7 @@
   mask-image: linear-gradient(180deg, transparent 0, #000 24%);
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 24%);
   background:
-    radial-gradient(24% 58% at 50% -8%, rgba(246, 238, 220, 0.34), rgba(201, 154, 94, 0.07) 55%, transparent 76%),
+    radial-gradient(24% 58% at 50% -8%, rgba(246, 238, 220, 0.34), rgba(160, 163, 168, 0.07) 55%, transparent 76%),
     radial-gradient(60% 40% at 50% 60%, rgba(232, 220, 192, 0.07), transparent 70%);
 }
 .pRoute {
@@ -585,7 +585,7 @@
   height: 50px;
   padding-inline: 22px 7px;
   border-radius: 999px;
-  border: 1px solid rgba(212, 193, 155, 0.5);
+  border: 1px solid rgba(201, 204, 210, 0.5);
   font-family: var(--font-lv);
   font-size: 0.7rem;
   font-weight: 500;
@@ -597,7 +597,7 @@
 .lvCta:hover,
 .lvCta:focus-visible {
   border-color: var(--lv-a);
-  background: rgba(212, 193, 155, 0.1);
+  background: rgba(201, 204, 210, 0.1);
 }
 .lvPlus {
   width: 36px;
@@ -627,10 +627,10 @@
 .threadLine {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, rgba(212, 193, 155, 0.7), rgba(212, 193, 155, 0.12));
+  background: linear-gradient(90deg, rgba(201, 204, 210, 0.7), rgba(201, 204, 210, 0.12));
 }
 :global([dir="rtl"]) .threadLine {
-  background: linear-gradient(270deg, rgba(212, 193, 155, 0.7), rgba(212, 193, 155, 0.12));
+  background: linear-gradient(270deg, rgba(201, 204, 210, 0.7), rgba(201, 204, 210, 0.12));
 }
 .threadNode {
   order: -1;
@@ -644,7 +644,7 @@
   font-family: var(--font-data);
   font-size: 0.64rem;
   letter-spacing: 0.18em;
-  color: rgba(212, 193, 155, 0.66);
+  color: rgba(201, 204, 210, 0.66);
   direction: ltr;
 }
 
@@ -723,7 +723,7 @@
   inset: 0;
   background:
     radial-gradient(60% 46% at 50% 0%, rgba(255, 252, 244, 0.85), transparent 72%),
-    radial-gradient(50% 60% at 50% 60%, rgba(212, 193, 155, 0.08), transparent 70%);
+    radial-gradient(50% 60% at 50% 60%, rgba(201, 204, 210, 0.08), transparent 70%);
 }
 .tileFloor {
   position: absolute;
@@ -794,14 +794,14 @@
   margin-bottom: 14px;
 }
 .areas {
-  border-top: 1px solid rgba(212, 193, 155, 0.22);
+  border-top: 1px solid rgba(201, 204, 210, 0.22);
 }
 .areas li {
   display: flex;
   align-items: center;
   gap: 12px;
   padding-block: 12px;
-  border-bottom: 1px solid rgba(212, 193, 155, 0.22);
+  border-bottom: 1px solid rgba(201, 204, 210, 0.22);
   font-weight: 300;
   font-variation-settings: "wght" 300;
   color: rgba(241, 236, 226, 0.55);
@@ -810,7 +810,7 @@
   content: "";
   width: 6px;
   height: 6px;
-  border: 1px solid rgba(212, 193, 155, 0.6);
+  border: 1px solid rgba(201, 204, 210, 0.6);
   border-radius: 50%;
 }
 .areas li[data-on] {
@@ -1138,8 +1138,8 @@
   min-height: 34px;
   padding: 6px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(212, 193, 155, 0.35);
-  background: rgba(212, 193, 155, 0.08);
+  border: 1px solid rgba(201, 204, 210, 0.35);
+  background: rgba(201, 204, 210, 0.08);
 }
 .systemLink {
   height: 54px;

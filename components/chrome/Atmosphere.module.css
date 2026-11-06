@@ -53,7 +53,7 @@
   animation: daylight 34s ease-in-out infinite alternate;
 }
 .daylightWarm {
-  background: radial-gradient(34% 30% at 76% 72%, rgba(218, 196, 164, 0.16), transparent 72%);
+  background: radial-gradient(34% 30% at 76% 72%, rgba(201, 204, 210, 0.16), transparent 72%);
   animation: daylightWarm 47s ease-in-out infinite alternate;
 }
 @keyframes daylight {
@@ -163,7 +163,7 @@
   width: 72vmax;
   height: 72vmax;
   margin: -36vmax 0 0 -36vmax;
-  background: radial-gradient(closest-side, rgba(241, 236, 226, 0.15), rgba(212, 193, 155, 0.08) 40%, rgba(201, 154, 94, 0.025) 62%, transparent 76%);
+  background: radial-gradient(closest-side, rgba(241, 236, 226, 0.15), rgba(201, 204, 210, 0.08) 40%, rgba(160, 163, 168, 0.025) 62%, transparent 76%);
   will-change: transform, opacity;
 }
 :global([dir="rtl"]) .key {
