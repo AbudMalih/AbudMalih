@@ -103,7 +103,7 @@ prebuild() { # prebuild <tag>: build all five images from the exported tree of $
   if [ ! -d "$ctx" ]; then mkdir -p "$ctx" && git -C "$TURVIO_ROOT/repo" archive "$SHA" turvio | tar -x -C "$ctx"; fi
   local b=(docker build -q)
   if [ -n "${HTTPS_PROXY:-}" ] && [ -f /root/.ccr/ca-bundle.crt ]; then
-    b+=(--network host --build-arg "HTTPS_PROXY=$HTTPS_PROXY" --build-arg "HTTP_PROXY=$HTTPS_PROXY" --secret id=build_ca,src=/root/.ccr/ca-bundle.crt)
+    b+=(--network host --build-arg "HTTPS_PROXY=$HTTPS_PROXY" --build-arg "HTTP_PROXY=$HTTPS_PROXY" --secret "id=build_ca,src=/root/.ccr/ca-bundle.crt")
   fi
   "${b[@]}" -f "$ctx/turvio/deploy/docker/api.Dockerfile" -t "turvio/api:$1" "$ctx/turvio" >/dev/null
   "${b[@]}" -f "$ctx/turvio/deploy/docker/optimizer.Dockerfile" -t "turvio/optimizer:$1" "$ctx/turvio" >/dev/null
