@@ -1,3 +1,4 @@
+import { buildServerUrl, serverUrlOverride } from "./serverUrl";
 import { isOpen, orderStopsLocally, resequence, sortBySequence, type Depot, type GeoPoint, type Stop, type Tour } from "@turvio/shared";
 
 export interface OptimizeOptions {
@@ -21,9 +22,15 @@ export interface OptimizationOutcome {
   durationSeconds?: number;
 }
 
+/**
+ * TURVIO API base URL: the build-time EXPO_PUBLIC_API_URL, or – in development
+ * and preview builds that have one – the server chosen on the login screen.
+ * Null = demo mode (no server).
+ */
 export function apiBaseUrl(): string | null {
-  const url = process.env.EXPO_PUBLIC_API_URL?.trim();
-  return url ? url.replace(/\/$/, "") : null;
+  const build = buildServerUrl();
+  if (!build) return null;
+  return serverUrlOverride() ?? build;
 }
 
 /**

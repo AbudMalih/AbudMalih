@@ -12,6 +12,8 @@ Status 2026-11-06: an **Android release APK was built in the development environ
 
 The three ids differ, so all three can be installed side by side. `EXPO_PUBLIC_API_URL` decides which server a build talks to (it is a build-time value, not a secret). **Without it the app runs in demo mode with synthetic data** – useful for testing scanning, OCR, maps and the UI without a server.
 
+**Changing the server in test builds:** development and preview builds that were built with `EXPO_PUBLIC_API_URL` show a *Server (test build)* panel on the sign-in screen. Tap it to point the app at another TURVIO server (for example a laptop on the same Wi-Fi). Only `https://` is accepted, except `http://` for `localhost`, `10.x.x.x` and `192.168.x.x`. The choice is stored on the phone; *Use the built-in server* removes it. Production builds have no such panel and always use the built-in server. The panel cannot turn a demo build into a server build.
+
 ## Android
 
 ### A. The APK from this environment (demo mode)

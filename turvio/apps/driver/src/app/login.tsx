@@ -5,6 +5,8 @@ import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, Vie
 import { Banner, Button, Field } from "../components/ui";
 import { createAuthClient } from "../lib/auth";
 import { useT } from "../lib/i18n";
+import { apiBaseUrl } from "../lib/optimizer";
+import { buildServerUrl, canOverrideServerUrl, setServerUrlOverride } from "../lib/serverUrl";
 import { useTourStore } from "../store/tourStore";
 import { radii, space, type as ty, useTheme } from "../theme";
 
@@ -18,8 +20,23 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [server, setServer] = useState(() => apiBaseUrl() ?? "");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverOpen, setServerOpen] = useState(false);
 
   if (user) return <Redirect href="/" />;
+
+  // Development and preview builds only; production always uses the built-in server.
+  const showServer = canOverrideServerUrl() && !!buildServerUrl();
+  const saveServer = async (value: string | null) => {
+    setServerError(null);
+    const r = await setServerUrlOverride(value);
+    if (!r.ok) return setServerError(t(r.reason === "insecure" ? "login.serverInsecure" : "login.serverInvalid"));
+    const active = apiBaseUrl() ?? "";
+    setServer(active);
+    setServerOpen(false);
+    setInfo(t("login.serverSaved", { url: active }));
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -67,6 +84,33 @@ export default function LoginScreen() {
             <Text style={[ty.small, { color: c.primary, fontWeight: "700" }]}>{t("login.forgot")}</Text>
           </Pressable>
         </View>
+        {showServer && (
+          <View style={{ backgroundColor: c.card, borderRadius: radii.xl, borderWidth: 1, borderColor: c.border, padding: space.lg, gap: space.sm }} testID="login-server">
+            <Pressable onPress={() => setServerOpen((o) => !o)} accessibilityRole="button" testID="login-server-toggle">
+              <Text style={[ty.small, { color: c.textMuted, fontWeight: "700" }]}>{t("login.server")}</Text>
+              <Text style={[ty.small, { color: c.text }]} testID="login-server-active">
+                {apiBaseUrl()}
+              </Text>
+            </Pressable>
+            {serverOpen && (
+              <>
+                <Field
+                  label={t("login.serverLabel")}
+                  value={server}
+                  onChangeText={setServer}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  error={serverError}
+                  hint={t("login.serverHint", { url: buildServerUrl() ?? "" })}
+                  testID="login-server-url"
+                />
+                <Button label={t("login.serverSave")} variant="secondary" onPress={() => void saveServer(server)} disabled={!server.trim()} testID="login-server-save" />
+                <Button label={t("login.serverReset")} variant="ghost" onPress={() => void saveServer(null)} testID="login-server-reset" />
+              </>
+            )}
+          </View>
+        )}
         <Text style={[ty.small, { color: c.textSubtle, textAlign: "center" }]}>{t("app.tagline")}</Text>
       </ScrollView>
     </KeyboardAvoidingView>

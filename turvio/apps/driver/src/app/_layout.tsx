@@ -1,8 +1,9 @@
 import { Redirect, useSegments } from "expo-router";
 import { Stack } from "expo-router/stack";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { applyLayoutDirection, useLocale, useT } from "../lib/i18n";
+import { loadServerUrlOverride, serverUrlLoaded } from "../lib/serverUrl";
 import { isServerMode, useTourStore } from "../store/tourStore";
 import { useTheme } from "../theme";
 
@@ -12,12 +13,18 @@ export default function RootLayout() {
   const { c, dark } = useTheme();
   const user = useTourStore((s) => s.user);
   const segments = useSegments();
+  // Test builds may point at another server (login screen); read it before the first API call.
+  const [serverReady, setServerReady] = useState(serverUrlLoaded());
   const needsLogin = isServerMode() && !user && segments[0] !== "login";
 
   useEffect(() => {
     applyLayoutDirection(locale);
   }, [locale]);
+  useEffect(() => {
+    if (!serverReady) void loadServerUrlOverride().finally(() => setServerReady(true));
+  }, [serverReady]);
 
+  if (!serverReady) return null;
   if (needsLogin) return <Redirect href="/login" />;
 
   const modal = { presentation: "modal" as const };
