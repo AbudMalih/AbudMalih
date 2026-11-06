@@ -161,3 +161,12 @@ Then the hosted-only files (never run locally):
 - the TURVIO API connecting as `turvio_service` through the session pooler.
 
 Both need the API to run where it can open a Postgres connection, i.e. on staging hosting or the owner's machine. This cloud session only has HTTPS through a proxy. Staging users are then created through TURVIO's invitation flow.
+
+### Migration 12 – 2026-11-06 (approved by the owner)
+- `20261111000100_function_search_path.sql` (SHA-256 `42e8091de05bdcda`) applied via the migration endpoint. The history row was set to the filename version; 12 migrations are recorded.
+- Verification:
+  - 0 TURVIO functions without a fixed `search_path`;
+  - `geo.norm`, `app.is_open_status` and `app.default_failure_reasons` behave as before;
+  - **Supabase security advisor: 0 findings**;
+  - `hosted/90_verify.sql`: 14/14 passed, rolled back (0 orgs, 0 users).
+- Owner revoked the legacy JWT signing key. Afterwards the publishable key still works, sign-up is still refused (422), and `public` is still not exposed over REST (404).
