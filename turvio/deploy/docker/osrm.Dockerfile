@@ -30,7 +30,7 @@ RUN --mount=type=secret,id=build_ca,required=false,mode=0444 \
  && useradd --system --uid 10002 --no-create-home osrm \
  && mkdir -p /data && chown osrm:osrm /data
 COPY --from=fetch /opt/osrm /opt/osrm
-COPY deploy/staging/osrm/prepare.sh /opt/osrm/prepare.sh
+COPY --chmod=755 deploy/staging/osrm/prepare.sh /opt/osrm/prepare.sh
 ENV PATH=/opt/osrm/bin:$PATH
 USER 10002
 EXPOSE 5000
