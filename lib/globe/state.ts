@@ -67,7 +67,9 @@ function globeStateLtr(): GlobeDerived {
     ox = lerp(o.ox, ox, smooth(range(h, 0, 0.4)));
   }
   oy = lerp(oy, 0, easeInOut(range(h, 0.75, 1)));
-  let opacity = 1;
+  // the opening hands over to the calm sections: the planet fades as the
+  // hero ends (the old dive chapter no longer follows)
+  let opacity = 1 - smooth(range(h, 0.8, 0.98));
   const route = easeInOut(range(h, 0.3, 0.94));
 
   // Dive (chapter 01 opening)

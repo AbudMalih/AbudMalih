@@ -22,7 +22,7 @@ export type Chapter = {
 };
 
 export const CHAPTERS: Chapter[] = [
-  { id: "hero", index: "00", len: 1.7, lenM: 1.4 },
+  { id: "hero", index: "00", len: 1.3, lenM: 1.2 },
   { id: "source", index: "01", len: 1.6, lenM: 1.3 },
   { id: "transport", index: "02", len: 1.8, lenM: 1.5 },
   { id: "warehouse", index: "03", len: 1.2, lenM: 1.0 },
