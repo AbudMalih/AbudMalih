@@ -36,39 +36,79 @@ export default function BrandsPage() {
   const t = dict.brandsPage;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
+  const hero = OWNED_BRANDS[0];
+  const heroCopy = hero ? t.brands[hero.id] : undefined;
 
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
       {/* ------------------------------------------------------------ HERO */}
-      <section className={`${svc.section} ${s.hero}`} style={ground(LUNA.hero, LUNA.hero)} data-tone="light" aria-labelledby="brands-title">
-        <div className={`frame ${s.heroGrid}`}>
-          <figure className={s.heroFigure} data-reveal aria-hidden="true">
-            <HeroVisual luna={t.hero.luna} brand={t.hero.brand} />
-            <HeroVisual luna={t.hero.luna} brand={t.hero.brand} compact />
-          </figure>
-          <div className={s.heroCopy}>
+      <section className={`${svc.section} ${s.nh}`} style={ground(LUNA.hero, LUNA.hero)} data-tone="light" aria-labelledby="brands-title">
+        <div className={`frame ${s.nhGrid}`}>
+          <div className={s.nhCopy}>
             <p className={`t-label ${s.eyebrow}`} data-reveal>
               <span className={s.idx}>02</span>
               <span className={s.redRule} />
               {t.hero.eyebrow}
             </p>
-            <h1 id="brands-title" className={s.heroTitle}>
-              <span className="mask">
-                <span className={svc.rise} data-reveal>
-                  {t.hero.h1a}
-                </span>
-              </span>
-              <span className="mask">
-                <span className={`${svc.rise} ${s.dim}`} data-reveal style={{ ["--d" as string]: "90ms" }}>
-                  {t.hero.h1b.replace(/\.$/, "")}
-                  <span className={s.period}>.</span>
-                </span>
+            <h1 id="brands-title" className={s.nhTitle} data-reveal style={{ ["--d" as string]: "80ms" }}>
+              <span>{t.hero.h1a}</span>
+              <span className={s.dim}>
+                {t.hero.h1b.replace(/\.$/, "")}
+                <span className={s.period}>.</span>
               </span>
             </h1>
+            <p className={`t-lead ${s.nhLead}`} data-reveal style={{ ["--d" as string]: "160ms" }}>
+              {t.hero.lead}
+            </p>
+            <div className={s.nhActions} data-reveal style={{ ["--d" as string]: "220ms" }}>
+              <Link href={href("/contact")} className={svc.ctaButton} data-cursor="invert">
+                <span className={svc.ctaLabel}>{t.cta.button}</span>
+                <span className={svc.ctaPlus} aria-hidden="true" />
+              </Link>
+              {hero && (
+                <a href={`#${hero.id}`} className={s.nhGhost} data-cursor="link" dir="ltr">
+                  {hero.name}
+                  {hero.mark}
+                </a>
+              )}
+            </div>
+            <ul className={s.nhPillars} data-reveal style={{ ["--d" as string]: "280ms" }}>
+              {t.principle.pillars.map((p, i) => (
+                <li key={p.name}>
+                  <span>{String(i + 1).padStart(2, "0")}</span>
+                  {p.name}
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className={`t-lead ${s.heroLead}`} data-reveal style={{ ["--d" as string]: "220ms" }}>
-            {t.hero.lead}
-          </p>
+
+          {hero && heroCopy && (
+            <a href={`#${hero.id}`} className={s.nhCard} data-reveal style={{ ["--d" as string]: "120ms" }} aria-label={`${hero.name}${hero.mark} · ${heroCopy.category}`}>
+              <span className={s.nhChips}>
+                <span>{heroCopy.owner}</span>
+                <span>{heroCopy.category}</span>
+              </span>
+              <span className={s.nhArch} aria-hidden="true" />
+              {hero.media.hero?.type === "image" && (
+                <img src={hero.media.hero.src} alt="" width={hero.media.hero.width} height={hero.media.hero.height} className={s.nhProduct} />
+              )}
+              <span className={s.nhFoot}>
+                <span className={s.nhLogo}>
+                  <LuviscentLogo />
+                </span>
+                <span className={s.nhClaim} lang={hero.claimLang} dir="ltr">
+                  {hero.claim}
+                </span>
+              </span>
+              <span className={s.nhBadge} aria-hidden="true">
+                <span className={s.nhBadgePlus} />
+                <span>
+                  <small>{t.hero.luna}</small>
+                  {t.hero.brand}
+                </span>
+              </span>
+            </a>
+          )}
         </div>
       </section>
 
@@ -186,60 +226,6 @@ export default function BrandsPage() {
 }
 
 /* ------------------------------------------------------------------------ */
-
-/** Luna Trading (the red +) → a route → an arched brand space, still unlit. */
-function HeroVisual({ luna, brand, compact }: { luna: string; brand: string; compact?: boolean }) {
-  // the compact (phone) drawing keeps the same elements, closer together
-  const w = compact ? 390 : 1320;
-  const ax = compact ? 200 : 1080; // arch left edge
-  const ticks = Array.from({ length: compact ? 3 : 8 }, (_, i) => 70 + i * (compact ? 44 : 120) + (compact ? 0 : 60));
-  const end = ax + 110;
-  return (
-    <svg
-      viewBox={`0 0 ${w} 430`}
-      className={`${s.heroSvg} ${compact ? s.heroSvgCompact : s.heroSvgWide}`}
-      direction="ltr"
-      preserveAspectRatio="xMinYMax meet"
-    >
-      <defs>
-        <linearGradient id="br-route" x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0" stopColor="var(--luna-red)" />
-          <stop offset="0.72" stopColor="var(--luna-red)" />
-          <stop offset="1" stopColor="#a8875a" />
-        </linearGradient>
-        <radialGradient id="br-light" cx="0.5" cy="0.05" r="0.9">
-          <stop offset="0" stopColor="#fbf6ea" stopOpacity="0.95" />
-          <stop offset="0.55" stopColor="#efe6d4" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#efe6d4" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      {/* survey ticks under the route */}
-      <path d={ticks.map((x) => `M${x} 392 V401`).join(" ")} className={s.hvTick} />
-      {/* the brand space: an arch, warm light already inside */}
-      <path d={`M${ax} 376 V156 A110 110 0 0 1 ${ax + 220} 156 V376 Z`} fill="url(#br-light)" className={s.hvGlow} />
-      <path d={`M${ax} 376 V156 A110 110 0 0 1 ${ax + 220} 156 V376`} pathLength={1} className={`${s.hvDraw} ${s.hvArch}`} />
-      <path d={`M${ax + 22} 376 V164 A88 88 0 0 1 ${ax + 198} 164 V376`} pathLength={1} className={`${s.hvDraw} ${s.hvArchInner}`} />
-      <path d={`M${ax - 30} 376 H${w}`} pathLength={1} className={`${s.hvDraw} ${s.hvFloor}`} />
-      {/* the route: Luna red, warming as it reaches the brand */}
-      <path d={`M14 376 H${end}`} pathLength={1} className={`${s.hvDraw} ${s.hvRoute}`} stroke="url(#br-route)" />
-      <circle cx={end} cy="376" r="5" className={s.hvEnd} />
-      {/* Luna Trading */}
-      <g className={s.hvPlus}>
-        <rect x="0" y="374" width="28" height="4" />
-        <rect x="12" y="362" width="4" height="28" />
-      </g>
-      <text x="0" y="340" className={s.hvLabel}>
-        {luna.toUpperCase()}
-      </text>
-      <text x="0" y="424" className={s.hvData}>
-        50.94° N · 6.96° E
-      </text>
-      <text x={end} y="424" className={s.hvLabel} textAnchor="middle">
-        {brand.toUpperCase()}
-      </text>
-    </svg>
-  );
-}
 
 function Passage({ dir, brand, mineral, from, to }: { dir: "in" | "out"; brand: OwnedBrand; mineral: string; from: string; to: string }) {
   const style = {
