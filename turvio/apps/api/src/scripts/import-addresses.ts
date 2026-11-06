@@ -13,7 +13,19 @@ if (!file || !process.env.DATABASE_URL) {
 }
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : undefined });
 await client.connect();
-if (flag === "--replace") await client.query("truncate geo.addresses");
+// One transaction: a failed import never leaves the geocoder half-empty.
+await client.query("begin");
+if (flag === "--replace") {
+  // TRUNCATE needs the table owner; the API service role (least privilege) may only DELETE.
+  await client.query("savepoint replace");
+  try {
+    await client.query("truncate geo.addresses");
+  } catch (e) {
+    if ((e as { code?: string }).code !== "42501") throw e;
+    await client.query("rollback to savepoint replace");
+    await client.query("delete from geo.addresses");
+  }
+}
 let batch: string[][] = [];
 let total = 0;
 const flush = async () => {
@@ -40,5 +52,6 @@ for await (const line of createInterface({ input: createReadStream(file) })) {
   if (batch.length >= 1000) await flush();
 }
 await flush();
+await client.query("commit");
 console.log(`imported ${total} rows into geo.addresses`);
 await client.end();

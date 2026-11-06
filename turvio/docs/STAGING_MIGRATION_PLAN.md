@@ -21,7 +21,7 @@ Audit date 2026-11-06, project ref `xwryomkbrkwjytwofgcu`, with the existing 7-d
 | Auth | e-mail sign-in on, **sign-up open** (`disable_signup=false`), e-mail confirmation on, **password min. length 6**, JWT 3600 s, refresh-token rotation on, **TOTP MFA enroll+verify on**, phone/WebAuthn off, **no custom SMTP** (built-in mailer, 2 e-mails/h), `site_url=http://localhost:3000`, no redirect URLs, no CAPTCHA, anonymous sign-in off, no third-party auth | `GET /config/auth` (200) |
 
 ### Compatibility check of the TURVIO migrations
-- All 9 files in `supabase/migrations/` were applied to a fresh **PostgreSQL 17.11** (same version as the project; Supabase role stubs from `supabase/local/00_supabase_stubs.sql`): no errors, all 19 `public` tables have RLS on.
+- All 10 files in `supabase/migrations/` (incl. `20261109000100_geocoder_spelling.sql`, added after the audit) were applied to a fresh **PostgreSQL 17.11** (same version as the project; Supabase role stubs from `supabase/local/00_supabase_stubs.sql`): no errors, all 19 `public` tables have RLS on.
 - The 46 API integration tests (RLS, tenant isolation via the API, driver RPCs, proofs, editing, geocoder, routing) **pass on PostgreSQL 17.11**.
 - The migrations use only `auth.uid()` and read `auth.users` (foreign keys, e-mail for the team list). They need no extension beyond what is installed, create no triggers on `auth.users`, touch neither `storage` nor `cron`.
 - `supabase/local/*` must **never** be applied to the hosted project (local auth schema, local password role).
@@ -60,7 +60,7 @@ No organisation-wide or account permissions are needed. A 1–2-day expiry is en
 
 0. **Precondition.** The project is empty (0 tables, 0 users), so no existing data can be affected. With `backups_read` I would confirm the daily backup first. The Free plan has no point-in-time recovery, so the rollback in step 9 is the safety net.
 1. **Dry run (done).** All migrations and integration tests pass on PG 17.11 locally.
-2. **Migrations.** Apply the 9 files in filename order with the Management API's migration endpoint (`POST /v1/projects/{ref}/database/migrations`, one file per call). This records each one in `supabase_migrations.schema_migrations`, so a later `supabase db push` from your Mac sees them as applied. Each file runs in its own transaction, and I stop at the first error.
+2. **Migrations.** Apply the 10 files in filename order with the Management API's migration endpoint (`POST /v1/projects/{ref}/database/migrations`, one file per call). This records each one in `supabase_migrations.schema_migrations`, so a later `supabase db push` from your Mac sees them as applied. Each file runs in its own transaction, and I stop at the first error.
 3. **Service role.** Apply `supabase/hosted/10_turvio_service.sql`. **You** set the password in the dashboard SQL editor (`alter role turvio_service password '<generated>'`), so it never passes through me or the chat. Then store `DATABASE_URL=postgres://turvio_service.xwryomkbrkwjytwofgcu:<pw>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require` in the API host's secret store. Use the **session** pooler (5432): the live updates use LISTEN/NOTIFY, which does not work on the transaction pooler (6543).
 4. **Read-only verification.**
    - Every `public` table has RLS.

@@ -22,6 +22,11 @@ describe("query parsing", () => {
     expect(parseQuery("Lister Meile 42a, 30161 Hannover")).toEqual({ street: "Lister Meile", houseNumber: "42a", postcode: "30161", city: "Hannover" });
     expect(parseQuery("Podbielskistr. 11")).toEqual({ street: "Podbielskistr.", houseNumber: "11", postcode: undefined, city: undefined });
     expect(normAddressPart("Podbielskistraße")).toBe(normAddressPart("podbielski str."));
+    // Found with real OSM data (Region Hannover): city without comma/postcode, ASCII umlauts.
+    expect(parseQuery("herrenhäuser str. 4 hannover")).toEqual({ street: "herrenhäuser str.", houseNumber: "4", postcode: undefined, city: "hannover" });
+    expect(parseQuery("Lister Meile 42 a")).toEqual({ street: "Lister Meile", houseNumber: "42a", postcode: undefined, city: undefined });
+    expect(normAddressPart("Herrenhaeuser Strasse")).toBe(normAddressPart("Herrenhäuser Straße"));
+    expect(normAddressPart("Goethestraße")).toBe(normAddressPart("Göthestr."));
   });
 });
 
@@ -39,7 +44,7 @@ describe.runIf(available)("self-hosted geocoder (PostgreSQL, synthetic OSM data)
   });
 
   it("TypeScript and SQL normalisation agree", async () => {
-    for (const t of ["Hildesheimer Straße", "Podbielskistr.", "Göttinger Chaussee", "Am Ägidientorplatz", "ŞTEFAN Str 4"]) {
+    for (const t of ["Hildesheimer Straße", "Podbielskistr.", "Göttinger Chaussee", "Am Ägidientorplatz", "ŞTEFAN Str 4", "Herrenhaeuser Strasse", "Müllerstraße", "Queerweg"]) {
       const sql = (await env.superuser.query<{ n: string }>(`select geo.norm($1) as n`, [t])).rows[0]!.n;
       expect(sql).toBe(normAddressPart(t));
     }

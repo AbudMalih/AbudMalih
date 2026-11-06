@@ -2,18 +2,26 @@
 // 50–100 stops each, pickups with time windows, optimization, publishing, deliveries, failures,
 // proof of delivery, an offline batch replayed with duplicates, and dispatcher monitoring.
 // All data is synthetic (fictional recipients, generated coordinates in the Hannover area).
+// With PILOT_ADDRESS_FILE (CSV from tools/osm_addresses.py) stops use real *public* OpenStreetMap
+// addresses instead, geocoded through /v1/geocode/batch (exact matches only; an address that is
+// not found keeps no position). Recipients and tracking numbers stay fictional.
 //
-//   scripts/dev-stack.sh up --fresh --pilot
+//   TURVIO_RATE_LIMIT=5000 scripts/dev-stack.sh up --fresh --pilot   (all simulated drivers share 127.0.0.1)
 //   node e2e/pilot.mjs            (writes a JSON report to PILOT_REPORT or /tmp/turvio-pilot.json)
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 const API = process.env.API_URL ?? "http://localhost:4000";
 const PASSWORD = process.env.SEED_PASSWORD ?? "Turvio-Demo-2026";
 const DRIVERS = ["lena.hoffmann@jarbou.test", "mihai.popescu@jarbou.test", "samir.haddad@jarbou.test", "jonas.becker@jarbou.test", "paula.schmidt@jarbou.test"];
 const STOPS = [62, 75, 88, 96, 54];
 const SIG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80"><path d="M10 40 L60 20 L110 60 L180 30" fill="none" stroke="#0F172A" stroke-width="3"/></svg>').toString("base64");
+
+const ADDRESS_FILE = process.env.PILOT_ADDRESS_FILE;
+const REAL = ADDRESS_FILE
+  ? readFileSync(ADDRESS_FILE, "utf8").trim().split("\n").slice(1).map((l) => l.split(";")).filter((r) => r.length === 6 && r[3] === "Hannover")
+  : null;
 
 let seed = 42;
 const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31);
@@ -32,7 +40,8 @@ async function login(email) {
 }
 
 const t0 = Date.now();
-const report = { date: today, synthetic: true, tours: [], checks: [] };
+const geo = {};
+const report = { date: today, synthetic: true, addresses: REAL ? "real public OSM addresses, fictional recipients" : "generated coordinates", geocoding: geo, tours: [], checks: [] };
 const check = (name, ok, detail) => {
   report.checks.push({ name, ok, detail });
   console.log(`  ${ok ? "✓" : "✗"} ${name}${detail ? ` – ${detail}` : ""}`);
@@ -69,6 +78,19 @@ for (let i = 0; i < 5; i++) {
       trackingNumbers: pickup ? [] : Array.from({ length: 1 + (k % 4 === 0 ? 1 : 0) }, (_, p) => `TVOPIL${i}${String(k).padStart(3, "0")}${p}`),
     };
   });
+  if (REAL) {
+    for (const s of stops) {
+      const [street, houseNumber, postalCode, city] = REAL[Math.floor(rnd() * REAL.length)];
+      s.address = { street, houseNumber, postalCode, city };
+    }
+    const g = await dispatcher("POST", "/v1/geocode/batch", { addresses: stops.map((s) => s.address) });
+    assert.equal(g.status, 200, JSON.stringify(g.body));
+    g.body.results.forEach((r, k) => {
+      // Only house-level matches are used; anything else stays without a position (never invented).
+      stops[k].location = r?.precision === "house" ? r.location : null;
+      geo[r ? r.precision : "none"] = (geo[r ? r.precision : "none"] ?? 0) + 1;
+    });
+  }
   const added = await dispatcher("POST", `/v1/orgs/${org}/stops`, { tourId: created.body.id, stops });
   assert.equal(added.status, 201);
   const opt0 = Date.now();

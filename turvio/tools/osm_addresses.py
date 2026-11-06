@@ -5,8 +5,9 @@ Usage:
   python3 tools/osm_addresses.py niedersachsen-latest.osm.pbf > addresses.csv
   (then: cd apps/api && npx tsx src/scripts/import-addresses.ts addresses.csv)
 
-Takes nodes and buildings (ways) with addr:street + addr:housenumber + addr:postcode
-(+ addr:city or the containing place); ways get the centroid of their nodes.
+Takes nodes, buildings (ways) and multipolygon relations with addr:street +
+addr:housenumber + addr:postcode (+ addr:city or addr:suburb); ways and relations get
+the centroid of their (outer) nodes.
 Output columns: street;house_number;postcode;city;lat;lng
 Requires pyosmium (pip install osmium). Data: © OpenStreetMap contributors, ODbL –
 keep the attribution wherever results are shown.
@@ -45,6 +46,18 @@ class Addresses(osmium.SimpleHandler):
             pts = pts[:-1]  # closed way: do not count the first node twice
         if pts:
             self._emit(w.tags, sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
+
+    def area(self, a):
+        # Closed ways are handled in way(); here only multipolygon relations
+        # (large buildings, e.g. town halls) – centroid of the outer rings' nodes.
+        if a.from_way() or "addr:housenumber" not in a.tags:
+            return
+        pts = []
+        for ring in a.outer_rings():
+            ring_pts = [(nd.lat, nd.lon) for nd in ring if nd.location.valid()]
+            pts.extend(ring_pts[:-1] if len(ring_pts) > 1 and ring_pts[0] == ring_pts[-1] else ring_pts)
+        if pts:
+            self._emit(a.tags, sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
 
 
 def main(path):

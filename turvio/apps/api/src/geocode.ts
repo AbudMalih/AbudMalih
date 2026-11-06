@@ -152,6 +152,8 @@ export function normAddressPart(t: string): string {
   return [...t.toLowerCase()]
     .map((ch) => map[ch] ?? ch)
     .join("")
+    // ASCII umlaut spellings (Haeuser, Goethe, Mueller) match the umlaut forms.
+    .replace(/([aou])e/g, "$1")
     .replace(/(strasse|straße|str\.|str)(\s|$)/g, "str$2")
     .replace(/[^a-z0-9]/g, "");
 }
@@ -169,6 +171,13 @@ export function parseQuery(q: string): { street: string; houseNumber?: string; p
     if (comma.length > 1) {
       city = comma.slice(1).join(",").trim() || undefined;
       rest = comma[0]!.trim();
+    } else {
+      // "herrenhäuser str. 4 hannover": city after the house number, no comma or postcode.
+      const m = /^(.*?[^\d\s])\s+(\d{1,4}[a-zA-Z]?(?:[-/]\d{1,4}[a-zA-Z]?)?)\s+([^\d,]{3,})$/.exec(rest);
+      if (m) {
+        city = m[3]!.trim();
+        rest = `${m[1]} ${m[2]}`;
+      }
     }
   }
   const hn = /^(.*?[^\d\s])\s*(\d{1,4}\s?[a-zA-Z]?(?:\s?[-/]\s?\d{1,4}[a-zA-Z]?)?)$/.exec(rest);
