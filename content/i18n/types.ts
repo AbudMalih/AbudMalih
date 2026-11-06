@@ -66,7 +66,7 @@ export type Dictionary = {
     desc: string;
   };
   closing: { lines: [string, string, string, string]; cta: string; sign: string };
-  footer: { statement: string; company: string; navigate: string; owned: string; legal: string };
+  footer: { statement: string; company: string; navigate: string; owned: string; legal: string; localTime: string; top: string; language: string; write: string };
   pages: {
     back: string;
     prep: string;
