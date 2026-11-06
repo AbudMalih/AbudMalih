@@ -150,3 +150,28 @@ Preparation:
   - the import list is empty after saving or leaving the screen.
 
 Record per run: phone model, OS version, build, number of images, addresses found vs. expected, and fields corrected by hand.
+
+### 7. Share into TURVIO (Phase B)
+**Android** (preview APK or EAS preview build):
+- [ ] WhatsApp → long-press a message with an address → Share → **TURVIO Driver (Test)** → the app opens "Stops from photo or screenshot" with the card(s) ("Text").
+- [ ] WhatsApp → open an image (a screenshot from `docs/testing/capture-samples`) → Share → TURVIO → card(s) ("Image 1").
+- [ ] Gallery → select 3 screenshots → Share → TURVIO → all are read (SEND_MULTIPLE). With more than 10 images, only 10 are read.
+- [ ] Share a PDF: TURVIO is not offered for PDFs; if forced, nothing is imported.
+- [ ] Signed out: share → login screen → after signing in the import opens with the shared items.
+
+**iOS** (needs the EAS build below):
+- [ ] Share sheet shows **TURVIO Test**. Text, one image and several images (up to 10) open in TURVIO as above.
+- [ ] Choosing screenshots in the app opens the system picker; no "Allow access to photos" prompt.
+
+**iOS build steps (Apple account needed; this cannot be done from the cloud environment):**
+1. In the Apple Developer account: App IDs `com.lunapact.turvio.driver.preview` and `com.lunapact.turvio.driver.preview.share-extension`, and the App Group `group.com.lunapact.turvio.driver.preview` enabled for both. EAS can create the IDs and the App Group capability when you log in with the Apple account during `eas build`.
+2. Register the test iPhones:
+   ```bash
+   eas device:create
+   ```
+3. Build:
+   ```bash
+   eas build -p ios --profile preview
+   ```
+   EAS creates the certificate and **two** provisioning profiles (app and share extension; declared in `extra.eas.build.experimental.ios.appExtensions` by the expo-share-intent plugin).
+4. Install from the EAS link. This is also the first compile check of the iOS OCR module and the share extension.

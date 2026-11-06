@@ -30,6 +30,22 @@ TURVIO processes personal data of recipients (name, address), drivers (identity,
 | Web headers | `X-Frame-Options: DENY`, `nosniff`, referrer policy; Dispatch disables camera/mic/geolocation; Admin is `noindex` |
 | Synthetic data | All development data is fictional; tracking numbers use a made-up `TVO…` format |
 
+### Stops from photos, screenshots, pasted or shared text (Phase 6)
+- **Text recognition runs on the phone** (ML Kit / Apple Vision). Images and their text are **never uploaded**. The only thing sent to the TURVIO API is the address fields, for the exact-match address search (`/v1/geocode/batch`, signed-in users, rate-limited).
+- **Gallery access:** only through the system photo picker (Android Photo Picker, iOS PHPicker). There is no gallery or storage permission: on Android `READ_MEDIA_*`, `READ/WRITE_EXTERNAL_STORAGE` are removed from the manifest, and on iOS there is no `NSPhotoLibraryUsageDescription`. The app receives copies of the chosen images only.
+- **Shares from other apps** (Android `SEND`/`SEND_MULTIPLE`, iOS Share Extension with an App Group):
+  - only images (max 10, ≤ 25 MB each) and text are accepted;
+  - other files are deleted immediately;
+  - shared items are held in memory only, until the import screen reads them;
+  - an import started while signed out waits for sign-in.
+- **No copies kept:** camera, picker and share copies are deleted right after reading; the driver's originals in the gallery are not touched. Extracted names and addresses live in an **in-memory, non-persisted** session until the driver saves or leaves.
+- **Coordinates are never invented:**
+  - set automatically only for exact house-level matches;
+  - street-level matches need the driver's confirmation;
+  - otherwise the driver sets a pin or explicitly saves "without position".
+- **Audit:** stops created this way go through the normal stop creation. They are written to `audit_log` with the driver as actor (insert trigger on `stops`), and the authorization rules are unchanged (driver → own route only).
+- **Not yet logged:** the source of a stop ("from photo"). That would need a database column (migration, needs approval).
+
 ## Required before production
 
 * Hosting in the EU (Supabase Frankfurt); TLS only; HSTS at the edge.

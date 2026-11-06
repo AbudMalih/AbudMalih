@@ -94,6 +94,18 @@ const config: ExpoConfig = {
         microphonePermission: false,
       },
     ],
+    // Share into TURVIO from WhatsApp, Gallery, Messages … (text and up to 10 images).
+    // iOS: a Share Extension target + App Group; Android: SEND / SEND_MULTIPLE intent filters.
+    [
+      "expo-share-intent",
+      {
+        iosActivationRules: { NSExtensionActivationSupportsText: true, NSExtensionActivationSupportsImageWithMaxCount: 10 },
+        iosShareExtensionName: variant === "production" ? "TURVIO" : variant === "development" ? "TURVIO Dev" : "TURVIO Test",
+        iosAppGroupIdentifier: `group.${appId}`,
+        androidIntentFilters: ["text/*", "image/*"],
+        androidMultiIntentFilters: ["image/*"],
+      },
+    ],
     // Google Maps on Android needs a key in development/production builds.
     // iOS uses Apple Maps by default and needs no key.
     ["react-native-maps", androidGoogleMapsApiKey ? { androidGoogleMapsApiKey } : {}],

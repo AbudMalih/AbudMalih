@@ -1,9 +1,11 @@
-import { Redirect, useSegments } from "expo-router";
+import { Redirect, router, useSegments } from "expo-router";
+import { ShareIntentProvider, useShareIntentContext } from "expo-share-intent";
 import { Stack } from "expo-router/stack";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { applyLayoutDirection, useLocale, useT } from "../lib/i18n";
 import { loadServerUrlOverride, serverUrlLoaded } from "../lib/serverUrl";
+import { setPendingShare } from "../lib/share";
 import { isServerMode, useTourStore } from "../store/tourStore";
 import { useTheme } from "../theme";
 
@@ -25,11 +27,18 @@ export default function RootLayout() {
   }, [serverReady]);
 
   if (!serverReady) return null;
-  if (needsLogin) return <Redirect href="/login" />;
+  if (needsLogin)
+    return (
+      <ShareIntentProvider options={{ resetOnBackground: false }}>
+        <ShareBridge signedIn={false} />
+        <Redirect href="/login" />
+      </ShareIntentProvider>
+    );
 
   const modal = { presentation: "modal" as const };
   return (
-    <>
+    <ShareIntentProvider options={{ resetOnBackground: false }}>
+      <ShareBridge signedIn />
       <StatusBar style={dark ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -58,6 +67,27 @@ export default function RootLayout() {
         <Stack.Screen name="outcome/[id]" options={{ title: t("outcome.title"), ...modal }} />
         <Stack.Screen name="pick-location/[id]" options={{ title: t("map.pickTitle") }} />
       </Stack>
-    </>
+    </ShareIntentProvider>
   );
+}
+
+/**
+ * Shares from other apps (WhatsApp …): keep the items in memory, clear them in the native
+ * module, and open the photo import once the driver is signed in.
+ */
+function ShareBridge({ signedIn }: { signedIn: boolean }) {
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext();
+  const [waiting, setWaiting] = useState(false);
+  useEffect(() => {
+    if (!hasShareIntent) return;
+    if (setPendingShare(shareIntent) > 0) setWaiting(true);
+    resetShareIntent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasShareIntent]);
+  useEffect(() => {
+    if (!waiting || !signedIn) return;
+    setWaiting(false);
+    router.push({ pathname: "/photo-import", params: { shared: String(Date.now()) } });
+  }, [waiting, signedIn]);
+  return null;
 }
