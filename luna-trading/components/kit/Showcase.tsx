@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import s from "./Kit.module.css";
 
 export type ShowcaseItem = {
@@ -25,6 +25,16 @@ export default function Showcase({ items, label }: { items: ShowcaseItem[]; labe
   const [i, setI] = useState(0);
   const uid = useId();
   const it = items[i];
+  // deep links (#ecommerce …) open the matching tab
+  useEffect(() => {
+    const pick = () => {
+      const n = items.findIndex((x) => `#${x.key}` === window.location.hash);
+      if (n >= 0) setI(n);
+    };
+    pick();
+    window.addEventListener("hashchange", pick);
+    return () => window.removeEventListener("hashchange", pick);
+  }, [items]);
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
     e.preventDefault();
@@ -36,6 +46,9 @@ export default function Showcase({ items, label }: { items: ShowcaseItem[]; labe
   };
   return (
     <div className={s.show}>
+      {items.map((x) => (
+        <span key={x.key} id={x.key} className={s.anchor} aria-hidden="true" />
+      ))}
       <div className={s.tabs} role="tablist" aria-label={label} onKeyDown={onKey}>
         {items.map((x, n) => (
           <button
