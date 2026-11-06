@@ -77,7 +77,8 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
     const el = root.current;
     if (!el) return;
     const html = document.documentElement;
-    const sections = Array.from(el.querySelectorAll<HTMLElement>("[data-tone]"));
+    // the page's sections, then the (dark) footer that closes every page
+    const sections = [...Array.from(el.querySelectorAll<HTMLElement>("[data-tone]")), ...Array.from(document.querySelectorAll<HTMLElement>("footer[data-tone]"))];
     let last = "";
     const probe = () => {
       // each section fades in from the previous ground over its seam, so the

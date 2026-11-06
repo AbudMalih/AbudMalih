@@ -113,6 +113,16 @@ export default async function Page({ params }: P) {
           Die Website selbst speichert die Inhalte des Formulars nicht in einer Datenbank. Zweck und Rechtsgrundlagen entsprechen denen
           der Kontaktaufnahme per E-Mail (Abschnitt 4).
         </p>
+        <h3>Frachtanfrage (Angebotsformular)</h3>
+        <p>
+          Über das Angebotsformular können Sie ein Angebot für einen Transport von China nach Deutschland anfragen. Dabei verarbeiten
+          wir die Angaben, die Sie eintragen: Transportart und gegebenenfalls Containergröße, Abholort und Zielort, Incoterm, Termin
+          der Warenbereitschaft (freiwillig), Beschreibung der Ware, Anzahl der Packstücke, Gewicht und Volumen (freiwillig), Hinweis
+          auf Gefahrgut, gewünschte Zusatzleistungen sowie Name, Unternehmen (freiwillig), E-Mail-Adresse, Telefonnummer (freiwillig)
+          und Anmerkung (freiwillig). Die Übermittlung erfolgt auf demselben Weg wie beim Kontaktformular als E-Mail an {L.email}; die
+          Website speichert die Inhalte nicht in einer Datenbank. Die Angaben dienen der Prüfung Ihrer Anfrage und der Erstellung eines
+          Angebots. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Durchführung vorvertraglicher Maßnahmen auf Ihre Anfrage).
+        </p>
         <h3>Schutz vor Missbrauch</h3>
         <p>
           Zum Schutz vor automatisierten Spam-Einsendungen verwenden wir ausschließlich eigene, technisch einfache Maßnahmen: ein für

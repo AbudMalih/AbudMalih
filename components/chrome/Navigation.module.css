@@ -522,3 +522,58 @@ html:global(.intro-pending) .cta:not(.ctaPanel) {
     padding-inline: 7px;
   }
 }
+
+/* the freight quote: a second, quieter action beside Kontakt */
+.quote {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding-inline: 18px;
+  border-radius: 999px;
+  border: 1px solid var(--cap-line);
+  background: var(--cap);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  backdrop-filter: blur(16px) saturate(1.3);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.25s, border-color 0.25s;
+}
+.solid .quote {
+  background: var(--cap-solid);
+}
+.quote:hover,
+.quote:focus-visible {
+  border-color: var(--paper);
+}
+.quote[aria-current="page"] {
+  background: var(--cap-on);
+  color: var(--cap-on-ink);
+}
+.quote:focus-visible {
+  outline: 2px solid var(--luna-red);
+  outline-offset: 2px;
+}
+@media (max-width: 1239px) {
+  .bar .quote {
+    display: none;
+  }
+}
+.quotePanel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding-inline: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(20, 21, 24, 0.25);
+  color: #141518;
+  font-weight: 650;
+}
+@media (max-width: 600px) {
+  .quotePanel {
+    width: 100%;
+  }
+}

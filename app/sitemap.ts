@@ -3,7 +3,7 @@ import { LOCALES, LOCALE_META, localePath } from "@/content/i18n/config";
 import { absolute } from "@/lib/seo";
 
 /** Indexable pages in every language (legal pages are noindex and stay out). */
-const PATHS = ["/", "/what-we-do", "/import", "/brands", "/company", "/contact"];
+const PATHS = ["/", "/what-we-do", "/import", "/quote", "/brands", "/company", "/contact"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return PATHS.flatMap((p) =>

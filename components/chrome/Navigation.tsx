@@ -10,6 +10,7 @@ import { formatLat, formatLon } from "@/lib/globe/coords";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { canonicalPath, stripLocale } from "@/content/i18n/config";
 import LanguageSelector from "./LanguageSelector";
+import { QUOTE_COPY } from "@/content/quotePage";
 import styles from "./Navigation.module.css";
 
 /**
@@ -25,7 +26,8 @@ import styles from "./Navigation.module.css";
  *  - Dialog semantics, focus trap, Escape, scroll lock, focus return.
  */
 export default function Navigation() {
-  const { dict, href } = useI18n();
+  const { dict, href, locale } = useI18n();
+  const quote = QUOTE_COPY[locale].nav;
   const contactHref = href(NAV.find((n) => n.key === "contact")?.href ?? "/contact");
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
@@ -110,6 +112,9 @@ export default function Navigation() {
           </button>
           </div>
 
+          <Link href={href("/quote")} className={styles.quote} aria-current={current === "/quote" ? "page" : undefined}>
+            {quote}
+          </Link>
           <Link href={contactHref} className={styles.cta} data-cursor="invert" aria-current={current === "/contact" ? "page" : undefined}>
             <span className={styles.ctaLabel}>{dict.nav.cta}</span>
             <span className={styles.ctaPlus} aria-hidden="true" />
@@ -142,6 +147,9 @@ export default function Navigation() {
             <a href={`mailto:${CONTACT_EMAIL}`} className={styles.mail} dir="ltr" data-cursor="link">
               {CONTACT_EMAIL}
             </a>
+            <Link href={href("/quote")} onClick={close} className={styles.quotePanel}>
+              {quote}
+            </Link>
             <Link href={contactHref} onClick={close} className={`${styles.cta} ${styles.ctaPanel}`} data-cursor="invert">
               {/* the index already lists "Kontakt": the action says what happens there */}
               <span className={styles.ctaLabel}>{dict.contactPage.inquiry.title}</span>
