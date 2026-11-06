@@ -21,7 +21,7 @@
   bottom: clamp(40px, 8vh, 96px);
 }
 .statement {
-  font-size: clamp(2.6rem, min(7.6vw, 13.5svh), 9rem);
+  font-size: clamp(2.2rem, min(5.2vw, 9.5svh), 5.8rem);
 }
 .ctaRow {
   position: relative;

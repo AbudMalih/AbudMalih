@@ -42,6 +42,9 @@ const en: Dictionary = {
     closing: "Contact",
   },
   hero: {
+    eyebrow: "Import · Brands · E-Commerce",
+    lead: "Sourcing, import, brands and e-commerce from one source. From Cologne we connect manufacturers in Asia with the European market.",
+    ctaImport: "Explore import",
     lines: ["Trade", "without", "borders."],
     route: "Route",
     routeSpan: "Asia · Europe",

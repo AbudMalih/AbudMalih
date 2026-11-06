@@ -38,9 +38,12 @@
   position: absolute;
   inset: 0;
   background: url("/sky/port-1600.webp") 62% 60% / cover no-repeat;
-  opacity: 0.78;
+  opacity: 0.5;
   transform-origin: 64% 58%;
-  animation: drift-cam 70s ease-in-out infinite alternate;
+  animation: drift-cam 90s ease-in-out infinite alternate;
+  /* the port lives low in the frame: the planet stands in clean evening air */
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.55) 40%, #000 75%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.55) 40%, #000 75%);
   will-change: transform;
 }
 @media (min-width: 1025px) {
@@ -55,7 +58,7 @@
 }
 @keyframes drift-cam {
   from { transform: scale(1.04) translate3d(0, 0, 0); }
-  to { transform: scale(1.1) translate3d(-1.2%, -0.8%, 0); }
+  to { transform: scale(1.06) translate3d(-0.6%, -0.4%, 0); }
 }
 /* quiet the photograph where the headline and the header sit */
 .shade {
