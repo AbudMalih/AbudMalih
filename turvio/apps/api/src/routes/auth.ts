@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { parse, problem, type RouteCtx } from "../http";
 import { AuthFailure, type AuthProvider } from "../auth/provider";
@@ -12,10 +12,16 @@ const STATUS: Record<AuthFailure["code"], number> = {
   invalid_token: 401,
   weak_password: 422,
   not_configured: 501,
+  invalid_code: 422,
+  mfa_required: 403,
+  no_pending_factor: 409,
+  mfa_already_enabled: 409,
 };
 
+const Code = z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code");
+
 export function registerAuthRoutes(app: FastifyInstance, ctx: RouteCtx & { auth: AuthProvider }) {
-  const { auth, deps } = ctx;
+  const { auth, deps, guards } = ctx;
   const db = deps.db;
 
   const fail = (reply: Parameters<typeof problem>[0], e: unknown) => {
@@ -38,6 +44,51 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: RouteCtx & { auth:
     if (!body) return;
     try {
       return await auth.refresh(body.refreshToken, req.headers["user-agent"]);
+    } catch (e) {
+      return fail(reply, e);
+    }
+  });
+
+  // --- Second factor (TOTP) -------------------------------------------------
+  const caller = (req: FastifyRequest) => ({
+    userId: req.user!.userId,
+    email: req.user!.email,
+    aal: req.user!.aal,
+    accessToken: (req.headers.authorization ?? "").slice("Bearer ".length),
+  });
+
+  app.get("/v1/auth/mfa", { preHandler: guards.authenticate }, async (req, reply) => {
+    try {
+      const status = await auth.mfaStatus(caller(req));
+      return { ...status, aal: req.user!.aal ?? "aal1", factorType: "totp" };
+    } catch (e) {
+      return fail(reply, e);
+    }
+  });
+
+  app.post("/v1/auth/mfa/enroll", { preHandler: guards.authenticate }, async (req, reply) => {
+    try {
+      return await auth.mfaEnroll(caller(req));
+    } catch (e) {
+      return fail(reply, e);
+    }
+  });
+
+  app.post("/v1/auth/mfa/activate", { preHandler: guards.authenticate }, async (req, reply) => {
+    const body = parse(z.object({ code: Code }), req.body, reply);
+    if (!body) return;
+    try {
+      return await auth.mfaActivate(caller(req), body.code, req.headers["user-agent"]);
+    } catch (e) {
+      return fail(reply, e);
+    }
+  });
+
+  app.post("/v1/auth/mfa/verify", async (req, reply) => {
+    const body = parse(z.object({ mfaToken: z.string().min(10).max(4000), code: Code }), req.body, reply);
+    if (!body) return;
+    try {
+      return await auth.mfaVerify(body.mfaToken, body.code, req.headers["user-agent"]);
     } catch (e) {
       return fail(reply, e);
     }

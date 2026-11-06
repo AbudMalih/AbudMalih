@@ -19,6 +19,7 @@ export function registerPlatformRoutes(app: FastifyInstance, { deps, guards }: R
     if (reply.sent) return;
     const ok = await db.asUser(guards.claims(req), async (tx) => (await tx.query<{ ok: boolean }>(`select app.is_platform_admin() as ok`)).rows[0]!.ok);
     if (!ok) return problem(reply, 403, "forbidden", "Platform administrators only");
+    guards.requireAal2(req, reply);
   }
 
   app.get("/v1/platform/overview", { preHandler: requirePlatformAdmin }, async (req) => {

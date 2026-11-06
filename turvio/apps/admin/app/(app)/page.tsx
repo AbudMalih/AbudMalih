@@ -22,6 +22,8 @@ export default async function DashboardPage() {
   const [overview, audit] = await Promise.all([serverApi<{ organizations: OverviewOrg[] }>(jar, "/v1/platform/overview"), serverApi<AuditEntry[]>(jar, "/v1/platform/activity")]);
   if (!overview.ok || !audit.ok) {
     if ((!overview.ok && overview.status === 401) || (!audit.ok && audit.status === 401)) redirect("/login");
+    // Platform administration needs two-step verification (REQUIRE_ADMIN_MFA).
+    if ((!overview.ok && overview.code === "mfa_required") || (!audit.ok && audit.code === "mfa_required")) redirect("/security?required=1");
     return (
       <AuthLayout product="Platform Admin" title="Could not load the platform overview">
         <FormAlert>The TURVIO service returned an error. Reload to try again.</FormAlert>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronRight, ChevronsUpDown, LogOut, Menu as MenuIcon, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
+import { Check, ChevronRight, ChevronsUpDown, LogOut, Menu as MenuIcon, PanelLeftClose, PanelLeftOpen, ShieldCheck, type LucideIcon } from "lucide-react";
 import { LayoutGroup, motion, MotionConfig } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Avatar } from "./Avatar";
@@ -173,6 +173,9 @@ function UserMenu({ user, collapsed, note, onSignOut }: { user: ShellUser; colla
           <div className="text-2xs text-muted">{user.email}</div>
         </div>
         <MenuSeparator />
+        <MenuItem icon={<ShieldCheck />} onSelect={() => window.location.assign("/security")}>
+          Two-step verification
+        </MenuItem>
         <MenuItem icon={<LogOut />} disabled={!onSignOut} onSelect={() => onSignOut?.()}>
           Sign out
         </MenuItem>

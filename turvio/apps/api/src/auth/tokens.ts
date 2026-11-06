@@ -4,6 +4,8 @@ import { SignJWT, createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jo
 export interface AuthUser {
   userId: string;
   email?: string;
+  /** Authenticator assurance level from the `aal` claim (Supabase-compatible); absent = aal1. */
+  aal?: "aal1" | "aal2";
 }
 
 export interface TokenVerifier {
@@ -39,7 +41,7 @@ export class JwtVerifier implements TokenVerifier {
     try {
       const { payload } = await jwtVerify(token, this.key as Uint8Array, { issuer: this.opts.issuer, audience: "authenticated" });
       if (!payload.sub) throw new AuthError("token has no subject");
-      return { userId: payload.sub, email: typeof payload.email === "string" ? payload.email : undefined };
+      return { userId: payload.sub, email: typeof payload.email === "string" ? payload.email : undefined, aal: payload.aal === "aal2" ? "aal2" : "aal1" };
     } catch (e) {
       throw new AuthError(e instanceof Error ? e.message : "invalid token");
     }
@@ -62,8 +64,8 @@ export class DevTokenVerifier implements TokenVerifier {
   }
 }
 
-export async function signAccessToken(opts: { secret: string; issuer: string; ttlSeconds: number; userId: string; email: string }): Promise<string> {
-  return new SignJWT({ email: opts.email, role: "authenticated" })
+export async function signAccessToken(opts: { secret: string; issuer: string; ttlSeconds: number; userId: string; email: string; aal?: "aal1" | "aal2" }): Promise<string> {
+  return new SignJWT({ email: opts.email, role: "authenticated", aal: opts.aal ?? "aal1" })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setSubject(opts.userId)
     .setIssuer(opts.issuer)

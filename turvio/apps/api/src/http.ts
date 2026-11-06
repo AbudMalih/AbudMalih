@@ -23,6 +23,8 @@ export function parse<T extends z.ZodType>(schema: T, value: unknown, reply: Fas
 export interface Guards {
   authenticate: (req: FastifyRequest, reply: FastifyReply) => Promise<unknown>;
   requireTenant: (permission: Permission) => (req: FastifyRequest, reply: FastifyReply) => Promise<unknown>;
+  /** Second-factor gate for administrative endpoints (no-op unless requireAdminMfa). */
+  requireAal2: (req: FastifyRequest, reply: FastifyReply) => boolean;
   claims: (req: FastifyRequest) => { sub: string; email?: string };
   callOptimizer: (body: unknown, timeLimitSeconds: number) => Promise<OptimizeResponse>;
 }

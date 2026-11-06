@@ -37,6 +37,11 @@ export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELET
   if (!res.ok) {
     const err = (data as { error?: { code?: string; message?: string } }).error ?? {};
     const code = err.code ?? "error";
+    if (res.status === 403 && code === "mfa_required") {
+      // Company administration needs two-step verification: go to the set-up page and come back.
+      const here = window.location.pathname + window.location.search;
+      window.location.assign(`/security?required=1&next=${encodeURIComponent(here)}`);
+    }
     throw new ApiCallError(res.status, code, FRIENDLY[code] ?? err.message ?? `Request failed (HTTP ${res.status})`);
   }
   return data as T;

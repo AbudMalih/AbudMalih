@@ -64,6 +64,7 @@ if (config.AUTH_PROVIDER === "dev") {
     proofStore,
     geocoder,
     rateLimitPerMinute: config.RATE_LIMIT_PER_MINUTE,
+    requireAdminMfa: config.requireAdminMfa,
     routing: config.OSRM_URL ? new OsrmRouting(config.OSRM_URL, { timeoutMs: config.OSRM_TIMEOUT_MS }) : undefined,
   });
   // Background jobs: retention purge (hourly) and deletion of files of removed proofs.

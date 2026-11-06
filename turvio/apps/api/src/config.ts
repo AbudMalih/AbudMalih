@@ -52,14 +52,20 @@ const Env = z.object({
   OSRM_TIMEOUT_MS: z.coerce.number().int().min(500).max(60000).default(8000),
   /** Run the retention purge and proof-file deletion worker inside the API process. */
   BACKGROUND_JOBS: z.enum(["true", "false"]).default("true"),
+  /**
+   * Two-step verification (aal2) for company administration (settings, members,
+   * billing) and the platform admin API. Default: true in production, false otherwise.
+   */
+  REQUIRE_ADMIN_MFA: z.enum(["true", "false"]).optional(),
   /** Legacy synthetic mode (AUTH_PROVIDER=dev). */
   SUPABASE_JWT_SECRET: z.string().min(32).optional(),
 });
-export type Config = z.infer<typeof Env>;
+export type Config = z.infer<typeof Env> & { requireAdminMfa: boolean };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const config = Env.parse(env);
-  const prod = config.NODE_ENV === "production";
+  const parsed = Env.parse(env);
+  const prod = parsed.NODE_ENV === "production";
+  const config: Config = { ...parsed, requireAdminMfa: parsed.REQUIRE_ADMIN_MFA ? parsed.REQUIRE_ADMIN_MFA === "true" : prod };
   if (config.AUTH_PROVIDER === "dev" && prod) throw new Error("AUTH_PROVIDER=dev is not allowed in production");
   if (config.DEV_MAILBOX === "true" && prod) throw new Error("DEV_MAILBOX is not allowed in production");
   if (config.AUTH_PROVIDER !== "dev" && !config.DATABASE_URL) throw new Error("DATABASE_URL is required");

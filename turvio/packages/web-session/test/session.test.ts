@@ -1,21 +1,34 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { COOKIES, loginHandler, logoutHandler, proxyHandler, sessionProxy } from "../src/index";
+import { COOKIES, loginHandler, logoutHandler, mfaActivateHandler, mfaVerifyHandler, proxyHandler, serverApi, sessionProxy } from "../src/index";
 
 const session = (n: number) => ({ accessToken: `access-${n}`, refreshToken: `refresh-${n}`, expiresIn: 900, user: { id: "u", email: "a@b.test", name: null } });
 let calls: { url: string; method: string; auth: string | null; body?: string }[];
 let accessOk: string;
+let mfaUser: boolean;
 
 beforeEach(() => {
   calls = [];
   accessOk = "access-1";
+  mfaUser = false;
   process.env.TURVIO_API_URL = "http://api.test";
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string, init: RequestInit = {}) => {
       const auth = new Headers(init.headers).get("authorization");
       calls.push({ url, method: init.method ?? "GET", auth, body: init.body as string | undefined });
-      if (url.endsWith("/v1/auth/login")) return Response.json(session(1));
+      if (url.endsWith("/v1/auth/login")) return mfaUser ? Response.json({ mfaRequired: true, mfaToken: "challenge-secret", factorType: "totp" }) : Response.json(session(1));
+      if (url.endsWith("/v1/auth/mfa/verify")) {
+        const b = JSON.parse(String(init.body));
+        if (b.mfaToken !== "challenge-secret") return Response.json({ error: { code: "invalid_token" } }, { status: 401 });
+        if (b.code !== "123456") return Response.json({ error: { code: "invalid_code", message: "wrong" } }, { status: 422 });
+        return Response.json({ ...session(3), aal: "aal2" });
+      }
+      if (url.endsWith("/v1/auth/mfa/activate")) {
+        if (auth !== `Bearer ${accessOk}`) return Response.json({ error: { code: "unauthenticated" } }, { status: 401 });
+        return JSON.parse(String(init.body)).code === "123456" ? Response.json({ ...session(4), aal: "aal2" }) : Response.json({ error: { code: "invalid_code" } }, { status: 422 });
+      }
+      if (url.endsWith("/v1/orgs/o/members")) return Response.json({ error: { code: "mfa_required", message: "needs 2fa" } }, { status: 403 });
       if (url.endsWith("/v1/auth/refresh")) {
         const rt = JSON.parse(String(init.body)).refreshToken;
         if (rt !== "refresh-1") return Response.json({ error: { code: "invalid_token" } }, { status: 401 });
@@ -100,5 +113,64 @@ describe("page guard", () => {
     const res = await sessionProxy(req("http://app.test/map", { cookies: { [COOKIES.refresh]: "refresh-1" } }));
     expect(res.headers.get("location")).toBeNull();
     expect(res.cookies.get(COOKIES.access)!.value).toBe("access-2");
+  });
+});
+
+describe("two-step verification", () => {
+  const post = (url: string, body: unknown, cookies?: Record<string, string>) => req(url, { method: "POST", body: JSON.stringify(body), cookies });
+
+  it("login with a second factor keeps the challenge in an httpOnly cookie and sets no session", async () => {
+    mfaUser = true;
+    const res = await loginHandler(post("http://app.test/api/auth/login", { email: "a@b.test", password: "x" }));
+    expect(await res.json()).toEqual({ mfaRequired: true, factorType: "totp" });
+    const c = res.cookies.get(COOKIES.mfa)!;
+    expect(c.value).toBe("challenge-secret");
+    expect(c.httpOnly).toBe(true);
+    expect(c.maxAge).toBe(300);
+    expect(res.cookies.get(COOKIES.access)).toBeUndefined();
+  });
+
+  it("verify sends cookie + code, sets session cookies and clears the challenge", async () => {
+    const res = await mfaVerifyHandler(post("http://app.test/api/auth/mfa/verify", { code: "123456" }, { [COOKIES.mfa]: "challenge-secret" }));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ user: { id: "u", email: "a@b.test", name: null } });
+    expect(calls[0]!.body).toBe(JSON.stringify({ mfaToken: "challenge-secret", code: "123456" }));
+    expect(res.cookies.get(COOKIES.access)!.value).toBe("access-3");
+    expect(res.cookies.get(COOKIES.mfa)!.value).toBe("");
+  });
+
+  it("a wrong code keeps the challenge; a missing or dead challenge asks to sign in again", async () => {
+    const wrong = await mfaVerifyHandler(post("http://app.test/api/auth/mfa/verify", { code: "000000" }, { [COOKIES.mfa]: "challenge-secret" }));
+    expect(wrong.status).toBe(422);
+    expect(wrong.cookies.get(COOKIES.mfa)).toBeUndefined();
+    expect((await mfaVerifyHandler(post("http://app.test/api/auth/mfa/verify", { code: "123456" }))).status).toBe(401);
+    expect(calls).toHaveLength(1);
+    const dead = await mfaVerifyHandler(post("http://app.test/api/auth/mfa/verify", { code: "123456" }, { [COOKIES.mfa]: "other" }));
+    expect(dead.status).toBe(401);
+    expect(dead.cookies.get(COOKIES.mfa)!.value).toBe("");
+  });
+
+  it("activation replaces the session cookies with the aal2 session (tokens never in the body)", async () => {
+    const res = await mfaActivateHandler(post("http://app.test/api/auth/mfa/activate", { code: "123456" }, { [COOKIES.access]: "access-1" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ user: { id: "u", email: "a@b.test", name: null }, aal: "aal2" });
+    expect(res.cookies.get(COOKIES.access)!.value).toBe("access-4");
+    expect(res.cookies.get(COOKIES.refresh)!.value).toBe("refresh-4");
+    expect((await mfaActivateHandler(post("http://app.test/api/auth/mfa/activate", { code: "123456" }))).status).toBe(401);
+  });
+
+  it("the proxy refuses token-issuing auth endpoints but allows MFA status and enrolment", async () => {
+    for (const p of [["v1", "auth", "login"], ["v1", "auth", "refresh"], ["v1", "auth", "mfa", "verify"], ["v1", "auth", "mfa", "activate"]]) {
+      expect((await proxyHandler(req(`http://app.test/api/turvio/${p.join("/")}`, { method: "POST", body: "{}", cookies: { [COOKIES.access]: "access-1" } }), p)).status).toBe(404);
+    }
+    expect(calls).toHaveLength(0);
+    const ok = await proxyHandler(req("http://app.test/api/turvio/v1/auth/mfa", { cookies: { [COOKIES.access]: "access-1" } }), ["v1", "auth", "mfa"]);
+    expect(ok.status).toBe(200);
+  });
+
+  it("serverApi reports the error code (mfa_required) so pages can redirect to set-up", async () => {
+    const r = await serverApi({ get: (n) => (n === COOKIES.access ? { value: "access-1" } : undefined) }, "/v1/orgs/o/members");
+    expect(r).toEqual({ ok: false, status: 403, code: "mfa_required" });
   });
 });

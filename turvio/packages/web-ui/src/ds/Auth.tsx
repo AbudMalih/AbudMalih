@@ -99,6 +99,8 @@ const safeNext = (next: string | null | undefined, fallback: string) => (next &&
 export function LoginForm({ product, next, home = "/" }: { product: string; next?: string | null; home?: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [step, setStep] = useState<"password" | "code">("password");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submit = async (e: FormEvent) => {
@@ -106,6 +108,12 @@ export function LoginForm({ product, next, home = "/" }: { product: string; next
     setBusy(true);
     setError(null);
     const r = await postJson("/api/auth/login", { email, password });
+    if (r.ok && r.data.mfaRequired) {
+      setBusy(false);
+      setPassword("");
+      setStep("code");
+      return;
+    }
     if (r.ok) {
       window.location.assign(safeNext(next, home));
       return;
@@ -113,6 +121,44 @@ export function LoginForm({ product, next, home = "/" }: { product: string; next
     setBusy(false);
     setError(r.data.error?.message ?? (r.status === 400 ? "Enter a valid email address and your password." : "Sign-in failed. Please try again."));
   };
+  const submitCode = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const r = await postJson("/api/auth/mfa/verify", { code: code.replace(/\s/g, "") });
+    if (r.ok) {
+      window.location.assign(safeNext(next, home));
+      return;
+    }
+    setBusy(false);
+    setCode("");
+    if (r.status === 401 || r.status === 429) {
+      // The sign-in step is used up: start again with the password.
+      setStep("password");
+      setError(r.data.error?.message ?? "Please sign in again.");
+      return;
+    }
+    setError(r.data.error?.message ?? "The code is not correct.");
+  };
+  if (step === "code") {
+    return (
+      <AuthLayout product={product} title="Two-step verification" subtitle="Enter the 6-digit code from your authenticator app.">
+        <form onSubmit={submitCode} className="flex flex-col gap-4" noValidate>
+          {error && <FormAlert>{error}</FormAlert>}
+          <Field label="Authentication code" htmlFor="otp">
+            <OtpInput id="otp" value={code} onChange={setCode} />
+          </Field>
+          <Button type="submit" variant="primary" size="lg" disabled={busy || code.replace(/\s/g, "").length !== 6} className="mt-1 w-full">
+            {busy && <Loader2 className="animate-spin" />}
+            {busy ? "Checking…" : "Verify"}
+          </Button>
+          <button type="button" onClick={() => (setStep("password"), setError(null), setCode(""))} className="text-[13px] font-medium text-brand-600 hover:underline">
+            Use a different account
+          </button>
+        </form>
+      </AuthLayout>
+    );
+  }
   return (
     <AuthLayout product={product} title="Sign in" subtitle="Use your TURVIO work account.">
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
@@ -136,6 +182,165 @@ export function LoginForm({ product, next, home = "/" }: { product: string; next
           {busy ? "Signing in…" : "Sign in"}
         </Button>
       </form>
+    </AuthLayout>
+  );
+}
+
+function OtpInput({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <Input
+      id={id}
+      value={value}
+      onChange={(e) => onChange(e.target.value.replace(/[^\d\s]/g, "").slice(0, 7))}
+      inputMode="numeric"
+      autoComplete="one-time-code"
+      pattern="[0-9 ]*"
+      placeholder="123 456"
+      required
+      autoFocus
+      className="h-11 text-center font-mono text-lg tracking-[0.3em]"
+    />
+  );
+}
+
+/** Groups a base32 key in blocks of four for manual entry. */
+export const groupKey = (secret: string) => secret.replace(/(.{4})/g, "$1 ").trim();
+
+/**
+ * Two-step verification (TOTP) settings: shows the status, starts enrolment
+ * (key + otpauth link – no QR library) and confirms it with a first code.
+ */
+export function MfaSetupForm({ product, next, home = "/", required }: { product: string; next?: string | null; home?: string; required?: boolean }) {
+  const [status, setStatus] = useState<{ enabled: boolean } | null>(null);
+  const [enrollment, setEnrollment] = useState<{ secret: string; otpauthUrl: string } | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/turvio/v1/auth/mfa", { cache: "no-store" })
+      .then(async (res) => {
+        if (res.status === 401) {
+          window.location.assign(`/login?next=${encodeURIComponent("/security")}`);
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!alive) return;
+        if (res.ok) setStatus({ enabled: !!data.enabled });
+        else setError(data.error?.message ?? "Could not load your security settings.");
+      })
+      .catch(() => alive && setError("No connection. Check your network and try again."));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const start = async () => {
+    setBusy(true);
+    setError(null);
+    const r = await postJson("/api/turvio/v1/auth/mfa/enroll", {});
+    setBusy(false);
+    if (r.ok) setEnrollment({ secret: String(r.data.secret), otpauthUrl: String(r.data.otpauthUrl) });
+    else setError(r.data.error?.message ?? "Could not start the set-up.");
+  };
+  const activate = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    const r = await postJson("/api/auth/mfa/activate", { code: code.replace(/\s/g, "") });
+    setBusy(false);
+    if (r.ok) {
+      setDone(true);
+      setStatus({ enabled: true });
+      return;
+    }
+    setCode("");
+    setError(r.data.error?.message ?? "The code is not correct.");
+  };
+  const copy = async () => {
+    if (!enrollment) return;
+    try {
+      await navigator.clipboard.writeText(enrollment.secret);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+  const target = safeNext(next, home);
+
+  return (
+    <AuthLayout
+      product={product}
+      title="Two-step verification"
+      subtitle="Protects company and platform administration with a code from an authenticator app."
+      footer={
+        <a href={target} className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">
+          <ArrowLeft className="size-3.5" /> Back
+        </a>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        {error && <FormAlert>{error}</FormAlert>}
+        {required && !status?.enabled && (
+          <FormAlert>This action needs two-step verification. Set it up below; next time you sign in, TURVIO asks for a code.</FormAlert>
+        )}
+        {status === null && !error && (
+          <p className="flex items-center gap-2 text-[13px] text-muted">
+            <Loader2 className="size-4 animate-spin" /> Loading…
+          </p>
+        )}
+        {status?.enabled && (
+          <>
+            <FormAlert tone="success">{done ? "Two-step verification is now on. Other sessions were signed out." : "Two-step verification is on for your account."}</FormAlert>
+            <Button variant="primary" size="lg" className="w-full" onClick={() => window.location.assign(target)}>
+              Continue
+            </Button>
+          </>
+        )}
+        {status && !status.enabled && !enrollment && (
+          <>
+            <p className="text-[13px] text-ink-2">
+              You need an authenticator app on your phone, for example Google Authenticator, Microsoft Authenticator, 1Password or Aegis.
+            </p>
+            <Button variant="primary" size="lg" className="w-full" onClick={start} disabled={busy}>
+              {busy && <Loader2 className="animate-spin" />}
+              Set up two-step verification
+            </Button>
+          </>
+        )}
+        {status && !status.enabled && enrollment && (
+          <form onSubmit={activate} className="flex flex-col gap-4" noValidate>
+            <ol className="flex list-decimal flex-col gap-3 ps-5 text-[13px] text-ink-2">
+              <li>
+                On your phone:{" "}
+                <a href={enrollment.otpauthUrl} className="font-medium text-brand-600 hover:underline">
+                  add TURVIO to your authenticator app
+                </a>
+                . On a computer, enter this key in the app instead (type: time-based):
+                <div className="mt-2 flex items-center gap-2">
+                  <code data-testid="mfa-secret" className="flex-1 select-all rounded-md border border-line bg-surface-2 px-2.5 py-2 font-mono text-[13px] tracking-wider text-ink">
+                    {groupKey(enrollment.secret)}
+                  </code>
+                  <Button type="button" variant="secondary" size="sm" onClick={copy}>
+                    {copied ? "Copied" : "Copy"}
+                  </Button>
+                </div>
+              </li>
+              <li>Enter the 6-digit code the app shows.</li>
+            </ol>
+            <Field label="Authentication code" htmlFor="otp">
+              <OtpInput id="otp" value={code} onChange={setCode} />
+            </Field>
+            <Button type="submit" variant="primary" size="lg" disabled={busy || code.replace(/\s/g, "").length !== 6} className="w-full">
+              {busy && <Loader2 className="animate-spin" />}
+              Turn on
+            </Button>
+          </form>
+        )}
+      </div>
     </AuthLayout>
   );
 }

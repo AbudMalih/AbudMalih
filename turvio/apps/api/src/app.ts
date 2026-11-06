@@ -39,7 +39,16 @@ export interface AppDeps {
   routing?: RoutingProvider;
   /** Requests per minute per client IP (default 600; 0 = off). */
   rateLimitPerMinute?: number;
+  /**
+   * Require a second factor (aal2 session) for company-administration
+   * permissions and all /v1/platform endpoints. Default: off (config turns it on
+   * in production).
+   */
+  requireAdminMfa?: boolean;
 }
+
+/** Permissions that change or reveal company administration; with requireAdminMfa they need an aal2 session. */
+export const ADMIN_MFA_PERMISSIONS: ReadonlySet<Permission> = new Set<Permission>(["org.settings.manage", "org.members.manage", "org.billing.view"]);
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -97,8 +106,16 @@ export function buildApp(deps: AppDeps): FastifyInstance {
       const org = await deps.tenancy.getOrganization(params.data.orgId, req.user.userId);
       if (!org || org.status === "suspended" || org.status === "cancelled") return problem(reply, 403, "organization_inactive", "Organization is not active");
       if (!can(membership.role, permission)) return problem(reply, 403, "forbidden", `Missing permission ${permission}`);
+      if (ADMIN_MFA_PERMISSIONS.has(permission) && !requireAal2(req, reply)) return;
       req.membership = membership;
     };
+  }
+
+  /** With requireAdminMfa: true when the session is aal2, else answers 403 mfa_required. Runs after the other checks, never instead of them. */
+  function requireAal2(req: FastifyRequest, reply: FastifyReply): boolean {
+    if (!deps.requireAdminMfa || req.user?.aal === "aal2") return true;
+    void problem(reply, 403, "mfa_required", "This action needs two-step verification. Set it up or sign in with your authenticator code.");
+    return false;
   }
 
   async function callOptimizer(body: unknown, timeLimitSeconds: number): Promise<OptimizeResponse> {
@@ -114,7 +131,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     return parsed.data;
   }
 
-  const guards: Guards = { authenticate, requireTenant, claims: (req) => ({ sub: req.user!.userId, email: req.user!.email }), callOptimizer };
+  const guards: Guards = { authenticate, requireTenant, requireAal2, claims: (req) => ({ sub: req.user!.userId, email: req.user!.email }), callOptimizer };
 
   app.get("/health", async () => ({ status: "ok" }));
 
@@ -128,6 +145,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
       userId: req.user!.userId,
       email: req.user!.email ?? null,
       name,
+      aal: req.user!.aal ?? "aal1",
       platformAdmin,
       memberships: memberships.map((m) => ({ organizationId: m.organizationId, organizationName: m.organizationName ?? null, role: m.role, depotIds: m.depotIds ?? null })),
     };

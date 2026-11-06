@@ -147,6 +147,14 @@ describe("config", () => {
     expect(() => loadConfig({ AUTH_PROVIDER: "supabase", DATABASE_URL: "postgres://x" })).toThrow(/SUPABASE_URL/);
     expect(loadConfig({ AUTH_PROVIDER: "dev" }).AUTH_PROVIDER).toBe("dev");
   });
+
+  it("requires admin MFA by default only in production; REQUIRE_ADMIN_MFA overrides", () => {
+    const local = { AUTH_PROVIDER: "local", DATABASE_URL: "postgres://x", JWT_SECRET: "x".repeat(40) };
+    expect(loadConfig({ ...local, NODE_ENV: "production" }).requireAdminMfa).toBe(true);
+    expect(loadConfig({ ...local, NODE_ENV: "development" }).requireAdminMfa).toBe(false);
+    expect(loadConfig({ ...local, NODE_ENV: "production", REQUIRE_ADMIN_MFA: "false" }).requireAdminMfa).toBe(false);
+    expect(loadConfig({ ...local, NODE_ENV: "test", REQUIRE_ADMIN_MFA: "true" }).requireAdminMfa).toBe(true);
+  });
 });
 
 describe("IP rate limit", () => {

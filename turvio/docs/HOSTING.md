@@ -55,6 +55,7 @@ Then `GEOCODER=postgres`. Refresh monthly. Public Nominatim/Photon instances mus
 | `RATE_LIMIT_PER_MINUTE` | 600 (plus a WAF/proxy limit) |
 | `BACKGROUND_JOBS` | `true` on one instance, `false` on the others |
 | `DEV_MAILBOX` | `false` (refused in production) |
+| `REQUIRE_ADMIN_MFA` | `true` (default in production) – admin and platform endpoints need two-step verification |
 
 Optimizer: `OSRM_URL`, `OSRM_TIMEOUT_SECONDS`, `OSRM_TABLE_CHUNK` (≤ OSRM `--max-table-size`).
 Driver app (EAS environment): `EXPO_PUBLIC_API_URL`, `GOOGLE_MAPS_ANDROID_API_KEY` (secret), `EAS_PROJECT_ID`.

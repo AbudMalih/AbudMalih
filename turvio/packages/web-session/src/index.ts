@@ -10,15 +10,27 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export const API_URL = () => (process.env.TURVIO_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
 
-export const COOKIES = { access: "tv_at", refresh: "tv_rt", org: "tv_org" } as const;
+export const COOKIES = { access: "tv_at", refresh: "tv_rt", org: "tv_org", mfa: "tv_mfa" } as const;
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
+/** The second login step must finish within the API's challenge lifetime (5 minutes). */
+const MFA_MAX_AGE = 5 * 60;
 
 interface ApiSession {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
   user: { id: string; email: string; name: string | null };
+  aal?: "aal1" | "aal2";
 }
+
+interface ApiMfaChallenge {
+  mfaRequired: true;
+  mfaToken: string;
+  factorType: "totp";
+}
+
+/** Where the apps send users whose action needs two-step verification. */
+export const MFA_SETUP_PATH = "/security";
 
 const secure = () => process.env.NODE_ENV === "production" && process.env.TURVIO_INSECURE_COOKIES !== "true";
 
@@ -67,8 +79,64 @@ export async function loginHandler(req: NextRequest): Promise<NextResponse> {
   const res = await api("/v1/auth/login", { method: "POST", body, headers: { "user-agent": req.headers.get("user-agent") ?? "" } }).catch(() => null);
   if (!res) return unavailable();
   if (!res.ok) return forwardJson(res);
+  const s = (await res.json()) as ApiSession | ApiMfaChallenge;
+  if ("mfaRequired" in s && s.mfaRequired) {
+    // Second step: the challenge token stays in an httpOnly cookie, never in browser JavaScript.
+    const out = NextResponse.json({ mfaRequired: true, factorType: s.factorType });
+    out.cookies.set(COOKIES.mfa, s.mfaToken, { httpOnly: true, sameSite: "strict", secure: secure(), path: "/api/auth", maxAge: MFA_MAX_AGE });
+    return out;
+  }
+  const session = s as ApiSession;
+  const out = NextResponse.json({ user: session.user });
+  setSessionCookies(out, session);
+  return out;
+}
+
+const signInAgain = () => NextResponse.json({ error: { code: "invalid_token", message: "This sign-in step expired. Please sign in again." } }, { status: 401 });
+
+/** Second login step: POST { code } with the challenge cookie from loginHandler. */
+export async function mfaVerifyHandler(req: NextRequest): Promise<NextResponse> {
+  const mfaToken = req.cookies.get(COOKIES.mfa)?.value;
+  if (!mfaToken) return signInAgain();
+  const { code } = (await req.json().catch(() => ({}))) as { code?: unknown };
+  const res = await api("/v1/auth/mfa/verify", {
+    method: "POST",
+    body: JSON.stringify({ mfaToken, code: typeof code === "string" ? code : "" }),
+    headers: { "user-agent": req.headers.get("user-agent") ?? "" },
+  }).catch(() => null);
+  if (!res) return unavailable();
+  if (!res.ok) {
+    const out = await forwardJson(res);
+    // A used-up or expired challenge cannot be retried: start over at the password.
+    if (res.status === 401 || res.status === 429) out.cookies.set(COOKIES.mfa, "", { path: "/api/auth", maxAge: 0 });
+    return out;
+  }
   const s = (await res.json()) as ApiSession;
   const out = NextResponse.json({ user: s.user });
+  setSessionCookies(out, s);
+  out.cookies.set(COOKIES.mfa, "", { path: "/api/auth", maxAge: 0 });
+  return out;
+}
+
+/** Finishes TOTP set-up: POST { code }; the API returns a new two-step session that replaces the cookies. */
+export async function mfaActivateHandler(req: NextRequest): Promise<NextResponse> {
+  let token = req.cookies.get(COOKIES.access)?.value;
+  let renewed: ApiSession | null = null;
+  const refreshToken = req.cookies.get(COOKIES.refresh)?.value;
+  if (!token && refreshToken) {
+    renewed = await refresh(refreshToken);
+    token = renewed?.accessToken;
+  }
+  if (!token) return NextResponse.json({ error: { code: "unauthenticated", message: "Your session ended. Please sign in again." } }, { status: 401 });
+  const res = await api("/v1/auth/mfa/activate", { method: "POST", body: await req.text(), token, headers: { "user-agent": req.headers.get("user-agent") ?? "" } }).catch(() => null);
+  if (!res) return unavailable();
+  if (!res.ok) {
+    const out = await forwardJson(res);
+    if (renewed) setSessionCookies(out, renewed);
+    return out;
+  }
+  const s = (await res.json()) as ApiSession;
+  const out = NextResponse.json({ user: s.user, aal: s.aal ?? "aal2" });
   setSessionCookies(out, s);
   return out;
 }
@@ -116,9 +184,15 @@ async function refresh(refreshToken: string): Promise<ApiSession | null> {
   return res && res.ok ? ((await res.json()) as ApiSession) : null;
 }
 
+/** Auth endpoints the browser may reach through the proxy; all others return tokens and have dedicated handlers. */
+const PROXY_AUTH_ALLOWED = new Set(["/v1/auth/mfa", "/v1/auth/mfa/enroll"]);
+
 export async function proxyHandler(req: NextRequest, path: string[]): Promise<Response> {
   const target = `/${path.map(encodeURIComponent).join("/")}${req.nextUrl.search}`;
-  if (!target.startsWith("/v1/")) return NextResponse.json({ error: { code: "not_found", message: "Unknown endpoint" } }, { status: 404 });
+  const pathOnly = `/${path.map(encodeURIComponent).join("/")}`;
+  if (!target.startsWith("/v1/") || (pathOnly.startsWith("/v1/auth/") && !PROXY_AUTH_ALLOWED.has(pathOnly)) || pathOnly === "/v1/auth") {
+    return NextResponse.json({ error: { code: "not_found", message: "Unknown endpoint" } }, { status: 404 });
+  }
   const method = req.method;
   const body = method === "GET" || method === "HEAD" ? undefined : await req.text();
   let token = req.cookies.get(COOKIES.access)?.value;
@@ -185,15 +259,23 @@ export interface Me {
   email: string | null;
   name: string | null;
   platformAdmin: boolean;
+  /** aal2 = signed in with password and authenticator code. */
+  aal?: "aal1" | "aal2";
   memberships: { organizationId: string; organizationName: string | null; role: "owner" | "admin" | "dispatcher" | "driver"; depotIds: string[] | null }[];
 }
 
 /** Fetch with the request's access token from a server component. */
-export async function serverApi<T>(cookieStore: { get(name: string): { value: string } | undefined }, path: string): Promise<{ ok: true; data: T } | { ok: false; status: number }> {
+export async function serverApi<T>(
+  cookieStore: { get(name: string): { value: string } | undefined },
+  path: string,
+): Promise<{ ok: true; data: T } | { ok: false; status: number; code?: string }> {
   const token = cookieStore.get(COOKIES.access)?.value;
   if (!token) return { ok: false, status: 401 };
   const res = await api(path, { token }).catch(() => null);
   if (!res) return { ok: false, status: 503 };
-  if (!res.ok) return { ok: false, status: res.status };
+  if (!res.ok) {
+    const code = ((await res.json().catch(() => ({}))) as { error?: { code?: string } }).error?.code;
+    return { ok: false, status: res.status, code };
+  }
   return { ok: true, data: (await res.json()) as T };
 }

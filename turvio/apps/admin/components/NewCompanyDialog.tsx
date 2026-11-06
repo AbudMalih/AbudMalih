@@ -41,6 +41,10 @@ export function NewCompanyDialog() {
         body: JSON.stringify({ name: name.trim(), slug, countryCode: country, planCode: plan, seats: Number(seats), ownerEmail: owner.trim() }),
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 403 && data?.error?.code === "mfa_required") {
+        window.location.assign("/security?required=1");
+        return;
+      }
       if (!res.ok) throw new Error(data?.error?.message ?? `HTTP ${res.status}`);
       toast.success(`${data.name} created`, { description: `Trial started · invitation sent to ${data.ownerInvited}` });
       setOpen(false);

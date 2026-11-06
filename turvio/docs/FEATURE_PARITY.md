@@ -67,7 +67,7 @@ Updated 2026-11-06 (Phase 5). Native Android build exists; nothing is device-tes
 
 | Feature | Spoke | TURVIO | Notes |
 |---|---|---|---|
-| Secure login, role-based access | Documented | **Done** (local auth) | Login, password reset, invitations, session refresh, logout, workspace switch, role/depot-scoped navigation. Supabase Auth provider implemented, not yet tested live. MFA: planned. |
+| Secure login, role-based access | Documented | **Done** (local auth) | Login, password reset, invitations, session refresh, logout, workspace switch, role/depot-scoped navigation. Supabase Auth provider implemented, not yet tested live. TOTP MFA for all accounts, enforced for admins/platform admins (`REQUIRE_ADMIN_MFA`); Supabase MFA mapping mock-tested only. |
 | Multiple depots | Documented | **Done** | Depot switcher, depot-scoped dispatchers (RLS), depot create/edit in Fleet. |
 | Driver management | Documented | **Done** | Create/edit/deactivate in Fleet; plan-limit enforced in DB; driver login via invitation. |
 | Vehicle management (capacity) | Documented (weight) | **Partial** | Parcel-count capacity in schema + optimizer; weight: M5. |

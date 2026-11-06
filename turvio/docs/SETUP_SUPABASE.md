@@ -23,7 +23,7 @@ select cron.schedule('turvio-retention', '17 3 * * *', 'select app.purge_expired
 * Authentication → Providers: Email/password on; "Confirm email" on.
 * Authentication → URL configuration: Site URL = your Dispatch URL; add redirect URL `https://<dispatch-domain>/reset-password`.
 * Authentication → SMTP: your EU mail provider (Supabase's built-in sender is rate-limited and not for production).
-* MFA: enable TOTP and require it for owners/admins and platform admins (planned UI work).
+* MFA: enable TOTP (Authentication → Multi-Factor → TOTP: enroll + verify). TURVIO enforces it for owners/admins and platform admins via `REQUIRE_ADMIN_MFA` (default `true` in production) and the `aal` claim; users set it up at `/security` in Dispatch/Admin. The GoTrue mapping is **mock-tested only** – verify enrol, login with code and refresh against staging.
 
 ## 4. API environment (`apps/api`)
 

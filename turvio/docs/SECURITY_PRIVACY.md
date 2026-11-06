@@ -9,6 +9,7 @@ TURVIO processes personal data of recipients (name, address), drivers (identity,
 | Tenant isolation | RLS on all tables, composite tenant FKs, explicit tenant in API routes, tests (see ARCHITECTURE §3.2) |
 | Least privilege | Roles owner/admin/dispatcher/driver; drivers change state only through checked RPCs; `anon` has no table access; platform admins see no operational data |
 | Authentication | JWT verified (issuer, audience, signature, expiry); local provider: scrypt hashes, 15-min access tokens, hashed + rotated refresh tokens with reuse detection (revokes all sessions), login throttling, single-use reset tokens, no account enumeration on password reset; dev bypass and dev mailbox refused in production |
+| Two-step verification (MFA) | TOTP (RFC 6238, SHA-1/30 s/6 digits, ±1 step) for any account; with `REQUIRE_ADMIN_MFA` (default on in production) company administration (`org.settings.manage`, `org.members.manage`, `org.billing.view`) and every `/v1/platform/*` endpoint need an `aal2` session, otherwise 403 `mfa_required` (checked *after* membership/role checks, never instead of them). Local provider: secret encrypted at rest (AES-256-GCM, key derived from `JWT_SECRET` via HKDF), codes single-use (replay protection by time step), second-step token hashed, 5-minute, single-use, 5 attempts per challenge and 10 wrong codes per account per 15 min; activating MFA signs out password-only sessions; `aal` kept on refresh. Supabase provider maps to GoTrue MFA factors (mock-tested only). Web: challenge token only in an `httpOnly` cookie; set-up page `/security` |
 | Sessions in web apps | Tokens only in `httpOnly`/`SameSite=Lax`/`Secure` cookies behind a same-origin proxy – never readable by page scripts; logout revokes the refresh token server-side |
 | Sessions in the driver app | Tokens in the OS keystore (`expo-secure-store`) |
 | Database access | Each request runs as role `authenticated` with the user's claims, so RLS applies to every API query; service connection only for auth tables and invitation acceptance |
@@ -35,7 +36,7 @@ TURVIO processes personal data of recipients (name, address), drivers (identity,
 * Records of processing, DPIA for location tracking and OCR, TOMs, DPA template for tenants, privacy notices for drivers (works council involvement in Germany for employee location tracking – BetrVG §87(1) no. 6).
 * Create the private `proofs` bucket in the hosted project and verify the Supabase storage adapter against it (only tested with a mocked Storage API).
 * DPIA for proof-of-delivery photos/signatures and (if enabled) PoD location; works-council agreement for location data.
-* MFA for owners/admins/platform admins (not built yet); session revocation on member removal.
+* MFA: verify the Supabase (GoTrue) MFA mapping against the hosted project (only mock-tested); recovery procedure for lost authenticators (today: an operator deletes the row in `app_auth.mfa_factors` / the Supabase factor after identity checks – no self-service recovery codes yet); session revocation on member removal.
 * Production mail (SMTP, SPF/DKIM) – today mails go to a development outbox.
 * Rate limiting and request logging without personal data in the API.
 * Dependency scanning and a penetration test before onboarding the second customer.
