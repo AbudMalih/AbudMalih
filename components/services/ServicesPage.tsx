@@ -71,7 +71,7 @@ export default function ServicesPage() {
           </p>
           <div className={s.bento}>
             {IDS.map((id, i) => (
-              <a key={id} href="#disziplinen" className={i === 0 ? s.bentoHero : s.card} data-reveal style={d(i * 70)}>
+              <a key={id} href={`#${id}`} className={i === 0 ? s.bentoHero : s.card} data-reveal style={d(i * 70)}>
                 <span className={s.num}>{num(i)}</span>
                 {i > 0 && (
                   <div style={{ marginTop: 18 }}>
