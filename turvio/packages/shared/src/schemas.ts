@@ -316,6 +316,8 @@ export const OptimizeResponse = z.object({
   unassignedStopIds: z.array(z.string()),
   /** How travel times were obtained: road network or straight-line estimate. */
   matrixSource: z.enum(["osrm", "haversine_estimate"]),
+  /** Set when OSRM is configured but could not be used (the estimate was used instead). */
+  matrixNote: z.string().nullable().optional(),
   /** Solver status; "feasible" means a valid, not proven-optimal, solution. */
   status: z.enum(["feasible", "no_solution"]),
   engine: z.string(),

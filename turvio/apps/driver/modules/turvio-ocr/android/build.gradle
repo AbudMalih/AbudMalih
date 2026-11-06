@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.lunapact.turvio'
+version = '0.1.0'
+
+android {
+  namespace "expo.modules.turvioocr"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+dependencies {
+  // On-device Latin text recognition; the model is bundled in the app (no download, no cloud).
+  implementation "com.google.mlkit:text-recognition:16.0.1"
+  implementation "androidx.exifinterface:exifinterface:1.4.2"
+}

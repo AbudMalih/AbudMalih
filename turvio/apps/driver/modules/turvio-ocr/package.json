@@ -1,0 +1,8 @@
+{
+  "name": "turvio-ocr",
+  "version": "0.1.0",
+  "description": "On-device text recognition for parcel labels (ML Kit on Android, Apple Vision on iOS)",
+  "main": "index.ts",
+  "license": "UNLICENSED",
+  "private": true
+}

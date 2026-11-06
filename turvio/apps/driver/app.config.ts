@@ -1,12 +1,24 @@
 import type { ExpoConfig } from "expo/config";
 
-// Secrets come from the environment (.env / EAS secrets) – never hard-code keys.
+// Secrets come from the environment (.env / EAS environment variables) – never hard-code keys.
 const androidGoogleMapsApiKey = process.env.GOOGLE_MAPS_ANDROID_API_KEY;
 
+/**
+ * Build variants (APP_VARIANT, set per EAS build profile in eas.json):
+ * - development: dev client (Metro), separate app id so it installs next to the others
+ * - preview:     self-contained internal test build (staging API)
+ * - production:  store build
+ * EXPO_PUBLIC_API_URL is baked into the JS bundle per profile (not a secret).
+ */
+const variant = (process.env.APP_VARIANT ?? "production") as "development" | "preview" | "production";
+const ID = "com.lunapact.turvio.driver";
+const appId = variant === "production" ? ID : `${ID}.${variant === "development" ? "dev" : "preview"}`;
+const appName = variant === "production" ? "TURVIO Driver" : variant === "development" ? "TURVIO Driver (Dev)" : "TURVIO Driver (Test)";
+
 const config: ExpoConfig = {
-  name: "TURVIO Driver",
+  name: appName,
   slug: "turvio-driver",
-  scheme: "turvio",
+  scheme: variant === "production" ? "turvio" : `turvio-${variant}`,
   version: "0.1.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
@@ -14,14 +26,14 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: false,
     // Publisher: Lunapact Technologies (UAE). Confirm IDs before the first store submission.
-    bundleIdentifier: "com.lunapact.turvio.driver",
+    bundleIdentifier: appId,
     infoPlist: {
       // Lets the app hand navigation to Google Maps / Waze when they are installed.
       LSApplicationQueriesSchemes: ["comgooglemaps", "waze"],
     },
   },
   android: {
-    package: "com.lunapact.turvio.driver",
+    package: appId,
     adaptiveIcon: {
       backgroundColor: "#FFFFFF",
       foregroundImage: "./assets/android-icon-foreground.png",
@@ -35,6 +47,8 @@ const config: ExpoConfig = {
   web: { favicon: "./assets/favicon.png" },
   plugins: [
     "expo-router",
+    ["expo-splash-screen", { image: "./assets/splash-icon.png", imageWidth: 160, resizeMode: "contain", backgroundColor: "#FFFFFF", dark: { backgroundColor: "#060B16" } }],
+    "expo-system-ui",
     "expo-localization",
     [
       "expo-camera",
@@ -70,6 +84,9 @@ const config: ExpoConfig = {
   ],
   extra: {
     supportsRTL: true,
+    variant,
+    // Filled by `eas init` (links the project to the Lunapact Expo account). Not a secret.
+    ...(process.env.EAS_PROJECT_ID ? { eas: { projectId: process.env.EAS_PROJECT_ID } } : {}),
   },
 };
 

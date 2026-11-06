@@ -1,24 +1,31 @@
-import type { OcrLine } from "@turvio/shared";
+import { orderOcrLines, type OcrLine } from "@turvio/shared";
+import { TurvioOcr } from "../../modules/turvio-ocr";
 
 /**
- * Text recognition (OCR) integration boundary.
- *
- * This build contains NO OCR engine: on-device text recognition (e.g. Google
- * ML Kit via @react-native-ml-kit/text-recognition, or Apple Vision) needs a
- * native module and a custom development build, which could not be built and
- * verified in this environment. Barcode extraction from the label photo works
- * (expo-camera); address fields are then entered/confirmed by the driver.
- *
- * To enable OCR: install a native engine, register it at app start with
- * `registerOcrEngine({ name, recognize })` – see docs/DRIVER_APP.md.
+ * Text recognition (OCR) for parcel labels – on the device only, no cloud service:
+ * - Android: Google ML Kit text recognition (bundled Latin model)
+ * - iOS: Apple Vision (VNRecognizeTextRequest)
+ * Provided by the local native module `modules/turvio-ocr`. It exists only in development
+ * and production builds; in Expo Go, on web and in unit tests `ocrEngine()` is null and the
+ * label screen says that text recognition is unavailable.
  */
 export interface OcrEngine {
   name: string;
   recognize(imageUri: string): Promise<OcrLine[]>;
 }
 
-let engine: OcrEngine | null = null;
+const native = TurvioOcr;
+let engine: OcrEngine | null = native
+  ? {
+      name: "on-device",
+      recognize: async (uri) => {
+        const r = await native.recognizeAsync(uri);
+        return orderOcrLines(r.lines);
+      },
+    }
+  : null;
 
+/** Replace the engine (tests, or an alternative engine). */
 export function registerOcrEngine(e: OcrEngine | null) {
   engine = e;
 }

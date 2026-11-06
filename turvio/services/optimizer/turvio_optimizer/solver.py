@@ -107,6 +107,7 @@ def solve(req: OptimizeRequest, matrix: Matrix | None = None) -> OptimizeRespons
             routes=[],
             unassigned_stop_ids=[s.id for s in stops],
             matrix_source=matrix.source,
+            matrix_note=matrix.note,
             status="no_solution",
             engine="or-tools",
         )
@@ -141,6 +142,7 @@ def solve(req: OptimizeRequest, matrix: Matrix | None = None) -> OptimizeRespons
         routes=routes,
         unassigned_stop_ids=[s.id for s in stops if s.id not in assigned],
         matrix_source=matrix.source,
+            matrix_note=matrix.note,
         status="feasible",
         engine="or-tools",
     )

@@ -128,7 +128,7 @@ def test_http_api_roundtrip_uses_camel_case():
     res = client.post("/optimize", json=body)
     assert res.status_code == 200
     data = res.json()
-    assert set(data) == {"routes", "unassignedStopIds", "matrixSource", "status", "engine"}
+    assert set(data) == {"routes", "unassignedStopIds", "matrixSource", "matrixNote", "status", "engine"}
     assert len(data["routes"][0]["visits"]) == 3
 
 

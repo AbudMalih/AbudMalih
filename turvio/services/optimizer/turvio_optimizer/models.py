@@ -77,6 +77,8 @@ class OptimizeResponse(_Model):
     routes: list[Route]
     unassigned_stop_ids: list[str]
     matrix_source: Literal["osrm", "haversine_estimate"]
+    # Set when OSRM is configured but failed and the estimate was used instead.
+    matrix_note: str | None = None
     # "feasible": a valid solution was found. OR-Tools' local search does not
     # prove optimality, so we never report "optimal".
     status: Literal["feasible", "no_solution"]
