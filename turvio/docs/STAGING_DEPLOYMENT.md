@@ -190,8 +190,22 @@ The first deployment takes longer: about 10–20 min building on 2 vCPU, plus a 
 - Backups: the database is on Supabase (daily backups on paid plans; the Free plan has none, see the migration plan). The VPS holds no business data, only certificates, the routing graph (rebuildable) and `.env`. Keep `.env` in your password manager, not in a server backup.
 - Base images are digest-pinned; update them deliberately in a commit (security updates), then deploy that commit.
 
-## 7. What was tested (2026-11-06, local Docker 29.9, rootful, x86-64)
-`deploy/staging/test/local-e2e.sh` rehearses the whole flow with throw-away data. Its results are reported in the commit message and the Phase 6 report. Images built: api 342 MB, dispatch 418 MB, admin 417 MB, optimizer 527 MB, osrm 152 MB.
+## 7. What was tested (2026-11-06, local Docker 29.9, rootful, x86-64, 4 vCPU)
+`deploy/staging/test/local-e2e.sh` rehearses the whole flow with throw-away data. It replaces Supabase with a local Postgres 17 carrying the same migrations, uses Mailpit as SMTP sink, and Caddy's internal CA instead of Let's Encrypt.
+
+| Check | Result |
+|---|---|
+| Images | api 342 MB, dispatch 418 MB, admin 417 MB, optimizer 527 MB, osrm 152 MB; all non-root, read-only root FS |
+| Commit-pinned deploy from a bare git remote | export of `turvio/` only, `--wait` health checks, HTTPS smoke checks through Caddy (api /health, dispatch /login, admin /login → 200) |
+| Routing data (real BBBike Region Hannover download) | MD5 verified, extract peak **456 MB RAM**, contract peak **191 MB**, about 1.5 min |
+| Synthetic JARBOU pilot through Caddy over HTTPS | **7/7 checks**: 5 drivers, 375 stops, OSRM matrix, proofs, offline replay, isolation |
+| Memory at idle (after the pilot) | ~310 MiB for the six services together |
+| Broken release (API health check fails) | detected, **automatic rollback** to the previous release, smoke checks green again |
+| Invalid compose file | refused before any change; running release untouched |
+| Second release + `--rollback` | back to the previous release |
+| Refusals | short SHA, unknown commit, `.env` with mode 644 |
+
+Unit tests added for: the new Supabase key formats (`sb_publishable_…`/`sb_secret_…` only in `apikey`, legacy JWT keys unchanged), ES256 verification against a JWKS endpoint (rejects HS256 in JWKS mode, other keys, wrong issuer or audience), one trusted proxy hop (spoofed `X-Forwarded-For` ignored), and the startup refusals (`sslmode` in `DATABASE_URL`, outbox mailer with Supabase in production).
 
 ## 8. Not tested
 - **Anything on the VPS:**

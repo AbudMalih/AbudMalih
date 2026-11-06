@@ -54,8 +54,10 @@ Then `GEOCODER=postgres`. Refresh monthly. Public Nominatim/Photon instances mus
 |---|---|
 | `NODE_ENV` | `production` |
 | `AUTH_PROVIDER` | `supabase` |
-| `DATABASE_URL`, `DATABASE_SSL=true` | Supabase connection string (secret) |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Supabase settings (service key = secret) |
+| `DATABASE_URL`, `DATABASE_SSL=true` | Supabase session-pooler connection string without `sslmode` (secret) |
+| `DATABASE_SSL_CA_FILE` | Supabase root CA (PEM); the certificate is always verified |
+| `TRUST_PROXY` | `1` behind exactly one reverse proxy (Caddy); default `true` only for development |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Supabase URL, publishable key (`sb_publishable_…`) and secret key (`sb_secret_…`, secret). Legacy JWT keys still work. Tokens are verified via the project's JWKS (ES256) unless `SUPABASE_JWT_SECRET` is set |
 | `PROOF_STORAGE=supabase`, `PROOF_BUCKET=proofs` | private bucket |
 | `OPTIMIZER_URL` | internal URL of the optimizer |
 | `OSRM_URL`, `OSRM_TIMEOUT_MS` | internal OSRM URL |
