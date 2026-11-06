@@ -27,6 +27,12 @@ PROJECT="turvio-staging"
 WAIT_TIMEOUT="${DEPLOY_WAIT_TIMEOUT:-300}"
 SERVICES=(api optimizer osrm dispatch admin)
 
+# Non-interactive SSH sessions (ssh host deploy …) may lack the rootless Docker variables.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+if [ -z "${DOCKER_HOST:-}" ] && [ -S "$XDG_RUNTIME_DIR/docker.sock" ]; then
+  export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
+fi
+
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$STATE/deploy.log" >&2; }
 die() { log "ERROR: $*"; exit 1; }
 
@@ -122,7 +128,14 @@ deploy() {
   current="$(cat "$STATE/current" 2>/dev/null || true)"
   [ "$sha" != "$current" ] || log "re-deploying the current release $sha"
   log "building $sha (one service at a time – 4 GB RAM)"
-  for s in "${SERVICES[@]}"; do compose "$sha" build "$s"; done
+  for s in "${SERVICES[@]}"; do
+    # Tags are commit-pinned: an existing image for this exact commit is reused (fast rollback/redeploy).
+    if docker image inspect "turvio/$s:$sha" >/dev/null 2>&1 && [ "${DEPLOY_REBUILD:-false}" != "true" ]; then
+      log "image turvio/$s:$sha exists – not rebuilding"
+    else
+      compose "$sha" build "$s"
+    fi
+  done
   if ! osrm_ready "$sha"; then
     log "no routing graph yet – preparing Region Hannover (one-off, a few minutes)"
     compose "$sha" run --rm osrm-prepare

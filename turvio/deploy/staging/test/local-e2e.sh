@@ -96,6 +96,26 @@ services:
 $PROXY_ENV
 EOF
 
+# Sandbox builds need the local proxy (host network + its CA as the optional build secret);
+# compose cannot pass those, so the images are built here and tagged for the commits under test.
+prebuild() { # prebuild <tag>: build all five images from the exported tree of $SHA
+  local ctx="$T/ctx"
+  if [ ! -d "$ctx" ]; then mkdir -p "$ctx" && git -C "$TURVIO_ROOT/repo" archive "$SHA" turvio | tar -x -C "$ctx"; fi
+  local b=(docker build -q)
+  if [ -n "${HTTPS_PROXY:-}" ] && [ -f /root/.ccr/ca-bundle.crt ]; then
+    b+=(--network host --build-arg "HTTPS_PROXY=$HTTPS_PROXY" --build-arg "HTTP_PROXY=$HTTPS_PROXY" --secret id=build_ca,src=/root/.ccr/ca-bundle.crt)
+  fi
+  "${b[@]}" -f "$ctx/turvio/deploy/docker/api.Dockerfile" -t "turvio/api:$1" "$ctx/turvio" >/dev/null
+  "${b[@]}" -f "$ctx/turvio/deploy/docker/optimizer.Dockerfile" -t "turvio/optimizer:$1" "$ctx/turvio" >/dev/null
+  "${b[@]}" -f "$ctx/turvio/deploy/docker/osrm.Dockerfile" -t "turvio/osrm:$1" "$ctx/turvio" >/dev/null
+  "${b[@]}" --build-arg APP=dispatch -f "$ctx/turvio/deploy/docker/web.Dockerfile" -t "turvio/dispatch:$1" "$ctx/turvio" >/dev/null
+  "${b[@]}" --build-arg APP=admin -f "$ctx/turvio/deploy/docker/web.Dockerfile" -t "turvio/admin:$1" "$ctx/turvio" >/dev/null
+}
+retag() { for s in api optimizer osrm dispatch admin; do docker tag "turvio/$s:$SHA" "turvio/$s:$1"; done; }
+
+step "build images for $SHA"
+prebuild "$SHA"
+
 step "deploy $SHA"
 "$DEPLOY" "$SHA"
 "$DEPLOY" --status
@@ -113,6 +133,7 @@ git clone --quiet --branch "$BRANCH" "$T/remote.git" "$T/work"
 (cd "$T/work" && sed -i 's/      REQUIRE_ADMIN_MFA: "true"/      REQUIRE_ADMIN_MFA: "true"\n      MAILER: outbox/' turvio/deploy/staging/compose.yml \
   && git -c user.email=test@example.invalid -c user.name=test commit -qam "test: broken release (API refuses MAILER=outbox)" && git push -q origin "$BRANCH")
 BROKEN="$(git -C "$T/work" rev-parse HEAD)"
+retag "$BROKEN"   # images are identical: only compose.yml changed
 if "$DEPLOY" "$BROKEN"; then echo "FAIL: broken release was reported healthy"; exit 1; fi
 [ "$(cat "$TURVIO_ROOT/state/current")" = "$SHA" ] || { echo "FAIL: current is not $SHA after rollback"; exit 1; }
 curl -sk --resolve api.staging.example.invalid:443:127.0.0.1 https://api.staging.example.invalid/health
@@ -120,6 +141,7 @@ curl -sk --resolve api.staging.example.invalid:443:127.0.0.1 https://api.staging
 step "second good release, then manual --rollback"
 (cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit -q HEAD && git push -q origin "$BRANCH")
 GOOD2="$(git -C "$T/work" rev-parse HEAD)"
+retag "$GOOD2"
 "$DEPLOY" "$GOOD2"
 [ "$(cat "$TURVIO_ROOT/state/previous")" = "$SHA" ] || { echo "FAIL: previous should be $SHA"; exit 1; }
 "$DEPLOY" --rollback
