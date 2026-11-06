@@ -43,6 +43,14 @@ eas build -p android --profile preview
 ```
 EAS prints a link/QR code; open it on the phone and install. For day-to-day development use `--profile development` (dev client, then `npx expo start` on your computer).
 
+### EAS preview build – status (2026-11-06)
+- Project `@lunapact-technologies/turvio-driver` (id `9ebfcd40-…`) is linked; `eas config --profile preview` resolves to package `com.lunapact.turvio.driver.preview`, APK, internal distribution, EAS environment `preview`.
+- **Not yet built on EAS.** Before the first build:
+  1. `EXPO_PUBLIC_API_URL` (plain text) in the EAS `preview` environment = the HTTPS address of the staging API (no staging host exists yet; without it the build runs in demo mode).
+  2. `GOOGLE_MAPS_ANDROID_API_KEY` (secret) in the same environment, restricted in Google Cloud to package `com.lunapact.turvio.driver.preview` + the EAS signing certificate SHA-1 (shown by `eas credentials -p android` after step 3).
+  3. Signing: the first `eas build -p android --profile preview` asks whether EAS should generate and store an Android keystore – answer yes (or approve that it is done for you). Keep that keystore; losing it means testers must uninstall to update.
+- Each cloud build counts against the Expo plan's monthly build allowance; no paid add-ons are used.
+
 ### C. Local build (Linux/macOS with Android SDK + JDK 17)
 ```bash
 cd apps/driver && APP_VARIANT=preview npx expo prebuild -p android --clean

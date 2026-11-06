@@ -10,7 +10,7 @@ const KEYLEN = 64;
 
 /** Password policy shared by reset and invitations. */
 export function passwordProblem(pw: string): string | null {
-  if (pw.length < 10) return "Use at least 10 characters";
+  if (pw.length < 12) return "Use at least 12 characters";
   if (pw.length > 200) return "Password is too long";
   if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) return "Use letters and at least one number";
   return null;

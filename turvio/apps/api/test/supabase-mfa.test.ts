@@ -80,3 +80,28 @@ describe("SupabaseAuthProvider MFA (mocked GoTrue)", () => {
     await expect(p.mfaEnroll(caller)).rejects.toMatchObject({ code: "mfa_already_enabled" });
   });
 });
+
+describe("SupabaseAuthProvider password policy (mocked GoTrue)", () => {
+  it("does not create an account with a password shorter than 12 characters", async () => {
+    const { p, calls } = mock({ "POST /token?grant_type=password": () => [400, {}] });
+    await expect(p.ensureUser("new@x.test", "Short-pw-1", null)).rejects.toMatchObject({ code: "weak_password" });
+    expect(calls.some((c) => c.path === "/admin/users")).toBe(false);
+  });
+
+  it("creates an account with a policy-compliant password via the admin API (works with sign-up disabled)", async () => {
+    const { p, calls } = mock({ "POST /admin/users": () => [200, { id: "u-new" }] });
+    await expect(p.ensureUser("new@x.test", "Long-enough-pw-2026", "New")).resolves.toEqual({ userId: "u-new", created: true });
+    expect(calls[0]).toMatchObject({ path: "/admin/users", auth: "Bearer service-role-key-service-role-key" });
+  });
+
+  it("an existing account may still accept with its current (older) password", async () => {
+    const { p } = mock({ "POST /token?grant_type=password": () => [200, session("aal1")] });
+    await expect(p.ensureUser("admin@x.test", "old-pw-1", null)).resolves.toEqual({ userId: "u1", created: false });
+  });
+
+  it("rejects a weak reset password before calling Supabase", async () => {
+    const { p, calls } = mock({});
+    await expect(p.resetPassword("recovery-token", "abc123")).rejects.toMatchObject({ code: "weak_password" });
+    expect(calls).toEqual([]);
+  });
+});

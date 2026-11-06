@@ -1,3 +1,4 @@
+import { passwordProblem } from "./password";
 import { AuthFailure, type AuthProvider, type Caller, type LoginResult, type MfaEnrollment, type Session } from "./provider";
 import { SupabaseTokenVerifier } from "./tokens";
 import { open, seal } from "./totp";
@@ -88,17 +89,26 @@ export class SupabaseAuthProvider implements AuthProvider {
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
+    // Same policy as local mode (Supabase enforces its own minimum as well).
+    const problem = passwordProblem(newPassword);
+    if (problem) throw new AuthFailure("weak_password", problem);
     // `token` is the recovery access token from the Supabase redirect.
     const r = await this.call("/user", { method: "PUT", token, body: { password: newPassword } });
     if (!r.ok) throw new AuthFailure("invalid_token", "This reset link is invalid or has expired");
   }
 
   async ensureUser(email: string, password: string, displayName: string | null) {
-    const created = await this.call("/admin/users", { admin: true, body: { email, password, email_confirm: true, user_metadata: { display_name: displayName } } });
-    if (created.ok) return { userId: String((created.data as { id: string }).id), created: true };
-    // Existing account: require the current password.
+    // A new account must meet the password policy; an existing one proves its current password.
+    const problem = passwordProblem(password);
+    if (!problem) {
+      const created = await this.call("/admin/users", { admin: true, body: { email, password, email_confirm: true, user_metadata: { display_name: displayName } } });
+      if (created.ok) return { userId: String((created.data as { id: string }).id), created: true };
+    }
     const login = await this.call("/token?grant_type=password", { body: { email, password } });
-    if (!login.ok) throw new AuthFailure("invalid_credentials", "An account with this email exists – enter its current password to accept");
+    if (!login.ok) {
+      if (problem) throw new AuthFailure("weak_password", problem);
+      throw new AuthFailure("invalid_credentials", "An account with this email exists – enter its current password to accept");
+    }
     return { userId: String((login.data.user as { id: string }).id), created: false };
   }
 

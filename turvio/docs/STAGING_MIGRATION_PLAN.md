@@ -21,7 +21,7 @@ Audit date 2026-11-06, project ref `xwryomkbrkwjytwofgcu`, with the existing 7-d
 | Auth | e-mail sign-in on, **sign-up open** (`disable_signup=false`), e-mail confirmation on, **password min. length 6**, JWT 3600 s, refresh-token rotation on, **TOTP MFA enroll+verify on**, phone/WebAuthn off, **no custom SMTP** (built-in mailer, 2 e-mails/h), `site_url=http://localhost:3000`, no redirect URLs, no CAPTCHA, anonymous sign-in off, no third-party auth | `GET /config/auth` (200) |
 
 ### Compatibility check of the TURVIO migrations
-- All 10 files in `supabase/migrations/` (incl. `20261109000100_geocoder_spelling.sql`, added after the audit) were applied to a fresh **PostgreSQL 17.11** (same version as the project; Supabase role stubs from `supabase/local/00_supabase_stubs.sql`): no errors, all 19 `public` tables have RLS on.
+- All 11 files in `supabase/migrations/` were applied to a fresh **PostgreSQL 17.11** (same version as the project; Supabase role stubs from `supabase/local/00_supabase_stubs.sql`): no errors, all 19 `public` tables have RLS on.
 - The 46 API integration tests (RLS, tenant isolation via the API, driver RPCs, proofs, editing, geocoder, routing) **pass on PostgreSQL 17.11**.
 - The migrations use only `auth.uid()` and read `auth.users` (foreign keys, e-mail for the team list). They need no extension beyond what is installed, create no triggers on `auth.users`, touch neither `storage` nor `cron`.
 - `supabase/local/*` must **never** be applied to the hosted project (local auth schema, local password role).
@@ -32,61 +32,90 @@ Audit date 2026-11-06, project ref `xwryomkbrkwjytwofgcu`, with the existing 7-d
 - Whether the token can **write**: not probed on purpose (no write attempts).
 - Connecting the TURVIO API to the hosted database from this cloud environment: the pooler hostname does not resolve here (only HTTPS via proxy). The API has to run on your machine or in hosting to talk to staging.
 
-## 2. Missing permissions
+## 2. Token: what it can do, what it needs
 
-Observed 403s with the existing token (exact permission names from Supabase's responses):
+**The existing token** can read only. Even when asked for a non-read-only query, Supabase runs it as `supabase_read_only_user` inside a read-only transaction (checked with a plain `SELECT`, 2026-11-06). It can:
+- read the auth config, the PostgREST config, storage buckets and config, and the pooler config;
+- list migrations;
+- run read-only SQL.
 
-| Permission | Needed for | Required? |
+It **cannot** apply migrations, create roles or buckets, or change any setting.
+
+**Required for the deployment.** These use the token form's resource names and access levels ([Supabase access tokens](https://supabase.com/docs/guides/platform/access-tokens)). Grant them on the `turvio-staging` project only, with a 1–2 day expiry:
+
+| Resource | Level | Used for |
 |---|---|---|
-| `project_admin_read` | project status, health, upgrade status | recommended (read) |
-| `backups_read` | confirm a backup exists before migrating | recommended (read) |
-| `database_ssl_config_read` | verify SSL enforcement | optional (read) |
-| `database_network_restrictions_read` | verify network restrictions | optional (read) |
-| `database_readonly_config_read` | read-only-mode status | optional |
-| `api_gateway_keys_read` | API keys | **not needed** – you copy keys from the dashboard straight into the secret stores |
-| `edge_functions_read`, `edge_functions_secrets_read`, branches | edge functions / branching | **not needed** (TURVIO uses neither) |
+| Database | Read-write | steps 1–4, 6, 8: migrations, service role, bucket (SQL), verification |
+| Auth Config | Read-write | step 5: invite-only, 12-character passwords |
+| Data API / PostgREST config | Read-write | step 7: stop exposing `public` over REST/GraphQL |
 
-**Write access needed for the plan.** These names are inferred from Supabase's `<area>_read` naming. Confirm the exact labels in the token form, and grant them only on `turvio-staging`.
+Recommended reads: Project admin (status/health), Backups. **Not needed:**
+- organisation or account access;
+- API keys (you copy them from the dashboard into the secret stores yourself);
+- Storage Read-write (the bucket is created with SQL);
+- edge functions, branches, network/SSL write.
 
-| Step | Access |
-|---|---|
-| Apply migrations, `turvio_service` role, `pg_cron` schedule (steps 2–4, 7) | database **write** (run SQL that is not read-only / apply migrations) |
-| Auth settings (step 5) | auth config **write** |
-| Private `proofs` bucket (step 6) | storage **write** (buckets) |
+## 3. Final review of the files to run
 
-No organisation-wide or account permissions are needed. A 1–2-day expiry is enough for the change window.
+| # | File | SHA-256 (first 16) | Effect |
+|---|---|---|---|
+| 1 | 20261030000100_tenancy_core.sql | 2319190b8f669c29 | schema `app`, 14 tables with RLS, policies, helper functions, retention function |
+| 2 | 20261030000200_billing.sql | 728b3e5965b30292 | plans, subscriptions (RLS) |
+| 3 | 20261105000100_depot_scope.sql | 5cb03f36d4ca7f41 | depot-scoped memberships; replaces 10 policies from file 1 |
+| 4 | 20261106000100_dispatch_persistence.sql | d9b13196c3ec0962 | tour events, invitations, live-update triggers (NOTIFY) |
+| 5 | 20261107000100_stop_status_values.sql | a77d89cfc63d5da3 | adds enum values |
+| 6 | 20261107000200_driver_execution.sql | c084b6d5a7074f30 | driver RPCs, proofs metadata, `app.storage_deletions`; replaces 1 function and 1 policy from earlier files |
+| 7 | 20261108000100_geocoder.sql | 9d359d12563794b5 | schema `geo`, `geo.addresses` (no access for anon/authenticated) |
+| 8 | 20261108000200_route_editing.sql | 59fa958a883159c3 | stop edit/delete/merge RPCs |
+| 9 | 20261108000300_access_audit.sql | 28c2a1c3e45d21b0 | `app.log_read` (not callable by clients) |
+| 10 | 20261109000100_geocoder_spelling.sql | 2f3cc00885a9855c | new normaliser; rebuilds an index on the (empty) address table |
+| 11 | **20261110000100_privilege_hardening.sql** | 84f28b038ca552e5 | **new since the report:** removes TRUNCATE/REFERENCES/TRIGGER/MAINTAIN on public tables from anon and authenticated |
 
-## 3. Migration plan (nothing below has been run)
+Then the hosted-only files (never run locally):
+- `supabase/hosted/10_turvio_service.sql`: API login role, no RLS bypass, no password.
+- `supabase/hosted/20_proofs_bucket.sql`: private `proofs` bucket, 5 MB, JPEG/PNG/SVG, no client policies.
+- `supabase/hosted/90_verify.sql`: verification. It always rolls back.
 
-0. **Precondition.** The project is empty (0 tables, 0 users), so no existing data can be affected. With `backups_read` I would confirm the daily backup first. The Free plan has no point-in-time recovery, so the rollback in step 9 is the safety net.
-1. **Dry run (done).** All migrations and integration tests pass on PG 17.11 locally.
-2. **Migrations.** Apply the 10 files in filename order with the Management API's migration endpoint (`POST /v1/projects/{ref}/database/migrations`, one file per call). This records each one in `supabase_migrations.schema_migrations`, so a later `supabase db push` from your Mac sees them as applied. Each file runs in its own transaction, and I stop at the first error.
-3. **Service role.** Apply `supabase/hosted/10_turvio_service.sql`. **You** set the password in the dashboard SQL editor (`alter role turvio_service password '<generated>'`), so it never passes through me or the chat. Then store `DATABASE_URL=postgres://turvio_service.xwryomkbrkwjytwofgcu:<pw>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require` in the API host's secret store. Use the **session** pooler (5432): the live updates use LISTEN/NOTIFY, which does not work on the transaction pooler (6543).
-4. **Read-only verification.**
-   - Every `public` table has RLS.
-   - The policy count matches the local database.
-   - `anon` has no table grants.
-   - `turvio_service` has no `bypassrls`.
-   - A tenant-isolation smoke test runs inside a transaction that is rolled back.
-5. **Auth settings.**
-   - `disable_signup=true` (TURVIO is invite-only).
-   - Password minimum length 12, with letters and digits required.
-   - `site_url` and redirect URLs set to the staging Dispatch/Admin URLs, once hosting exists.
-   - Keep e-mail confirmation and TOTP MFA (already on).
-   - Leaked-password protection, if the plan offers it.
-   - **SMTP:** the built-in mailer (2 mails/h) is too slow for inviting 7 pilot users. It needs an EU SMTP provider, which is your decision (cost).
-6. **Storage.** Create the private bucket `proofs`:
-   - `public=false`;
-   - 5 MB file size limit, matching the API's `MAX_PROOF_BYTES`;
-   - allowed types `image/jpeg`, `image/png`, `image/svg+xml`;
-   - no storage policies for `anon`/`authenticated`. Only the API reads and writes it with the service key, after its own access check.
-7. **Retention.** `create extension pg_cron;` then `select cron.schedule('turvio-retention', '17 3 * * *', 'select app.purge_expired_data()');`. Alternatively, skip pg_cron and set `BACKGROUND_JOBS=true` on one API instance.
-8. **Synthetic JARBOU pilot data.** Create users through the real invitation flow (Admin app → invitation e-mail), not by writing `auth.users`. The current seed writes `auth.users` directly; that is fine locally but must not be used on hosted Supabase. Synthetic tours/stops then go through the API (Dispatch import), not raw SQL. No real customer data.
-9. **Rollback** (destructive, so only with your explicit go-ahead at that moment): the project is otherwise empty, so it is
-   - `drop schema app cascade; drop schema geo cascade;`
-   - drop the TURVIO tables in `public`;
-   - `drop role turvio_service;`
-   - delete the `proofs` bucket;
-   - delete the rows in `supabase_migrations.schema_migrations`.
+**Destructive statements: none against existing data.** The project has 0 tables and 0 users. All `drop` statements replace objects created earlier in the same set (policies, one function, one constraint, one index). Every `delete` either sits inside a runtime function or targets the empty address table (file 10). There is no `drop table`, no `truncate`, no change to `auth`, `storage` or Supabase roles, and nothing grants `anon` access.
 
-Order and time: steps 2–4 take about 10 min, 5–7 about 10 min, and 8 depends on SMTP and hosting.
+**Why file 11 is new.** This project's real default privileges (`pg_default_acl`) give anon and authenticated TRUNCATE, REFERENCES, TRIGGER and MAINTAIN on every new table, and TRUNCATE ignores RLS. The local stubs now emulate these defaults:
+- Without file 11, `authenticated` could truncate all 19 tables.
+- With it, none.
+
+## 4. Execution plan (awaiting approval; nothing has been run)
+
+0. **Gate.** Check that the project is still empty: 0 tables in `public` and 0 migrations recorded. If not, stop.
+1. **Migrations.** Apply files 1–11 in order through `POST /v1/projects/{ref}/database/migrations`, one call per file, so each one is recorded in Supabase's migration history.
+   - After file 1, check that the tables are owned by `postgres`; if not, stop.
+   - Stop at the first error. Each file runs in its own transaction.
+2. **Service role.** Run `hosted/10_turvio_service.sql`.
+   - **You** then set the password in the dashboard SQL editor: `alter role turvio_service password '<generated>'`.
+   - Store the connection string only in the API host's secret store: session pooler, port 5432, user `turvio_service.xwryomkbrkwjytwofgcu`.
+3. **Bucket.** Run `hosted/20_proofs_bucket.sql`.
+4. **Retention job.** `create extension if not exists pg_cron;` then `select cron.schedule('turvio-retention', '17 3 * * *', 'select app.purge_expired_data()');`
+5. **Auth.** `PATCH /config/auth` with exactly `supabase/hosted/auth-config.staging.json`:
+   - sets `disable_signup=true` and `password_min_length=12` (letters and digits required);
+   - restates the existing protections unchanged: e-mail confirmation on, TOTP on, anonymous sign-in off, refresh-token rotation on.
+
+   Not changed yet: site URL and redirect URLs (no staging host exists), and SMTP (your decision, it costs money). Invitations keep working with sign-up off, because TURVIO creates accounts through the admin API. TURVIO's own policy is raised to 12 characters as well.
+6. **Verify.** Run `hosted/90_verify.sql`; it rolls back. It covers:
+   - driver sees own tour only;
+   - depot-scoped dispatcher;
+   - cross-tenant reads and writes;
+   - user without membership;
+   - anon has no access;
+   - no TRUNCATE;
+   - RLS on every table;
+   - ownership;
+   - `turvio_service`;
+   - private bucket with no client policies.
+
+   Locally on PG 17: 12/12 with file 11, and 10/12 without it.
+7. **Data API.** Restrict the exposed schemas so `public` is no longer served over Supabase's REST/GraphQL. TURVIO never uses them (checked: no client calls `/rest/v1` or `/graphql/v1`). This removes a path that would bypass the TURVIO API's MFA enforcement and rate limits. Then re-read the config.
+8. **Auth tests against hosted GoTrue** (sign-up refused, short password refused, invite → login → TOTP). These need two things this environment doesn't have yet:
+   - the host `xwryomkbrkwjytwofgcu.supabase.co` added to the network allowlist;
+   - the project's publishable (anon) key, saved as a secret through the secure form and never in chat.
+
+   I'll ask for both at that step.
+
+**Rollback** (only with your explicit go-ahead at that moment): drop schemas `app` and `geo` with cascade, drop the TURVIO tables and types in `public`, drop role `turvio_service`, delete the `proofs` bucket, unschedule the cron job, delete the migration-history rows, and restore the auth JSON values read in the audit.

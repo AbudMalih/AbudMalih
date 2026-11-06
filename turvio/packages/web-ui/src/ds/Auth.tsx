@@ -390,7 +390,7 @@ export function ForgotPasswordForm({ product }: { product: string }) {
 
 function passwordHint(pw: string): string | null {
   if (!pw) return null;
-  if (pw.length < 10) return "Use at least 10 characters";
+  if (pw.length < 12) return "Use at least 12 characters";
   if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) return "Use letters and at least one number";
   return null;
 }
