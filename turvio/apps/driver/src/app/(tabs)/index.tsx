@@ -16,7 +16,7 @@ export default function HomeScreen() {
   const t = useT();
   const { c, dark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { tours, tour, depot, driver, stops } = useMyTour();
+  const { tours, tour, depot, driver, stops, road } = useMyTour();
   const tourAction = useTourStore((s) => s.tourAction);
   const selectTour = useTourStore((s) => s.selectTour);
   const sync = useTourStore((s) => s.sync);
@@ -84,8 +84,16 @@ export default function HomeScreen() {
           {metrics && progress.total > 0 && (
             <View style={{ flexDirection: "row", gap: space.md, marginTop: space.xs }}>
               <Stat label={t("home.openStops")} value={String(progress.pending)} hint={t("home.parcels", { n: progress.parcels })} />
-              <Stat label={t("home.remainingDistance")} value={`${km(metrics.remainingMeters)} km`} hint={t("home.ofTotal", { total: `${km(metrics.totalMeters)} km` })} />
-              <Stat label={t("home.remainingTime")} value={duration(metrics.remainingDriveSeconds)} hint={t("common.straightLine")} />
+              <Stat
+                label={t("home.remainingDistance")}
+                value={`${km(road?.metrics?.remainingMeters ?? metrics.remainingMeters)} km`}
+                hint={t("home.ofTotal", { total: `${km(road?.metrics?.totalMeters ?? metrics.totalMeters)} km` })}
+              />
+              <Stat
+                label={t("home.remainingTime")}
+                value={duration(road?.metrics?.remainingDriveSeconds ?? metrics.remainingDriveSeconds)}
+                hint={road ? t("common.roadNetwork") : t("common.straightLine")}
+              />
             </View>
           )}
           {unlocated > 0 && <Banner text={t("home.needsLocation", { n: unlocated })} tone="warning" icon="location-outline" />}

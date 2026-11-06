@@ -266,3 +266,55 @@ export function routeMetrics(start: GeoPoint, stops: Stop[], end?: GeoPoint): Ro
     source: "haversine_estimate",
   };
 }
+
+export interface RoadMetrics {
+  totalMeters: number;
+  totalDriveSeconds: number;
+  remainingMeters: number;
+  remainingDriveSeconds: number;
+  /** Estimated arrival (minutes since local midnight) per open stop, from road travel times. */
+  etas: Record<string, number>;
+  source: "osrm";
+}
+
+/**
+ * Figures from a road route. `waypointStopIds[i]` is the stop at waypoint i
+ * (null for start/end); leg i runs from waypoint i to i+1. Remaining = legs
+ * after the last closed stop. ETAs add service times and wait for time windows.
+ */
+export function roadMetrics(stops: Stop[], route: { legs: { meters: number; seconds: number }[]; waypointStopIds: (string | null)[] }, fromMinute: number): RoadMetrics {
+  const byId = new Map(stops.map((s) => [s.id, s]));
+  const ids = route.waypointStopIds;
+  let lastClosed = 0;
+  ids.forEach((id, i) => {
+    const s = id ? byId.get(id) : undefined;
+    if (s && !isOpen(s.status)) lastClosed = i;
+  });
+  let totalMeters = 0;
+  let totalDriveSeconds = 0;
+  let remainingMeters = 0;
+  let remainingDriveSeconds = 0;
+  route.legs.forEach((l, i) => {
+    totalMeters += l.meters;
+    totalDriveSeconds += l.seconds;
+    if (i >= lastClosed) {
+      remainingMeters += l.meters;
+      remainingDriveSeconds += l.seconds;
+    }
+  });
+  const etas: Record<string, number> = {};
+  let t = fromMinute;
+  for (let i = lastClosed + 1; i < ids.length; i++) {
+    t += (route.legs[i - 1]?.seconds ?? 0) / 60;
+    const s = ids[i] ? byId.get(ids[i]!) : undefined;
+    if (!s || !isOpen(s.status)) continue;
+    if (s.timeWindow && t < s.timeWindow.start) t = s.timeWindow.start;
+    etas[s.id] = Math.round(t);
+    t += s.serviceSeconds / 60;
+  }
+  return { totalMeters, totalDriveSeconds, remainingMeters, remainingDriveSeconds, etas, source: "osrm" };
+}
+
+/** Identifies a stop order + positions + statuses; a cached road route is valid only for the same key. */
+export const routeKey = (stops: Pick<Stop, "id" | "sequence" | "status" | "location">[]) =>
+  stops.map((s) => `${s.id}:${s.sequence}:${s.status}:${s.location?.lat ?? ""}`).join("|");

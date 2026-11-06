@@ -1,4 +1,4 @@
-import { sortBySequence, type Stop, type Tour } from "@turvio/shared";
+import { routeKey, sortBySequence, type Stop, type Tour } from "@turvio/shared";
 import { useMemo } from "react";
 import { DEFAULT_DRIVER_SETTINGS } from "../lib/sync";
 import { useTourStore } from "./tourStore";
@@ -12,6 +12,7 @@ export function useMyTour() {
   const driverId = useTourStore((s) => s.driverId);
   const activeTourId = useTourStore((s) => s.activeTourId);
   const settingsByOrg = useTourStore((s) => s.settingsByOrg);
+  const roads = useTourStore((s) => s.roads);
 
   return useMemo(() => {
     const mine = tours.filter((t) => t.driverId === driverId);
@@ -22,8 +23,11 @@ export function useMyTour() {
     const driver = drivers.find((d) => d.id === driverId);
     const stops: Stop[] = tour ? sortBySequence(allStops.filter((s) => s.tourId === tour.id)) : [];
     const settings = (tour && settingsByOrg[tour.organizationId]) || DEFAULT_DRIVER_SETTINGS;
-    return { tours: ordered, tour, depot, driver, stops, settings };
-  }, [tours, allStops, depots, drivers, driverId, activeTourId, settingsByOrg]);
+    // Road figures only while they match the current stop order (otherwise labelled estimates are shown).
+    const cached = tour ? roads?.[tour.id] : undefined;
+    const road = cached && cached.source === "osrm" && cached.key === routeKey(stops) ? cached : null;
+    return { tours: ordered, tour, depot, driver, stops, settings, road };
+  }, [tours, allStops, depots, drivers, driverId, activeTourId, settingsByOrg, roads]);
 }
 
 export function useStop(id: string | undefined) {

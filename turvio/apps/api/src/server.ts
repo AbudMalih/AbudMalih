@@ -8,9 +8,10 @@ import { Db } from "./db";
 import { ChangeFeed } from "./events";
 import { OutboxMailer, SmtpMailer, type Mailer } from "./mail";
 import { PgTenancyRepository, syntheticTenancy } from "./tenancy";
-import { NoGeocoder, NominatimGeocoder, PhotonGeocoder, type Geocoder } from "./geocode";
+import { NoGeocoder, NominatimGeocoder, PhotonGeocoder, PostgresGeocoder, type Geocoder } from "./geocode";
 import { LocalProofStore, SupabaseProofStore, processStorageDeletions, type ProofStore } from "./storage";
 import { resolve } from "node:path";
+import { OsrmRouting } from "./routing";
 
 const config = loadConfig();
 const corsOrigins = config.CORS_ORIGINS.split(",").map((s) => s.trim()).filter(Boolean);
@@ -39,7 +40,9 @@ if (config.AUTH_PROVIDER === "dev") {
       ? new SupabaseProofStore(config.SUPABASE_URL!, config.SUPABASE_SERVICE_ROLE_KEY!, config.PROOF_BUCKET)
       : new LocalProofStore(resolve(config.PROOF_STORAGE_DIR));
   const geocoder: Geocoder =
-    config.GEOCODER === "nominatim"
+    config.GEOCODER === "postgres"
+      ? new PostgresGeocoder((sql, params) => db.asService((tx) => tx.query(sql, params)) as never)
+      : config.GEOCODER === "nominatim"
       ? new NominatimGeocoder(config.GEOCODER_URL!, config.GEOCODER_USER_AGENT)
       : config.GEOCODER === "photon"
         ? new PhotonGeocoder(config.GEOCODER_URL!, config.GEOCODER_USER_AGENT)
@@ -60,6 +63,7 @@ if (config.AUTH_PROVIDER === "dev") {
     devMailbox: config.DEV_MAILBOX === "true",
     proofStore,
     geocoder,
+    routing: config.OSRM_URL ? new OsrmRouting(config.OSRM_URL, { timeoutMs: config.OSRM_TIMEOUT_MS }) : undefined,
   });
   // Background jobs: retention purge (hourly) and deletion of files of removed proofs.
   let jobs: NodeJS.Timeout | undefined;

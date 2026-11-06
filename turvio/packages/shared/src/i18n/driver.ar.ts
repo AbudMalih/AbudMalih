@@ -241,6 +241,7 @@ export const driverAr: Record<DriverMessageKey, string> = {
   "map.myLocation": "موقعي",
   "map.locationExplain": "يُعرض موقعك على هذا الهاتف فقط ولا يُرسل إلى أحد.",
   "map.schematic": "معاينة تخطيطية (إصدار الويب) – خطوط مستقيمة، بدون خريطة.",
+  "map.roadLine": "الخط = مسار الطريق (OSRM).",
   "map.orderLine": "الخط = ترتيب المحطات (خط مستقيم)، وليس الطريق.",
   "map.pickTitle": "اضغط على الخريطة لتحديد المحطة",
   "map.pickConfirm": "استخدام هذا الموقع",

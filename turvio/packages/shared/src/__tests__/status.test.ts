@@ -45,3 +45,27 @@ describe("route metrics (Dispatch and Driver show the same figures)", () => {
     expect(m.source).toBe("haversine_estimate");
   });
 });
+
+describe("road metrics", () => {
+  it("splits total and remaining at the last closed stop and computes ETAs with windows", async () => {
+    const { roadMetrics } = await import("../index");
+    const ds = createSyntheticDataset();
+    const stops = ds.stops.filter((s) => s.tourId === ds.tours[0]!.id).sort((a, b) => a.sequence - b.sequence).slice(0, 3);
+    const s0 = setStopStatus(stops[0]!, stops[0]!.type === "pickup" ? "picked_up" : "delivered");
+    const s1 = { ...stops[1]!, serviceSeconds: 120, timeWindow: undefined };
+    const s2 = { ...stops[2]!, serviceSeconds: 120, timeWindow: { start: 600, end: 660 } };
+    const m = roadMetrics([s0, s1, s2], {
+      waypointStopIds: [null, s0.id, s1.id, s2.id, null],
+      legs: [
+        { meters: 1000, seconds: 120 },
+        { meters: 2000, seconds: 300 },
+        { meters: 3000, seconds: 600 },
+        { meters: 4000, seconds: 900 },
+      ],
+    }, 540);
+    expect(m.totalMeters).toBe(10000);
+    expect(m.remainingMeters).toBe(9000); // after the first (closed) stop
+    expect(m.etas[s1.id]).toBe(545); // 540 + 5 min
+    expect(m.etas[s2.id]).toBe(600); // 545 + 2 service + 10 drive = 557 -> waits for window 10:00
+  });
+});

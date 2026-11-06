@@ -241,6 +241,7 @@ export const driverRo: Record<DriverMessageKey, string> = {
   "map.myLocation": "Locația mea",
   "map.locationExplain": "Poziția ta este afișată doar pe acest telefon și nu este trimisă nimănui.",
   "map.schematic": "Previzualizare schematică (versiune web) – linii drepte, fără hartă.",
+  "map.roadLine": "Linia = traseu rutier (OSRM).",
   "map.orderLine": "Linia = ordinea opririlor (linie dreaptă), nu drumul.",
   "map.pickTitle": "Atinge harta pentru a plasa oprirea",
   "map.pickConfirm": "Folosește această poziție",

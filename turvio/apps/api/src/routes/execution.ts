@@ -1,4 +1,6 @@
-import { DriverSettings, defaultFailureReasons } from "@turvio/shared";
+import { DriverSettings, defaultFailureReasons, nowInZone, roadMetrics, sortBySequence } from "@turvio/shared";
+import { STOP_SELECT, orgTimeZone, toStop, type StopRow, type TourRow } from "../data/dispatch";
+import { RoutingUnavailable, type RoutingProvider } from "../routing";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { ApiError, type Tx } from "../db";
@@ -36,7 +38,7 @@ export async function driverSettingsOf(tx: Tx, orgId: string) {
   };
 }
 
-export type ExecutionDeps = { proofStore?: ProofStore; geocoder?: Geocoder };
+export type ExecutionDeps = { proofStore?: ProofStore; geocoder?: Geocoder; routing?: RoutingProvider };
 
 export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: RouteCtx, extra: ExecutionDeps) {
   const db = deps.db;
@@ -167,6 +169,35 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
     return reply.status(204).send(); // the file is removed by the storage-deletion worker
   });
 
+  // ------------------------------------------------------------ road route (Dispatch and Driver use the same figures)
+  app.get("/v1/orgs/:orgId/tours/:id/route", { preHandler: guards.requireTenant("tours.view_own") }, async (req, reply) => {
+    const { orgId, id } = IdParams.parse(req.params);
+    const data = await db.asUser(claims(req), async (tx) => {
+      const tour = (await tx.query<TourRow>(`select * from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
+      if (!tour) throw new ApiError(404, "not_found", "Tour not found");
+      const depot = (await tx.query<{ lat: number; lng: number }>(`select lat, lng from depots where id = $1`, [tour.depot_id])).rows[0]!;
+      const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 order by s.sequence`, [id])).rows.map(toStop);
+      const tz = await orgTimeZone(tx, orgId);
+      return { tour, depot, stops, now: nowInZone(tz).minute };
+    });
+    const start = data.tour.start_lat != null && data.tour.start_lng != null ? { lat: data.tour.start_lat, lng: data.tour.start_lng } : data.depot;
+    const end = data.tour.end_lat != null && data.tour.end_lng != null ? { lat: data.tour.end_lat, lng: data.tour.end_lng } : data.depot;
+    const located = sortBySequence(data.stops).filter((s) => s.type !== "break" && s.location);
+    const waypointStopIds: (string | null)[] = [null, ...located.map((s) => s.id), null];
+    const points = [start, ...located.map((s) => s.location!), end];
+    const unlocated = data.stops.filter((s) => !s.location).map((s) => s.id);
+    if (!extra.routing) return { source: "none", note: "No routing service configured – figures are straight-line estimates", waypointStopIds, unlocatedStopIds: unlocated };
+    try {
+      const r = await extra.routing.route(points);
+      const running = data.tour.status === "in_progress" || data.tour.status === "paused";
+      const metrics = roadMetrics(data.stops, { legs: r.legs, waypointStopIds }, running ? data.now : data.tour.planned_start_minute);
+      return { source: "osrm", waypointStopIds, legs: r.legs, geometry: r.geometry, metrics, unlocatedStopIds: unlocated, computedAt: new Date().toISOString() };
+    } catch (e) {
+      if (e instanceof RoutingUnavailable) return reply.send({ source: "none", note: `${e.message} – figures are straight-line estimates`, waypointStopIds, unlocatedStopIds: unlocated });
+      throw e;
+    }
+  });
+
   // ------------------------------------------------------------ address search
   const limiter = new RateLimiter(2, 6);
   const geocodeGuard = (userId: string) => {
@@ -208,6 +239,29 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
     if (!q) return;
     const g = geocodeGuard(req.user!.userId);
     return { provider: g.name, result: await wrap(() => g.reverse(q.lat, q.lng)) };
+  });
+
+  /** Bulk geocoding for imports: exact structured matches only (house or street level), never fuzzy guesses. */
+  const batchLimiter = new RateLimiter(0.5, 3);
+  app.post("/v1/geocode/batch", { preHandler: guards.authenticate }, async (req, reply) => {
+    const b = parse(
+      z.object({ addresses: z.array(z.object({ street: z.string().trim().min(2).max(200), houseNumber: z.string().trim().max(20).optional(), postalCode: z.string().trim().max(10), city: z.string().trim().max(100).optional() })).min(1).max(200) }),
+      req.body,
+      reply,
+    );
+    if (!b) return;
+    const g = extra.geocoder;
+    if (!g || g.name === "none") throw new ApiError(503, "geocoder_unavailable", "Address search is not configured");
+    if (!batchLimiter.take(req.user!.userId)) throw new ApiError(429, "rate_limited", "Too many batch requests – try again in a moment");
+    const exact = (g as { exact?: (a: { street: string; houseNumber?: string; postalCode: string }) => Promise<unknown> }).exact?.bind(g);
+    const results = [];
+    for (const a of b.addresses) {
+      const r = exact
+        ? await exact(a)
+        : (await wrap(() => g.search(`${a.street} ${a.houseNumber ?? ""}, ${a.postalCode} ${a.city ?? ""}`, { countryCodes: ["DE"], limit: 1 })))[0] ?? null;
+      results.push(r ?? null);
+    }
+    return { provider: g.name, results };
   });
 
   app.get("/v1/geocode/status", { preHandler: guards.authenticate }, async () => ({ provider: extra.geocoder?.name ?? "none", available: !!extra.geocoder && extra.geocoder.name !== "none" }));

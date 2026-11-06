@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { tourColor } from "../lib/helpers";
+import { routeKey, useRoadRoute } from "../lib/road";
 import { useDispatch } from "../lib/store";
 import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
 import { TourDetail } from "./TourDetail";
@@ -94,6 +95,8 @@ function Overview() {
 export function MapWorkspace() {
   const d = useDispatch();
   const { summaries, data, selectedTourId, selectedStopId, selectTour, selectStop, scoped } = d;
+  const selectedSummary = summaries.find((x) => x.tour.id === selectedTourId);
+  const road = useRoadRoute(d.session.organizationId, selectedTourId, selectedSummary ? routeKey(selectedSummary.stops) : "");
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [mobilePane, setMobilePane] = useState<"tours" | "map">("map");
@@ -160,6 +163,7 @@ export function MapWorkspace() {
             onSelectTour={selectTour}
             onSelectStop={(stopId, tourId) => selectStop(stopId, tourId)}
             fitRequest={fitRequest}
+            road={road?.source === "osrm" && road.geometry && selectedTourId ? { tourId: selectedTourId, geometry: road.geometry } : null}
           />
           {isDesktop && (
             <div className="absolute start-3 top-3 z-[460] flex gap-1.5">

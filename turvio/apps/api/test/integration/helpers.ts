@@ -12,6 +12,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { LocalProofStore } from "../../src/storage";
 import type { Geocoder } from "../../src/geocode";
+import type { RoutingProvider } from "../../src/routing";
 
 /**
  * Integration harness: a fresh PostgreSQL database with all migrations, the
@@ -46,7 +47,7 @@ export const fakeOptimizerFetch: typeof fetch = async (_url, init) => {
   return new Response(JSON.stringify({ routes, unassignedStopIds: [], matrixSource: "haversine_estimate", status: "feasible", engine: "or-tools" }), { status: 200 });
 };
 
-export async function createTestEnv(name: string, opts: { geocoder?: Geocoder } = {}) {
+export async function createTestEnv(name: string, opts: { geocoder?: Geocoder; routing?: RoutingProvider } = {}) {
   const dbName = `turvio_it_${name}_${process.pid}`;
   const admin = new pg.Client({ connectionString: adminUrl("postgres") });
   await admin.connect();
@@ -85,6 +86,7 @@ export async function createTestEnv(name: string, opts: { geocoder?: Geocoder } 
     devMailbox: true,
     proofStore: new LocalProofStore(proofDir),
     geocoder: opts.geocoder,
+    routing: opts.routing,
   });
   await app.ready();
 

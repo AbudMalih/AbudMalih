@@ -239,6 +239,7 @@ export const driverEn = {
   "map.myLocation": "My location",
   "map.locationExplain": "Your position is shown only on this phone and is not sent to anyone.",
   "map.schematic": "Schematic preview (web build) – straight lines, no map tiles.",
+  "map.roadLine": "Line = road route (OSRM).",
   "map.orderLine": "Line = stop order (straight), not the road route.",
   "map.pickTitle": "Tap the map to place the stop",
   "map.pickConfirm": "Use this position",

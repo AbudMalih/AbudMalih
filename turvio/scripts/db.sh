@@ -21,7 +21,7 @@ init() {
   if [ -f "$PGDATA/PG_VERSION" ]; then echo "cluster exists at $PGDATA"; return; fi
   mkdir -p "$PGDATA"
   [ "$(id -u)" = "0" ] && chown postgres:postgres "$PGDATA"
-  "${RUN[@]}" "$PGBIN/initdb" -D "$PGDATA" -U postgres --auth-local=trust --auth-host=scram-sha-256 >/dev/null
+  "${RUN[@]}" "$PGBIN/initdb" -D "$PGDATA" -U postgres -E UTF8 --locale=C.UTF-8 --auth-local=trust --auth-host=scram-sha-256 >/dev/null
   echo "initialised $PGDATA"
 }
 

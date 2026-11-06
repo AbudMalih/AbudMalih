@@ -46,3 +46,64 @@ export function boundingRegion(points: GeoPoint[], paddingFactor = 1.3) {
     longitudeDelta: Math.max((maxLng - minLng) * paddingFactor, 0.01),
   };
 }
+
+export interface MapRegion {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
+
+export type MapItem<T> = { kind: "single"; item: T; point: GeoPoint } | { kind: "cluster"; items: T[]; point: GeoPoint; id: string };
+
+/**
+ * Grid clustering + viewport culling for large tours (hundreds of stops): items outside the
+ * visible region (plus a margin) are skipped; inside, items sharing a grid cell are merged
+ * into one cluster when there are too many to draw individually. `keep` items (current/next
+ * stop) are always drawn on their own. O(n), no allocation-heavy spatial index.
+ */
+export function clusterForRegion<T>(
+  items: T[],
+  pointOf: (t: T) => GeoPoint | null,
+  region: MapRegion,
+  opts: { maxMarkers?: number; cellsAcross?: number; keep?: (t: T) => boolean } = {},
+): MapItem<T>[] {
+  const maxMarkers = opts.maxMarkers ?? 60;
+  const margin = 0.25;
+  const minLat = region.latitude - region.latitudeDelta * (0.5 + margin);
+  const maxLat = region.latitude + region.latitudeDelta * (0.5 + margin);
+  const minLng = region.longitude - region.longitudeDelta * (0.5 + margin);
+  const maxLng = region.longitude + region.longitudeDelta * (0.5 + margin);
+  const visible: { item: T; point: GeoPoint }[] = [];
+  const out: MapItem<T>[] = [];
+  for (const item of items) {
+    const point = pointOf(item);
+    if (!point) continue;
+    if (opts.keep?.(item)) {
+      out.push({ kind: "single", item, point });
+      continue;
+    }
+    if (point.lat < minLat || point.lat > maxLat || point.lng < minLng || point.lng > maxLng) continue;
+    visible.push({ item, point });
+  }
+  if (visible.length <= maxMarkers) return [...out, ...visible.map((v) => ({ kind: "single" as const, ...v }))];
+  const cells = opts.cellsAcross ?? 8;
+  const cw = region.longitudeDelta / cells;
+  const ch = region.latitudeDelta / cells;
+  const grid = new Map<string, { item: T; point: GeoPoint }[]>();
+  for (const v of visible) {
+    const key = `${Math.floor(v.point.lng / cw)}:${Math.floor(v.point.lat / ch)}`;
+    const cell = grid.get(key);
+    if (cell) cell.push(v);
+    else grid.set(key, [v]);
+  }
+  for (const [key, cell] of grid) {
+    if (cell.length === 1) out.push({ kind: "single", ...cell[0]! });
+    else {
+      const lat = cell.reduce((a, c) => a + c.point.lat, 0) / cell.length;
+      const lng = cell.reduce((a, c) => a + c.point.lng, 0) / cell.length;
+      out.push({ kind: "cluster", id: key, items: cell.map((c) => c.item), point: { lat, lng } });
+    }
+  }
+  return out;
+}

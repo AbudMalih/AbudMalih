@@ -13,6 +13,7 @@ import { registerEventRoutes } from "./routes/events";
 import { registerExecutionRoutes } from "./routes/execution";
 import type { Geocoder } from "./geocode";
 import type { ProofStore } from "./storage";
+import type { RoutingProvider } from "./routing";
 import { registerOrgRoutes } from "./routes/org";
 import { registerPlatformRoutes } from "./routes/platform";
 import { registerTourRoutes } from "./routes/tours";
@@ -34,6 +35,7 @@ export interface AppDeps {
   events?: ChangeFeed;
   proofStore?: ProofStore;
   geocoder?: Geocoder;
+  routing?: RoutingProvider;
 }
 
 declare module "fastify" {
@@ -142,7 +144,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     registerOrgRoutes(app, ctx);
     registerTourRoutes(app, ctx);
     registerDriverRoutes(app, ctx);
-    registerExecutionRoutes(app, ctx, { proofStore: deps.proofStore, geocoder: deps.geocoder });
+    registerExecutionRoutes(app, ctx, { proofStore: deps.proofStore, geocoder: deps.geocoder, routing: deps.routing });
     registerPlatformRoutes(app, ctx);
     if (deps.events) registerEventRoutes(app, { ...ctx, events: deps.events });
   }

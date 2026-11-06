@@ -20,6 +20,8 @@ export interface RouteMapProps {
   onSelectStop: (stopId: string, tourId: string) => void;
   /** Increment to request "fit to selection". */
   fitRequest?: number;
+  /** Road geometry of the selected tour (OSRM); without it the order is drawn as straight lines. */
+  road?: { tourId: string; geometry: [number, number][] } | null;
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -150,7 +152,11 @@ export function RouteMap(props: RouteMapProps) {
         Lf.polyline(path.slice(0, doneCount + 1), { color: "#94A3B8", weight: selected ? 3 : 2, opacity: dim ? 0.15 : 0.7, dashArray: "4 6" }).addTo(group);
       }
       const remaining = path.slice(doneCount);
-      if (remaining.length > 1) {
+      if (props.road && props.road.tourId === s.tour.id && props.road.geometry.length > 1) {
+        Lf.polyline(props.road.geometry, { color, weight: selected ? 5 : 3, opacity: dim ? 0.18 : 0.95 })
+          .bindTooltip(`<strong>${esc(s.tour.name)}</strong> · road route (OSRM)`, { sticky: true })
+          .addTo(group);
+      } else if (remaining.length > 1) {
         Lf.polyline(remaining, { color, weight: selected ? 5 : 3, opacity: dim ? 0.18 : selected ? 0.95 : 0.7 })
           .on("click", (e) => {
             Lf.DomEvent.stopPropagation(e);
@@ -220,7 +226,7 @@ export function RouteMap(props: RouteMapProps) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, props.summaries, props.depots, props.unassigned, props.selectedTourId, props.selectedStopId, showCompleted, showUnassigned]);
+  }, [state, props.summaries, props.depots, props.unassigned, props.selectedTourId, props.selectedStopId, showCompleted, showUnassigned, props.road]);
 
   // Fit on first load, on selection change and on request.
   const firstFit = useRef(false);

@@ -29,6 +29,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { api, errorMessage } from "../lib/api";
 import { tourColor } from "../lib/helpers";
+import { routeKey, useRoadRoute } from "../lib/road";
 import { useDispatch } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -67,7 +68,7 @@ function StopMarker({ stop, color, index }: { stop: Stop; color: string; index: 
   );
 }
 
-export function StopRow({ summary, stop, index, expanded, onToggle }: { summary: TourSummary; stop: Stop; index: number; expanded: boolean; onToggle: () => void }) {
+export function StopRow({ summary, stop, index, expanded, onToggle, roadEta }: { summary: TourSummary; stop: Stop; index: number; expanded: boolean; onToggle: () => void; roadEta?: number }) {
   const { scoped, setPriority } = useDispatch();
   const [busy, setBusy] = useState(false);
   const color = tourColor(scoped, summary.tour.id);
@@ -86,7 +87,9 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
           <span className="block truncate text-xs text-muted">{formatAddress(stop)}</span>
         </span>
         <span className="shrink-0 text-end">
-          <span className={cn("block text-xs font-medium tabular", p?.late ? "text-danger-ink" : p?.atRisk ? "text-warning-ink" : "text-ink-2")}>{p ? formatClock(p.etaMinute) : "–"}</span>
+          <span className={cn("block text-xs font-medium tabular", p?.late ? "text-danger-ink" : p?.atRisk ? "text-warning-ink" : "text-ink-2")}>
+            {roadEta !== undefined && isOpen(stop.status) ? formatClock(roadEta) : p ? formatClock(p.etaMinute) : "–"}
+          </span>
           <span className={cn("block text-2xs", isNotDelivered(stop.status) ? "text-danger-ink" : "text-subtle")}>{stop.status === "pending" ? "ETA" : st.label}</span>
         </span>
         <ChevronDown className={cn("size-4 shrink-0 text-subtle transition-transform", expanded && "rotate-180")} />
@@ -254,6 +257,8 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
   const startLabel = started !== null ? `${formatClock(started)} (actual)` : `${formatClock(s.tour.plannedStartMinute)} (planned)`;
   const open = s.tour.status !== "completed";
   const canManage = session.role !== "driver";
+  const road = useRoadRoute(session.organizationId, s.tour.id, routeKey(s.stops));
+  const rm = road?.source === "osrm" ? road.metrics : undefined;
 
   const optimize = async () => {
     setBusy("optimize");
@@ -343,13 +348,21 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         <Fact icon={<Truck />} label="Vehicle" value={s.vehicleLabel ?? <span className="text-warning-ink">Not assigned</span>} sub={s.vehiclePlate ?? undefined} />
         <Fact icon={<Warehouse />} label="Start depot" value={s.depot.name} sub={formatAddress(s.depot)} />
         <Fact icon={<Clock />} label="Start" value={startLabel} sub={`Est. return ${formatClock(t.projectedEndMinute)}`} />
-        <Fact icon={<Gauge />} label="Est. duration" value={formatDuration(t.durationMinutes)} sub="estimate" />
-        <Fact
-          icon={<Route />}
-          label="Est. distance"
-          value={`${(t.distanceMeters / 1000).toFixed(1)} km total`}
-          sub={`${(t.remainingMeters / 1000).toFixed(1)} km remaining · straight-line × 1.35`}
-        />
+        {rm ? (
+          <Fact icon={<Gauge />} label="Road driving time" value={formatDuration(Math.round(rm.totalDriveSeconds / 60))} sub={`${formatDuration(Math.round(rm.remainingDriveSeconds / 60))} remaining · road network`} />
+        ) : (
+          <Fact icon={<Gauge />} label="Est. duration" value={formatDuration(t.durationMinutes)} sub="estimate" />
+        )}
+        {rm ? (
+          <Fact icon={<Route />} label="Road distance" value={`${(rm.totalMeters / 1000).toFixed(1)} km total`} sub={`${(rm.remainingMeters / 1000).toFixed(1)} km remaining · road network (OSRM)`} />
+        ) : (
+          <Fact
+            icon={<Route />}
+            label="Est. distance"
+            value={`${(t.distanceMeters / 1000).toFixed(1)} km total`}
+            sub={`${(t.remainingMeters / 1000).toFixed(1)} km remaining · straight-line × 1.35`}
+          />
+        )}
         <Fact icon={<MapPin />} label="Stops" value={`${s.total} total`} sub={`${s.delivered} done · ${s.failed} not delivered`} />
         <Fact
           icon={<ArrowUpFromLine />}
@@ -361,6 +374,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
 
       {s.tour.optimization && (
         <p className="text-2xs text-muted">
+          {road?.source === "none" && road.note ? <span className="block">{road.note}</span> : null}
           Last optimized {s.tour.optimizedAt ? new Date(s.tour.optimizedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : ""} ·{" "}
           {s.tour.optimization.matrixSource === "osrm" ? "road network" : "straight-line estimate"}
         </p>
@@ -410,7 +424,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         ) : (
           <ol className="flex flex-col">
             {s.stops.map((stop, i) => (
-              <StopRow key={stop.id} summary={s} stop={stop} index={i + 1} expanded={selectedStopId === stop.id} onToggle={() => selectStop(selectedStopId === stop.id ? null : stop.id)} />
+              <StopRow key={stop.id} summary={s} stop={stop} index={i + 1} expanded={selectedStopId === stop.id} onToggle={() => selectStop(selectedStopId === stop.id ? null : stop.id)} roadEta={rm?.etas[stop.id]} />
             ))}
           </ol>
         )}

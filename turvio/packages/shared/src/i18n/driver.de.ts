@@ -240,6 +240,7 @@ export const driverDe: Record<DriverMessageKey, string> = {
   "map.myLocation": "Mein Standort",
   "map.locationExplain": "Ihre Position wird nur auf diesem Telefon angezeigt und an niemanden gesendet.",
   "map.schematic": "Schematische Vorschau (Web-Build) – gerade Linien, keine Kartenkacheln.",
+  "map.roadLine": "Linie = Straßenroute (OSRM).",
   "map.orderLine": "Linie = Reihenfolge (Luftlinie), nicht der Straßenverlauf.",
   "map.pickTitle": "Tippen Sie auf die Karte, um den Stopp zu setzen",
   "map.pickConfirm": "Diese Position verwenden",

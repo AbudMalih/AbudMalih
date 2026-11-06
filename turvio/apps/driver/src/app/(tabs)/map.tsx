@@ -16,7 +16,7 @@ export default function MapScreen() {
   const t = useT();
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
-  const { tour, depot, stops } = useMyTour();
+  const { tour, depot, stops, road } = useMyTour();
   const [showMe, setShowMe] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -36,7 +36,7 @@ export default function MapScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TourMap depot={depot} stops={stops} currentStopId={focus?.id} showUserLocation={showMe} onStopPress={(s) => setSelected(s.id)} />
+      <TourMap depot={depot} stops={stops} roadGeometry={road?.geometry ?? null} currentStopId={focus?.id} showUserLocation={showMe} onStopPress={(s) => setSelected(s.id)} />
       <View style={{ position: "absolute", top: insets.top + space.sm, right: space.lg, gap: space.sm }}>
         <IconButton icon={showMe ? "locate" : "locate-outline"} label={t("map.myLocation")} active={showMe} onPress={() => void toggleMe()} testID="map-locate" />
       </View>
@@ -49,7 +49,7 @@ export default function MapScreen() {
             <View style={{ flexDirection: "row", gap: space.sm }}>
               <NavigateButton stop={focus} />
             </View>
-            <Text style={[ty.small, { color: c.textSubtle, fontSize: 12 }]}>{t("map.orderLine")}</Text>
+            <Text style={[ty.small, { color: c.textSubtle, fontSize: 12 }]}>{road ? t("map.roadLine") : t("map.orderLine")}</Text>
           </View>
         )}
       </View>

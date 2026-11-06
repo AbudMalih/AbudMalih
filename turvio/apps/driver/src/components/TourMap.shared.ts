@@ -8,6 +8,8 @@ export interface TourMapProps {
   currentStopId?: string | null;
   /** Show the device's own position (only after the driver allowed location). */
   showUserLocation?: boolean;
+  /** Road geometry ([lat, lng]) from OSRM; without it the order is drawn as straight dashed lines. */
+  roadGeometry?: [number, number][] | null;
   /** Extra pin, e.g. the position being chosen for a stop. */
   pendingPin?: GeoPoint | null;
   onMapPress?: (point: GeoPoint) => void;

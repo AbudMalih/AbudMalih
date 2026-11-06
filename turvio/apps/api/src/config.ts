@@ -42,9 +42,12 @@ const Env = z.object({
   PROOF_STORAGE_DIR: z.string().default("./.data/proofs"),
   PROOF_BUCKET: z.string().default("proofs"),
   /** Address search: none (default – addresses are kept and marked "needs location"), nominatim or photon (self-hosted). */
-  GEOCODER: z.enum(["none", "nominatim", "photon"]).default("none"),
+  GEOCODER: z.enum(["none", "postgres", "nominatim", "photon"]).default("none"),
   GEOCODER_URL: z.url().optional(),
   GEOCODER_USER_AGENT: z.string().default("TURVIO (development)"),
+  /** Self-hosted OSRM for road distances, times and geometry (same instance the optimizer uses). Empty = straight-line estimates, labelled. */
+  OSRM_URL: z.url().optional(),
+  OSRM_TIMEOUT_MS: z.coerce.number().int().min(500).max(60000).default(8000),
   /** Run the retention purge and proof-file deletion worker inside the API process. */
   BACKGROUND_JOBS: z.enum(["true", "false"]).default("true"),
   /** Legacy synthetic mode (AUTH_PROVIDER=dev). */
@@ -63,7 +66,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error("SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY are required for AUTH_PROVIDER=supabase");
   }
   if (config.MAILER === "smtp" && !config.SMTP_URL) throw new Error("SMTP_URL is required for MAILER=smtp");
-  if (config.GEOCODER !== "none" && !config.GEOCODER_URL) throw new Error("GEOCODER_URL is required when GEOCODER is set");
+  if ((config.GEOCODER === "nominatim" || config.GEOCODER === "photon") && !config.GEOCODER_URL) throw new Error("GEOCODER_URL is required when GEOCODER is set");
   if (config.PROOF_STORAGE === "supabase" && (!config.SUPABASE_URL || !config.SUPABASE_SERVICE_ROLE_KEY)) {
     throw new Error("PROOF_STORAGE=supabase needs SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
   }

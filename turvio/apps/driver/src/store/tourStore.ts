@@ -7,6 +7,7 @@ import {
   moveStop as moveStopInList,
   normalizeTrackingNumber,
   resequence,
+  routeKey,
   setStopStatus as applyStatus,
   sortBySequence,
   validateOutcome,
@@ -73,7 +74,19 @@ export interface ProofCapture {
   location?: GeoPoint;
 }
 
+/** Road route from the API (OSRM), valid for the stop order it was computed for. */
+export interface CachedRoad {
+  key: string;
+  source: "osrm" | "none";
+  note?: string;
+  geometry?: [number, number][];
+  metrics?: { totalMeters: number; totalDriveSeconds: number; remainingMeters: number; remainingDriveSeconds: number; etas: Record<string, number> };
+  at: string;
+}
+
 export interface TourState extends SyntheticDataset {
+  roads: Record<string, CachedRoad>;
+  loadRoad(tourId: string): Promise<void>;
   driverId: string;
   locale: Locale | null;
   prefs: Prefs;
@@ -169,6 +182,7 @@ export const useTourStore = create<TourState>()(
         lastOptimization: null,
         optimizing: false,
         scans: {},
+        roads: {},
         user: null,
         outbox: [],
         failed: [],
@@ -420,9 +434,23 @@ export const useTourStore = create<TourState>()(
               }
             }
             set({ stops: replaceTourStops(get().stops, tourId, resequence(sortBySequence(outcome.stops))), lastOptimization: { ...outcome, tourId, at: now() } });
+            if (outcome.engine === "server") void get().loadRoad(tourId);
             return outcome;
           } finally {
             set({ optimizing: false });
+          }
+        },
+
+        loadRoad: async (tourId) => {
+          if (!isServerMode() || !get().user) return;
+          const tour = get().tours.find((t) => t.id === tourId);
+          if (!tour || get().outbox.some((o) => "tourId" in o && o.tourId === tourId)) return; // server order not current yet
+          const key = routeKey(sortBySequence(get().stops.filter((s) => s.tourId === tourId)));
+          try {
+            const r = await auth().request<Omit<CachedRoad, "key" | "at">>("GET", `/v1/orgs/${tour.organizationId}/tours/${tourId}/route`);
+            set({ roads: { ...get().roads, [tourId]: { key, source: r.source, note: r.note, geometry: r.geometry, metrics: r.metrics, at: now() } } });
+          } catch {
+            // offline: keep the cached route; it is only shown while the stop order still matches
           }
         },
 
@@ -483,6 +511,7 @@ export const useTourStore = create<TourState>()(
               const snap = applyOutbox(snapshotFrom(payload, get().driverId, get()), get().outbox, localTours);
               const active = get().activeTourId;
               set({ ...snap, activeTourId: active && snap.tours.some((t) => t.id === active) ? active : null, syncState: "idle", lastSyncAt: now() });
+              for (const t of snap.tours) if (t.status !== "completed") void get().loadRoad(t.id);
             } catch (e) {
               const offline = isTransient(e);
               set({ syncState: offline ? "offline" : "error", syncMessage: e instanceof Error ? e.message : String(e) });
@@ -514,6 +543,7 @@ export const useTourStore = create<TourState>()(
         settingsByOrg: s.settingsByOrg,
         lastOptimization: s.lastOptimization,
         scans: s.scans,
+        roads: s.roads,
         user: s.user,
         outbox: s.outbox,
         failed: s.failed,

@@ -145,3 +145,106 @@ export class RateLimiter {
     return ok;
   }
 }
+
+/** Normalisation identical to SQL geo.norm() (kept in sync; tested). */
+export function normAddressPart(t: string): string {
+  const map: Record<string, string> = { ä: "a", ö: "o", ü: "u", ß: "ss", à: "a", á: "a", â: "a", ã: "a", å: "a", ç: "c", è: "e", é: "e", ê: "e", ë: "e", ì: "i", í: "i", î: "i", ï: "i", ñ: "n", ò: "o", ó: "o", ô: "o", õ: "o", ù: "u", ú: "u", û: "u", ý: "y", ă: "a", ș: "s", ț: "t", ş: "s" };
+  return [...t.toLowerCase()]
+    .map((ch) => map[ch] ?? ch)
+    .join("")
+    .replace(/(strasse|straße|str\.|str)(\s|$)/g, "str$2")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Splits "Lister Meile 42, 30161 Hannover" style queries into parts. */
+export function parseQuery(q: string): { street: string; houseNumber?: string; postcode?: string; city?: string } {
+  let rest = q.replace(/\s+/g, " ").trim();
+  const pc = /\b(\d{5})\b/.exec(rest);
+  let city: string | undefined;
+  if (pc) {
+    city = rest.slice(pc.index + 5).replace(/^[\s,]+/, "").trim() || undefined;
+    rest = rest.slice(0, pc.index).replace(/[\s,]+$/, "");
+  } else {
+    const comma = rest.split(",");
+    if (comma.length > 1) {
+      city = comma.slice(1).join(",").trim() || undefined;
+      rest = comma[0]!.trim();
+    }
+  }
+  const hn = /^(.*?[^\d\s])\s*(\d{1,4}\s?[a-zA-Z]?(?:\s?[-/]\s?\d{1,4}[a-zA-Z]?)?)$/.exec(rest);
+  return { street: hn ? hn[1]!.trim() : rest, houseNumber: hn ? hn[2]!.replace(/\s/g, "").toLowerCase() : undefined, postcode: pc?.[1], city };
+}
+
+interface AddressRow {
+  street: string;
+  house_number: string | null;
+  postcode: string;
+  city: string;
+  lat: number;
+  lng: number;
+  exact: boolean;
+}
+
+type Query = <R>(sql: string, params: unknown[]) => Promise<{ rows: R[] }>;
+
+/**
+ * Self-hosted geocoder on PostgreSQL (`geo.addresses`, imported from OpenStreetMap).
+ * German address autocomplete by street prefix + house number + postal code/city.
+ * A house number that does not exist gives a street-level result (precision "street"),
+ * never an invented house position.
+ */
+export class PostgresGeocoder implements Geocoder {
+  readonly name = "postgres";
+  constructor(private readonly query: Query) {}
+
+  async search(q: string, opts: { limit?: number } = {}): Promise<GeocodeResult[]> {
+    const p = parseQuery(q);
+    const street = normAddressPart(p.street);
+    if (street.length < 3) return [];
+    const limit = opts.limit ?? 5;
+    const city = p.city ? normAddressPart(p.city) : null;
+    const { rows } = await this.query<AddressRow>(
+      `select street, house_number, postcode, city, lat, lng, (hn_norm = coalesce($2, '')) as exact
+         from geo.addresses
+        where street_norm like $1 || '%'
+          and ($3::text is null or postcode = $3)
+          and ($4::text is null or city_norm like $4 || '%')
+          and ($2::text is null or hn_norm like $2 || '%')
+        order by (hn_norm = coalesce($2, '')) desc, length(street_norm), street, nullif(regexp_replace(hn_norm, '\\D.*$', ''), '')::int nulls last, hn_norm
+        limit $5`,
+      [street, p.houseNumber ?? null, p.postcode ?? null, city, limit],
+    );
+    if (rows.length) return rows.map((r) => this.map(r, "house"));
+    if (!p.houseNumber) return [];
+    // House number unknown: street-level centre (clearly marked as such).
+    const street2 = await this.query<AddressRow>(
+      `select street, null as house_number, postcode, city, avg(lat) as lat, avg(lng) as lng, false as exact
+         from geo.addresses where street_norm = $1 and ($2::text is null or postcode = $2) and ($3::text is null or city_norm like $3 || '%')
+        group by street, postcode, city limit $4`,
+      [street, p.postcode ?? null, city, limit],
+    );
+    return street2.rows.map((r) => this.map(r, "street"));
+  }
+
+  async reverse(lat: number, lng: number): Promise<GeocodeResult | null> {
+    const { rows } = await this.query<AddressRow>(
+      `select street, house_number, postcode, city, lat, lng, true as exact from geo.addresses
+        where lat between $1 - 0.002 and $1 + 0.002 and lng between $2 - 0.003 and $2 + 0.003
+        order by (lat - $1) ^ 2 + ((lng - $2) * cos(radians($1))) ^ 2 limit 1`,
+      [lat, lng],
+    );
+    return rows[0] ? this.map(rows[0], "house") : null;
+  }
+
+  /** Exact structured match for imports (no fuzzy guessing). */
+  async exact(a: { street: string; houseNumber?: string; postalCode: string }): Promise<GeocodeResult | null> {
+    const r = await this.search(`${a.street} ${a.houseNumber ?? ""}, ${a.postalCode}`, { limit: 2 });
+    const hit = r.find((x) => x.precision === "house" && (!a.houseNumber || x.houseNumber?.toLowerCase().replace(/\s/g, "") === a.houseNumber.toLowerCase().replace(/\s/g, "")));
+    return hit ?? (r[0]?.precision === "street" ? r[0] : null);
+  }
+
+  private map(r: AddressRow, precision: GeocodePrecision): GeocodeResult {
+    const base = { street: r.street, houseNumber: r.house_number ?? undefined, postalCode: r.postcode, city: r.city, countryCode: "DE" };
+    return { ...base, label: label(base), location: { lat: Number(r.lat), lng: Number(r.lng) }, precision, source: "osm-local" };
+  }
+}

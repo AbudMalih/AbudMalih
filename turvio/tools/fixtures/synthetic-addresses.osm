@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC test data (not a real OSM excerpt): checks the extraction pipeline only. -->
+<osm version="0.6" generator="turvio-test">
+  <node id="1" lat="52.3826" lon="9.7462" version="1"><tag k="addr:street" v="Lister Meile"/><tag k="addr:housenumber" v="42"/><tag k="addr:postcode" v="30161"/><tag k="addr:city" v="Hannover"/></node>
+  <node id="2" lat="52.3830" lon="9.7470" version="1"><tag k="addr:street" v="Lister Meile"/><tag k="addr:housenumber" v="44a"/><tag k="addr:postcode" v="30161"/><tag k="addr:city" v="Hannover"/></node>
+  <node id="3" lat="52.3790" lon="9.7400" version="1"><tag k="addr:street" v="Podbielskistraße"/><tag k="addr:housenumber" v="11"/><tag k="addr:postcode" v="30163"/><tag k="addr:city" v="Hannover"/></node>
+  <node id="10" lat="52.4000" lon="9.7500" version="1"/>
+  <node id="11" lat="52.4002" lon="9.7500" version="1"/>
+  <node id="12" lat="52.4002" lon="9.7504" version="1"/>
+  <node id="13" lat="52.4000" lon="9.7504" version="1"/>
+  <way id="100" version="1"><nd ref="10"/><nd ref="11"/><nd ref="12"/><nd ref="13"/><nd ref="10"/><tag k="building" v="yes"/><tag k="addr:street" v="Hildesheimer Straße"/><tag k="addr:housenumber" v="15"/><tag k="addr:postcode" v="30169"/><tag k="addr:city" v="Hannover"/></way>
+  <node id="4" lat="52.3700" lon="9.7300" version="1"><tag k="addr:street" v="Ohne PLZ"/><tag k="addr:housenumber" v="1"/></node>
+</osm>
