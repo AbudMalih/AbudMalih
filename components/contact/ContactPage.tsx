@@ -4,98 +4,70 @@ import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { CONTACT_EMAIL, COMPANY } from "@/content/site";
 import { usePageMotion } from "@/components/services/usePageMotion";
+import { FlagDE } from "@/components/import/Flags";
+import { PageHero, RedButton, GhostButton, kit as k } from "@/components/kit/Kit";
 import ContactForm from "./ContactForm";
 import svc from "@/components/services/Services.module.css";
 import s from "./Contact.module.css";
 
-/* one light mineral room from the hero to the footer */
-const MINERAL = "#ecebe6";
-
 /**
- * KONTAKT / CONTACT: the end point of the visitor journey, a conversion page.
- * A premium company inviting a conversation, in one light mineral room: the
- * hero, the direct e-mail, the inquiry drawn straight onto the ground, one
- * quiet signature, then the paper footer. Only typography, hairlines and the
- * small red + carry the identity.
+ * KONTAKT / CONTACT on the site kit: port hero with the direct line, then the
+ * inquiry form on a light card. The form itself (validation, SMTP delivery,
+ * honest success / failure) is unchanged.
  */
 export default function ContactPage() {
   const { dict, locale, href } = useI18n();
   const t = dict.contactPage;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
-  const ground = { ["--bg" as string]: MINERAL, ["--from" as string]: MINERAL };
 
   return (
-    <article ref={root} className={`${svc.page} ${s.page}`}>
-      {/* ------------------------------------------------------------ HERO */}
-      <section className={`${svc.section} ${s.room} ${s.hero}`} style={ground} data-tone="light" aria-labelledby="ct-title">
-        <div className={`frame ${s.heroCopy}`}>
-          <p className={`t-label ${s.eyebrow}`} data-reveal>
-            <span className={s.idx}>04</span>
-            <span className={s.redRule} />
-            {t.hero.eyebrow}
-          </p>
-          <h1 id="ct-title" className={s.heroTitle}>
-            <span className="mask">
-              <span className={svc.rise} data-reveal>
-                {t.hero.h1a}
-              </span>
-            </span>
-            <span className="mask">
-              <span className={`${svc.rise} ${s.dim}`} data-reveal style={{ ["--d" as string]: "90ms" }}>
-                {t.hero.h1b.replace(/\.$/, "")}
-                <span className={s.period}>.</span>
-              </span>
-            </span>
-          </h1>
-          <p className={`t-lead ${s.heroLead}`} data-reveal style={{ ["--d" as string]: "200ms" }}>
-            {t.hero.lead}
-          </p>
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------- CONTACT */}
-      <section className={`${svc.section} ${s.room} ${s.contact}`} style={ground} data-tone="light" aria-labelledby="ct-direct">
-        <div className="frame">
-          {/* the one transition signal: a red + and a line drawing out of it */}
-          <div className={s.signal} data-reveal aria-hidden="true">
-            <span className={s.signalPlus} />
-            <span className={s.signalLine} />
-          </div>
-
-          <div className={s.direct}>
-            <h2 id="ct-direct" className={s.directHead}>
-              <span className={`t-label ${s.directTag}`} data-reveal>
-                {t.direct.tag}
-              </span>
-              <span className={s.directTitle} data-reveal style={{ ["--d" as string]: "70ms" }}>
-                {t.direct.title}
-              </span>
-            </h2>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={s.mail} dir="ltr" data-cursor="link" data-reveal style={{ ["--d" as string]: "140ms" }}>
-              <span className={s.mailText}>{CONTACT_EMAIL}</span>
-              <span className={s.mailArrow} aria-hidden="true">
-                →
-              </span>
+    <article ref={root} className={`${svc.page} ${k.page} ${s.page}`}>
+      <PageHero
+        id="ct-title"
+        short
+        eyebrow={t.hero.eyebrow}
+        a={t.hero.h1a}
+        b={t.hero.h1b}
+        lead={t.hero.lead}
+        actions={
+          <>
+            <RedButton href="#anfrage">{t.inquiry.title}</RedButton>
+            <GhostButton href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</GhostButton>
+          </>
+        }
+        aside={
+          <div className={k.glass}>
+            <p className={`t-label ${k.tagDark}`}>{t.direct.tag}</p>
+            <p className={k.h3} style={{ marginTop: 10 }}>
+              {t.direct.title}
+            </p>
+            <a href={`mailto:${CONTACT_EMAIL}`} className={k.big} dir="ltr" style={{ display: "inline-block", marginTop: 18, borderBottom: "2px solid var(--luna-red)", paddingBottom: 6, wordBreak: "break-all" }}>
+              {CONTACT_EMAIL}
             </a>
+            <div className={k.flags}>
+              <span className={k.flagChip}>
+                <FlagDE className={k.flag} />
+                <span>
+                  <small>{COMPANY.legalName}</small>
+                  {dict.company.place}
+                </span>
+              </span>
+            </div>
           </div>
+        }
+      />
 
-          <div className={s.formArea}>
-            <ContactForm copy={t} locale={locale} privacyHref={href("/datenschutz")} />
+      <section id="anfrage" className={k.light} data-tone="light" aria-label={t.inquiry.title}>
+        <div className="frame">
+          <div className={k.card} style={{ background: "#fbfaf8" }} data-reveal aria-label={t.inquiry.title} role="region">
+            <div className={s.formArea}>
+              <ContactForm copy={t} locale={locale} privacyHref={href("/datenschutz")} />
+            </div>
           </div>
-        </div>
-      </section>
-
-      {/* --------------------------------------------------------- CLOSING */}
-      <section className={`${svc.section} ${s.room} ${s.closing}`} style={ground} data-tone="light" aria-label={COMPANY.legalName}>
-        <div className={`frame ${s.closeRow}`} data-reveal>
-          <span className={s.closeLine} aria-hidden="true" />
-          <span className={s.closePlus} aria-hidden="true" />
-          <p className={s.closeName}>{COMPANY.legalName}</p>
-          <p className={s.closeMeta}>{t.closing.line}</p>
-          <a href={`mailto:${CONTACT_EMAIL}`} className={s.closeMail} dir="ltr">
-            {CONTACT_EMAIL}
-          </a>
+          <p className={k.note} data-reveal>
+            {COMPANY.legalName} · {t.closing.line}
+          </p>
         </div>
       </section>
     </article>
