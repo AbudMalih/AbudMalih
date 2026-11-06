@@ -2,7 +2,7 @@
    (GlobeLayer). --px/--py: pointer −1..1, damped. --hp: hero progress. */
 .root {
   --dir: 1;
-  --rise: 3.6s;
+  --rise: 2.2s;
   --ease: cubic-bezier(0.22, 0.61, 0.2, 1);
   position: absolute;
   inset: 0;
