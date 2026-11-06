@@ -113,6 +113,9 @@ const config: ExpoConfig = {
   extra: {
     supportsRTL: true,
     variant,
+    // Google Maps on Android crashes the app if a map is created without an API key, so the
+    // app only renders maps when a key was built in (the value itself is not exposed here).
+    googleMapsAndroid: !!androidGoogleMapsApiKey,
     // EAS project lunapact-technologies/turvio-driver (registered with `eas init`). Not a secret.
     eas: { projectId: EAS_PROJECT_ID },
   },

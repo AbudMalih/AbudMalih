@@ -332,6 +332,7 @@ export const driverEn = {
   "photoImport.pasteRead": "Find addresses",
   "photoImport.noneText": "No address found in the text.",
   "photoImport.text": "Text",
+  "map.unavailable": "Map not available in this test build (no Google Maps key). Use the address search instead.",
 } as const;
 
 export type DriverMessageKey = keyof typeof driverEn;

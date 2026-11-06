@@ -334,4 +334,5 @@ export const driverAr: Record<DriverMessageKey, string> = {
   "photoImport.pasteRead": "ابحث عن العناوين",
   "photoImport.noneText": "لم يُعثر على عنوان في النص.",
   "photoImport.text": "نص",
+  "map.unavailable": "الخريطة غير متاحة في هذا الإصدار التجريبي (لا يوجد مفتاح Google Maps). استخدم البحث عن العنوان.",
 };

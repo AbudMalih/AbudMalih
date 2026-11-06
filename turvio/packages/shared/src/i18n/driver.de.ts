@@ -333,4 +333,5 @@ export const driverDe: Record<DriverMessageKey, string> = {
   "photoImport.pasteRead": "Adressen finden",
   "photoImport.noneText": "Keine Adresse im Text gefunden.",
   "photoImport.text": "Text",
+  "map.unavailable": "Karte in diesem Test-Build nicht verfügbar (kein Google-Maps-Schlüssel). Bitte die Adresssuche verwenden.",
 };

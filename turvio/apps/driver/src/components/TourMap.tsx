@@ -1,7 +1,9 @@
 import { boundingRegion, clusterForRegion, isOpen, isSuccess, type GeoPoint, type MapRegion, type Stop } from "@turvio/shared";
 import { memo, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import Constants from "expo-constants";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, Polyline, type MapPressEvent } from "react-native-maps";
+import { useT } from "../lib/i18n";
 import { useTheme, type Palette } from "../theme";
 import { markerTone, type TourMapProps } from "./TourMap.shared";
 export type { TourMapProps };
@@ -29,7 +31,24 @@ const StopMarker = memo(function StopMarker({ stop, index, current, c, onPress }
  * zoomed out, nearby stops are merged into count bubbles (tap to zoom in). The current
  * stop is always shown. Road geometry (OSRM) replaces the straight order line when known.
  */
-export function TourMap({ depot, stops, currentStopId, showUserLocation, pendingPin, onMapPress, onStopPress, style, roadGeometry }: TourMapProps) {
+/** Android + Google Maps without an API key: creating a MapView throws and crashes the app. */
+export const mapsAvailable = Platform.OS !== "android" || Constants.expoConfig?.extra?.googleMapsAndroid === true;
+
+export function TourMap(props: TourMapProps) {
+  return mapsAvailable ? <NativeTourMap {...props} /> : <MapUnavailable style={props.style} />;
+}
+
+function MapUnavailable({ style }: { style?: TourMapProps["style"] }) {
+  const t = useT();
+  const { c } = useTheme();
+  return (
+    <View style={[StyleSheet.absoluteFill, s.unavailable, { backgroundColor: c.bg }, style]} testID="map-unavailable">
+      <Text style={{ color: c.textMuted, textAlign: "center" }}>{t("map.unavailable")}</Text>
+    </View>
+  );
+}
+
+function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingPin, onMapPress, onStopPress, style, roadGeometry }: TourMapProps) {
   const { c } = useTheme();
   const mapRef = useRef<MapView>(null);
   const located = useMemo(() => stops.filter((x): x is Located => x.location !== null), [stops]);
@@ -113,4 +132,5 @@ const s = StyleSheet.create({
   pinText: { color: "#FFFFFF", fontWeight: "800", fontSize: 13 },
   cluster: { minWidth: 38, height: 38, paddingHorizontal: 8, borderRadius: 19, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   clusterText: { fontWeight: "800", fontSize: 14 },
+  unavailable: { alignItems: "center", justifyContent: "center", padding: 24 },
 });

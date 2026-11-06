@@ -334,4 +334,5 @@ export const driverRo: Record<DriverMessageKey, string> = {
   "photoImport.pasteRead": "Găsește adresele",
   "photoImport.noneText": "Nicio adresă găsită în text.",
   "photoImport.text": "Text",
+  "map.unavailable": "Harta nu este disponibilă în această versiune de test (fără cheie Google Maps). Folosește căutarea adresei.",
 };
