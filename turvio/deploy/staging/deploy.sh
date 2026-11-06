@@ -128,6 +128,8 @@ deploy() {
   fetch_and_export "$sha"
   current="$(cat "$STATE/current" 2>/dev/null || true)"
   [ "$sha" != "$current" ] || log "re-deploying the current release $sha"
+  # Validate before touching anything: the running release stays untouched on errors.
+  compose "$sha" config --quiet || die "compose configuration of $sha is invalid – nothing changed"
   log "building $sha (one service at a time – 4 GB RAM)"
   for s in "${SERVICES[@]}"; do
     # Tags are commit-pinned: an existing image for this exact commit is reused (fast rollback/redeploy).

@@ -130,7 +130,7 @@ grep -q "api.staging.example.invalid" /etc/hosts || echo "127.0.0.1 api.staging.
 
 step "broken release -> automatic rollback"
 git clone --quiet --branch "$BRANCH" "$T/remote.git" "$T/work"
-(cd "$T/work" && sed -i 's/      REQUIRE_ADMIN_MFA: "true"/      REQUIRE_ADMIN_MFA: "true"\n      MAILER: outbox/' turvio/deploy/staging/compose.yml \
+(cd "$T/work" && sed -i 's/      MAILER: smtp/      MAILER: outbox/' turvio/deploy/staging/compose.yml \
   && git -c user.email=test@example.invalid -c user.name=test commit -qam "test: broken release (API refuses MAILER=outbox)" && git push -q origin "$BRANCH")
 BROKEN="$(git -C "$T/work" rev-parse HEAD)"
 retag "$BROKEN"   # images are identical: only compose.yml changed
@@ -138,8 +138,17 @@ if "$DEPLOY" "$BROKEN"; then echo "FAIL: broken release was reported healthy"; e
 [ "$(cat "$TURVIO_ROOT/state/current")" = "$SHA" ] || { echo "FAIL: current is not $SHA after rollback"; exit 1; }
 curl -sk --noproxy "*" --resolve api.staging.example.invalid:443:127.0.0.1 https://api.staging.example.invalid/health
 
+step "invalid compose file -> refused before anything changes"
+(cd "$T/work" && printf 'services:\n  api:\n    environment:\n      A: 1\n      A: 2\n' >> turvio/deploy/staging/compose.yml \
+  && git -c user.email=test@example.invalid -c user.name=test commit -qam "test: invalid compose" && git push -q origin "$BRANCH")
+INVALID="$(git -C "$T/work" rev-parse HEAD)"
+if "$DEPLOY" "$INVALID"; then echo "FAIL: invalid compose accepted"; exit 1; fi
+[ "$(cat "$TURVIO_ROOT/state/current")" = "$SHA" ] || { echo "FAIL: current changed"; exit 1; }
+echo "invalid compose refused, running release untouched"
+(cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit HEAD >/dev/null && git push -q origin "$BRANCH")
+
 step "second good release, then manual --rollback"
-(cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit -q HEAD && git push -q origin "$BRANCH")
+(cd "$T/work" && git -c user.email=test@example.invalid -c user.name=test revert --no-edit HEAD >/dev/null && git push -q origin "$BRANCH")
 GOOD2="$(git -C "$T/work" rev-parse HEAD)"
 retag "$GOOD2"
 "$DEPLOY" "$GOOD2"
