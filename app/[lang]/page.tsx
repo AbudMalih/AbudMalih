@@ -3,6 +3,7 @@ import { getDictionary, isLocale } from "@/content/i18n";
 import { organizationJsonLd, pageMetadata } from "@/lib/seo";
 import Hero from "@/components/sections/Hero";
 import HomeSections from "@/components/sections/HomeSections";
+import Commerce from "@/components/sections/Commerce";
 import Atmosphere from "@/components/chrome/Atmosphere";
 import Loader from "@/components/chrome/Loader";
 import GlobeLayer from "@/components/stage/GlobeLayer";
@@ -15,7 +16,8 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
 /**
  * HOME: one cinematic opening (the globe over the port), then calm sections
- * in the site's style: what we do, the import lane, e-commerce, LUVISCENT,
+ * in the site's style: what we do, the import lane, the e-commerce scene
+ * (the one film chapter kept), LUVISCENT,
  * why Luna Trading, contact. The globe's Three.js code is an async chunk.
  */
 export default function HomePage() {
@@ -26,7 +28,9 @@ export default function HomePage() {
       <GlobeLayer />
       <Loader />
       <Hero />
-      <HomeSections />
+      <HomeSections part="a" />
+      <Commerce />
+      <HomeSections part="b" />
     </>
   );
 }

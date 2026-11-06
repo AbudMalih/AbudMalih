@@ -100,6 +100,8 @@ export default function Atmosphere() {
       return d;
     };
 
+    const hasLv = !!document.querySelector('[data-chapter="luviscent"]');
+    const commerceEl = document.querySelector('[data-chapter="commerce"]');
     let lastEnv = "";
     const root = document.documentElement.style;
     // type on the opening follows its light: dark graphite → light (a short,
@@ -141,8 +143,14 @@ export default function Atmosphere() {
       const brandColor = `rgb(${(rgb[0] * 255) | 0},${(rgb[1] * 255) | 0},${(rgb[2] * 255) | 0})`;
 
       // ---- 06 · digital commerce (cooler, cleaner) --------------------------
-      const commerceIn = smooth(range(cm, 0.0, 0.1));
-      const X = airProgress();
+      let commerceIn = smooth(range(cm, 0.0, 0.1));
+      // on the calm homepage the scene's light is already up as it scrolls in
+      if (!hasLv && commerceEl && cm <= 0) {
+        const top = commerceEl.getBoundingClientRect().top;
+        if (top < window.innerHeight) commerceIn = 1;
+      }
+      // the bloom into the LUVISCENT world only exists when its chapter follows
+      const X = hasLv ? airProgress() : 0;
       const bloomDone = X >= 0.97;
       const lightO = Math.min(1, commerceIn * 2.2) * (bloomDone ? 0 : 1);
       const reveal = 12 + commerceIn * 190;
