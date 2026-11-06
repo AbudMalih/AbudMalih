@@ -2,20 +2,10 @@ import type { Metadata } from "next";
 import { getDictionary, isLocale } from "@/content/i18n";
 import { organizationJsonLd, pageMetadata } from "@/lib/seo";
 import Hero from "@/components/sections/Hero";
-import SourceToMarket from "@/components/sections/SourceToMarket";
-import Transport from "@/components/sections/Transport";
-import Warehouse from "@/components/sections/Warehouse";
-import BrandShift from "@/components/sections/BrandShift";
-import Chain from "@/components/sections/Chain";
-import Commerce from "@/components/sections/Commerce";
-import Luviscent from "@/components/sections/Luviscent";
-import Ecosystem from "@/components/sections/Ecosystem";
-import Closing from "@/components/sections/Closing";
+import HomeSections from "@/components/sections/HomeSections";
 import Atmosphere from "@/components/chrome/Atmosphere";
 import Loader from "@/components/chrome/Loader";
-import ProgressRail from "@/components/chrome/ProgressRail";
 import GlobeLayer from "@/components/stage/GlobeLayer";
-import WorldLayer from "@/components/stage/WorldLayer";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
@@ -24,12 +14,9 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 }
 
 /**
- * HOME — one continuous story:
- * WORLD → TRADE → FREIGHT → TRANSPORT → WAREHOUSE → PRODUCT → BRAND →
- * E-COMMERCE → LUVISCENT → ECOSYSTEM → WORLD
- *
- * Fixed render layers (Atmosphere, Globe, World) sit behind chapter stages.
- * Three.js code for both layers is split into separate async chunks.
+ * HOME: one cinematic opening (the globe over the port), then calm sections
+ * in the site's style: what we do, the import lane, e-commerce, LUVISCENT,
+ * why Luna Trading, contact. The globe's Three.js code is an async chunk.
  */
 export default function HomePage() {
   return (
@@ -37,19 +24,9 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
       <Atmosphere />
       <GlobeLayer />
-      <WorldLayer />
       <Loader />
-      <ProgressRail />
       <Hero />
-      <SourceToMarket />
-      <Transport />
-      <Warehouse />
-      <BrandShift />
-      <Chain />
-      <Commerce />
-      <Luviscent />
-      <Ecosystem />
-      <Closing />
+      <HomeSections />
     </>
   );
 }

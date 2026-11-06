@@ -1,0 +1,6 @@
+/* the calm sections cover the fixed opening layers once the hero has passed */
+.wrap {
+  position: relative;
+  z-index: 2;
+  background: #101113;
+}
