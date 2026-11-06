@@ -22,7 +22,7 @@ export type Dictionary = {
     language: string;
     scroll: string;
   };
-  nav: { home: string; whatWeDo: string; brands: string; company: string; contact: string; cta: string };
+  nav: { home: string; whatWeDo: string; import: string; brands: string; company: string; contact: string; cta: string };
   legal: { impressum: string; datenschutz: string };
   company: { place: string; city: string };
   chapters: Record<ChapterId, string>;

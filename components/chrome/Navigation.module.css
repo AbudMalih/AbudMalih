@@ -511,3 +511,14 @@ html:global(.intro-pending) .cta:not(.ctaPanel) {
   font-size: 0.92rem;
   letter-spacing: 0;
 }
+/* four links: a tighter capsule on small laptops */
+@media (min-width: 1024px) and (max-width: 1240px) {
+  .links a {
+    padding-inline: 11px;
+    font-size: 0.82rem;
+  }
+  .lang :global(ul) a {
+    min-width: 30px;
+    padding-inline: 7px;
+  }
+}

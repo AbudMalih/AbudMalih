@@ -31,6 +31,7 @@ export const COMPANY = {
 export const NAV = [
   { href: "/", key: "home" },
   { href: "/what-we-do", key: "whatWeDo" },
+  { href: "/import", key: "import" },
   { href: "/brands", key: "brands" },
   { href: "/company", key: "company" },
   { href: "/contact", key: "contact" },
