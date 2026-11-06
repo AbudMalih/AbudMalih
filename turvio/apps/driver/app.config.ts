@@ -94,6 +94,19 @@ const config: ExpoConfig = {
         microphonePermission: false,
       },
     ],
+    // Release builds are minified with R8 (full mode). react-native-maps pulls in WorkManager
+    // 2.9.1 -> Room 2.5.0, whose consumer rule keeps RoomDatabase subclasses without members:
+    // R8 then removed WorkDatabase_Impl's constructor and the app crashed at start-up
+    // ("Failed to create an instance of class androidx.work.impl.WorkDatabase"). Room 2.6+
+    // ships this exact rule; add it until the dependency chain is updated.
+    [
+      "expo-build-properties",
+      {
+        android: {
+          extraProguardRules: "-keep class * extends androidx.room.RoomDatabase { <init>(); }",
+        },
+      },
+    ],
     // Share into TURVIO from WhatsApp, Gallery, Messages … (text and up to 10 images).
     // iOS: a Share Extension target + App Group; Android: SEND / SEND_MULTIPLE intent filters.
     [
