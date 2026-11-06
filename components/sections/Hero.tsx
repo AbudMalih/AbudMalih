@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Fragment, useEffect, useRef } from "react";
 import Chapter, { useChapterTimeline } from "@/components/stage/Chapter";
 import { gsap } from "@/lib/motion/gsap";
@@ -19,11 +20,10 @@ export default function Hero() {
 }
 
 function HeroContent() {
-  const { dict, locale } = useI18n();
+  const { dict, locale, href } = useI18n();
   const scope = useRef<HTMLDivElement>(null);
   const period = useRef<HTMLSpanElement>(null);
   const lines = dict.hero.lines;
-  const index = dict.hero.index;
 
   // Time-based entrance (after the loader hands over)
   useEffect(() => {
@@ -44,61 +44,61 @@ function HeroContent() {
     return () => window.removeEventListener("luna:intro", play);
   }, []);
 
-  // Scroll choreography: the words part to let the world through
+  // Scroll: one calm move. The opening block lifts and fades as the world
+  // turns; nothing splits or flies.
   useChapterTimeline(
     scope,
     (tl, q) => {
-      tl.to(q("[data-line='2'] [data-move]"), { yPercent: -135, duration: 0.16, ease: "power2.in" }, 0.02)
-        .to(q("[data-line='1']"), { y: "-7vh", duration: 0.2, ease: "power1.inOut" }, 0.02)
-        .to(q("[data-line='3']"), { y: "11vh", duration: 0.22, ease: "power1.inOut" }, 0.02)
-        .to(q("[data-line='1'] [data-move]"), { yPercent: -135, duration: 0.11, ease: "power2.in" }, 0.17)
-        .to(q("[data-line='3'] [data-move]"), { yPercent: 135, duration: 0.12, ease: "power2.in" }, 0.22)
-        .to(q("[data-hrule]"), { scaleX: 0, duration: 0.12 }, 0.18)
-        .to(q("[data-meta]"), { opacity: 0, duration: 0.08 }, 0.12)
-        .fromTo(q("[data-route-head]"), { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.06 }, 0.32)
-        .fromTo(q("[data-route-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.52, ease: "none" }, 0.34);
-      const items = q("[data-index-item]");
-      const step = 0.5 / items.length;
-      items.forEach((item, i) => {
-        const at = 0.37 + i * step;
-        tl.fromTo(item, { opacity: 0, x: 0 }, { opacity: 1, duration: 0.04 }, at);
-        // colours come from the environment (light → dark); only the emphasis is tweened
-        tl.fromTo(item, { "--on": 0 }, { "--on": 1, duration: 0.03, immediateRender: false }, at);
-        if (i > 0) tl.to(items[i - 1], { "--on": 0, duration: 0.03 }, at);
-      });
-      tl.to(q("[data-route]"), { opacity: 0, y: -16, duration: 0.07, ease: "power2.in" }, 0.91);
+      tl.to(q("[data-block]"), { y: "-6vh", opacity: 0, duration: 0.26, ease: "power1.in" }, 0.04).to(q("[data-meta]"), { opacity: 0, duration: 0.1 }, 0.04);
     },
     [locale]
   );
 
   return (
     <div ref={scope} className={styles.hero}>
-      <h1 className={`t-mega ${styles.title}`}>
-        {lines.map((w, i) => {
-          // only the closing period carries the red: it is the route's origin
-          const last = i === lines.length - 1 && w.endsWith(".");
-          return (
-            <Fragment key={i}>
-              {/* a real space between the block lines, so the heading reads as words (no visual effect) */}
-              {i > 0 && " "}
-              <span className={`${styles.line} ${i === 1 ? `${styles.indent} tone-graphite` : ""}`} data-line={i + 1}>
-              <span className="mask">
-                <span data-move>
-                  <span data-word>
-                    {last ? w.slice(0, -1) : w}
-                    {last && (
-                      <span ref={period} className={styles.period} data-period>
-                        .
+      <div className={styles.block} data-block>
+        <p className={`t-label ${styles.eyebrow}`} data-meta>
+          <span className={styles.eyeDot} />
+          {dict.hero.eyebrow}
+        </p>
+        <h1 className={`t-mega ${styles.title}`}>
+          {lines.map((w, i) => {
+            // only the closing period carries the red: it is the route's origin
+            const last = i === lines.length - 1 && w.endsWith(".");
+            return (
+              <Fragment key={i}>
+                {i > 0 && " "}
+                <span className={`${styles.line} ${i === 1 ? styles.red : ""}`} data-line={i + 1}>
+                  <span className="mask">
+                    <span data-move>
+                      <span data-word>
+                        {last ? w.slice(0, -1) : w}
+                        {last && (
+                          <span ref={period} className={styles.period} data-period>
+                            .
+                          </span>
+                        )}
                       </span>
-                    )}
+                    </span>
                   </span>
                 </span>
-              </span>
-              </span>
-            </Fragment>
-          );
-        })}
-      </h1>
+              </Fragment>
+            );
+          })}
+        </h1>
+        <p className={`t-lead ${styles.lead}`} data-meta>
+          {dict.hero.lead}
+        </p>
+        <div className={styles.actions} data-meta>
+          <Link href={href("/contact")} className={styles.btnRed} data-cursor="invert">
+            {dict.nav.cta}
+            <span className={styles.badge} aria-hidden="true" />
+          </Link>
+          <Link href={href("/import")} className={styles.btnGhost} data-cursor="link">
+            {dict.hero.ctaImport}
+          </Link>
+        </div>
+      </div>
 
       <div className={styles.foot}>
         <span className={styles.hrule} data-hrule />
@@ -111,21 +111,6 @@ function HeroContent() {
         <p className={`t-label ${styles.metaR}`} data-meta data-cine-only>
           {dict.a11y.scroll} <span className={styles.scrollCue} aria-hidden="true" />
         </p>
-      </div>
-
-      {/* Route index: appears as the red route travels Asia → Europe */}
-      <div className={styles.route} data-route data-cine-only aria-hidden="true">
-        <p className={`t-label ${styles.routeHead}`} data-route-head>
-          {dict.hero.route} &nbsp;<span className={styles.dim}>{dict.hero.routeSpan}</span>
-        </p>
-        <span className={styles.routeRule} data-route-rule />
-        <ol className={styles.index}>
-          {index.map((t, i) => (
-            <li key={t} data-index-item className={styles.indexItem}>
-              <span className={styles.dim}>{String(i + 1).padStart(2, "0")}</span> {t}
-            </li>
-          ))}
-        </ol>
       </div>
 
       <HeroSignal period={period} />

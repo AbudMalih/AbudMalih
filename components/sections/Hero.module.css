@@ -9,7 +9,7 @@
   padding: var(--safe-top) var(--margin) 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
 }
 /* type follows the opening's light (vars set by Atmosphere from heroEnv):
    TRADE / BORDERS strong graphite, WITHOUT a softer metallic graphite */
@@ -19,14 +19,122 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  padding-bottom: clamp(96px, 15vh, 170px);
+  margin: 22px 0 0;
   margin-inline-start: -0.04em;
+  /* a confident headline that leaves the globe its own space */
+  font-size: clamp(2.4rem, min(5.2vw, 10svh), 5.4rem) !important;
+  --unused: clamp(2.6rem, min(6vw, 11.5svh), 6.4rem);
+  line-height: 0.94;
 }
 .line {
   display: block;
 }
-.indent {
-  padding-inline-start: 1.06em;
+.red {
+  color: var(--luna-red);
+}
+.block {
+  position: relative;
+  z-index: 1;
+  max-width: min(46vw, 720px);
+  padding-bottom: clamp(40px, 8vh, 90px);
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding-inline: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #d9d9dc;
+}
+.eyeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--luna-red);
+}
+.lead {
+  margin-top: 22px;
+  max-width: 30em;
+  color: #c9c9cd;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.btnRed,
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  height: 54px;
+  border-radius: 999px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.25s, transform 0.25s var(--ease-out), border-color 0.25s;
+}
+.btnRed {
+  padding-inline: 24px 7px;
+  background: var(--luna-red);
+  color: #fff;
+  box-shadow: 0 14px 34px -14px rgba(201, 2, 22, 0.7);
+}
+.btnRed:hover,
+.btnRed:focus-visible {
+  background: #a90013;
+  transform: translateY(-2px);
+}
+.badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background:
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 14px 2px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 14px no-repeat,
+    #fff;
+  transition: transform 0.35s var(--ease-out);
+}
+.btnRed:hover .badge {
+  transform: rotate(90deg);
+}
+.btnGhost {
+  padding-inline: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f3f0;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.btnGhost:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.btnRed:focus-visible,
+.btnGhost:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+@media (max-width: 767px) {
+  .block {
+    max-width: none;
+    padding-bottom: clamp(86px, 13vh, 120px);
+    margin-top: auto;
+  }
+  .lead {
+    display: none;
+  }
+  .title {
+    font-size: clamp(2.3rem, 11.5vw, 3.4rem) !important;
+  }
+}
+:global(html[lang="ar"]) .title {
+  line-height: 1.15;
 }
 .foot {
   position: absolute;
@@ -158,14 +266,16 @@
     padding-inline-start: 0.5em;
   }
   .title {
-    padding-bottom: calc(120px + var(--hero-lift));
+    padding-bottom: 0;
   }
   /* cinematic phones: an editorial opening laid out from the TOP of what
      Safari shows (svh), not from the 100lvh stage bottom. The headline ends at
      71% of the small viewport, set on the planet's upper surface (the globe's
      edge sits at 27%: lib/globe/state.ts phoneOpening). */
-  :global(html.cine) .title {
-    padding-bottom: calc(100lvh - 71svh);
+  /* cinematic phones: the stage is 100lvh, Safari shows 100svh: the block
+     ends above the footer line of what is actually visible */
+  :global(html.cine) .block {
+    padding-bottom: calc(100lvh - 100svh + 104px);
   }
   .foot {
     grid-template-columns: 1fr auto;
@@ -195,8 +305,13 @@
   line-height: 1.35;
 }
 /* Arabic glyphs are taller (ascenders, dots): own height-aware size keeps the header zone clear */
-:global(html[lang="ar"]) .title {
-  font-size: clamp(3rem, min(11.5vw, 17.5svh), 13rem);
+:global(html[lang="ar"]) .hero .title {
+  font-size: clamp(2.4rem, min(5.6vw, 10.5svh), 5.8rem) !important;
+}
+@media (max-width: 767px) {
+  :global(html[lang="ar"]) .hero .title {
+    font-size: clamp(2.2rem, 10.5vw, 3.2rem) !important;
+  }
 }
 
 /* The red period: origin of the trade route */

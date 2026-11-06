@@ -21,7 +21,7 @@
   position: absolute;
   inset-inline-start: var(--margin);
   top: calc(var(--safe-top) + 34px);
-  font-size: clamp(2.1rem, min(5vw, 9svh), 6rem);
+  font-size: clamp(1.9rem, min(3.8vw, 7svh), 4.4rem);
   color: var(--ink-950);
 }
 .dim {

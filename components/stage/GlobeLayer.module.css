@@ -85,18 +85,16 @@
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
   stroke-dasharray: 2 7;
-  animation: lane 90s linear infinite;
+  animation: none;
 }
 .ring:nth-child(2) {
   stroke: rgba(236, 237, 239, 0.22);
   stroke-dasharray: 1 11;
-  animation-duration: 130s;
-  animation-direction: reverse;
+  animation: none;
 }
 .ring:nth-child(3) {
   stroke: rgba(236, 237, 239, 0.18);
   stroke-dasharray: 40 18 2 18;
-  animation-duration: 160s;
 }
 @keyframes lane {
   to {
@@ -104,6 +102,7 @@
   }
 }
 .orbitPlus {
+  display: none;
   position: absolute;
   left: 0;
   top: 0;

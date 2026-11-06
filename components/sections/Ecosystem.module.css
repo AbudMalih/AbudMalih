@@ -15,7 +15,7 @@
   z-index: 2;
 }
 .h {
-  font-size: clamp(1.8rem, 3.4vw, 3.8rem);
+  font-size: clamp(1.6rem, 2.8vw, 3rem);
 }
 .caption {
   margin-top: clamp(10px, 1.6vh, 18px);

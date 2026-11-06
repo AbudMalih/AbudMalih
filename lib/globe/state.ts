@@ -52,9 +52,11 @@ function globeStateLtr(): GlobeDerived {
   const turnB = easeInOut(range(h, 0.58, 0.98));
   let lon = lerp(lerp(124, 66, turnA), KOELN.lon + 1.5, turnB);
   let lat = lerp(lerp(14, 28, turnA), 45, turnB);
-  let dist = lerp(lerp(5.0, 4.15, smooth(range(h, 0, 0.45))), 2.75, easeInOut(range(h, 0.7, 1))) * distScale;
-  let ox = m ? 0 : lerp(lerp(0.2, 0.16, smooth(range(h, 0, 0.4))), 0.0, easeInOut(range(h, 0.62, 1)));
-  let oy = lerp(m ? 0.34 : 0.46, m ? 0.1 : 0.05, easeOut(range(h, 0.0, 0.42)));
+  // desktop opens on the whole planet (radius ≈ a third of the screen height),
+  // with clear space beside the headline; it comes closer as the story starts
+  let dist = lerp(lerp(6.4, 4.6, smooth(range(h, 0, 0.5))), 2.75, easeInOut(range(h, 0.7, 1))) * distScale;
+  let ox = m ? 0 : lerp(lerp(0.23, 0.18, smooth(range(h, 0, 0.4))), 0.0, easeInOut(range(h, 0.62, 1)));
+  let oy = lerp(m ? 0.34 : 0.03, m ? 0.1 : 0.04, easeOut(range(h, 0.0, 0.42)));
   if (m) {
     // phones open on a monumental, cropped planet (see phoneOpening); the
     // camera pulls back into the regular framing over the first scroll, so
@@ -101,13 +103,14 @@ function globeStateLtr(): GlobeDerived {
 function phoneOpening() {
   const W = Math.max(1, stage.vw);
   const H = Math.max(1, stage.lvh); // the globe canvas is 100lvh tall
-  const top = 0.27 * Math.max(1, stage.svh);
-  const r = 0.98 * W;
+  // the whole planet above the headline, clear of the header
+  const top = 0.13 * Math.max(1, stage.svh);
+  const r = 0.4 * W;
   const t = (2 * r * Math.tan((13 * Math.PI) / 180)) / H; // tan(angular radius)
   const dist = 1 / Math.sin(Math.atan(t));
   const oy = (top + r) / H - 0.5; // canvas centre → globe centre
   // a little off-centre, away from the headline: the curvature falls toward
   // the text side, a diagonal against the type rather than a centred dome
-  const ox = 0.12;
+  const ox = 0;
   return { dist, oy, ox };
 }

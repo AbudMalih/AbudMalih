@@ -26,7 +26,7 @@ export type Dictionary = {
   legal: { impressum: string; datenschutz: string };
   company: { place: string; city: string };
   chapters: Record<ChapterId, string>;
-  hero: { lines: [string, string, string]; route: string; routeSpan: string; index: string[] };
+  hero: { lines: [string, string, string]; route: string; routeSpan: string; index: string[]; eyebrow: string; lead: string; ctaImport: string };
   source: { tag: string; l1: string; l2: string; supporting: string[] };
   transport: { tag: string; l1: string; l2: string; leadStrong: string; lead: string };
   warehouse: { tag: string; l1: string; l2: string; labels: { germany: string; eu: string; ecommerce: string; b2b: string } };
