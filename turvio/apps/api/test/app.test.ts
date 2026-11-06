@@ -148,3 +148,16 @@ describe("config", () => {
     expect(loadConfig({ AUTH_PROVIDER: "dev" }).AUTH_PROVIDER).toBe("dev");
   });
 });
+
+describe("IP rate limit", () => {
+  it("answers 429 after the per-minute budget and spares /health", async () => {
+    const { buildApp } = await import("../src/app");
+    const { syntheticTenancy } = await import("../src/tenancy");
+    const { DevTokenVerifier } = await import("../src/auth/tokens");
+    const app = buildApp({ verifier: new DevTokenVerifier(), tenancy: syntheticTenancy(), optimizerUrl: "http://x", rateLimitPerMinute: 60 });
+    const codes: number[] = [];
+    for (let i = 0; i < 20; i++) codes.push((await app.inject({ method: "GET", url: "/v1/me" })).statusCode);
+    expect(codes.filter((c) => c === 429).length).toBeGreaterThan(0);
+    expect((await app.inject({ method: "GET", url: "/health" })).statusCode).toBe(200);
+  });
+});

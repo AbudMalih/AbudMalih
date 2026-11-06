@@ -127,6 +127,9 @@ export const driverEn = {
   "pod.cameraDenied": "Camera access is off. Allow it in the system settings to take delivery photos.",
   "pod.saved": "Delivery saved",
 
+  "scan.stats": "{n} parcels · {dup} repeats · {rate}/min · median {gap} s between scans",
+  "scan.idlePaused": "Paused to save battery – tap ▶ to continue",
+  "settings.allBarcodes": "Scan all barcode types (slower)",
   "scan.title": "Scan parcels",
   "scan.count": "{n} scanned",
   "scan.matched": "{n} on route",
@@ -193,6 +196,8 @@ export const driverEn = {
   "addStop.phone": "Phone (optional)",
   "addStop.route": "Route",
 
+  "import.locate": "Find map positions",
+  "import.located": "{n} exact positions found; {street} only matched the street (set the pin by hand)",
   "import.title": "Import stops",
   "import.paste": "Paste",
   "import.file": "File",

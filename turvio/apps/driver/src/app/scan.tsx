@@ -1,8 +1,8 @@
-import { SCAN_BARCODE_TYPES, ScanSession, parcelIndex, type ScanEntry, type ScanOutcome } from "@turvio/shared";
+import { PARCEL_BARCODE_TYPES, SCAN_BARCODE_TYPES, ScanSession, parcelIndex, scanStats, type ScanEntry, type ScanOutcome } from "@turvio/shared";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Animated, FlatList, Linking, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { AppState, Animated, FlatList, Linking, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Ionicons, Sheet } from "../components/ui";
 import { todayIso } from "../lib/format";
@@ -38,6 +38,23 @@ export default function ScanScreen() {
   const [, force] = useState(0);
   const flashAnim = useRef(new Animated.Value(0)).current;
   const buffer = useRef<ScanEntry[]>([]);
+  const allTypes = useTourStore((s) => s.prefs.allBarcodeTypes ?? false);
+  const [appActive, setAppActive] = useState(true);
+  const lastScanAt = useRef(Date.now());
+  const [idlePaused, setIdlePaused] = useState(false);
+
+  // Battery: no camera while the app is in the background, auto-pause after 60 s without a scan.
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (s) => setAppActive(s === "active"));
+    const idle = setInterval(() => {
+      if (Date.now() - lastScanAt.current > 60_000) setIdlePaused(true);
+    }, 5000);
+    return () => {
+      sub.remove();
+      clearInterval(idle);
+    };
+  }, []);
+  const cameraActive = !paused && !idlePaused && appActive;
 
   // A route is needed to attach scans to: create a personal route if there is none yet.
   useEffect(() => {
@@ -68,6 +85,7 @@ export default function ScanScreen() {
   };
 
   const handle = (outcome: ScanOutcome) => {
+    if (outcome.kind !== "repeat") lastScanAt.current = Date.now();
     switch (outcome.kind) {
       case "repeat":
         return;
@@ -94,7 +112,7 @@ export default function ScanScreen() {
   };
 
   const onBarcode = ({ data, type }: { data: string; type: string }) => {
-    if (paused) return;
+    if (!cameraActive) return;
     handle(session.handle(data, type, "camera"));
   };
 
@@ -120,9 +138,10 @@ export default function ScanScreen() {
           style={{ flex: 1 }}
           facing="back"
           enableTorch={torch}
-          active={!paused}
-          barcodeScannerSettings={{ barcodeTypes: [...SCAN_BARCODE_TYPES] }}
-          onBarcodeScanned={paused ? undefined : onBarcode}
+          active={cameraActive}
+          autofocus="on"
+          barcodeScannerSettings={{ barcodeTypes: allTypes ? [...SCAN_BARCODE_TYPES] : PARCEL_BARCODE_TYPES }}
+          onBarcodeScanned={cameraActive ? onBarcode : undefined}
           onMountError={() => setCameraError(true)}
         />
       ) : (
@@ -158,12 +177,27 @@ export default function ScanScreen() {
             <Ionicons name={torch ? "flashlight" : "flashlight-outline"} size={20} color="#FFFFFF" />
           </Pressable>
         )}
-        <Pressable onPress={() => setPaused(!paused)} accessibilityRole="button" accessibilityLabel={paused ? t("scan.resume") : t("scan.pause")} style={[pill, paused && { backgroundColor: c.primary }]} testID="scan-pause">
-          <Ionicons name={paused ? "play" : "pause"} size={20} color="#FFFFFF" />
+        <Pressable
+          onPress={() => {
+            lastScanAt.current = Date.now();
+            if (idlePaused) return setIdlePaused(false);
+            setPaused(!paused);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={paused || idlePaused ? t("scan.resume") : t("scan.pause")}
+          style={[pill, (paused || idlePaused) && { backgroundColor: c.primary }]}
+          testID="scan-pause"
+        >
+          <Ionicons name={paused || idlePaused ? "play" : "pause"} size={20} color="#FFFFFF" />
         </Pressable>
       </View>
 
       {/* Viewfinder */}
+      {idlePaused && (
+        <View pointerEvents="none" style={{ position: "absolute", top: "45%", left: space.lg, right: space.lg, alignItems: "center" }}>
+          <Text style={[ty.bodyStrong, { color: "#FFFFFF", textAlign: "center" }]}>{t("scan.idlePaused")}</Text>
+        </View>
+      )}
       {cameraUsable && (
         <View pointerEvents="none" style={{ position: "absolute", top: "30%", left: "12%", right: "12%", height: 170, borderRadius: radii.lg, borderWidth: 3, borderColor: paused ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.9)" }} />
       )}
@@ -219,6 +253,14 @@ export default function ScanScreen() {
       </View>
 
       <Sheet visible={showHistory} onClose={() => setShowHistory(false)} title={t("scan.history")}>
+        {(() => {
+          const st = scanStats(session.entries);
+          return (
+            <Text style={[ty.small, { color: c.textMuted }]} testID="scan-stats">
+              {t("scan.stats", { n: st.scanned, dup: st.duplicates, rate: st.perMinute ?? "–", gap: st.medianIntervalSeconds ?? "–" })}
+            </Text>
+          );
+        })()}
         <FlatList
           data={session.entries}
           scrollEnabled={false}

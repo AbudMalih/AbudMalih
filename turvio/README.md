@@ -17,7 +17,7 @@ Multi-tenant SaaS for route optimization and delivery management. Intended softw
 
 Branding: official logo files in [`branding/`](branding/README.md) (raster; no vector version yet).
 
-Docs: [Architecture](docs/ARCHITECTURE.md) · [Driver app](docs/DRIVER_APP.md) · [Feature parity](docs/FEATURE_PARITY.md) · [Roadmap](docs/ROADMAP.md) · [Billing](docs/BILLING.md) · [Security & privacy](docs/SECURITY_PRIVACY.md) · [Design system](docs/DESIGN_SYSTEM.md)
+Docs: [Architecture](docs/ARCHITECTURE.md) · [Driver app](docs/DRIVER_APP.md) · [Device testing](docs/DEVICE_TESTING.md) · [Hosting](docs/HOSTING.md) · [Production checklist](docs/PRODUCTION_CHECKLIST.md) · [Pilot plan](docs/PILOT_PLAN.md) · [Feature parity](docs/FEATURE_PARITY.md) · [Roadmap](docs/ROADMAP.md) · [Billing](docs/BILLING.md) · [Security & privacy](docs/SECURITY_PRIVACY.md) · [Design system](docs/DESIGN_SYSTEM.md)
 
 All data in development is **synthetic** (fictional people, made-up `TVO…` tracking numbers). There is no connection to DHL or any other carrier.
 
@@ -148,6 +148,8 @@ python3 branding/build_assets.py
 | `packages/web-session` | cookie sessions, API proxy (refresh, binary proof files), page guard |
 | `e2e/workflow.mjs` | Playwright across Dispatch, Driver (web build), Admin and API: dispatcher → driver scenario incl. scanning (manual entry), proof of delivery (signature), not-delivered outcome, notes, offline queue, server optimization, personal route + import, cross-tenant checks |
 | `e2e/driver-screens.mjs` | Driver screenshots (light, dark, Arabic RTL) |
+| `e2e/pilot.mjs` | synthetic JARBOU pilot: 5 drivers, 5 tours, 50–100 stops, optimization, deliveries, proofs, offline replay, monitoring |
+| `e2e/phase5-screens.mjs` | road route (OSRM) and address-search screenshots |
 
 ## External services and keys
 
@@ -157,8 +159,8 @@ python3 branding/build_assets.py
 | Google Maps SDK for Android | Driver map on Android builds | `GOOGLE_MAPS_ANDROID_API_KEY` | needed for Android builds |
 | OSRM (self-hosted) | Road-network travel times | `OSRM_URL` | optional; falls back to labelled estimates |
 | Map tiles | Dispatch map in production | – | decision pending (OSM public tiles are dev-only) |
-| Geocoding (self-hosted Nominatim or Photon) | Address autocomplete / geocoding in the driver app | `GEOCODER`, `GEOCODER_URL` | optional; without it addresses are saved and marked "needs map position" |
-| On-device OCR (e.g. Google ML Kit) | Reading address text from parcel labels | – | not bundled – needs a native module + dev build (see docs/DRIVER_APP.md) |
+| Geocoding (self-hosted) | Address search, import geocoding | `GEOCODER=postgres` (+ OSM import) or `nominatim`/`photon` + `GEOCODER_URL` | optional; without it addresses are kept as "needs map position" |
+| On-device OCR | Reading parcel labels | – | built in (ML Kit / Apple Vision), no service or key |
 | Stripe Billing | Subscriptions | – | intentionally not connected |
 | Expo / EAS | Mobile builds | `eas login` | account owned by Lunapact recommended |
 

@@ -128,6 +128,9 @@ export const driverDe: Record<DriverMessageKey, string> = {
   "pod.cameraDenied": "Kamerazugriff ist aus. Erlauben Sie ihn in den Systemeinstellungen, um Zustellfotos aufzunehmen.",
   "pod.saved": "Zustellung gespeichert",
 
+  "scan.stats": "{n} Pakete · {dup} Wiederholungen · {rate}/min · Median {gap} s zwischen Scans",
+  "scan.idlePaused": "Pausiert, um Akku zu sparen – ▶ tippen zum Fortsetzen",
+  "settings.allBarcodes": "Alle Barcode-Typen scannen (langsamer)",
   "scan.title": "Pakete scannen",
   "scan.count": "{n} gescannt",
   "scan.matched": "{n} auf Tour",
@@ -194,6 +197,8 @@ export const driverDe: Record<DriverMessageKey, string> = {
   "addStop.phone": "Telefon (optional)",
   "addStop.route": "Tour",
 
+  "import.locate": "Kartenpositionen suchen",
+  "import.located": "{n} genaue Positionen gefunden; {street} nur auf Straßenebene (Pin bitte selbst setzen)",
   "import.title": "Stopps importieren",
   "import.paste": "Einfügen",
   "import.file": "Datei",

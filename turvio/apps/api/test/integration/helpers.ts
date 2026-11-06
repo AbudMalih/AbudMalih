@@ -87,6 +87,7 @@ export async function createTestEnv(name: string, opts: { geocoder?: Geocoder; r
     proofStore: opts.proofStore ?? new LocalProofStore(proofDir),
     geocoder: opts.geocoder,
     routing: opts.routing,
+    rateLimitPerMinute: 0,
   });
   await app.ready();
 

@@ -58,6 +58,8 @@ export interface Prefs {
   /** Use the device position as start when optimizing. */
   optimizeFromDevice: boolean;
   colorScheme: "system" | "light" | "dark";
+  /** Scan every supported symbology instead of the parcel-label profile (slower). */
+  allBarcodeTypes?: boolean;
 }
 
 export interface FailedItem {

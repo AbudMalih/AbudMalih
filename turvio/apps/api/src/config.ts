@@ -47,6 +47,8 @@ const Env = z.object({
   GEOCODER_USER_AGENT: z.string().default("TURVIO (development)"),
   /** Self-hosted OSRM for road distances, times and geometry (same instance the optimizer uses). Empty = straight-line estimates, labelled. */
   OSRM_URL: z.url().optional(),
+  /** Requests per minute per client IP (0 disables; put a proxy/WAF in front in production as well). */
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).default(600),
   OSRM_TIMEOUT_MS: z.coerce.number().int().min(500).max(60000).default(8000),
   /** Run the retention purge and proof-file deletion worker inside the API process. */
   BACKGROUND_JOBS: z.enum(["true", "false"]).default("true"),

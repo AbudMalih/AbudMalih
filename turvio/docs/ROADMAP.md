@@ -1,6 +1,6 @@
 # TURVIO – Development roadmap
 
-Updated 2026-11-05 (Phase 4). Originally written 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapact Technologies, UAE; pilot: JARBOU Logistik GmbH).
+Updated 2026-11-06 (Phase 5). Originally written 2026-10-30 after the switch to a multi-tenant SaaS model (owner: Lunapact Technologies, UAE; pilot: JARBOU Logistik GmbH).
 
 ## M1 – Foundation & vertical slice ✅ (this delivery)
 
@@ -40,6 +40,12 @@ Still open from the original M2 list:
 Done: redesigned driver app (scan/optimize-first home, stops, map, stop detail), continuous barcode scanning, label capture with review (OCR boundary), manual/paste/CSV/XLSX import with grouping, geocoder abstraction, server optimization with start/end/locks, navigation hand-off (Google/Apple/Waze), arrival and not-delivered outcomes with configurable reasons, notes, proof of delivery (photo, signature, name, optional location) with private storage and retention, personal routes, offline outbox with idempotent retries, dark mode, de/en/ro/ar. DB-level double-booking protection; shared route metrics (Dispatch = driver figures).
 
 Open: **device testing on Android and iOS (EAS dev builds)**, OCR engine, hosted geocoder and OSRM, native review of ro/ar texts.
+
+## M2.6 – Native builds, OCR, routing, pilot readiness (Phase 5) ✅ local / ⏳ hosted
+
+Done: EAS profiles and app variants; native Android APK built; on-device OCR module (ML Kit / Vision) + parser; scanner performance and battery work; OSRM integration (optimizer matrices, route geometry, road ETAs, caching, labelled fallback); self-hosted PostgreSQL geocoder + OSM import tools; route editing (edit address, drag-and-drop, merge, move, remove); map clustering; deeper offline tests; access logging and rate limits; synthetic 5-driver Hannover pilot.
+
+Open (blockers for a real pilot): device tests on Android and iPhone, first iOS build (Apple account), hosted Supabase/OSRM/geocoder data, SMTP, MFA, penetration test, legal documents. See [PILOT_PLAN.md](PILOT_PLAN.md).
 
 ## M3 – Dispatch operations
 

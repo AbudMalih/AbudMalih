@@ -51,6 +51,19 @@ describe("continuous scanning", () => {
     expect(session.handle("x").kind).toBe("invalid");
   });
 
+  it("measures throughput for the device test matrix (200 parcels)", async () => {
+    const { scanStats } = await import("../capture");
+    let t = 0;
+    const s = new ScanSession({ now: () => t });
+    for (let i = 0; i < 200; i++) {
+      t = i * 1200; // one parcel every 1.2 s
+      s.handle(`TVO${String(1000000000 + i)}`);
+    }
+    t = 300_000;
+    s.handle("TVO1000000005");
+    expect(scanStats(s.entries)).toMatchObject({ scanned: 200, duplicates: 1, durationSeconds: 239, perMinute: 50, medianIntervalSeconds: 1.2 });
+  });
+
   it("treats manual entry of an already scanned parcel as duplicate even immediately", () => {
     let t = 0;
     const s = new ScanSession({ now: () => t });

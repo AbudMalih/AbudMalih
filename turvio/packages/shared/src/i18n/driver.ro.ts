@@ -129,6 +129,9 @@ export const driverRo: Record<DriverMessageKey, string> = {
   "pod.cameraDenied": "Accesul la cameră este dezactivat. Permite-l din setările sistemului pentru a face fotografii.",
   "pod.saved": "Livrare salvată",
 
+  "scan.stats": "{n} colete · {dup} repetări · {rate}/min · median {gap} s între scanări",
+  "scan.idlePaused": "Pauză pentru economisirea bateriei – atinge ▶ pentru a continua",
+  "settings.allBarcodes": "Scanează toate tipurile de coduri (mai lent)",
   "scan.title": "Scanează colete",
   "scan.count": "{n} scanate",
   "scan.matched": "{n} pe traseu",
@@ -195,6 +198,8 @@ export const driverRo: Record<DriverMessageKey, string> = {
   "addStop.phone": "Telefon (opțional)",
   "addStop.route": "Traseu",
 
+  "import.locate": "Caută pozițiile pe hartă",
+  "import.located": "{n} poziții exacte găsite; {street} doar la nivel de stradă (setează pinul manual)",
   "import.title": "Importă opriri",
   "import.paste": "Lipește",
   "import.file": "Fișier",

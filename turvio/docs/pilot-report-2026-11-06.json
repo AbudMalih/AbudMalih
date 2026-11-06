@@ -1,0 +1,92 @@
+{
+  "date": "2026-11-06",
+  "synthetic": true,
+  "tours": [
+    {
+      "name": "HAN-01",
+      "driver": "Lena Hoffmann",
+      "stops": 62,
+      "pickups": 5,
+      "optimizeMs": 10260,
+      "matrixSource": "osrm",
+      "unassigned": 0,
+      "progress": "19/62"
+    },
+    {
+      "name": "HAN-02",
+      "driver": "Mihai Popescu",
+      "stops": 75,
+      "pickups": 6,
+      "optimizeMs": 10203,
+      "matrixSource": "osrm",
+      "unassigned": 0,
+      "progress": "30/75"
+    },
+    {
+      "name": "HAN-03",
+      "driver": "Samir Haddad",
+      "stops": 88,
+      "pickups": 7,
+      "optimizeMs": 10221,
+      "matrixSource": "osrm",
+      "unassigned": 0,
+      "progress": "44/88"
+    },
+    {
+      "name": "HAN-04",
+      "driver": "Jonas Becker",
+      "stops": 96,
+      "pickups": 8,
+      "optimizeMs": 12520,
+      "matrixSource": "osrm",
+      "unassigned": 19,
+      "progress": "58/96"
+    },
+    {
+      "name": "HAN-05",
+      "driver": "Paula Schmidt",
+      "stops": 54,
+      "pickups": 4,
+      "optimizeMs": 5188,
+      "matrixSource": "osrm",
+      "unassigned": 0,
+      "progress": "38/54"
+    }
+  ],
+  "checks": [
+    {
+      "name": "pilot setup: 5 drivers and 5 vehicles in Hannover",
+      "ok": true,
+      "detail": "5 drivers, 5 vehicles"
+    },
+    {
+      "name": "5 tours planned, optimized and published",
+      "ok": true,
+      "detail": "HAN-01:62 stops/10260 ms/osrm, HAN-02:75 stops/10203 ms/osrm, HAN-03:88 stops/10221 ms/osrm, HAN-04:96 stops/12520 ms/osrm, HAN-05:54 stops/5188 ms/osrm"
+    },
+    {
+      "name": "dispatcher sees every completed stop (incl. the replayed offline batch)",
+      "ok": true,
+      "detail": "189/189"
+    },
+    {
+      "name": "failed deliveries carry a reason",
+      "ok": true,
+      "detail": "13 failed/attempted"
+    },
+    {
+      "name": "each proof stored exactly once despite retries",
+      "ok": true,
+      "detail": "38 proofs"
+    },
+    {
+      "name": "all five tours in progress",
+      "ok": true
+    },
+    {
+      "name": "drivers cannot read other drivers' tours",
+      "ok": true
+    }
+  ],
+  "durationMs": 57069
+}

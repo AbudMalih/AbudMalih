@@ -14,6 +14,7 @@ import { registerExecutionRoutes } from "./routes/execution";
 import type { Geocoder } from "./geocode";
 import type { ProofStore } from "./storage";
 import type { RoutingProvider } from "./routing";
+import { RateLimiter } from "./geocode";
 import { registerOrgRoutes } from "./routes/org";
 import { registerPlatformRoutes } from "./routes/platform";
 import { registerTourRoutes } from "./routes/tours";
@@ -36,6 +37,8 @@ export interface AppDeps {
   proofStore?: ProofStore;
   geocoder?: Geocoder;
   routing?: RoutingProvider;
+  /** Requests per minute per client IP (default 600; 0 = off). */
+  rateLimitPerMinute?: number;
 }
 
 declare module "fastify" {
@@ -50,6 +53,16 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   const fetchImpl = deps.fetchImpl ?? fetch;
 
   app.register(cors, { origin: deps.corsOrigins ?? false, credentials: true });
+
+  // Coarse abuse protection per client IP (login and geocoding have their own, stricter limits).
+  const perMinute = deps.rateLimitPerMinute ?? 600;
+  if (perMinute > 0) {
+    const limiter = new RateLimiter(perMinute / 60, perMinute / 4);
+    app.addHook("onRequest", async (req, reply) => {
+      if (req.url === "/health" || req.url.endsWith("/events")) return;
+      if (!limiter.take(req.ip)) return reply.status(429).header("retry-after", "10").send({ error: { code: "rate_limited", message: "Too many requests – slow down" } });
+    });
+  }
 
   app.setErrorHandler((err: { statusCode?: number; message: string; validation?: unknown }, req, reply) => {
     if (err instanceof ApiError) return problem(reply, err.status, err.code, err.message);

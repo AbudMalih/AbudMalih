@@ -196,6 +196,10 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
       (await tx.query<{ storage_path: string; content_type: string }>(`select storage_path, content_type from proofs where id = $1 and organization_id = $2`, [id, orgId])).rows[0],
     );
     if (!row) return problem(reply, 404, "not_found", "Proof not found");
+    // Accountability: who looked at which proof (personal data) and when.
+    await db.asService((tx) =>
+      tx.query(`select app.log_read($1, $2, 'proofs', $3)`, [orgId, req.user!.userId, id]),
+    );
     const file = await store.get(row.storage_path);
     if (!file) return problem(reply, 404, "file_missing", "The file of this proof is not available");
     return reply

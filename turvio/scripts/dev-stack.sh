@@ -62,6 +62,11 @@ down() {
     kill -TERM -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
     rm -f "$f"
   done
+  # setsid may fork, so the stored pid is not always the group leader: also stop anything
+  # still listening on the stack's ports (development machine only).
+  for port in 8000 4000 3000 3001 8081; do
+    fuser -k -TERM "$port/tcp" >/dev/null 2>&1 || true
+  done
   echo "stopped app processes"
 }
 

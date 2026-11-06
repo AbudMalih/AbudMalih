@@ -1,3 +1,4 @@
+import { geocodeImportRows } from "../src/lib/geocode";
 import { parseLabelText } from "@turvio/shared";
 import { formFromExtraction } from "../src/lib/labelForm";
 import { navigationUrls, openNavigation } from "../src/lib/navigation";
@@ -66,5 +67,25 @@ describe("signature", () => {
   it("serialises strokes to path-only SVG", () => {
     const svg = strokesToSvg(["M1 1 L5 5"], 300.4, 120);
     expect(svg).toBe('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="300" height="120"><path d="M1 1 L5 5" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  });
+});
+
+describe("bulk geocoding for imports", () => {
+  it("applies exact house matches only and counts street-level results", async () => {
+
+    const rows = [
+      { street: "Lister Meile", houseNumber: "42", postalCode: "30161", city: "Hannover", location: null },
+      { street: "Lister Meile", houseNumber: "999", postalCode: "30161", city: "Hannover", location: null },
+      { street: "Weg", houseNumber: "1", postalCode: "30159", city: "Hannover", location: { lat: 52, lng: 9 } },
+    ];
+    const client = {
+      request: async () =>
+        ({ results: [{ precision: "house", location: { lat: 52.38, lng: 9.74 } }, { precision: "street", location: { lat: 52.3, lng: 9.7 } }] }) as never,
+    };
+    const r = await geocodeImportRows(client, rows);
+    expect(r).toMatchObject({ applied: 1, streetOnly: 1, status: "ok" });
+    expect(r.rows[0]!.location).toEqual({ lat: 52.38, lng: 9.74 });
+    expect(r.rows[1]!.location).toBeNull(); // street-level: not used as a house position
+    expect(r.rows[2]!.location).toEqual({ lat: 52, lng: 9 });
   });
 });

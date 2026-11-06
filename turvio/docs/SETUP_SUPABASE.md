@@ -74,9 +74,11 @@ Tokens are stored in httpOnly, `Secure`, `SameSite=Lax` cookies; serve the apps 
 |---|---|---|
 | API hosting (EU), e.g. container service | `apps/api` | not provisioned |
 | Optimizer hosting (internal network only) | `services/optimizer` | not provisioned |
-| OSRM with Germany extract (internal) | road-network travel times (`OSRM_URL`) | not provisioned – straight-line estimates are used and labelled until then |
+| OSRM with Germany extract (internal) | road-network travel times and geometry (`OSRM_URL` on optimizer and API) | integration verified locally with a synthetic grid; real extract not provisioned |
 | Map tiles + geocoding provider | Dispatch map in production; address search (`GEOCODER`) | decision pending – a self-hosted Nominatim/Photon needs no paid service |
 | SMTP provider (EU) | invitations, password reset | not configured |
 | Monitoring, log retention, backups | operations | not configured |
+
+Deployment of the API, optimizer, OSRM and geocoder data: [HOSTING.md](HOSTING.md). Security/production checklist: [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md).
 
 Production readiness additionally requires a security review/penetration test, load tests, DPA/AVV templates and an incident process – see `docs/SECURITY_PRIVACY.md`.

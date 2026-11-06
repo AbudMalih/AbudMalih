@@ -124,6 +124,8 @@ describe.runIf(available)("driver execution API", () => {
     expect(file.statusCode).toBe(200);
     expect(file.headers["content-type"]).toBe("image/jpeg");
     expect(file.headers["cache-control"]).toBe("private, no-store");
+    const logged = (await env.superuser.query(`select action, actor_user_id from audit_log where table_name = 'proofs' and record_id = $1 and action = 'read'`, [photo.id])).rows;
+    expect(logged).toEqual([{ action: "read", actor_user_id: env.data.users.dispatcherHannover }]);
     expect(file.rawPayload.subarray(0, 3)).toEqual(Buffer.from([0xff, 0xd8, 0xff]));
     // Not for another depot's dispatcher, another company, or an anonymous caller.
     expect((await env.as(U.dispatcherBremen, "GET", `/v1/orgs/${org()}/proofs/${photo.id}/file`)).statusCode).toBe(404);

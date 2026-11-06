@@ -22,6 +22,43 @@ export const SCAN_BARCODE_TYPES = [
 ] as const;
 export type ScanBarcodeType = (typeof SCAN_BARCODE_TYPES)[number];
 
+/**
+ * Default profile for parcel labels: the symbologies carriers print on labels
+ * (1D tracking codes, GS1/SSCC, DataMatrix/QR/PDF417). Fewer types = faster detection;
+ * the full list stays available as a setting.
+ */
+export const PARCEL_BARCODE_TYPES: ScanBarcodeType[] = ["code128", "code39", "itf14", "datamatrix", "qr", "pdf417"];
+
+export interface ScanStats {
+  scanned: number;
+  matched: number;
+  unknown: number;
+  /** Repeated scans of codes already in the list. */
+  duplicates: number;
+  /** Time from the first to the last scan. */
+  durationSeconds: number;
+  /** New parcels per minute over that time (null below 2 scans). */
+  perMinute: number | null;
+  /** Median seconds between consecutive new scans (null below 2 scans). */
+  medianIntervalSeconds: number | null;
+}
+
+/** Throughput figures for the hardware test matrix (50/100/200 parcels). */
+export function scanStats(entries: ScanEntry[]): ScanStats {
+  const times = entries.map((e) => Date.parse(e.at)).sort((a, b) => a - b);
+  const gaps = times.slice(1).map((t, i) => (t - times[i]!) / 1000).sort((a, b) => a - b);
+  const duration = times.length > 1 ? (times.at(-1)! - times[0]!) / 1000 : 0;
+  return {
+    scanned: entries.length,
+    matched: entries.filter((e) => e.stopId).length,
+    unknown: entries.filter((e) => !e.stopId).length,
+    duplicates: entries.reduce((n, e) => n + e.repeats, 0),
+    durationSeconds: Math.round(duration),
+    perMinute: times.length > 1 && duration > 0 ? Math.round(((times.length - 1) / duration) * 60 * 10) / 10 : null,
+    medianIntervalSeconds: gaps.length ? Math.round(gaps[Math.floor(gaps.length / 2)]! * 100) / 100 : null,
+  };
+}
+
 const TRACKING_RE = /^[A-Z0-9][A-Z0-9\-/.]{4,63}$/;
 const URL_PARAM_KEYS = ["tracking", "trackingnumber", "tracking_number", "piececode", "idc", "id", "sendungsnummer", "shipment"];
 

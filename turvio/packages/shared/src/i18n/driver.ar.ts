@@ -129,6 +129,9 @@ export const driverAr: Record<DriverMessageKey, string> = {
   "pod.cameraDenied": "الوصول إلى الكاميرا متوقف. اسمح به من إعدادات النظام لالتقاط صور التسليم.",
   "pod.saved": "تم حفظ التسليم",
 
+  "scan.stats": "{n} طرد · {dup} تكرار · {rate}/دقيقة · الوسيط {gap} ث بين عمليات المسح",
+  "scan.idlePaused": "متوقف مؤقتًا لتوفير البطارية – اضغط ▶ للمتابعة",
+  "settings.allBarcodes": "مسح جميع أنواع الرموز الشريطية (أبطأ)",
   "scan.title": "مسح الطرود",
   "scan.count": "تم مسح {n}",
   "scan.matched": "{n} على المسار",
@@ -195,6 +198,8 @@ export const driverAr: Record<DriverMessageKey, string> = {
   "addStop.phone": "الهاتف (اختياري)",
   "addStop.route": "المسار",
 
+  "import.locate": "البحث عن المواقع على الخريطة",
+  "import.located": "تم العثور على {n} موقع دقيق؛ {street} على مستوى الشارع فقط (حدد الدبوس يدويًا)",
   "import.title": "استيراد المحطات",
   "import.paste": "لصق",
   "import.file": "ملف",

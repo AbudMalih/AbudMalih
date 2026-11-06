@@ -5,9 +5,10 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Platform, Text, TextInput, View } from "react-native";
 import { Banner, Button, Card, Field, Ionicons, Pill, Screen, SectionTitle, Segmented, Sheet } from "../components/ui";
+import { geocodeImportRows } from "../lib/geocode";
 import { feedback } from "../lib/haptics";
 import { useT } from "../lib/i18n";
-import { useTourStore } from "../store/tourStore";
+import { auth, isServerMode, useTourStore } from "../store/tourStore";
 import { useMyTour } from "../store/useMyTour";
 import { radii, space, type as ty, useTheme } from "../theme";
 
@@ -33,6 +34,23 @@ export default function ImportScreen() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<ImportRow | null>(null);
+  const [geoBusy, setGeoBusy] = useState(false);
+
+  const locate = async () => {
+    if (!rows) return;
+    setGeoBusy(true);
+    const r = await geocodeImportRows(isServerMode() ? auth() : null, rows);
+    setGeoBusy(false);
+    const located = r.rows.map((row) => (row.location ? validateImportRow({ ...row, errors: [] }) : row));
+    setRows(located);
+    setError(
+      r.status === "ok"
+        ? t("import.located", { n: r.applied, street: r.streetOnly })
+        : r.status === "unavailable"
+          ? t("address.unavailable")
+          : t("address.offline"),
+    );
+  };
 
   const groups = useMemo(() => (rows ? groupImportRows(rows) : []), [rows]);
   const summary = useMemo(() => (rows ? summarizeImport(rows, groups) : null), [rows, groups]);
@@ -98,6 +116,7 @@ export default function ImportScreen() {
           <Card testID="import-summary">
             <Text style={[ty.bodyStrong, { color: c.text }]}>{t("import.summary", { stops: summary.stops, parcels: summary.parcels, invalid: summary.invalid })}</Text>
             {summary.needsLocation > 0 && <Banner text={t("import.needsLocation", { n: summary.needsLocation })} tone="warning" icon="location-outline" />}
+            {summary.needsLocation > 0 && <Button label={t("import.locate")} variant="secondary" icon="locate-outline" loading={geoBusy} onPress={() => void locate()} testID="import-locate" />}
             {summary.duplicates > 0 && <Banner text={t("import.duplicates", { n: summary.duplicates })} tone="warning" />}
           </Card>
           <SectionTitle>{t("import.preview")}</SectionTitle>

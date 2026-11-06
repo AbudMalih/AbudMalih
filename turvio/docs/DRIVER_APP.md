@@ -1,8 +1,8 @@
-# TURVIO Driver – Phase 4
+# TURVIO Driver (Phases 4–5)
 
 Expo SDK 58 / React Native 0.88 / Expo Router. iOS and Android (plus a web build used only for automated tests).
 
-> **Verification status.** Everything below was verified with unit/integration tests, the iOS/Android JavaScript bundles, `expo prebuild` (native project generation) and Playwright against the **web build** with a real API, PostgreSQL and the OR-Tools optimizer. **No physical Android or iOS device and no native build (Gradle/Xcode) was available in this environment.** Camera scanning, torch, haptics, the native map, location and photo capture are therefore *implemented but not hardware-verified* – see the matrix at the end.
+> **Verification status (Phase 5).** Verified with unit/integration tests, the browser build against the real API/PostgreSQL/OR-Tools/OSRM, and a **native Android release build** (Gradle, arm64; the OCR module and ML Kit model compile and are packaged). **Not verified:** running on a physical Android or iOS device (none available), any iOS build. See [DEVICE_TESTING.md](DEVICE_TESTING.md) for installation and the device test plan.
 
 ## Screens
 
@@ -49,10 +49,9 @@ action on the phone ──► store (applied immediately, persisted to AsyncStor
 ### Parcel-label capture & OCR boundary
 
 * Takes a photo (`expo-image-picker`), decodes barcodes from it (`expo-camera` `scanFromURLAsync`), runs the registered OCR engine if any, then `parseLabelText()` extracts recipient, street, house number, postal code, city and tracking number with a confidence per field (sender block ignored, multiple-address and missing-field warnings). The driver reviews and corrects every field. **The label photo is deleted right after reading.**
-* **No OCR engine is bundled.** On-device text recognition needs a native module and a custom development build that could not be built or tested here. To enable it:
-  1. `npx expo install @react-native-ml-kit/text-recognition` (or another engine) and create a dev build (`eas build --profile development`).
-  2. At app start: `registerOcrEngine({ name: "mlkit", recognize: async (uri) => (await TextRecognition.recognize(uri)).blocks.flatMap((b) => b.lines.map((l) => ({ text: l.text })) ) })` (`src/lib/ocr.ts`).
-  3. Test with real labels; ML Kit runs on the device (no image leaves the phone).
+* **On-device OCR (Phase 5):** local Expo module `apps/driver/modules/turvio-ocr` – Google ML Kit text recognition (bundled Latin model, Android) and Apple Vision `VNRecognizeTextRequest` (iOS, languages de/en, no language correction so names and numbers are not "corrected"). No image leaves the phone. If little text is found, the image is analysed again at 90°/270°/180° (labels photographed sideways). Lines come back with confidence and position; `orderOcrLines()` restores reading order per text block (sender and recipient side by side).
+* The parser (`packages/shared/src/capture/label.ts`) handles German specifics: `D-` prefixes, `Str.` without space, house-number ranges/letters, Packstation, `c/o` lines, OCR digit confusions in postal codes (`3O161` → `30161`, flagged "check"), several barcodes (carrier codes ranked above product EANs; ties → driver chooses), multiple addresses (recipient confidence "low"), missing fields reported instead of guessed. The recipient is never marked "certain".
+* The module only exists in development/production builds; Expo Go, the web build and unit tests have no OCR (the screen says so).
 * Without an engine the screen says so; the barcode is still read and the address is typed (with address search if configured).
 
 ### Stops, imports and addresses
@@ -88,18 +87,23 @@ Design tokens from `@turvio/shared` with a light and a dark palette (`src/theme.
 |---|---|---|---|---|
 | Sign-in, sync, offline queue, restart recovery, interrupted upload | ✓ | ✓ (offline via browser offline mode) | ✓ | **not tested** |
 | Continuous scan logic (duplicates, repeats, counters, history) | ✓ | ✓ (manual entry – no camera in the test browser) | ✓ | **camera decoding, torch, haptics not tested** |
-| Label photo → barcode → review | parser + form ✓ | – | ✓ | **not tested** |
-| OCR text recognition | parser only | – | – | **no engine bundled** |
+| Label photo → barcode → review | parser + form ✓ (synthetic labels) | – | ✓ Android build | **not tested** |
+| OCR text recognition | parser ✓; native module mock-free path untested | – | Android: compiled + model packaged; iOS: not compiled | **not tested** |
 | Paste / CSV / XLSX import, grouping | ✓ | ✓ (paste) | ✓ | file picker **not tested** |
-| Address search | ✓ (mocked provider) / 503 without provider | ✓ (no provider configured) | ✓ | **not tested** |
-| Optimization (server, options, locks) | ✓ | ✓ (real OR-Tools, straight-line matrix) | ✓ | **not tested** |
-| Map | – | schematic web stand-in only | ✓ | **react-native-maps not tested** |
+| Address search | ✓ PostgreSQL geocoder with synthetic OSM fixture; batch for imports | ✓ (synthetic addresses) | ✓ | **not tested** |
+| Optimization (server, options, locks) | ✓ | ✓ (real OR-Tools; OSRM on a synthetic grid in the pilot run) | ✓ | **not tested** |
+| Map (clustering for 50–250 stops, road line) | clustering ✓ (Node timing only) | schematic web stand-in | ✓ Android build | **react-native-maps performance not measured** |
 | Navigation hand-off | ✓ (URL building, fallback) | – | ✓ | **not tested** |
 | Statuses, reasons, notes | ✓ | ✓ | ✓ | **not tested** |
 | Proof of delivery | ✓ (upload, idempotency, access control) | ✓ (signature; Dispatch views it) | ✓ | **photo capture not tested** |
 | Dark mode, RTL | – | ✓ (screenshots) | ✓ | **not tested** |
 
 Build checks run: `expo export --platform android` and `--platform ios` (Hermes bytecode bundles), `expo export --platform web`, `expo prebuild --clean` (Android manifest: camera, fine/coarse location, background location and microphone removed; iOS Info.plist: camera and when-in-use location only, LSApplicationQueriesSchemes for Google Maps/Waze). Not run: Gradle/Xcode compilation, store builds, on-device tests.
+
+## Phase 5 additions
+* Route editing: edit address (old position dropped unless a new pin is set – enforced in the database), merge stops (all parcels kept), remove stops from personal routes, drag-and-drop reorder with fixed-height rows, lock positions.
+* Scanner: parcel-label barcode profile (faster), autofocus, camera off in background, auto-pause after 60 s idle, throughput statistics in the scan history (for the hardware matrix).
+* Road routing: cached OSRM route per stop order (valid only while the order matches), solid road line on the map, road-network figures labelled.
 
 ## Next steps for the driver app
 

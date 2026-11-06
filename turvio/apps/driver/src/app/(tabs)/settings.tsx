@@ -83,6 +83,12 @@ export default function SettingsScreen() {
           onChange={(v) => s.setPrefs({ navApp: v === "ask" ? null : v })}
           options={[{ value: "ask", label: t("settings.ask") }, ...availableNavApps().map((a) => ({ value: a, label: t(`nav.${a}`) }))]}
         />
+        <ListRow
+          icon="barcode-outline"
+          title={t("settings.allBarcodes")}
+          onPress={() => s.setPrefs({ allBarcodeTypes: !s.prefs.allBarcodeTypes })}
+          right={<Pill label={s.prefs.allBarcodeTypes ? "✓" : "–"} tone={s.prefs.allBarcodeTypes ? "primary" : "neutral"} />}
+        />
         <SectionTitle>{t("settings.appearance")}</SectionTitle>
         <Segmented
           value={s.prefs.colorScheme}

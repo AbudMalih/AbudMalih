@@ -20,3 +20,4 @@ grant execute on function app.accept_invitation(text, uuid), app.invitation_info
 grant select, update, delete on app.storage_deletions to turvio_service;
 grant execute on function app.purge_expired_data() to turvio_service;
 grant usage on schema geo to turvio_service; grant select, insert, update, delete on geo.addresses to turvio_service; grant usage, select on all sequences in schema geo to turvio_service; grant execute on function geo.norm(text) to turvio_service;
+grant execute on function app.log_read(uuid, uuid, text, text) to turvio_service;

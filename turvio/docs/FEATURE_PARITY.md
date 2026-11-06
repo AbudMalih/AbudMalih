@@ -18,34 +18,34 @@ TURVIO is developed independently. This list compares against **publicly documen
 
 ## 1. Driver app (vs. Spoke Route Planner and the Dispatch driver app)
 
-Updated 2026-11-05 (Phase 4).
+Updated 2026-11-06 (Phase 5). Native Android build exists; nothing is device-tested yet.
 
 | Feature | Spoke | TURVIO | Notes |
 |---|---|---|---|
 | Add stop by typing an address | Documented | **Done** | Form with validation; duplicate-address hint; address autocomplete when a geocoder is configured. |
-| Address autocomplete / geocoding | Documented | **Partial** | Provider abstraction (self-hosted Nominatim/Photon) + API endpoint, tested with mocked providers. No provider is configured yet – addresses are then kept and marked "needs map position" (never invented coordinates). |
+| Address autocomplete / geocoding | Documented | **Done (data import pending)** | Self-hosted PostgreSQL geocoder from OpenStreetMap (German matching, street-level fallback, batch for imports) – tested with synthetic data; a real Germany address import is still to be run. |
 | Long-press/tap map to place a stop | Documented | **Done (device test pending)** | Tap/drag pin in the stop form and "set/move pin" for existing stops. |
 | Extended search for partial addresses | Documented | Planned | Depends on the geocoder. |
 | Voice entry / dictation | Documented | Planned (M5) | |
 | Continuous barcode scanning | Documented (Dispatch driver app) | **Done (device test pending)** | Camera stays open, Code 128/39/93, EAN, UPC, ITF, Codabar, QR, Data Matrix, PDF417, Aztec; duplicate/repeat handling, counters, haptics, torch, pause, history, manual entry, offline queue; parcels marked loaded in Dispatch. Scan logic tested; camera decoding not hardware-verified. |
-| Camera scan of an address label (OCR) | Documented | **Partial** | Label photo → barcode from photo → review screen with confidence per field; label-text parser tested. **No OCR engine bundled** (needs ML Kit + dev build). Photo deleted after reading. |
+| Camera scan of an address label (OCR) | Documented | **Done (device test pending)** | On-device ML Kit (Android, compiled into the APK) / Apple Vision (iOS, not yet compiled); review screen with confidence; synthetic label tests. |
 | Manifest / PDF / image import (OCR) | Documented | Planned (M4) | |
 | Spreadsheet import (CSV/XLS/XLSX) | Documented | **Done** | CSV and .xlsx with preview, per-row errors, edit/remove, grouping. Legacy .xls refused with a message. |
 | Paste multiple addresses | Unconfirmed | **Done** | One stop per line incl. tracking numbers and optional coordinates. |
 | Group parcels for the same address | – | **Done** | Import, manual entry, label capture; all tracking numbers kept, duplicates reported. |
-| Edit stop after adding | Documented | **Partial** | Notes, lock, map position. Editing address fields of an existing stop: planned. |
+| Edit stop after adding | Documented | **Done** | Address, recipient, pin; old position dropped on address change. |
 | Multi-stop optimization | Documented | **Done** | Server OR-Tools for saved routes (time windows, priorities, shift, capacity, multiple parcels); offline heuristic fallback, labelled. |
 | Optimize remaining stops / from current position | Documented | **Done** | Completed stops stay; optional device position as start. |
 | Start/end location, round trip | Documented | **Partial** | Start: depot/last stop or device position; end: depot or last stop. Arbitrary addresses as start/end: planned. |
 | Time windows | Documented | **Done** | |
 | Service time per stop | Documented | **Partial** | Used by the optimizer; not editable in the app yet. |
 | Priority stops | Documented (Dispatch "ASAP") | **Done** | |
-| Manual reorder | Documented | **Done** | Up/down in reorder mode; synced to the server. Drag-and-drop: planned. |
+| Manual reorder | Documented | **Done** | Drag-and-drop (app), up/down (Dispatch), synced. |
 | Lock stop positions | Documented ("pin") | **Done** | Locked stops keep their slot on re-optimization (server and offline). |
 | Draw on map to reorder | Documented | Not planned yet | |
-| Road-network travel times | Documented | **Partial** | OSRM client ready; not hosted → straight-line estimates, always labelled. |
+| Road-network travel times | Documented | **Done (hosting pending)** | OSRM matrices in OR-Tools, road geometry, total/remaining and ETAs in Dispatch and app; verified with real OSRM on a synthetic grid; Germany extract not yet hosted. Fallback labelled. |
 | Offline route access | Documented | **Done** | Persistent store + outbox with client ids; restart and interrupted-upload recovery tested. |
-| Breaks | Documented | Planned (M5) | |
+| Breaks | Documented | Planned (M5) |
 | Start / pause / finish tour | – | **Done** | |
 | Navigation handoff (Google/Apple Maps/Waze) | Documented (+HERE, Sygic) | **Done (device test pending)** | Native schemes with https fallback when an app is missing; default app setting. |
 | In-app turn-by-turn navigation | Documented | Not planned | Handoff is the chosen approach. |
@@ -77,7 +77,7 @@ Updated 2026-11-05 (Phase 4).
 | Multi-driver optimization | Documented | **Done** | Per tour and whole depot plan (OR-Tools), saved to the DB. Travel times are straight-line estimates until OSRM is hosted (labelled). |
 | Optimization objective (balance workload etc.) | Documented | Planned (M5) | |
 | Linked pickup → delivery | Documented | Planned (M5) | |
-| Reassign stops | Documented | **Done** | Assign unassigned stops/pickups to tours; deleting a tour returns its stops to unassigned. |
+| Reassign stops | Documented | **Done** | Move between tours (Dispatch), merge stops with parcels; driver lists follow. | Assign unassigned stops/pickups to tours; deleting a tour returns its stops to unassigned. |
 | Max stops per driver, allowed drivers per stop | Documented | Planned (M5) | |
 | Live tour progress | Documented | **Partial** | Stop statuses from the driver app appear in Dispatch within seconds (SSE change feed, polling fallback). No live GPS positions – the map deliberately shows none without authorized location data. |
 | Pickups and delivery deadlines | Documented | **Done** | Pickups workspace on persisted data: windows, deadlines, projected ETA, conflicts, assignment. |
