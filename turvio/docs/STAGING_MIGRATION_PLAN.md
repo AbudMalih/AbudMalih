@@ -140,3 +140,24 @@ Then the hosted-only files (never run locally):
 **Incident.** `GET /v1/projects/{ref}/postgrest` returns the project's *legacy JWT secret*. While recording the "before" state, it was printed in the session's tool output and briefly stored in a scratchpad file. The file was cleaned and nothing is in Git. Action for the owner: rotate the legacy JWT secret / switch to the new JWT signing keys in the dashboard. Nothing uses the current keys yet, so this has no impact. In future, only read single fields from that endpoint.
 
 **Permission correction.** Changing the auth config requires `project_admin_write`, not an Auth-Config-only permission as the table in section 2 assumed. The Data API change worked with the granted permissions.
+
+### Follow-up – owner actions and hosted sign-in checks (2026-11-06)
+- Owner set the `turvio_service` password in the dashboard; it is not stored in this repository or the session.
+- Owner applied the auth settings in the dashboard. Read back: `disable_signup=true`, `password_min_length=12`, letters + digits required, TOTP enroll/verify on, e-mail confirmation on, anonymous sign-in off.
+- Hosted checks with the publishable key only (saved as an environment network secret, never in Git):
+
+| Check | Result |
+|---|---|
+| `POST /auth/v1/signup` | 422 `signup_disabled` |
+| Password login, unknown user | 400 `invalid_credentials` (generic) |
+| `GET /rest/v1/tours` | 404: table not exposed (Data API serves only `graphql_public`) |
+| REST OpenAPI paths | none |
+| GraphQL | not available |
+| Public URL into `proofs` | refused (bucket not public) |
+| Bucket list with publishable key | empty |
+
+**Not yet tested on hosted:**
+- login → TOTP enrolment → aal2 for a real staging user;
+- the TURVIO API connecting as `turvio_service` through the session pooler.
+
+Both need the API to run where it can open a Postgres connection, i.e. on staging hosting or the owner's machine. This cloud session only has HTTPS through a proxy. Staging users are then created through TURVIO's invitation flow.
