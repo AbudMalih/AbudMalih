@@ -9,7 +9,7 @@ var rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var gl=false;try{var c=document.createElement('canvas');var x=c.getContext('webgl2')||c.getContext('webgl');gl=!!x;var l=x&&x.getExtension('WEBGL_lose_context');l&&l.loseContext();}catch(e){}
 var forceStatic=/[?&]static\\b/.test(q);
 if(!rm&&gl&&!forceStatic){d.classList.add('cine');if(/^\\/(de|en|ar)?\\/?$/.test(location.pathname)){d.classList.add('intro-pending');}}else{d.classList.add('static');}
-if(!rm&&window.matchMedia('(hover: hover) and (pointer: fine)').matches){d.classList.add('has-cursor');}
+
 }catch(e){}})();`;
 
 export function isCine() {

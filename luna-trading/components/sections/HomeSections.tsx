@@ -185,16 +185,18 @@ export default function HomeSections() {
                 </p>
               </div>
               <div className={s.cardDark} data-reveal style={d(100)}>
-                <ChainArt
-                  id="import"
-                  className={`${s.cardArt} ${s.cardArtDark}`}
-                  redClass={s.cardArtRed}
-                />
-                <ChainArt
-                  id="distribution"
-                  className={`${s.cardArt} ${s.cardArtDark}`}
-                  redClass={s.cardArtRed}
-                />
+                <ol className={h.steps}>
+                  {sv.trade.docRows.map((r, n) => (
+                    <li key={r}>
+                      <span className={h.stepNum}>{num(n)}</span>
+                      <span className={h.stepName}>{r}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className={h.stepFoot}>
+                  <span className={h.hubPlus} aria-hidden="true" />
+                  {sv.trade.market}
+                </p>
               </div>
             </div>
           </section>
@@ -397,36 +399,57 @@ export default function HomeSections() {
             </div>
           </section>
 
-          {/* one company, many markets */}
+          {/* one company, many markets: Luna Trading as the bar that joins six capabilities */}
           <section
             className={s.dark}
             data-tone="dark"
             aria-labelledby="home-eco"
           >
-            <div className={`frame ${s.split}`}>
-              <div>
-                <Tag dark>{dict.ecosystem.tag}</Tag>
-                <h2 id="home-eco" className={`${s.h2} ${s.h2Dark}`} data-reveal>
-                  {dict.ecosystem.h1}{" "}
-                  <span className={s.titleRed}>{dict.ecosystem.h2}</span>
-                </h2>
-                <p className={s.bodyDark} data-reveal>
-                  {dict.ecosystem.caption}
-                </p>
-              </div>
-              <div className={h.eco} data-reveal style={d(100)}>
-                <span className={h.ecoCenter}>{dict.ecosystem.center}</span>
-                {Object.values(dict.ecosystem.capabilities).map((c, i, all) => (
-                  <span
-                    key={c}
-                    className={h.ecoNode}
-                    style={{
-                      ["--a" as string]: `${(i / all.length) * 360 - 90}deg`,
-                    }}
-                  >
-                    {c}
-                  </span>
-                ))}
+            <div className="frame">
+              <Tag dark>{dict.ecosystem.tag}</Tag>
+              <h2 id="home-eco" className={`${s.h2} ${s.h2Dark}`} data-reveal>
+                {dict.ecosystem.h1}{" "}
+                <span className={s.titleRed}>{dict.ecosystem.h2}</span>
+              </h2>
+              <p className={s.bodyDark} data-reveal>
+                {dict.ecosystem.caption}
+              </p>
+              <div className={h.hub}>
+                <div className={`${h.hubRow} ${h.hubTop}`}>
+                  {Object.values(dict.ecosystem.capabilities)
+                    .slice(0, 3)
+                    .map((c, n) => (
+                      <div
+                        key={c}
+                        className={h.hubCard}
+                        data-reveal
+                        style={d(n * 60)}
+                      >
+                        <span className={h.hubNum}>{num(n)}</span>
+                        {c}
+                      </div>
+                    ))}
+                </div>
+                <div className={h.hubBar} data-reveal>
+                  <span className={h.hubPlus} aria-hidden="true" />
+                  {dict.ecosystem.center}
+                  <small>{dict.company.place}</small>
+                </div>
+                <div className={`${h.hubRow} ${h.hubBottom}`}>
+                  {Object.values(dict.ecosystem.capabilities)
+                    .slice(3)
+                    .map((c, n) => (
+                      <div
+                        key={c}
+                        className={h.hubCard}
+                        data-reveal
+                        style={d(n * 60)}
+                      >
+                        <span className={h.hubNum}>{num(n + 3)}</span>
+                        {c}
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
           </section>

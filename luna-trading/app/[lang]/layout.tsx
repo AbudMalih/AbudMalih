@@ -9,7 +9,6 @@ import "../globals.css";
 import { ENV_SCRIPT } from "@/lib/motion/env";
 import ScrollSetup from "@/lib/motion/scroll";
 import Navigation from "@/components/chrome/Navigation";
-import Cursor from "@/components/chrome/Cursor";
 import Footer from "@/components/chrome/Footer";
 import { I18nProvider } from "@/content/i18n/I18nProvider";
 import { LOCALES, LOCALE_META, getDictionary, isLocale, type Locale } from "@/content/i18n";
@@ -73,7 +72,6 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           </a>
           <ScrollSetup />
           <Navigation />
-          <Cursor />
           <main id="main">{children}</main>
           <Footer />
         </I18nProvider>
