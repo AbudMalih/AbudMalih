@@ -8,6 +8,7 @@ import type { StepId } from "@/content/i18n/types";
 import { usePageMotion } from "@/components/services/usePageMotion";
 import ChainArt from "@/components/sections/ChainArt";
 import RouteCard from "@/components/import/RouteCard";
+import CommerceFlow from "./CommerceFlow";
 import { FlagCN, FlagDE, FlagEU } from "@/components/import/Flags";
 import {
   Band,
@@ -43,7 +44,7 @@ const ART: Record<ServiceId, StepId> = {
 };
 const num = (i: number) => String(i + 1).padStart(2, "0");
 
-export default function HomeSections({ part }: { part: "a" | "b" }) {
+export default function HomeSections() {
   const { dict, locale, href } = useI18n();
   const sv = dict.services;
   const im = IMPORT_COPY[locale];
@@ -53,52 +54,43 @@ export default function HomeSections({ part }: { part: "a" | "b" }) {
 
   return (
     <div ref={root} className={`${s.page} ${h.wrap}`}>
-      {part === "a" && (
+      {true && (
         <>
           <Band title={im.lanesTitle} items={im.lanes} />
 
-          {/* what we do */}
+          {/* 01 · from the source to the market */}
           <section
             className={s.light}
             data-tone="light"
-            aria-labelledby="home-model"
+            aria-labelledby="home-source"
           >
-            <div className="frame">
-              <Tag>{sv.model.tag}</Tag>
-              <h2 id="home-model" className={s.h2} data-reveal>
-                {sv.model.title}
-              </h2>
-              <p className={s.body} data-reveal>
-                {sv.model.intro}
-              </p>
-              <div className={s.bento}>
-                {IDS.map((id, i) => (
-                  <a
-                    key={id}
-                    href={href(`/what-we-do#${id}`)}
-                    className={i === 0 ? s.bentoHero : s.card}
-                    data-reveal
-                    style={d(i * 60)}
-                  >
-                    <span className={s.num}>{num(i)}</span>
-                    {i > 0 && (
-                      <div style={{ marginTop: 18 }}>
-                        <ChainArt
-                          id={ART[id]}
-                          className={s.cardArt}
-                          redClass={s.cardArtRed}
-                        />
-                      </div>
-                    )}
-                    <h3 className={s.h3}>
-                      {sv.chapters[id].title.replace(/­/g, "")}
-                    </h3>
-                    <p className={i === 0 ? s.textDark : s.text}>
-                      {sv.model.lines[id]}
-                    </p>
-                    <span className={s.link}>{sv.model.jump}</span>
-                  </a>
-                ))}
+            <div className={`frame ${s.split}`}>
+              <div>
+                <Tag>{dict.source.tag}</Tag>
+                <h2 id="home-source" className={s.h2} data-reveal>
+                  {dict.source.l1}{" "}
+                  <span className={s.titleRed}>{dict.source.l2}</span>
+                </h2>
+                <ul className={s.chips} data-reveal>
+                  {dict.source.supporting.map((x) => (
+                    <li key={x} className={s.chip}>
+                      {x}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div
+                className={s.bentoHero}
+                style={{ minHeight: 360 }}
+                data-reveal
+                aria-hidden="true"
+              >
+                <span
+                  className={s.chipDark}
+                  style={{ alignSelf: "flex-start" }}
+                >
+                  {im.lanes[0]}
+                </span>
               </div>
             </div>
           </section>
@@ -168,10 +160,185 @@ export default function HomeSections({ part }: { part: "a" | "b" }) {
               </div>
             </div>
           </section>
+          {/* 02 · to Europe */}
+          <section
+            className={s.dark}
+            data-tone="dark"
+            aria-labelledby="home-transport"
+          >
+            <div className={`frame ${s.split}`}>
+              <div>
+                <Tag dark>{dict.transport.tag}</Tag>
+                <h2
+                  id="home-transport"
+                  className={`${s.h2} ${s.h2Dark}`}
+                  data-reveal
+                >
+                  {dict.transport.l1}{" "}
+                  <span className={s.titleRed}>{dict.transport.l2}</span>
+                </h2>
+                <p className={`${s.big}`} style={{ marginTop: 22 }} data-reveal>
+                  {dict.transport.leadStrong}
+                </p>
+                <p className={s.bodyDark} data-reveal>
+                  {dict.transport.lead}
+                </p>
+              </div>
+              <div className={s.cardDark} data-reveal style={d(100)}>
+                <ChainArt
+                  id="import"
+                  className={`${s.cardArt} ${s.cardArtDark}`}
+                  redClass={s.cardArtRed}
+                />
+                <ChainArt
+                  id="distribution"
+                  className={`${s.cardArt} ${s.cardArtDark}`}
+                  redClass={s.cardArtRed}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* 03 · distribution */}
+          <section
+            className={s.light}
+            data-tone="light"
+            aria-labelledby="home-warehouse"
+          >
+            <div className="frame">
+              <Tag>{dict.warehouse.tag}</Tag>
+              <h2 id="home-warehouse" className={s.h2} data-reveal>
+                {dict.warehouse.l1}{" "}
+                <span className={s.titleRed}>{dict.warehouse.l2}</span>
+              </h2>
+              <div className={s.grid4}>
+                {(["germany", "eu", "ecommerce", "b2b"] as const).map(
+                  (k, i) => (
+                    <div
+                      key={k}
+                      className={`${s.card} ${s.cardHover}`}
+                      data-reveal
+                      style={{
+                        ...d(i * 70),
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                      }}
+                    >
+                      {k === "germany" ? (
+                        <FlagDE className={s.flag} />
+                      ) : k === "eu" ? (
+                        <FlagEU className={s.flag} />
+                      ) : (
+                        <span className={s.num}>{num(i)}</span>
+                      )}
+                      <h3 className={s.h3} style={{ marginTop: 0 }}>
+                        {dict.warehouse.labels[k]}
+                      </h3>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* 04 · we build brands */}
+          <section
+            className={s.dark}
+            data-tone="dark"
+            aria-labelledby="home-brands"
+          >
+            <div className="frame">
+              <h2
+                id="home-brands"
+                className={`${s.h2} ${s.h2Dark}`}
+                style={{ maxWidth: "none" }}
+                data-reveal
+              >
+                <span style={{ color: "#8d8e93" }}>
+                  {dict.brands.a1} {dict.brands.a2}
+                </span>
+                <br />
+                {dict.brands.b1}{" "}
+                <span className={s.titleRed}>{dict.brands.b2}.</span>
+              </h2>
+              <div className={s.actions} data-reveal>
+                <GhostButton href={href("/brands")}>
+                  {dict.nav.brands}
+                </GhostButton>
+              </div>
+            </div>
+          </section>
+
+          {/* what we do */}
+          <section
+            className={s.light}
+            data-tone="light"
+            aria-labelledby="home-model"
+          >
+            <div className="frame">
+              <Tag>{sv.model.tag}</Tag>
+              <h2 id="home-model" className={s.h2} data-reveal>
+                {sv.model.title}
+              </h2>
+              <p className={s.body} data-reveal>
+                {sv.model.intro}
+              </p>
+              <div className={s.bento}>
+                {IDS.map((id, i) => (
+                  <a
+                    key={id}
+                    href={href(`/what-we-do#${id}`)}
+                    className={i === 0 ? s.bentoHero : s.card}
+                    data-reveal
+                    style={d(i * 60)}
+                  >
+                    <span className={s.num}>{num(i)}</span>
+                    {i > 0 && (
+                      <div style={{ marginTop: 18 }}>
+                        <ChainArt
+                          id={ART[id]}
+                          className={s.cardArt}
+                          redClass={s.cardArtRed}
+                        />
+                      </div>
+                    )}
+                    <h3 className={s.h3}>
+                      {sv.chapters[id].title.replace(/­/g, "")}
+                    </h3>
+                    <p className={i === 0 ? s.textDark : s.text}>
+                      {sv.model.lines[id]}
+                    </p>
+                    <span className={s.link}>{sv.model.jump}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* e-commerce */}
+          <section
+            className={`${s.light} ${s.alt}`}
+            data-tone="light"
+            aria-labelledby="home-commerce"
+          >
+            <div className="frame">
+              <Tag>{dict.commerce.tag}</Tag>
+              <h2 id="home-commerce" className={s.h2} data-reveal>
+                {dict.commerce.h1}{" "}
+                <span className={s.titleRed}>{dict.commerce.h2}</span>
+              </h2>
+              <p className={s.body} data-reveal>
+                <strong>{dict.commerce.secondary}</strong> {dict.commerce.body}
+              </p>
+              <CommerceFlow copy={dict.commerce} />
+              <p className={s.note}>{im.channelsNote}</p>
+            </div>
+          </section>
         </>
       )}
 
-      {part === "b" && (
+      {true && (
         <>
           {/* Cologne: the company behind it */}
           <section
@@ -225,6 +392,40 @@ export default function HomeSections({ part }: { part: "a" | "b" }) {
                       </p>
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* one company, many markets */}
+          <section
+            className={s.dark}
+            data-tone="dark"
+            aria-labelledby="home-eco"
+          >
+            <div className={`frame ${s.split}`}>
+              <div>
+                <Tag dark>{dict.ecosystem.tag}</Tag>
+                <h2 id="home-eco" className={`${s.h2} ${s.h2Dark}`} data-reveal>
+                  {dict.ecosystem.h1}{" "}
+                  <span className={s.titleRed}>{dict.ecosystem.h2}</span>
+                </h2>
+                <p className={s.bodyDark} data-reveal>
+                  {dict.ecosystem.caption}
+                </p>
+              </div>
+              <div className={h.eco} data-reveal style={d(100)}>
+                <span className={h.ecoCenter}>{dict.ecosystem.center}</span>
+                {Object.values(dict.ecosystem.capabilities).map((c, i, all) => (
+                  <span
+                    key={c}
+                    className={h.ecoNode}
+                    style={{
+                      ["--a" as string]: `${(i / all.length) * 360 - 90}deg`,
+                    }}
+                  >
+                    {c}
+                  </span>
                 ))}
               </div>
             </div>

@@ -1,0 +1,224 @@
+.flow {
+  margin-top: clamp(36px, 6vh, 64px);
+  border-radius: 32px;
+  background: #f7f6f3;
+  border: 1px solid rgba(20, 21, 24, 0.06);
+  box-shadow: 0 30px 60px -40px rgba(20, 21, 24, 0.4);
+  padding: clamp(20px, 3vw, 40px);
+}
+.diagram {
+  position: relative;
+  aspect-ratio: 1000 / 420;
+}
+.svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.line {
+  fill: none;
+  stroke: #9a9ba0;
+  stroke-width: 1.4;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.6s var(--ease-out);
+}
+.red {
+  stroke: var(--luna-red);
+  stroke-width: 2.4;
+}
+.soft {
+  stroke: #c3c4c8;
+  transition-delay: 0.5s;
+}
+.flow[data-in] .line {
+  stroke-dashoffset: 0;
+}
+.packet {
+  fill: var(--luna-red);
+}
+.product,
+.layer,
+.node,
+.end,
+.colLabel {
+  position: absolute;
+  translate: -50% -50%;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-out);
+}
+.flow[data-in] .product,
+.flow[data-in] .layer,
+.flow[data-in] .colLabel {
+  opacity: 1;
+}
+.flow[data-in] .node {
+  opacity: 1;
+  transition-delay: 0.5s;
+}
+.flow[data-in] .end {
+  opacity: 1;
+  transition-delay: 0.9s;
+}
+.product {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.product svg {
+  width: 56px;
+  height: 56px;
+  fill: #fff;
+  stroke: #141518;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.productRed {
+  stroke: var(--luna-red) !important;
+  stroke-width: 2.2 !important;
+}
+.product small,
+.layer small {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b6c71;
+}
+.layer {
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 5px;
+  height: 46%;
+}
+.layer i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  border-radius: 3px;
+  background: #141518;
+}
+.layer small {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  translate: -50% 10px;
+  white-space: nowrap;
+}
+.colLabel {
+  top: 0;
+  translate: -50% -60%;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b6c71;
+  white-space: nowrap;
+}
+.node {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding-inline: 14px 18px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(20, 21, 24, 0.1);
+  box-shadow: 0 12px 24px -16px rgba(20, 21, 24, 0.4);
+  font-weight: 650;
+  color: #141518;
+  white-space: nowrap;
+}
+.node svg {
+  width: 20px;
+  height: 20px;
+  fill: #141518;
+}
+.end {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  padding-inline: 12px 16px;
+  border-radius: 999px;
+  background: #141518;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.end i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--luna-red);
+}
+:global(html[dir="rtl"]) .diagram {
+  direction: ltr;
+}
+.list {
+  display: none;
+}
+@media (max-width: 900px) {
+  .diagram {
+    display: none;
+  }
+  .list {
+    display: grid;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(20, 21, 24, 0.08);
+  }
+  .list li:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  .list small {
+    flex-basis: 100%;
+    font-family: var(--font-data);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6b6c71;
+  }
+  .chip,
+  .chipRed {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .chip {
+    background: #fff;
+    border: 1px solid rgba(20, 21, 24, 0.1);
+  }
+  .chipRed {
+    background: var(--luna-red);
+    color: #fff;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .line,
+  .product,
+  .layer,
+  .node,
+  .end,
+  .colLabel {
+    transition: none;
+  }
+}
