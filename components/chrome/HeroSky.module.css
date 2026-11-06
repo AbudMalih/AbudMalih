@@ -103,14 +103,14 @@
   width: calc(var(--gr, 40vh) * 3);
   height: calc(var(--gr, 40vh) * 3);
   margin: calc(var(--gr, 40vh) * -1.5) 0 0 calc(var(--gr, 40vh) * -1.5);
-  background: radial-gradient(closest-side, rgba(236, 226, 210, 0.3) 62%, rgba(214, 200, 182, 0.12) 74%, transparent 100%);
+  background: radial-gradient(closest-side, rgba(230, 232, 236, 0.1) 62%, rgba(214, 216, 220, 0.04) 74%, transparent 100%);
   transform: scale(0.9);
 }
 .rim {
   width: calc(var(--gr, 40vh) * 2.16);
   height: calc(var(--gr, 40vh) * 2.16);
   margin: calc(var(--gr, 40vh) * -1.08) 0 0 calc(var(--gr, 40vh) * -1.08);
-  background: radial-gradient(closest-side, transparent 90.5%, rgba(255, 246, 232, 0.85) 92.4%, rgba(240, 226, 206, 0.28) 94.5%, transparent 100%);
+  background: radial-gradient(closest-side, transparent 91.4%, rgba(240, 242, 246, 0.38) 92.4%, rgba(230, 232, 236, 0.08) 94%, transparent 100%);
   mask-image: linear-gradient(calc(var(--dir) * 128deg), #000 18%, rgba(0, 0, 0, 0.35) 48%, transparent 70%);
   -webkit-mask-image: linear-gradient(calc(var(--dir) * 128deg), #000 18%, rgba(0, 0, 0, 0.35) 48%, transparent 70%);
   transform: rotate(calc(var(--dir) * -18deg));

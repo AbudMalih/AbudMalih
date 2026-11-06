@@ -114,7 +114,8 @@ void main() {
   float a = pow(clamp((1.0 - rim) / 0.29, 0.0, 1.0), 2.4);
   float side = 0.35 + 0.65 * smoothstep(-0.6, 0.8, dot(normalize(vN), normalize(uLight)));
   // dark grounds: a silver atmosphere; daylight: a soft contact shadow on the side away from the light
-  float glow = a * side * 0.48;
+  // a quieter atmosphere: present, never a glow ring
+  float glow = a * side * 0.22;
   float shade = a * (1.0 - side) * 0.4;
   vec3 c = mix(vec3(0.62, 0.63, 0.67), vec3(0.16, 0.165, 0.18), uEnv);
   gl_FragColor = vec4(c, mix(glow, shade, uEnv) * uReveal);
@@ -156,6 +157,8 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
   const camera = new THREE.PerspectiveCamera(26, 1, 0.01, 50);
   camera.position.set(0, 0, 4);
 
+  const tmp = new THREE.Vector3();
+  const tmpV = new THREE.Vector3();
   const tilt = new THREE.Group();
   const spin = new THREE.Group();
   tilt.add(spin);
@@ -190,6 +193,65 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
   const halo = new THREE.Mesh(haloGeo, haloMat);
   halo.renderOrder = -1; // behind the (transparent) globe body
   scene.add(halo);
+
+  // --- Ports: small lights at real trade hubs (Cologne in Luna red) ------
+  const PORTS: [number, number, number][] = [
+    [121.5, 31.2, 0], [114.1, 22.5, 0], [121.6, 29.9, 0], [120.4, 36.1, 0], [113.3, 23.1, 0], [118.1, 24.5, 0],
+    [117.7, 39.0, 0], [129.0, 35.1, 0], [103.8, 1.3, 0], [55.0, 25.0, 0], [32.5, 30.0, 0], [23.6, 37.9, 0],
+    [4.4, 51.9, 0], [9.9, 53.5, 0], [4.4, 51.2, 0], [8.6, 53.5, 0], [6.8, 51.4, 0], [6.96, 50.94, 1],
+    [-74.0, 40.7, 0], [-118.3, 33.7, 0], [72.9, 19.0, 0], [139.8, 35.6, 0],
+  ];
+  const portGeo = new THREE.BufferGeometry();
+  const portPos = new Float32Array(PORTS.length * 3);
+  const portKind = new Float32Array(PORTS.length);
+  const portPhase = new Float32Array(PORTS.length);
+  PORTS.forEach(([lon, lat, k], i) => {
+    const v = lonLatToVec3(lon, lat, 1.006, tmpV);
+    portPos.set([v.x, v.y, v.z], i * 3);
+    portKind[i] = k;
+    portPhase[i] = (i * 0.37) % 1;
+  });
+  portGeo.setAttribute("position", new THREE.BufferAttribute(portPos, 3));
+  portGeo.setAttribute("aKind", new THREE.BufferAttribute(portKind, 1));
+  portGeo.setAttribute("aPhase", new THREE.BufferAttribute(portPhase, 1));
+  const portUniforms = { uTime: { value: 0 }, uReveal: uniforms.uReveal, uCam: uniforms.uCam, uScale: { value: 1 } };
+  const portMat = new THREE.ShaderMaterial({
+    uniforms: portUniforms,
+    transparent: true,
+    depthWrite: false,
+    vertexShader: `
+attribute float aKind;
+attribute float aPhase;
+uniform float uTime;
+uniform float uScale;
+uniform vec3 uCam;
+varying float vKind;
+varying float vA;
+void main() {
+  vec4 w = modelMatrix * vec4(position, 1.0);
+  // only the side facing the camera, fading at the limb
+  float facing = dot(normalize(w.xyz), normalize(uCam - w.xyz));
+  vA = smoothstep(0.05, 0.35, facing);
+  vKind = aKind;
+  float pulse = 0.5 + 0.5 * sin(uTime * 1.6 + aPhase * 6.2831);
+  gl_PointSize = uScale * (aKind > 0.5 ? 11.0 : 6.5 + 2.5 * pulse);
+  gl_Position = projectionMatrix * viewMatrix * w;
+}`,
+    fragmentShader: `
+uniform float uReveal;
+varying float vKind;
+varying float vA;
+void main() {
+  vec2 c = gl_PointCoord - 0.5;
+  float d = length(c);
+  float core = smoothstep(0.5, 0.18, d);
+  vec3 col = vKind > 0.5 ? vec3(0.86, 0.04, 0.1) : vec3(0.93, 0.94, 0.96);
+  gl_FragColor = vec4(col, core * vA * uReveal * (vKind > 0.5 ? 1.0 : 0.85));
+}`,
+  });
+  const ports = new THREE.Points(portGeo, portMat);
+  ports.frustumCulled = false;
+  spin.add(ports);
 
   // --- Route ---------------------------------------------------------------
   const route = buildRoute(1.0035);
@@ -226,7 +288,6 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
 
   let W = 1;
   let H = 1;
-  const tmp = new THREE.Vector3();
   const tmpN = new THREE.Vector3();
   const camDir = new THREE.Vector3();
 
@@ -239,6 +300,7 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
     camera.updateProjectionMatrix();
     routeMat.resolution.set(w * dpr, h * dpr);
     routeMat.linewidth = w < 768 ? 1.6 : 2;
+    portUniforms.uScale.value = dpr * (w < 768 ? 0.85 : 1);
   }
 
   function render(f: GlobeFrame) {
@@ -269,6 +331,7 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
     (routeGeo as unknown as THREE.InstancedBufferGeometry).instanceCount = r <= 0 ? 0 : Math.min(segCount, i + 1);
     routeLine.visible = r > 0;
 
+    portUniforms.uTime.value = performance.now() / 1000;
     renderer.render(scene, camera);
   }
 
@@ -289,6 +352,8 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
   }
 
   function dispose() {
+    portGeo.dispose();
+    portMat.dispose();
     sphereGeo.dispose();
     globeMat.dispose();
     haloGeo.dispose();
