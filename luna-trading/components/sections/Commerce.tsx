@@ -144,15 +144,9 @@ function Content() {
         .to(q("[data-secondary], [data-body], [data-tag]"), { opacity: 0, duration: 0.05 }, 0.66)
         .to(q("[data-origin-label]"), { opacity: 0, duration: 0.04 }, 0.7)
         .to(q("[data-layer]"), { scaleY: 0, duration: 0.05, stagger: 0.01 }, 0.72)
-        // 5 · the red connection reaches LUVISCENT (drawn by the atmosphere's air line)
-        .fromTo(q("[data-node]"), { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.05, ease: "back.out(2)" }, 0.75)
-        .fromTo(q("[data-node-label]"), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.04 }, 0.78)
         .to(q("[data-trunk], [data-route]"), { opacity: 0, duration: 0.04 }, 0.79)
-        // 6 · digital commerce becomes atmosphere: the node opens into air
-        .to(q("[data-node] i"), { backgroundColor: "#c9ccd2", duration: 0.06 }, 0.8)
-        .to(q("[data-carton]"), { opacity: 0, duration: 0.06 }, 0.82)
-        .to(q("[data-node-label]"), { opacity: 0, duration: 0.05 }, 0.87)
-        .to(q("[data-node]"), { scale: 2.4, opacity: 0, duration: 0.08, ease: "power1.in" }, 0.86);
+        // 5 · the scene settles: the product hands over to the next section
+        .to(q("[data-carton]"), { opacity: 0, duration: 0.06 }, 0.82);
       // channels leave one by one: each mark with its own two routes
       NODES.forEach((_, i) => {
         const at = 0.62 + (NODES.length - 1 - i) * 0.022;
@@ -248,16 +242,6 @@ function Content() {
           <span key={i} className={s.packet} data-packet aria-hidden="true" />
         ))}
 
-        {/* owned-brand node */}
-        <div className={s.node} data-node style={{ insetInlineStart: `${NODE.x}%`, top: `${NODE.y}%` }} aria-hidden="true">
-          <i />
-        </div>
-        <div className={s.nodeLabel} data-node-label style={{ insetInlineStart: `${NODE.x}%` }}>
-          <span className="t-label">{t.owned}</span>
-          <span className={s.nodeName} lang="en" dir="ltr">
-            LUVISCENT®
-          </span>
-        </div>
       </div>
 
       <div className={s.copy}>
