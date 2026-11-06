@@ -6,10 +6,9 @@ import { onFrame, damp } from "@/lib/stage/ticker";
 import styles from "./HeroSky.module.css";
 
 /**
- * The opening's sky, lit like a product film: the planet is backlit, a fine
- * line of light traces its limb (atmosphere seen from orbit, warm white, no
- * blue), steel-grey cloud masses drift at two depths and a broad, slow band
- * of light passes over them. The scene opens in shadow and the backlight
+ * The opening's ground: a container port at dusk (photograph), drifting
+ * very slowly, darkened toward the headline. The planet is backlit, a fine
+ * line of light traces its limb (warm white, no blue). The scene opens in shadow and the backlight
  * comes up once the intro hands over. Depth: each plane answers the pointer
  * a little (desktop). The headline never moves. It lives inside the steel
  * texture, so it fades out with the opening.
@@ -60,18 +59,18 @@ export default function HeroSky() {
 
   return (
     <div ref={ref} className={styles.root} aria-hidden="true">
-      <div className={styles.sky} />
+      {/* the port at dusk: a real-world photograph, drifting very slowly */}
       <div className={`${styles.depth} ${styles.d2}`}>
-        <div className={`${styles.clouds} ${styles.cloudsFar}`} />
+        <div className={styles.photo} />
       </div>
+      <div className={styles.shade} />
+      {/* the planet is solid: the port never shows through it */}
+      <div className={styles.occluder} />
       <div className={`${styles.depth} ${styles.d3}`}>
         <div className={styles.backlight} />
         <div className={styles.rim} />
       </div>
-      <div className={`${styles.depth} ${styles.d4}`}>
-        <div className={`${styles.clouds} ${styles.cloudsNear}`} />
-      </div>
-      <div className={styles.sweep} />
+
       <div className={styles.night} />
     </div>
   );
