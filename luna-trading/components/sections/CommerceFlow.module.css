@@ -123,7 +123,7 @@
   align-items: center;
   gap: 10px;
   height: 46px;
-  padding-inline: 14px 18px;
+  padding-inline: 20px;
   border-radius: 999px;
   background: #fff;
   border: 1px solid rgba(20, 21, 24, 0.1);
@@ -218,7 +218,7 @@
 .nodeV {
   height: 36px;
   gap: 7px;
-  padding-inline: 10px 13px;
+  padding-inline: 13px;
   font-size: 0.82rem;
 }
 .nodeV svg {

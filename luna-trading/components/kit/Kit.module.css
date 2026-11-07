@@ -453,7 +453,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #6b6c71;
+  color: #5c5d62;
 }
 .tagDark {
   color: #9a9ba0;
@@ -479,7 +479,7 @@
 .note {
   margin-top: 28px;
   max-width: 60em;
-  color: #6b6c71;
+  color: #5c5d62;
   font-size: 0.88rem;
 }
 
@@ -666,7 +666,7 @@
   align-items: center;
   gap: 12px;
   height: 60px;
-  padding-inline: 18px 24px;
+  padding-inline: 24px;
   border-radius: 999px;
   background: #f7f6f3;
   border: 1px solid rgba(20, 21, 24, 0.08);
@@ -1191,7 +1191,7 @@ a.card:hover,
 }
 .mediaCap {
   margin: 12px 4px 0;
-  color: #6b6c71;
+  color: #5c5d62;
   font-size: 0.88rem;
 }
 @media (max-width: 1100px) {
@@ -1514,4 +1514,9 @@ a.card:hover,
   background:
     linear-gradient(#ff5a68, #ff5a68) center / 100% 2px no-repeat,
     linear-gradient(#ff5a68, #ff5a68) center / 2px 100% no-repeat;
+}
+
+/* the flag chip on a white ground (Unternehmen): readable small caption */
+.flagChipLight small {
+  color: #6b6c71;
 }

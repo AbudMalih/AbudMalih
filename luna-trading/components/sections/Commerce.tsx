@@ -129,7 +129,8 @@ function Content() {
         });
       };
 
-      tl.fromTo( // 1 · the route arrives at the product
+      tl.fromTo(
+        // 1 · the route arrives at the product
         q("[data-route]"),
         { scaleX: 1 },
         { scaleX: (CARTON_X + 1) / 100, duration: 0.1, ease: "power2.inOut" },

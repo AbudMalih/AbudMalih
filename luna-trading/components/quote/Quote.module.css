@@ -57,7 +57,7 @@
 }
 .label small {
   font-weight: 400;
-  color: #8a8b8f;
+  color: #6b6c71;
 }
 .field {
   display: grid;
@@ -257,7 +257,7 @@
 .privacy {
   margin: 0;
   max-width: 34em;
-  color: #6b6c71;
+  color: #5c5d62;
   font-size: 0.88rem;
 }
 .privacy a {
