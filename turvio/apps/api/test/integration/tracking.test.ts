@@ -48,6 +48,21 @@ describe.runIf(available)("live tracking API", () => {
     expect(r.json().error.code).toBe("tracking_disabled");
   });
 
+  it("pilot mode tracks only the named driver (e.g. the owner's own phone), never colleagues", async () => {
+    const lena = env.data.drivers.hannover![0]!;
+    const unconfirmed = await env.as(U.jarbouOwner, "PATCH", `/v1/orgs/${org()}/tracking`, { mode: "pilot", pilotDriverIds: [lena] });
+    expect(unconfirmed.json().error.code).toBe("pilot_not_confirmed");
+    const pilot = await env.as(U.jarbouOwner, "PATCH", `/v1/orgs/${org()}/tracking`, { mode: "pilot", pilotDriverIds: [lena], confirmPilotConsent: true });
+    expect(pilot.statusCode).toBe(200);
+    expect((await env.as(U.driverHannover1, "GET", `/v1/orgs/${org()}/tracking/config`)).json()).toMatchObject({ mode: "active_tours", companyMode: "pilot" });
+    // A colleague's app sees tracking as off, and the database refuses positions from them.
+    expect((await env.as(U.driverHannover2, "GET", `/v1/orgs/${org()}/tracking/config`)).json()).toMatchObject({ mode: "off", companyMode: "pilot" });
+    const other = await env.superuser.query(`select app.tracking_enabled_for($1, $2) as on`, [org(), env.data.drivers.hannover![1]]);
+    expect(other.rows[0].on).toBe(false);
+    // Back to off for the following tests.
+    expect((await env.as(U.jarbouOwner, "PATCH", `/v1/orgs/${org()}/tracking`, { mode: "off", pilotDriverIds: [] })).statusCode).toBe(200);
+  });
+
   it("only an admin can switch it on, and only after confirming the legal prerequisites", async () => {
     expect((await env.as(U.dispatcherHannover, "PATCH", `/v1/orgs/${org()}/tracking`, { mode: "active_tours", confirmPrerequisites: true })).statusCode).toBe(403);
     const unconfirmed = await env.as(U.jarbouOwner, "PATCH", `/v1/orgs/${org()}/tracking`, { mode: "active_tours" });

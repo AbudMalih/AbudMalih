@@ -69,8 +69,16 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
           [orgId],
         )
       ).rows[0];
+      // Effective for THIS driver: in pilot mode only named pilot drivers are tracked.
+      const enabled = (
+        await tx.query<{ on: boolean }>(
+          `select coalesce(bool_or(app.tracking_enabled_for($1, d.id)), false) as on from drivers d where d.organization_id = $1 and d.id in (select app.my_driver_ids())`,
+          [orgId],
+        )
+      ).rows[0]?.on;
       return {
-        mode: o.tracking_mode as "off" | "active_tours",
+        mode: (enabled ? "active_tours" : "off") as "off" | "active_tours",
+        companyMode: o.tracking_mode as "off" | "pilot" | "active_tours",
         intervalSeconds: o.tracking_interval_seconds,
         noticeVersion: o.tracking_notice_version,
         acknowledgedVersion: ack?.notice_version ?? null,
@@ -257,7 +265,11 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
     if (!guards.requireAal2(req, reply)) return;
     const b = parse(
       z.object({
-        mode: z.enum(["off", "active_tours"]).optional(),
+        mode: z.enum(["off", "pilot", "active_tours"]).optional(),
+        /** Pilot mode: the only drivers that are tracked (e.g. the owner's own test account). */
+        pilotDriverIds: z.array(Uuid).max(20).optional(),
+        /** Pilot mode: each pilot driver agreed to be tracked for testing and read the notice. */
+        confirmPilotConsent: z.literal(true).optional(),
         intervalSeconds: z.number().int().min(5).max(60).optional(),
         retentionDays: z.number().int().min(1).max(365).optional(),
         /** Bump when the notice text changes: every driver must acknowledge again. */
@@ -271,22 +283,30 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
     if (!b) return;
     if (b.mode === "active_tours" && !b.confirmPrerequisites)
       return problem(reply, 422, "prerequisites_not_confirmed", "Confirm that the privacy impact assessment, the works-council agreement and the driver information are in place");
-    const row = await db.asUser(claims(req), async (tx) =>
-      (
+    if (b.mode === "pilot" && (!b.pilotDriverIds?.length || !b.confirmPilotConsent))
+      return problem(reply, 422, "pilot_not_confirmed", "Name the pilot drivers and confirm that each of them agreed to be tracked for testing");
+    const row = await db.asUser(claims(req), async (tx) => {
+      if (b.pilotDriverIds) {
+        // Exactly these drivers are pilots (others are switched back); RLS limits to this org.
+        await tx.query(`update drivers set tracking_pilot = (id = any($2::uuid[])) where organization_id = $1`, [orgId, b.pilotDriverIds]);
+        const n = (await tx.query<{ n: number }>(`select count(*)::int as n from drivers where organization_id = $1 and tracking_pilot`, [orgId])).rows[0]!.n;
+        if (n !== b.pilotDriverIds.length) throw new ApiError(422, "invalid_reference", "A pilot driver does not belong to this company");
+      }
+      return (
         await tx.query<{ tracking_mode: string; tracking_interval_seconds: number; tracking_notice_version: number; location_retention_days: number }>(
           `update organizations set
              tracking_mode = coalesce($2, tracking_mode),
              tracking_interval_seconds = coalesce($3, tracking_interval_seconds),
              location_retention_days = coalesce($4, location_retention_days),
              tracking_notice_version = tracking_notice_version + case when $5 then 1 else 0 end,
-             tracking_enabled_at = case when $2 = 'active_tours' and tracking_mode <> 'active_tours' then now() when $2 = 'off' then null else tracking_enabled_at end,
-             tracking_enabled_by = case when $2 = 'active_tours' and tracking_mode <> 'active_tours' then auth.uid() when $2 = 'off' then null else tracking_enabled_by end
+             tracking_enabled_at = case when $2 in ('active_tours', 'pilot') and tracking_mode is distinct from $2 then now() when $2 = 'off' then null else tracking_enabled_at end,
+             tracking_enabled_by = case when $2 in ('active_tours', 'pilot') and tracking_mode is distinct from $2 then auth.uid() when $2 = 'off' then null else tracking_enabled_by end
            where id = $1
            returning tracking_mode, tracking_interval_seconds, tracking_notice_version, location_retention_days`,
           [orgId, b.mode ?? null, b.intervalSeconds ?? null, b.retentionDays ?? null, b.newNoticeVersion],
         )
-      ).rows[0],
-    );
+      ).rows[0];
+    });
     if (!row) return problem(reply, 404, "not_found", "Organization not found");
     return { mode: row.tracking_mode, intervalSeconds: row.tracking_interval_seconds, noticeVersion: row.tracking_notice_version, retentionDays: row.location_retention_days };
   });
