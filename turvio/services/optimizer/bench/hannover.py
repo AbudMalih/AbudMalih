@@ -90,8 +90,10 @@ def make_tour(rows: list[dict], n: int, seed: int) -> list[BStop]:
         s.tw = (SHIFT_START, 10 * 60 + 30 if rnd.random() < 0.5 else 12 * 60)
         s.priority = True
     # Business pickups (~4 %, at least 1 from 25 stops): window 14:00–17:00.
+    # BENCH_PICKUPS=0: a pure delivery tour (express deadlines only).
     free = [s for s in stops if s.tw is None]
-    for s in rnd.sample(free, max(1 if n >= 25 else 0, n // 25)):
+    n_pickups = max(1 if n >= 25 else 0, n // 25) if os.environ.get("BENCH_PICKUPS", "1") != "0" else 0
+    for s in rnd.sample(free, n_pickups):
         s.kind, s.tw = "pickup", (14 * 60, 17 * 60)
     rnd.shuffle(stops)  # imported manifest order
     return stops

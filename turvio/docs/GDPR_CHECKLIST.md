@@ -35,7 +35,7 @@
 | Processing | Data subjects | Data | Purpose / legal basis (to confirm) | Retention |
 |---|---|---|---|---|
 | Driver accounts | JARBOU drivers, dispatchers, admins | name, work e-mail, role, depot, login and MFA records, audit log | Employment contract: §26 BDSG / Art. 88 GDPR, Art. 6(1)(b) | while employed, then delete |
-| Driver location | drivers | GPS point **only when proof of delivery is captured** and the tenant enabled it; position on the map is shown on the phone only, **no background tracking** (Android background location is blocked) | Proof of delivery, §26 BDSG; works council (section 5) | `location_retention_days`, default **30** |
+| Driver location | drivers | (a) GPS point with proof of delivery if the tenant enabled it; (b) **live tour tracking** (docs/LIVE_TRACKING.md): GPS every 5–60 s **only while a tour is in progress**, only if the tenant switched it on (default off) and the driver acknowledged the notice; enforced in the database | Proof of delivery / operational tour monitoring, §26 BDSG; **DPIA and works-council agreement required before enabling (b)** | `location_retention_days`, default **30**; live position removed at tour end |
 | Proof of delivery | drivers, recipients | photo, signature (SVG), time, optional location | Contract performance with the sender; evidence | `proof_retention_days`, default **90** |
 | Delivery stops | recipients | name, address, phone (optional), notes, tracking numbers | Art. 6(1)(b)/(f) on behalf of the sender | ☐ JARBOU must set a period; **no automatic purge of stop records yet** |
 | Label OCR | recipients | label photo processed **on the device**, then discarded; no cloud OCR | data entry | not stored |
@@ -71,7 +71,7 @@ Retention is enforced by `app.purge_expired_data()`. It needs either the daily `
 | Abuse protection | IP rate limit (600/min), login throttling | local |
 | Encryption | TLS in transit (Caddy / Supabase); at rest by Supabase (provider statement, ☐ check its DPA) | not verified by us |
 | Least privilege | `turvio_service` without RLS bypass; `anon` without table grants | PG 17 validation |
-| Data minimisation | No background location; no microphone; on-device OCR; label photo not stored | code review; ☐ device test |
+| Data minimisation | Background location only during tours in progress and only with tracking switched on (default off); parked fixes thinned to 1/min; no microphone; on-device OCR; label photo not stored | code review, DB tests; ☐ device test |
 | Backups / restore | Supabase backups (Free plan: limited, ☐ check); restore test | ☐ |
 | Secrets | Only in secret stores or the server's `.env`; never in Git or chat | process |
 
