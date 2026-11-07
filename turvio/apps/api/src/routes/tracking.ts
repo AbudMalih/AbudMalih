@@ -1,7 +1,11 @@
+import { isOpen, nowInZone, sortBySequence } from "@turvio/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { STOP_SELECT, orgTimeZone, toStop, type StopRow } from "../data/dispatch";
 import { ApiError } from "../db";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
+import { RoutingUnavailable } from "../routing";
+import { FRESH_GPS_SECONDS } from "./tours";
 
 const Uuid = z.string().uuid();
 const IdParams = OrgParams.extend({ id: Uuid });
@@ -172,6 +176,75 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
       events: data.events.map((e) => ({ kind: e.kind, at: e.created_at.toISOString() })),
       completedStops: data.stops.map((s) => ({ stopId: s.id, status: s.status, at: s.completed_at!.toISOString() })),
       gaps,
+    };
+  });
+
+  /**
+   * Live ETA of a tour on the road: road route from the vehicle's CURRENT position (fresh GPS
+   * only) through the open stops in their planned order. Reports deadline risks and suggests –
+   * never applies – a re-optimization. Stale or missing GPS -> no live ETA (said explicitly).
+   */
+  app.get("/v1/orgs/:orgId/tours/:id/eta", { preHandler: guards.requireTenant("tracking.view_live") }, async (req, reply) => {
+    const { orgId, id } = IdParams.parse(req.params);
+    const data = await db.asUser(claims(req), async (tx) => {
+      const tour = (await tx.query<{ id: string; status: string; depot_id: string; end_lat: number | null; end_lng: number | null }>(`select id, status, depot_id, end_lat, end_lng from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
+      if (!tour) return null;
+      const pos = (
+        await tx.query<{ lat: number; lng: number; recorded_at: Date; age: number }>(
+          `select lat, lng, recorded_at, extract(epoch from now() - recorded_at)::int as age from driver_positions where tour_id = $1`,
+          [id],
+        )
+      ).rows[0];
+      const depot = (await tx.query<{ lat: number; lng: number }>(`select lat, lng from depots where id = $1`, [tour.depot_id])).rows[0]!;
+      const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 order by s.sequence`, [id])).rows.map(toStop);
+      const now = nowInZone(await orgTimeZone(tx, orgId)).minute;
+      return { tour, pos, depot, stops, now };
+    });
+    if (!data) return problem(reply, 404, "not_found", "Tour not found");
+    if (data.tour.status !== "in_progress") return { source: "none", reason: "tour_not_in_progress" };
+    if (!data.pos) return { source: "none", reason: "no_live_position" };
+    if (data.pos.age > FRESH_GPS_SECONDS) return { source: "none", reason: "position_stale", positionAgeSeconds: data.pos.age };
+    const routing = deps.routing;
+    if (!routing) return { source: "none", reason: "no_routing" };
+    const open = sortBySequence(data.stops).filter((s) => isOpen(s.status) && s.type !== "break" && s.location);
+    const end = data.tour.end_lat != null && data.tour.end_lng != null ? { lat: data.tour.end_lat, lng: data.tour.end_lng } : data.depot;
+    let legs: { meters: number; seconds: number }[];
+    try {
+      legs = (await routing.route([{ lat: data.pos.lat, lng: data.pos.lng }, ...open.map((s) => s.location!), end])).legs;
+    } catch (e) {
+      if (e instanceof RoutingUnavailable) return { source: "none", reason: "routing_unavailable", note: e.message };
+      throw e;
+    }
+    let t = data.now;
+    let remainingMeters = 0;
+    let remainingDriveSeconds = 0;
+    const stops = open.map((s, i) => {
+      const leg = legs[i] ?? { meters: 0, seconds: 0 };
+      remainingMeters += leg.meters;
+      remainingDriveSeconds += leg.seconds;
+      t += leg.seconds / 60;
+      if (s.timeWindow && t < s.timeWindow.start) t = s.timeWindow.start;
+      const eta = Math.round(t);
+      const lateMinutes = s.timeWindow && eta > s.timeWindow.end ? eta - s.timeWindow.end : 0;
+      t += s.serviceSeconds / 60;
+      return { stopId: s.id, etaMinute: eta, deadlineMinute: s.timeWindow?.end ?? null, lateMinutes, priority: s.priority };
+    });
+    const back = legs[open.length] ?? { meters: 0, seconds: 0 };
+    remainingMeters += back.meters;
+    remainingDriveSeconds += back.seconds;
+    const atRisk = stops.filter((x) => x.lateMinutes > 0);
+    return {
+      source: "osrm",
+      from: "gps",
+      positionAgeSeconds: data.pos.age,
+      computedAtMinute: data.now,
+      stops,
+      remainingMeters: Math.round(remainingMeters),
+      remainingDriveSeconds: Math.round(remainingDriveSeconds),
+      finishMinute: Math.round(t + back.seconds / 60),
+      atRiskStopIds: atRisk.map((x) => x.stopId),
+      // A suggestion for the dispatcher/driver – the order is never changed automatically.
+      suggestReoptimize: atRisk.length > 0,
     };
   });
 

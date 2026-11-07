@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { RoadRoute, RoutingProvider } from "../../src/routing";
 import { SEED_USERS as U } from "../../src/seed";
 import { createTestEnv, postgresAvailable, type TestEnv } from "./helpers";
 
@@ -8,9 +9,18 @@ let env: TestEnv;
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 const fix = (secondsAgo: number, lat = 52.38, lng = 9.74) => ({ id: randomUUID(), lat, lng, accuracy: 6, speed: 8.3, heading: 120, recordedAt: new Date(Date.now() - secondsAgo * 1000).toISOString() });
 
+/** Deterministic road router for tests: every leg 5 min / 2 km. Not real road data. */
+const fakeRouting: RoutingProvider = {
+  name: "fake",
+  async route(points): Promise<RoadRoute> {
+    const legs = points.slice(1).map(() => ({ meters: 2000, seconds: 300 }));
+    return { source: "osrm", legs, distanceMeters: legs.length * 2000, durationSeconds: legs.length * 300, geometry: points.map((p) => [p.lat, p.lng]) };
+  },
+};
+
 describe.runIf(available)("live tracking API", () => {
   beforeAll(async () => {
-    env = await createTestEnv("tracking");
+    env = await createTestEnv("tracking", { routing: fakeRouting });
   }, 120_000);
   afterAll(async () => {
     await env?.close();
@@ -86,6 +96,34 @@ describe.runIf(available)("live tracking API", () => {
     const audit = await env.superuser.query(`select count(*)::int as n from audit_log where action = 'read' and table_name = 'location_pings' and record_id = $1`, [tourId]);
     expect(audit.rows[0].n).toBe(1);
     expect((await env.as(U.dispatcherBremen, "GET", `/v1/orgs/${org()}/tours/${tourId}/track`)).statusCode).toBe(404);
+  });
+
+  it("live ETA starts at the vehicle's current position and flags deadline risks (suggestion only)", async () => {
+    const eta = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/tours/${tourId}/eta`)).json();
+    expect(eta).toMatchObject({ source: "osrm", from: "gps", remainingMeters: 4 * 2000, remainingDriveSeconds: 4 * 300 });
+    expect(eta.stops).toHaveLength(3);
+    // 5 min driving per leg + service time between stops: strictly increasing ETAs.
+    expect(eta.stops[1].etaMinute).toBeGreaterThan(eta.stops[0].etaMinute);
+    expect(eta.stops[0].etaMinute - eta.computedAtMinute).toBe(5);
+    expect(eta.suggestReoptimize).toBe(false);
+    // Drivers have no access to the fleet ETA view.
+    expect((await env.as(U.driverHannover2, "GET", `/v1/orgs/${org()}/tours/${tourId}/eta`)).statusCode).toBe(403);
+  });
+
+  it("re-optimizing a running tour starts from the fresh GPS position", async () => {
+    const r = await env.as(U.driverHannover1, "POST", `/v1/orgs/${org()}/tours/${tourId}/optimize`, {});
+    expect(r.statusCode).toBe(200);
+    expect(r.json().result.startSource).toBe("gps");
+  });
+
+  it("a stale position gives no live ETA – it is never presented as current", async () => {
+    await env.superuser.query(`update driver_positions set recorded_at = now() - interval '10 minutes' where tour_id = $1`, [tourId]);
+    const eta = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/tours/${tourId}/eta`)).json();
+    expect(eta).toMatchObject({ source: "none", reason: "position_stale" });
+    expect(eta.positionAgeSeconds).toBeGreaterThanOrEqual(600);
+    // The live list still shows it – with its real age (the dispatch UI marks it "No signal").
+    const live = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/fleet/live`)).json();
+    expect(Date.parse(live.serverTime) - Date.parse(live.vehicles[0].recordedAt)).toBeGreaterThanOrEqual(600_000);
   });
 
   it("completing the tour ends the live position", async () => {

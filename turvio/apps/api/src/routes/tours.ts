@@ -148,8 +148,13 @@ interface VehicleInputRow {
   maxShift: number;
   capacity: number | null;
   start: { lat: number; lng: number };
+  /** Where `start` comes from: live GPS (fresh), last completed stop, tour start or depot. */
+  startSource: "gps" | "last_stop" | "tour" | "depot";
   shiftStart: number;
 }
+
+/** A live position younger than this is used as the origin of the remaining route. */
+export const FRESH_GPS_SECONDS = 120;
 
 /** Build optimizer vehicles for saved tours (current position = last completed stop; no GPS). */
 async function vehicleFor(tx: Tx, tour: TourRow, nowMinute: number): Promise<VehicleInputRow> {
@@ -160,12 +165,23 @@ async function vehicleFor(tx: Tx, tour: TourRow, nowMinute: number): Promise<Veh
     await tx.query<{ lat: number; lng: number }>(`select lat, lng from stops where tour_id = $1 and status not in ('pending', 'in_progress') and lat is not null order by sequence desc limit 1`, [tour.id])
   ).rows[0];
   const running = tour.status === "in_progress" || tour.status === "paused";
+  // Live tracking (if switched on): the vehicle's real position is the best origin.
+  const gps = tour.status === "in_progress"
+    ? (
+        await tx.query<{ lat: number; lng: number }>(
+          `select lat, lng from driver_positions where tour_id = $1 and recorded_at > now() - make_interval(secs => $2)`,
+          [tour.id, FRESH_GPS_SECONDS],
+        )
+      ).rows[0]
+    : undefined;
+  const tourStart = tour.start_lat != null && tour.start_lng != null ? { lat: tour.start_lat, lng: tour.start_lng } : null;
   return {
     tour,
     depot,
     maxShift: driver?.max_shift_minutes ?? 480,
     capacity: vehicle?.capacity_parcels ?? null,
-    start: running && last ? last : tour.start_lat != null && tour.start_lng != null ? { lat: tour.start_lat, lng: tour.start_lng } : depot,
+    start: gps ?? (running && last ? last : (tourStart ?? depot)),
+    startSource: gps ? "gps" : running && last ? "last_stop" : tourStart ? "tour" : "depot",
     shiftStart: running ? Math.max(nowMinute, tour.planned_start_minute) : tour.planned_start_minute,
   };
 }
@@ -488,7 +504,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     const meta = {
       engine: result.engine,
       lockedStopIds: locked.map((s) => s.id),
-      startSource: opts.start ? "device" : "tour",
+      startSource: opts.start ? "device" : input.v.startSource,
       matrixSource: result.matrixSource,
       unassignedStopIds: result.unassignedStopIds,
       unlocatedStopIds: input.stops.filter((s) => s.lat == null).map((s) => s.id),

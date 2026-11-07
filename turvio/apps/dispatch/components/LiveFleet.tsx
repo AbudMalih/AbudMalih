@@ -1,9 +1,9 @@
 "use client";
 
-import { formatClock } from "@turvio/shared";
+import { formatClock, formatDuration } from "@turvio/shared";
 import { Badge, Button, cn } from "@turvio/web-ui/ds";
 import { Crosshair, Radio, Truck } from "lucide-react";
-import { ageLabel, freshnessOf, FRESHNESS_LABEL, type Freshness, type LiveVehicle } from "../lib/live";
+import { ageLabel, freshnessOf, FRESHNESS_LABEL, useLiveEta, type Freshness, type LiveVehicle } from "../lib/live";
 
 const TONE: Record<Freshness, string> = {
   live: "bg-success-soft text-success-ink",
@@ -53,6 +53,8 @@ export function LiveFleetList({ vehicles, serverNow, onSelect }: { vehicles: Liv
 /** Details of the selected vehicle, above the tour detail. */
 export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; serverNow: number; onFocus: () => void }) {
   const { state } = freshnessOf(v.recordedAt, serverNow);
+  const eta = useLiveEta(v.tourId, state !== "offline");
+  const nextEta = eta?.stops?.find((x) => x.stopId === v.nextStop?.id);
   const total = v.progress.done + v.progress.remaining;
   const speedKmh = v.position.speedMps != null && state === "live" ? Math.round(v.position.speedMps * 3.6) : null;
   return (
@@ -109,6 +111,30 @@ export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; se
           </dd>
         </div>
       </dl>
+      <div className="rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-xs" aria-label="Live ETA">
+        {eta?.source === "osrm" ? (
+          <div className="flex flex-col gap-1">
+            <div className="text-ink">
+              {nextEta ? <>Next stop ETA <strong>{formatClock(nextEta.etaMinute)}</strong> · </> : null}
+              back by <strong>{formatClock(eta.finishMinute!)}</strong> · {formatDuration(eta.remainingDriveSeconds!)} driving, {(eta.remainingMeters! / 1000).toFixed(1)} km left
+            </div>
+            <div className="text-subtle">Road route from the current GPS position (OSRM), planned stop order.</div>
+            {eta.suggestReoptimize && (
+              <div className="text-warning-ink">
+                {eta.atRiskStopIds!.length} stop(s) will miss their deadline in the current order. Consider “Re-optimize…” below – the order is not changed automatically.
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-subtle">
+            {eta?.reason === "position_stale" || state === "offline"
+              ? "No live ETA: the last position is too old."
+              : eta?.reason === "no_routing" || eta?.reason === "routing_unavailable"
+                ? "No live ETA: road routing is not available."
+                : "Live ETA is calculated from the current position…"}
+          </div>
+        )}
+      </div>
       <Button variant="secondary" size="sm" onClick={onFocus}>
         <Crosshair /> Focus map on vehicle
       </Button>

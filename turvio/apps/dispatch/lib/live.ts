@@ -100,3 +100,40 @@ export function useLiveFleet() {
 
   return { allowed, loaded, error, vehicles, serverNow: now + offset.current, reload: load };
 }
+
+export interface LiveEta {
+  source: "osrm" | "none";
+  reason?: "tour_not_in_progress" | "no_live_position" | "position_stale" | "no_routing" | "routing_unavailable";
+  positionAgeSeconds?: number;
+  stops?: { stopId: string; etaMinute: number; deadlineMinute: number | null; lateMinutes: number; priority: boolean }[];
+  remainingMeters?: number;
+  remainingDriveSeconds?: number;
+  finishMinute?: number;
+  atRiskStopIds?: string[];
+  suggestReoptimize?: boolean;
+}
+
+/** Road ETA from the vehicle's current GPS position (refreshed at most every 30 s). */
+export function useLiveEta(tourId: string | null, enabled: boolean) {
+  const { session, positionTick } = useDispatch();
+  const org = session.organizationId;
+  const [eta, setEta] = useState<LiveEta | null>(null);
+  const last = useRef(0);
+  useEffect(() => {
+    setEta(null);
+    last.current = 0;
+  }, [tourId]);
+  useEffect(() => {
+    if (!tourId || !enabled) return;
+    if (Date.now() - last.current < 30_000) return;
+    last.current = Date.now();
+    let cancelled = false;
+    api<LiveEta>("GET", `/v1/orgs/${org}/tours/${tourId}/eta`)
+      .then((r) => !cancelled && setEta(r))
+      .catch(() => !cancelled && setEta(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [org, tourId, enabled, positionTick]);
+  return eta;
+}
