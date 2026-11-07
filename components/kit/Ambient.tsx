@@ -356,3 +356,38 @@ export function BrandCube({
     </div>
   );
 }
+
+/** The idea: separate steps that close into one company, and open again. */
+export function LayerStack({
+  layers,
+  label,
+  className = "",
+}: {
+  layers: string[];
+  label?: ReactNode;
+  className?: string;
+}) {
+  const n = layers.length;
+  return (
+    <div className={`${a.wrap} ${a.light} ${className}`} aria-hidden="true">
+      <div className={a.yardSm}>
+        <div className={a.stackCam}>
+          {layers.map((l, i) => (
+            <Box
+              key={l}
+              className={`${a.plain} ${a.slab} ${i === n - 1 ? a.slabTop : ""}`}
+              style={{ ["--i" as string]: i - (n - 1) / 2 }}
+            >
+              <span className={a.slabText}>
+                <em>{String(i + 1).padStart(2, "0")}</em>
+                {l}
+              </span>
+            </Box>
+          ))}
+        </div>
+        <div className={a.shadow} />
+      </div>
+      {label && <p className={a.label}>{label}</p>}
+    </div>
+  );
+}
