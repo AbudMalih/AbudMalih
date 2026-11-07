@@ -20,6 +20,31 @@ export const TRACKING_TASK = "turvio-live-tracking";
 const SESSION_KEY = "turvio-tracking-session-v1";
 /** Upload at most this often from the background task (each upload wakes the radio). */
 const UPLOAD_EVERY_MS = 15_000;
+/** Standing still: keep one "still here" fix per minute instead of one per interval. */
+const STATIONARY_KEEP_MS = 60_000;
+const MOVED_METERS = 15;
+
+let lastKept: { lat: number; lng: number; at: number } | null = null;
+function metersBetween(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const k = Math.PI / 180;
+  const x = (b.lng - a.lng) * k * Math.cos(((a.lat + b.lat) / 2) * k);
+  const y = (b.lat - a.lat) * k;
+  return Math.sqrt(x * x + y * y) * 6_371_000;
+}
+/**
+ * Thin out fixes while parked (unloading, traffic jam): moving -> every fix; standing still ->
+ * one per minute, so dispatch still sees "live" (not "offline") without a stream of identical points.
+ */
+export function keepFix(f: { lat: number; lng: number; at: number }): boolean {
+  if (!lastKept || f.at - lastKept.at >= STATIONARY_KEEP_MS || metersBetween(lastKept, f) >= MOVED_METERS) {
+    lastKept = f;
+    return true;
+  }
+  return false;
+}
+export function resetFixFilter() {
+  lastKept = null;
+}
 
 export interface TrackingSession {
   orgId: string;
@@ -121,7 +146,9 @@ export function defineTrackingTask() {
       await Location.stopLocationUpdatesAsync(TRACKING_TASK).catch(() => undefined);
       return;
     }
-    const fixes: Fix[] = data.locations.map((l) => ({
+    const fixes: Fix[] = data.locations
+      .filter((l) => keepFix({ lat: l.coords.latitude, lng: l.coords.longitude, at: l.timestamp }))
+      .map((l) => ({
       id: uuid(),
       orgId: session.orgId,
       tourId: session.tourId,
@@ -132,6 +159,7 @@ export function defineTrackingTask() {
       heading: l.coords.heading != null && l.coords.heading >= 0 ? l.coords.heading : null,
       recordedAt: new Date(l.timestamp).toISOString(),
     }));
+    if (!fixes.length) return;
     const { size } = await appendFixes(fixes);
     setStatus({ buffered: size, lastFixAt: fixes.at(-1)!.recordedAt });
     if (Date.now() - lastUpload >= UPLOAD_EVERY_MS) await uploadNow().catch(() => undefined);
@@ -196,12 +224,14 @@ export async function startTracking(input: StartInput, opts: { requestPermission
   setStatus({ state: "starting", tourId: input.tourId });
   const session: TrackingSession = { orgId: input.orgId, tourId: input.tourId, tourName: input.tourName, intervalSeconds: cfg.intervalSeconds, startedAt: new Date().toISOString() };
   await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  resetFixFilter();
   if (await isRunning()) await Location.stopLocationUpdatesAsync(TRACKING_TASK).catch(() => undefined);
   await Location.startLocationUpdatesAsync(TRACKING_TASK, {
     accuracy: Location.Accuracy.High,
     timeInterval: cfg.intervalSeconds * 1000,
-    // Standing still (unloading, traffic light) produces no new fixes: saves battery and data.
-    distanceInterval: 10,
+    // Time-based sampling (also while standing, so dispatch can tell "parked" from "lost");
+    // keepFix() thins parked fixes to one per minute before anything is stored or sent.
+    distanceInterval: 0,
     deferredUpdatesInterval: cfg.intervalSeconds * 1000,
     activityType: Location.ActivityType.AutomotiveNavigation,
     pausesUpdatesAutomatically: false,

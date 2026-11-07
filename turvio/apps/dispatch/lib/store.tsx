@@ -50,6 +50,8 @@ export interface OptimizeOutcome {
 }
 
 interface DispatchState {
+  /** Increments on every live-position event (server-sent). */
+  positionTick: number;
   session: SessionInfo;
   /** Everything the user may see for the selected date (scoped by the database). */
   scoped: DispatchDataset;
@@ -102,6 +104,8 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [live, setLive] = useState<LiveState>("connecting");
+  // Live GPS: bumps on every "position" event; the fleet layer refetches positions only.
+  const [positionTick, setPositionTick] = useState(0);
   const [lastLoadedAt, setLastLoadedAt] = useState(() => Date.now());
   const dateRef = useRef(date);
   dateRef.current = date;
@@ -139,6 +143,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
       es = new EventSource(`/api/turvio/v1/orgs/${org}/events`);
       es.addEventListener("ready", () => setLive("live"));
       es.addEventListener("change", scheduleReload);
+      es.addEventListener("position", () => setPositionTick((n) => n + 1));
       es.onerror = () => setLive("offline");
     } else setLive("offline");
     const poll = setInterval(() => void reload().catch(() => undefined), 60_000);
@@ -187,6 +192,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     today,
     loading,
     live,
+    positionTick,
     lastLoadedAt,
     reload,
     selectedTourId,

@@ -23,7 +23,7 @@ jest.mock("expo-task-manager", () => ({
 
 import { ApiError } from "../src/lib/auth";
 import { bufferedCount, clearBuffer } from "../src/lib/trackingBuffer";
-import { TRACKING_TASK, defineTrackingTask, readSession, setTrackingClient, startTracking, stopTracking, uploadNow, useTrackingStatus } from "../src/lib/tracking";
+import { TRACKING_TASK, defineTrackingTask, keepFix, resetFixFilter, readSession, setTrackingClient, startTracking, stopTracking, uploadNow, useTrackingStatus } from "../src/lib/tracking";
 
 const input = { orgId: "org1", tourId: "tour1", tourName: "Hannover List", notificationTitle: "T", notificationBody: "B" };
 let config: Record<string, unknown>;
@@ -85,7 +85,7 @@ describe("live tracking lifecycle", () => {
     expect(mockLoc.startLocationUpdatesAsync).toHaveBeenCalledTimes(1);
     const [task, opts] = mockLoc.startLocationUpdatesAsync.mock.calls[0]!;
     expect(task).toBe(TRACKING_TASK);
-    expect(opts).toMatchObject({ timeInterval: 10_000, distanceInterval: 10, foregroundService: { notificationTitle: "T", notificationBody: "B" } });
+    expect(opts).toMatchObject({ timeInterval: 10_000, distanceInterval: 0, foregroundService: { notificationTitle: "T", notificationBody: "B" } });
     expect((await readSession())?.tourId).toBe("tour1");
   });
 
@@ -127,5 +127,16 @@ describe("live tracking lifecycle", () => {
     expect(useTrackingStatus.getState().state).toBe("disabled");
     expect(await bufferedCount()).toBe(0);
     expect(running).toBe(false);
+  });
+
+  it("thins fixes while parked but keeps a once-a-minute sign of life", () => {
+    resetFixFilter();
+    const t0 = 1_700_000_000_000;
+    const p = (dSeconds: number, dMeters = 0) => ({ lat: 52.38 + dMeters / 111_320, lng: 9.74, at: t0 + dSeconds * 1000 });
+    expect(keepFix(p(0))).toBe(true);
+    expect(keepFix(p(10, 3))).toBe(false); // parked, GPS jitter
+    expect(keepFix(p(20, 2))).toBe(false);
+    expect(keepFix(p(61, 1))).toBe(true); // one per minute
+    expect(keepFix(p(71, 40))).toBe(true); // moving again
   });
 });

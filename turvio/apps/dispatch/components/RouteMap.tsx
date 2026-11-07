@@ -6,6 +6,7 @@ import { Button, Skeleton, Tooltip, cn } from "@turvio/web-ui/ds";
 import { CircleAlert, Layers, LocateFixed, Maximize2, Minus, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
+import { ageLabel, freshnessOf, FRESHNESS_LABEL, type LiveVehicle } from "../lib/live";
 
 type MapState = "loading" | "ready" | "error";
 
@@ -22,6 +23,14 @@ export interface RouteMapProps {
   fitRequest?: number;
   /** Road geometry of the selected tour (OSRM); without it the order is drawn as straight lines. */
   road?: { tourId: string; geometry: [number, number][] } | null;
+  /** Live GPS positions (only for roles allowed to see them; undefined = not available). */
+  vehicles?: LiveVehicle[];
+  /** Server clock (ms) for position ages. */
+  serverNow?: number;
+  selectedDriverId?: string | null;
+  onSelectVehicle?: (v: LiveVehicle) => void;
+  /** Change `n` to centre the map on this point (e.g. a selected vehicle). */
+  focus?: { lat: number; lng: number; n: number } | null;
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -35,6 +44,7 @@ export function RouteMap(props: RouteMapProps) {
   const L = useRef<typeof Leaflet | null>(null);
   const map = useRef<Leaflet.Map | null>(null);
   const layer = useRef<Leaflet.LayerGroup | null>(null);
+  const liveLayer = useRef<Leaflet.LayerGroup | null>(null);
   const [state, setState] = useState<MapState>("loading");
   const [attempt, setAttempt] = useState(0);
   const [tiles, setTiles] = useState<"loading" | "ok" | "unavailable">("loading");
@@ -72,6 +82,7 @@ export function RouteMap(props: RouteMapProps) {
         tl.addTo(m);
         m.on("click", () => latest.current.onSelectTour(null));
         layer.current = mod.layerGroup().addTo(m);
+        liveLayer.current = mod.layerGroup().addTo(m);
         map.current = m;
         m.setView([51.6, 9.2], 7);
         // Panels collapse/expand around the map: keep Leaflet's size in sync.
@@ -88,6 +99,7 @@ export function RouteMap(props: RouteMapProps) {
       map.current?.remove();
       map.current = null;
       layer.current = null;
+      liveLayer.current = null;
     };
   }, [attempt]);
 
@@ -228,6 +240,58 @@ export function RouteMap(props: RouteMapProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, props.summaries, props.depots, props.unassigned, props.selectedTourId, props.selectedStopId, showCompleted, showUnassigned, props.road]);
 
+  // Live vehicles: own layer, redrawn on every position update / clock tick only.
+  useEffect(() => {
+    const Lf = L.current;
+    const group = liveLayer.current;
+    if (state !== "ready" || !Lf || !group) return;
+    group.clearLayers();
+    const now = props.serverNow ?? Date.now();
+    for (const v of props.vehicles ?? []) {
+      const { state: fresh, ageSeconds } = freshnessOf(v.recordedAt, now);
+      const sel = v.driverId === props.selectedDriverId;
+      const color = fresh === "live" ? "#2563EB" : fresh === "delayed" ? "#D97706" : "#94A3B8";
+      const ring = fresh === "live" ? "#10B981" : "#fff";
+      const moving = fresh === "live" && (v.position.speedMps ?? 0) > 1 && v.position.headingDeg != null;
+      const size = sel ? 40 : 34;
+      const arrow = moving
+        ? `<div style="position:absolute;inset:-9px;transform:rotate(${v.position.headingDeg}deg)"><div style="margin:0 auto;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:9px solid ${color}"></div></div>`
+        : "";
+      const label = esc(v.vehicle?.label ?? v.driverName.split(" ").map((x) => x[0]).join("").slice(0, 3));
+      if (sel && v.position.accuracyMeters && fresh !== "offline") {
+        Lf.circle([v.position.lat, v.position.lng], { radius: v.position.accuracyMeters, color, weight: 1, fillColor: color, fillOpacity: 0.08, interactive: false }).addTo(group);
+      }
+      Lf.marker([v.position.lat, v.position.lng], {
+        icon: Lf.divIcon({
+          className: "turvio-marker",
+          html: `<div style="position:relative;width:${size}px;height:${size}px">${arrow}<div style="width:${size}px;height:${size}px;border-radius:999px;background:${fresh === "offline" ? "#F1F5F9" : color};border:3px solid ${ring};${fresh === "offline" ? "border-style:dashed;border-color:#94A3B8;" : ""}box-shadow:${sel ? "0 0 0 5px rgba(37,99,235,.25)," : ""}0 2px 8px rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;color:${fresh === "offline" ? "#64748B" : "#fff"};font:700 10px var(--font-sans),system-ui;opacity:${fresh === "offline" ? 0.75 : 1}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></div></div>`,
+          iconSize: [size, size],
+          iconAnchor: [size / 2, size / 2],
+        }),
+        zIndexOffset: 2000 + (sel ? 500 : 0),
+        title: `${v.driverName} – ${FRESHNESS_LABEL[fresh]}`,
+      })
+        .on("click", (e) => {
+          Lf.DomEvent.stopPropagation(e);
+          latest.current.onSelectVehicle?.(v);
+        })
+        .bindTooltip(
+          `<strong>${esc(v.driverName)}</strong>${v.vehicle ? ` · ${esc(v.vehicle.label ?? "")} ${esc(v.vehicle.licensePlate ?? "")}` : ""}<br/>${esc(v.tourName)} · ${v.progress.done}/${v.progress.done + v.progress.remaining} stops<br/>${
+            fresh === "live" ? `Live · updated ${ageLabel(ageSeconds)}` : fresh === "delayed" ? `Delayed · last position ${ageLabel(ageSeconds)}` : `No signal · last known position ${ageLabel(ageSeconds)} – not live`
+          }${v.position.accuracyMeters != null ? ` · ±${Math.round(v.position.accuracyMeters)} m` : ""}<br/><span style="opacity:.7">${label}</span>`,
+          { direction: "top", offset: [0, -size / 2] },
+        )
+        .addTo(group);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, props.vehicles, props.serverNow, props.selectedDriverId]);
+
+  useEffect(() => {
+    if (state !== "ready" || !props.focus || !map.current) return;
+    map.current.setView([props.focus.lat, props.focus.lng], Math.max(map.current.getZoom(), 15), { animate: !prefersReducedMotion() });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, props.focus?.n]);
+
   // Fit on first load, on selection change and on request.
   const firstFit = useRef(false);
   useEffect(() => {
@@ -346,7 +410,12 @@ export function RouteMap(props: RouteMapProps) {
               </span>
             </div>
             <div className="mt-1 text-subtle">
-              {props.road ? "Selected tour: road route (OSRM); other tours: stop order as straight lines" : "Lines show stop order, not road geometry"} · no live driver locations (none authorized)
+              {props.road ? "Selected tour: road route (OSRM); other tours: stop order as straight lines" : "Lines show stop order, not road geometry"} ·{" "}
+              {props.vehicles === undefined
+                ? "live positions not available for your role"
+                : props.vehicles.length
+                  ? `${props.vehicles.length} vehicle(s) with live GPS (blue = live, amber = delayed, grey = no signal)`
+                  : "no live GPS positions (tracking off or no tour on the road)"}
             </div>
           </div>
         </>

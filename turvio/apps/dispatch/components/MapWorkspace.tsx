@@ -8,8 +8,10 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { tourColor } from "../lib/helpers";
+import { useLiveFleet, type LiveVehicle } from "../lib/live";
 import { routeKey, useRoadRoute } from "../lib/road";
 import { useDispatch } from "../lib/store";
+import { LiveFleetList, LiveVehiclePanel } from "./LiveFleet";
 import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
 import { TourDetail } from "./TourDetail";
 import { TourList } from "./TourList";
@@ -31,7 +33,7 @@ function useMediaQuery(q: string) {
   return match;
 }
 
-function Overview() {
+function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFleet>; onSelectVehicle: (v: LiveVehicle) => void }) {
   const { pickups, summaries, data, selectTour } = useDispatch();
   const urgent = pickups.filter((p) => p.state === "late" || p.state === "at_risk" || p.state === "unassigned").slice(0, 6);
   const delayed = summaries.filter((s) => s.status === "delayed");
@@ -41,6 +43,7 @@ function Overview() {
         <MousePointerClick className="mt-0.5 size-4 shrink-0 text-subtle" />
         Select a tour in the list or on the map to see its driver, vehicle, schedule and stops.
       </div>
+      {live.allowed && <LiveFleetList vehicles={live.vehicles} serverNow={live.serverNow} onSelect={onSelectVehicle} />}
       {delayed.length > 0 && (
         <section>
           <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
@@ -101,6 +104,14 @@ export function MapWorkspace() {
   const [rightOpen, setRightOpen] = useState(true);
   const [mobilePane, setMobilePane] = useState<"tours" | "map">("map");
   const [fitRequest, setFitRequest] = useState(0);
+  const live = useLiveFleet();
+  const [focus, setFocus] = useState<{ lat: number; lng: number; n: number } | null>(null);
+  const liveOfSelected = live.vehicles.find((v) => v.tourId === selectedTourId) ?? null;
+  const focusVehicle = (v: LiveVehicle) => setFocus((f) => ({ lat: v.position.lat, lng: v.position.lng, n: (f?.n ?? 0) + 1 }));
+  const selectVehicle = (v: LiveVehicle) => {
+    selectTour(v.tourId);
+    focusVehicle(v);
+  };
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isWide = useMediaQuery("(min-width: 1280px)");
   const selected = summaries.find((s) => s.tour.id === selectedTourId);
@@ -164,6 +175,11 @@ export function MapWorkspace() {
             onSelectStop={(stopId, tourId) => selectStop(stopId, tourId)}
             fitRequest={fitRequest}
             road={road?.source === "osrm" && road.geometry && selectedTourId ? { tourId: selectedTourId, geometry: road.geometry } : null}
+            vehicles={live.allowed ? live.vehicles : undefined}
+            serverNow={live.serverNow}
+            selectedDriverId={liveOfSelected?.driverId ?? null}
+            onSelectVehicle={selectVehicle}
+            focus={focus}
           />
           {isDesktop && (
             <div className="absolute start-3 top-3 z-[460] flex gap-1.5">
@@ -206,7 +222,14 @@ export function MapWorkspace() {
                     </Button>
                   )}
                 </div>
-                <div className="min-h-0 flex-1 overflow-y-auto p-4">{selected ? <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} /> : <Overview />}</div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-4">{selected ? (
+                    <div className="flex flex-col gap-4">
+                      {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
+                      <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
+                    </div>
+                  ) : (
+                    <Overview live={live} onSelectVehicle={selectVehicle} />
+                  )}</div>
               </div>
             </motion.aside>
           )}
@@ -222,7 +245,12 @@ export function MapWorkspace() {
           description={selected ? `${selected.depot.name} · ${selected.tour.date}` : undefined}
           className="max-w-lg"
         >
-          {selected && <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />}
+          {selected && (
+            <div className="flex flex-col gap-4">
+              {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
+              <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
+            </div>
+          )}
         </Sheet>
       )}
     </div>
