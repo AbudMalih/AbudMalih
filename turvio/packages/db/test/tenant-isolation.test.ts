@@ -124,23 +124,115 @@ describe("tenant isolation (RLS)", () => {
   });
 
   it("location pings are only accepted for the driver's in-progress tour", async () => {
+    // The direct insert path is closed: positions go through driver_record_locations only.
     await asUser(db, ids.driverA1, async () => {
-      const ping = () =>
-        db.query(`insert into location_pings (organization_id, driver_id, tour_id, lat, lng) values ($1, $2, $3, 50.97, 11.03)`, [
-          ids.orgJarbou,
-          ids.drvRowA1,
-          ids.tourA1,
-        ]);
-      await expect(ping()).rejects.toThrow(/row-level security/); // tour still planned
+      await expect(
+        db.query(`insert into location_pings (organization_id, driver_id, tour_id, lat, lng) values ($1, $2, $3, 50.97, 11.03)`, [ids.orgJarbou, ids.drvRowA1, ids.tourA1]),
+      ).rejects.toThrow(/permission denied/);
+    });
+  });
+});
+
+describe("live tracking", () => {
+  const at = (offsetSeconds: number) => new Date(Date.now() + offsetSeconds * 1000).toISOString();
+  let n = 0;
+  const point = (offsetSeconds: number, extra: Record<string, unknown> = {}) => ({
+    id: `00000000-0000-4000-9000-${String(++n).padStart(12, "0")}`,
+    lat: 50.97,
+    lng: 11.03,
+    accuracy: 8,
+    speed: 9.5,
+    heading: 90,
+    recordedAt: at(offsetSeconds),
+    ...extra,
+  });
+  const record = (tour: string, points: unknown[]) =>
+    db.query<{ r: { accepted: number; duplicates: number; rejected: { id: string; reason: string }[] } }>(`select driver_record_locations($1, $2::jsonb) as r`, [tour, JSON.stringify(points)]).then((x) => x.rows[0]!.r);
+
+  it("is off by default and requires the driver's acknowledgement of the notice", async () => {
+    await asUser(db, ids.driverA1, async () => {
       await db.query(`select driver_set_tour_status($1, 'in_progress')`, [ids.tourA1]);
-      await ping();
-      expect(await count("select * from location_pings")).toBe(0); // drivers cannot read pings back
+      await expect(record(ids.tourA1, [point(0)])).rejects.toThrow(/tracking_disabled/);
+    });
+    await db.query(`update organizations set tracking_mode = 'active_tours' where id = $1`, [ids.orgJarbou]);
+    await asUser(db, ids.driverA1, async () => {
+      await expect(record(ids.tourA1, [point(0)])).rejects.toThrow(/tracking_notice_required/);
+      expect((await db.query<{ v: number }>(`select driver_ack_tracking_notice($1) as v`, [ids.orgJarbou])).rows[0]!.v).toBe(1);
+      expect((await record(ids.tourA1, [point(0)])).accepted).toBe(1);
+    });
+    // A new notice version needs a new acknowledgement.
+    await db.query(`update organizations set tracking_notice_version = 2 where id = $1`, [ids.orgJarbou]);
+    await asUser(db, ids.driverA1, async () => {
+      await expect(record(ids.tourA1, [point(1)])).rejects.toThrow(/tracking_notice_required/);
+    });
+  });
+
+  it("accepts only valid points inside driving periods, idempotently, and isolates tenants", async () => {
+    await db.query(`update organizations set tracking_mode = 'active_tours' where id in ($1, $2)`, [ids.orgJarbou, ids.orgOther]);
+    await asUser(db, ids.driverA1, async () => {
+      await db.query(`select driver_ack_tracking_notice($1)`, [ids.orgJarbou]);
+      // Planned tour: nothing is recorded.
+      expect((await record(ids.tourA1, [point(0)])).rejected[0]!.reason).toBe("outside_active_tour");
+      await db.query(`select driver_set_tour_status($1, 'in_progress')`, [ids.tourA1]);
+    });
+    // Pretend the tour started 10 minutes ago.
+    await db.query(`update tour_events set created_at = now() - interval '10 minutes' where tour_id = $1 and kind = 'started'`, [ids.tourA1]);
+    await asUser(db, ids.driverA1, async () => {
+      const first = point(-60);
+      const r = await record(ids.tourA1, [
+        first,
+        point(-30),
+        point(-20 * 60), // before the start
+        point(600), // 10 minutes in the future
+        point(0, { lat: 123 }), // invalid
+        point(0, { recordedAt: "not a date" }),
+      ]);
+      expect(r.accepted).toBe(2);
+      expect(r.rejected.map((x) => x.reason).sort()).toEqual(["future_timestamp", "invalid", "malformed", "outside_active_tour"]);
+      // Retried upload of the same point: no duplicate.
+      expect(await record(ids.tourA1, [first])).toMatchObject({ accepted: 0, duplicates: 1 });
+      // The driver sees the own live position but not the history.
+      expect(await count("select * from driver_positions")).toBe(1);
+      expect(await count("select * from location_pings")).toBe(0);
+    });
+    await asUser(db, ids.driverA2, async () => {
+      await expect(record(ids.tourA1, [point(0)])).rejects.toThrow(/tour not found/);
+      expect(await count("select * from driver_positions")).toBe(0);
     });
     await asUser(db, ids.dispatcherA, async () => {
-      expect(await count("select * from location_pings")).toBe(1);
+      expect(await count("select * from location_pings")).toBe(2);
+      expect(await count("select * from driver_positions")).toBe(1);
     });
     await asUser(db, ids.ownerB, async () => {
       expect(await count("select * from location_pings")).toBe(0);
+      expect(await count("select * from driver_positions")).toBe(0);
+    });
+    // Nobody can write the tables directly.
+    await asUser(db, ids.dispatcherA, async () => {
+      await expect(db.query(`delete from driver_positions`)).rejects.toThrow(/permission denied/);
+    });
+  });
+
+  it("keeps buffered points from before a pause, rejects points after it, clears the live position on completion", async () => {
+    await db.query(`update organizations set tracking_mode = 'active_tours' where id = $1`, [ids.orgJarbou]);
+    await asUser(db, ids.driverA1, async () => {
+      await db.query(`select driver_ack_tracking_notice($1)`, [ids.orgJarbou]);
+      await db.query(`select driver_set_tour_status($1, 'in_progress')`, [ids.tourA1]);
+    });
+    await db.query(`update tour_events set created_at = now() - interval '10 minutes' where tour_id = $1 and kind = 'started'`, [ids.tourA1]);
+    await asUser(db, ids.driverA1, async () => {
+      await db.query(`select driver_set_tour_status($1, 'paused')`, [ids.tourA1]);
+      // Uploaded after the pause, recorded before it (offline buffer): kept. Recorded after it: refused.
+      const r = await record(ids.tourA1, [point(-5 * 60), point(90)]);
+      expect(r.accepted).toBe(1);
+      expect(r.rejected.map((x) => x.reason)).toEqual(["outside_active_tour"]);
+      // Paused tour: the live position does not move.
+      expect(await count("select * from driver_positions")).toBe(0);
+      await db.query(`select driver_set_tour_status($1, 'in_progress')`, [ids.tourA1]);
+      expect((await record(ids.tourA1, [point(1)])).accepted).toBe(1);
+      expect(await count("select * from driver_positions")).toBe(1);
+      await db.query(`select driver_set_tour_status($1, 'completed')`, [ids.tourA1]);
+      expect(await count("select * from driver_positions")).toBe(0);
     });
   });
 });

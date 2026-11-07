@@ -374,7 +374,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sizes", default="10,25,50,80,100,150,200")
     ap.add_argument("--seeds", default="1,2,3")
-    ap.add_argument("--methods", default="import_order,address_sort,nearest_neighbour,nn_2opt_oropt,legacy_prod,turvio_prod,turvio_30s")
+    ap.add_argument("--methods", default="import_order,address_sort,nearest_neighbour,nn_2opt_oropt,vroom,legacy_prod,turvio_prod,turvio_30s")
     ap.add_argument("--max-shift", type=int, default=600)
     ap.add_argument("--solver", default="turvio_optimizer.solver")
     ap.add_argument("--out", default=None)
@@ -391,15 +391,18 @@ def main() -> None:
     for n in sizes:
         secs["turvio_prod"] = secs["legacy_prod"] = 10 if n > 60 else 5
         rows_out += run([n], seeds, a.methods.split(","), secs, a.max_shift, mod.solve)
-    table = summarize(rows_out)
-    print(table)
-    if a.out:
-        out = Path(a.out)
-        out.mkdir(parents=True, exist_ok=True)
-        (out / f"hannover-{a.label}.json").write_text(
-            json.dumps([{"size": r.size, "method": r.method, "seconds": r.seconds, **r.ev.__dict__, **r.extra} for r in rows_out], indent=1)
-        )
-        (out / f"hannover-{a.label}.md").write_text(table + "\n")
+        if a.out:  # after every size, so a late failure keeps the finished results
+            save(rows_out, a.out, a.label)
+    print(summarize(rows_out))
+
+
+def save(rows_out: list[Row], out_dir: str, label: str) -> None:
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    (out / f"hannover-{label}.json").write_text(
+        json.dumps([{"size": r.size, "method": r.method, "seconds": r.seconds, **r.ev.__dict__, **r.extra} for r in rows_out], indent=1)
+    )
+    (out / f"hannover-{label}.md").write_text(summarize(rows_out) + "\n")
 
 
 if __name__ == "__main__":
