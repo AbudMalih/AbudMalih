@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { INDEXING_ENABLED, SITE_HOST, SITE_ORIGIN } from "@/lib/seo";
+import { bareHost, publicHost } from "@/lib/request";
 
 /**
  * Crawling is allowed only on the launched production host: SITE_INDEXING
@@ -8,7 +9,12 @@ import { INDEXING_ENABLED, SITE_HOST, SITE_ORIGIN } from "@/lib/seo";
  * (luna-trading-preview.vercel.app, deployment URLs, localhost) is disallowed.
  */
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const host = ((await headers()).get("host") ?? "").toLowerCase();
-  if (!(INDEXING_ENABLED && host === SITE_HOST)) return { rules: { userAgent: "*", disallow: "/" } };
-  return { rules: { userAgent: "*", allow: "/" }, sitemap: `${SITE_ORIGIN}/sitemap.xml`, host: SITE_ORIGIN };
+  const host = bareHost(publicHost(await headers()));
+  if (!(INDEXING_ENABLED && host === SITE_HOST))
+    return { rules: { userAgent: "*", disallow: "/" } };
+  return {
+    rules: { userAgent: "*", allow: "/" },
+    sitemap: `${SITE_ORIGIN}/sitemap.xml`,
+    host: SITE_ORIGIN,
+  };
 }

@@ -34,7 +34,11 @@ const SECURITY = [
   ...(PROD ? [{ key: "Content-Security-Policy", value: CSP }] : []),
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" },
+  {
+    key: "Permissions-Policy",
+    value:
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+  },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Strict-Transport-Security", value: "max-age=31536000" },
@@ -52,19 +56,46 @@ const nextConfig = {
     deviceSizes: [640, 828, 1080, 1440, 1920, 2560],
   },
   async headers() {
-    const immutable = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];
+    const immutable = [
+      { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+    ];
     return [
       { source: "/:path*", headers: SECURITY },
       // preview / deployment hosts are never indexable; luna-trading.de only after the launch switch
       INDEXING
-        ? { source: "/:path*", missing: [{ type: "host", value: "luna-trading.de" }], headers: NOINDEX }
+        ? {
+            source: "/:path*",
+            // noindex unless the request is for luna-trading.de, directly or via the
+            // hosting proxy (applies only when neither header names the domain)
+            missing: [
+              { type: "host", value: "luna-trading.de" },
+              {
+                type: "header",
+                key: "x-forwarded-host",
+                value: "luna-trading.de",
+              },
+            ],
+            headers: NOINDEX,
+          }
         : { source: "/:path*", headers: NOINDEX },
       { source: "/textures/:path*", headers: immutable },
       { source: "/sequences/:path*", headers: immutable },
       // icons: revalidate, so a changed favicon is never stuck in caches
-      { source: "/:icon(favicon.ico|favicon-lt.svg|apple-touch-icon.png|apple-touch-icon-lt.png|site.webmanifest)", headers: [{ key: "Cache-Control", value: "public, max-age=0, must-revalidate" }] },
-      { source: "/brand/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
-      { source: "/sky/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] },
+      {
+        source:
+          "/:icon(favicon.ico|favicon-lt.svg|apple-touch-icon.png|apple-touch-icon-lt.png|site.webmanifest)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+      {
+        source: "/brand/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
+      },
+      {
+        source: "/sky/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
+      },
     ];
   },
 };
