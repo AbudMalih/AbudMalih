@@ -183,3 +183,88 @@ export function Photo({
     </figure>
   );
 }
+
+/** A 3D box built from six faces; size via CSS vars on the element. */
+function Box({
+  className = "",
+  style,
+  children,
+}: {
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+}) {
+  return (
+    <div className={`${a.box} ${className}`} style={style}>
+      <div className={`${a.bf} ${a.bFront}`}>{children}</div>
+      <div className={`${a.bf} ${a.bBack}`} />
+      <div className={`${a.bf} ${a.bRight}`} />
+      <div className={`${a.bf} ${a.bLeft}`} />
+      <div className={`${a.bf} ${a.bTop}`} />
+      <div className={`${a.bf} ${a.bBottom}`} />
+    </div>
+  );
+}
+
+/** Quote: a crane slowly sets a Luna container onto the stack. */
+export function Containers({
+  label,
+  className = "",
+}: {
+  label?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`${a.wrap} ${className}`} aria-hidden="true">
+      <div className={a.yard}>
+        <div className={a.orbitCam}>
+          <div className={a.ground} />
+          <Box className={`${a.ctr} ${a.ctrA}`} />
+          <Box className={`${a.ctr} ${a.ctrB}`} />
+          <Box className={`${a.ctr} ${a.ctrC}`} />
+          <div className={a.lift}>
+            <div className={a.cable} />
+            <div className={a.spreader} />
+            <Box className={`${a.ctr} ${a.ctrRed}`}>
+              <span className={a.ctrMark} />
+            </Box>
+          </div>
+        </div>
+      </div>
+      {label && <p className={a.label}>{label}</p>}
+    </div>
+  );
+}
+
+/** Contact: a gyroscope of rings around the Luna plus, signals in orbit. */
+export function Gyro({
+  label,
+  className = "",
+}: {
+  label?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`${a.wrap} ${className}`} aria-hidden="true">
+      <div className={a.gyroStage}>
+        <div className={a.float}>
+          <div className={a.gyro}>
+            <div className={`${a.ring} ${a.ring1}`}>
+              <i />
+            </div>
+            <div className={`${a.ring} ${a.ring2}`}>
+              <i />
+            </div>
+            <div className={`${a.ring} ${a.ring3}`}>
+              <i />
+            </div>
+            <div className={a.core}>
+              <span className={a.coreMark} />
+            </div>
+          </div>
+        </div>
+      </div>
+      {label && <p className={a.label}>{label}</p>}
+    </div>
+  );
+}

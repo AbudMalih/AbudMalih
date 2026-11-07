@@ -179,36 +179,6 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      {/* the whole route */}
-      <section className={s.dark} data-tone="dark" aria-labelledby="svc-payoff">
-        <div className="frame">
-          <Tag dark>{t.payoff.tag}</Tag>
-          <h2
-            id="svc-payoff"
-            className={`${s.h2} ${s.h2Dark}`}
-            style={{ maxWidth: "22ch" }}
-            data-reveal
-          >
-            {t.payoff.body}
-          </h2>
-          <ol className={s.chips} data-reveal>
-            {t.route.map((stop, i) => (
-              <li
-                key={stop}
-                style={{ display: "flex", alignItems: "center", gap: 8 }}
-              >
-                {i > 0 && <span className={s.arrowSep} aria-hidden="true" />}
-                <span
-                  className={i === t.route.length - 1 ? s.chipRed : s.chipDark}
-                >
-                  {stop}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
       {/* LUVISCENT */}
       <section className={s.emerald} aria-labelledby="svc-lv" data-tone="dark">
         <div className={`frame ${s.split}`}>
