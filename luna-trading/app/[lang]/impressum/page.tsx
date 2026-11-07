@@ -42,9 +42,7 @@ export default async function Page({ params }: P) {
           <br />
           {L.country}
         </address>
-
-        <h2>Vertreten durch</h2>
-        <p>Geschäftsführer: {L.managingDirector}</p>
+        <p>Vertreten durch den Geschäftsführer: {L.managingDirector}</p>
 
         <h2>Kontakt</h2>
         <p>
