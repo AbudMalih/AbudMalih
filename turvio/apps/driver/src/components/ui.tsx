@@ -1,5 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import type { ComponentProps, ReactNode } from "react";
+import { HeaderHeightContext } from "expo-router/react-navigation";
+import { useContext, type ComponentProps, type ReactNode } from "react";
 import { ActivityIndicator, I18nManager, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { radii, space, touch, type as ty, useTheme, type Palette } from "../theme";
@@ -218,7 +219,7 @@ export function Segmented<T extends string>({ value, options, onChange, testID }
             onPress={() => onChange(o.value)}
             style={[s.segmentItem, on && { backgroundColor: c.card, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 }]}
           >
-            <Text style={[ty.small, { fontWeight: "700", color: on ? c.text : c.textMuted }]} numberOfLines={1}>
+            <Text style={[ty.small, { fontWeight: "700", color: on ? c.text : c.textMuted, textAlign: "center" }]} numberOfLines={2}>
               {o.label}
             </Text>
           </Pressable>
@@ -235,13 +236,16 @@ export function Sheet({ visible, onClose, title, children, testID }: { visible: 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }]} onPress={onClose} accessibilityLabel="Close" />
-      <View style={[s.sheet, { backgroundColor: c.card, paddingBottom: insets.bottom + space.lg }]} testID={testID}>
-        <View style={[s.grabber, { backgroundColor: c.borderStrong }]} />
-        <Text style={[ty.h2, { color: c.text, marginBottom: space.md }]}>{title}</Text>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: space.md }}>
-          {children}
-        </ScrollView>
-      </View>
+      {/* The sheet rides on top of the keyboard (paste/edit fields) on iOS and Android. */}
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.sheetHost} pointerEvents="box-none">
+        <View style={[s.sheet, { backgroundColor: c.card, paddingBottom: insets.bottom + space.lg }]} testID={testID}>
+          <View style={[s.grabber, { backgroundColor: c.borderStrong }]} />
+          <Text style={[ty.h2, { color: c.text, marginBottom: space.md }]}>{title}</Text>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: space.md }}>
+            {children}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -257,7 +261,7 @@ export function ListRow({ icon, title, subtitle, right, onPress, testID, tone }:
         </View>
       )}
       <View style={{ flex: 1 }}>
-        <Text style={[ty.bodyStrong, { color: c.text }]} numberOfLines={1}>
+        <Text style={[ty.bodyStrong, { color: c.text }]} numberOfLines={2}>
           {title}
         </Text>
         {subtitle ? (
@@ -316,15 +320,20 @@ export function Stat({ label, value, hint }: { label: string; value: string; hin
  *   indicator (edge-to-edge), or sits above a sticky `footer` (BottomBar) that does so;
  * - keyboard: the content moves above the on-screen keyboard on both platforms.
  */
-export function Screen({ children, scroll = true, testID, padded = true, footer }: { children: ReactNode; scroll?: boolean; testID?: string; padded?: boolean; footer?: ReactNode }) {
+export function Screen({ children, scroll = true, testID, padded = true, footer, inTabs = false }: { children: ReactNode; scroll?: boolean; testID?: string; padded?: boolean; footer?: ReactNode; /** Tab screen: the tab bar already covers the bottom inset. */ inTabs?: boolean }) {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
+  // Inside the tab navigator the tab bar already sits above the home indicator / system bar,
+  // so the bottom inset must not be added a second time.
+  const bottom = inTabs ? 0 : insets.bottom;
+  // iOS: the keyboard frame is measured from the window, the content starts below the header.
+  const headerHeight = useContext(HeaderHeightContext) ?? 0;
   const body = !scroll ? (
-    <View style={{ flex: 1, paddingBottom: footer ? 0 : insets.bottom }}>{children}</View>
+    <View style={{ flex: 1, paddingBottom: footer ? 0 : bottom }}>{children}</View>
   ) : (
     <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={padded ? { padding: space.lg, gap: space.md, paddingBottom: (footer ? space.lg : insets.bottom + space.xl) } : { paddingBottom: footer ? 0 : insets.bottom }}
+      contentContainerStyle={padded ? { padding: space.lg, gap: space.md, paddingBottom: footer ? space.lg : bottom + space.xl } : { paddingBottom: footer ? 0 : bottom }}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       testID={testID}
@@ -333,7 +342,7 @@ export function Screen({ children, scroll = true, testID, padded = true, footer 
     </ScrollView>
   );
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"} testID={scroll ? undefined : testID}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0} testID={scroll ? undefined : testID}>
       {body}
       {footer}
     </KeyboardAvoidingView>
@@ -398,8 +407,9 @@ export const s = StyleSheet.create({
   iconBtn: { borderRadius: radii.md, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   input: { minHeight: touch.min, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: space.md, fontSize: 16, textAlign: "auto" },
   segment: { flexDirection: "row", padding: 3, borderRadius: radii.md, gap: 3 },
-  segmentItem: { flex: 1, minHeight: 40, borderRadius: radii.sm, alignItems: "center", justifyContent: "center", paddingHorizontal: space.sm },
-  sheet: { position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "88%", borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, padding: space.lg, paddingTop: space.sm },
+  segmentItem: { flex: 1, minHeight: 44, borderRadius: radii.sm, alignItems: "center", justifyContent: "center", paddingHorizontal: space.sm },
+  sheetHost: { flex: 1, justifyContent: "flex-end" },
+  sheet: { maxHeight: "88%", borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, padding: space.lg, paddingTop: space.sm },
   grabber: { width: 40, height: 5, borderRadius: 3, alignSelf: "center", marginBottom: space.md },
   listRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: touch.min + 4, paddingVertical: space.sm },
   rowIcon: { width: 36, height: 36, borderRadius: radii.md, alignItems: "center", justifyContent: "center" },

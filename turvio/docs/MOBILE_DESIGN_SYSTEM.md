@@ -29,7 +29,7 @@ Theme follows the system setting unless the driver picks light/dark in Settings.
 
 ## Safe areas
 - Expo Router provides the `SafeAreaProvider`; screens read `useSafeAreaInsets()`. No hard-coded system-bar padding.
-- Tab bar: `height = 62 + insets.bottom`, `paddingBottom = insets.bottom + 8` – covers Android edge-to-edge with gesture *and* 3-button navigation and the iOS home indicator.
+- Tab bar: `height = 68 + insets.bottom`, `paddingBottom = insets.bottom + 6` – covers Android edge-to-edge with gesture *and* 3-button navigation and the iOS home indicator.
 - Header-less screens (Today, Map, Login) pad `insets.top`; footers and the map pin-confirm button pad `insets.bottom`.
 - Forms: `KeyboardAvoidingView` (`padding` on iOS, `height` on Android).
 

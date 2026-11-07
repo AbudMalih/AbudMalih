@@ -48,9 +48,9 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: c.primary,
         tabBarInactiveTintColor: c.textMuted,
-        tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth, height: 62 + bottom, paddingBottom: bottom + 8, paddingTop: 6 },
+        tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth, height: 68 + bottom, paddingBottom: bottom + 6, paddingTop: 6 },
         tabBarItemStyle: { minHeight: 48 },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginTop: 1 },
+        tabBarLabelStyle: { fontSize: 11, lineHeight: 14, fontWeight: "600", marginTop: 2 },
         headerStyle: { backgroundColor: c.card },
         headerShadowVisible: false,
         headerTitleStyle: { fontWeight: "700", color: c.text, fontSize: 17 },

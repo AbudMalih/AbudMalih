@@ -36,7 +36,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <Screen testID="settings">
+    <Screen testID="settings" inTabs>
       {isServerMode() && s.user && (
         <Card>
           <SectionTitle>{t("settings.account")}</SectionTitle>
