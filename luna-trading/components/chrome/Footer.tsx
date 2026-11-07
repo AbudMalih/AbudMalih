@@ -14,7 +14,10 @@ import styles from "./Footer.module.css";
 function useCologneTime(locale: string) {
   const [t, setT] = useState("");
   useEffect(() => {
-    const fmt = new Intl.DateTimeFormat(locale === "ar" ? "ar" : locale === "en" ? "en-GB" : "de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
+    const fmt = new Intl.DateTimeFormat(
+      locale === "ar" ? "ar" : locale === "en" ? "en-GB" : "de-DE",
+      { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" },
+    );
     const tick = () => setT(fmt.format(new Date()));
     tick();
     const id = window.setInterval(tick, 30_000);
@@ -33,7 +36,13 @@ export default function Footer() {
   const { dict, href, locale } = useI18n();
   const year = new Date().getFullYear();
   const time = useCologneTime(locale);
-  const toTop = () => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  const toTop = () =>
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
 
   return (
     <footer className={styles.footer} data-tone="dark">
@@ -41,17 +50,31 @@ export default function Footer() {
         {/* brand row: who we are, and the two direct actions */}
         <div className={styles.invite}>
           <div className={styles.brandRow}>
-            <Link href={href("/")} aria-label={dict.a11y.home} className={styles.logo} data-cursor="link">
+            <Link
+              href={href("/")}
+              aria-label={dict.a11y.home}
+              className={styles.logo}
+              data-cursor="link"
+            >
               <LunaLogo height="100%" lazy />
             </Link>
             <p className={styles.statement}>{dict.footer.statement}</p>
           </div>
           <div className={styles.actions}>
-            <Link href={href("/contact")} className={styles.btnRed} data-cursor="invert">
+            <Link
+              href={href("/contact")}
+              className={styles.btnRed}
+              data-cursor="invert"
+            >
               {dict.nav.cta}
               <span className={styles.badge} aria-hidden="true" />
             </Link>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={styles.btnGhost} dir="ltr" data-cursor="link">
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className={styles.btnGhost}
+              dir="ltr"
+              data-cursor="link"
+            >
               {CONTACT_EMAIL}
             </a>
           </div>
@@ -95,7 +118,11 @@ export default function Footer() {
             <ul className={styles.list}>
               {NAV.map((n) => (
                 <li key={n.href}>
-                  <Link href={href(n.href)} className={styles.link} data-cursor="link">
+                  <Link
+                    href={href(n.href)}
+                    className={styles.link}
+                    data-cursor="link"
+                  >
                     {dict.nav[n.key]}
                   </Link>
                 </li>
@@ -104,12 +131,16 @@ export default function Footer() {
           </nav>
 
           <div className={styles.col}>
-            <h2 className={styles.h}>
-              {dict.footer.owned}
-            </h2>
+            <h2 className={styles.h}>{dict.footer.owned}</h2>
             <ul className={styles.list}>
               <li>
-                <Link href={href(BRANDS.luviscent.internal)} className={styles.link} data-cursor="link" lang="en" dir="ltr">
+                <Link
+                  href={href(BRANDS.luviscent.internal)}
+                  className={styles.link}
+                  data-cursor="link"
+                  lang="en"
+                  dir="ltr"
+                >
                   {BRANDS.luviscent.name}
                   {BRANDS.luviscent.mark}
                 </Link>
@@ -128,7 +159,11 @@ export default function Footer() {
             <ul className={styles.list}>
               {LEGAL_NAV.map((n) => (
                 <li key={n.href}>
-                  <Link href={href(n.href)} className={styles.link} data-cursor="link">
+                  <Link
+                    href={href(n.href)}
+                    className={styles.link}
+                    data-cursor="link"
+                  >
                     {dict.legal[n.key]}
                   </Link>
                 </li>
@@ -144,9 +179,15 @@ export default function Footer() {
           </span>
           <span className={styles.coords} dir="ltr">
             <i className={styles.plus} aria-hidden="true" />
-            {formatLat(COMPANY.coordinates.lat)} &nbsp;{formatLon(COMPANY.coordinates.lon)}
+            {formatLat(COMPANY.coordinates.lat)} &nbsp;
+            {formatLon(COMPANY.coordinates.lon)}
           </span>
-          <button type="button" onClick={toTop} className={styles.top} data-cursor="link">
+          <button
+            type="button"
+            onClick={toTop}
+            className={styles.top}
+            data-cursor="link"
+          >
             {dict.footer.top}
             <span className={styles.topArrow} aria-hidden="true" />
           </button>

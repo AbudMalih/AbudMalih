@@ -12,8 +12,10 @@
   height: 36px;
   margin: -18px 0 0 -18px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 8px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 8px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 8px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 8px 100%
+      no-repeat;
 }
 .block {
   position: absolute;
@@ -60,7 +62,9 @@
   text-transform: uppercase;
   line-height: 1;
   box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.6);
-  transition: background-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+  transition:
+    background-color 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out);
 }
 .cta:hover,
 .cta:focus-visible {

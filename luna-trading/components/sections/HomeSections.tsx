@@ -19,7 +19,7 @@ import {
   kit as s,
 } from "@/components/kit/Kit";
 import h from "./HomeSections.module.css";
-import { Carton } from "@/components/kit/Ambient";
+import { BrandCube } from "@/components/kit/Ambient";
 import a from "@/components/kit/Ambient.module.css";
 import Story from "@/components/kit/Story";
 import { STORY } from "@/content/story";
@@ -272,7 +272,7 @@ export default function HomeSections() {
                 </div>
               </div>
               <div className={a.sideVisual} data-reveal style={d(160)}>
-                <Carton label={STORY[locale].visual.carton} />
+                <BrandCube label={STORY[locale].visual.carton} />
               </div>
             </div>
           </section>

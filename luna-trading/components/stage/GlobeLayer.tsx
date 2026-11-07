@@ -12,14 +12,27 @@ import { globeAnchor } from "@/lib/globe/shared";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./GlobeLayer.module.css";
 
-const KEYS: (keyof GlobeFrame)[] = ["lon", "lat", "dist", "ox", "oy", "reveal", "route", "env"];
+const KEYS: (keyof GlobeFrame)[] = [
+  "lon",
+  "lat",
+  "dist",
+  "ox",
+  "oy",
+  "reveal",
+  "route",
+  "env",
+];
 
 /**
  * Fixed WebGL layer for the Earth (hero + closing). The renderer only draws
  * when the derived state actually changes, and stops entirely while invisible.
  * `mode="static"` renders a single composed frame (reduced motion / review).
  */
-export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "static" }) {
+export default function GlobeLayer({
+  mode = "fixed",
+}: {
+  mode?: "fixed" | "static";
+}) {
   const { dict } = useI18n();
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -52,7 +65,10 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       const r = wrap.getBoundingClientRect();
       vw = Math.max(1, r.width);
       vh = Math.max(1, r.height);
-      const dpr = Math.min(window.devicePixelRatio || 1, stage.tier === "high" ? 2 : 1.5);
+      const dpr = Math.min(
+        window.devicePixelRatio || 1,
+        stage.tier === "high" ? 2 : 1.5,
+      );
       globe.setSize(Math.max(1, r.width), Math.max(1, r.height), dpr);
       dirty = true;
     };
@@ -73,8 +89,13 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       const front = orbitFrontRef.current;
       const plus = orbitPlusRef.current;
       if (!back || !front || !plus) return;
-      const show = (1 - smooth(range(stage.p.hero, 0, 0.3))) * f.reveal * (stage.p.closing > 0 ? 0 : 1);
-      const r = ((vh / 2) * Math.tan(Math.asin(Math.min(1, 1 / f.dist)))) / Math.tan((13 * Math.PI) / 180);
+      const show =
+        (1 - smooth(range(stage.p.hero, 0, 0.3))) *
+        f.reveal *
+        (stage.p.closing > 0 ? 0 : 1);
+      const r =
+        ((vh / 2) * Math.tan(Math.asin(Math.min(1, 1 / f.dist)))) /
+        Math.tan((13 * Math.PI) / 180);
       const cx = vw * (0.5 + f.ox);
       const cy = vh * (0.5 + f.oy);
       // the sky behind the planet (Atmosphere) follows the globe's framing
@@ -97,13 +118,21 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       if (key !== lastOrbit) {
         lastOrbit = key;
         for (const svg of [back, front]) {
-          svg.querySelector("g")!.setAttribute("transform", `translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${((TILT * 180) / Math.PI).toFixed(1)})`);
+          svg
+            .querySelector("g")!
+            .setAttribute(
+              "transform",
+              `translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${((TILT * 180) / Math.PI).toFixed(1)})`,
+            );
           svg.querySelectorAll("ellipse").forEach((e, i) => {
             e.setAttribute("rx", (r * RINGS[i]).toFixed(1));
             e.setAttribute("ry", (r * RINGS[i] * 0.3).toFixed(1));
           });
           const clip = svg.querySelector("clipPath rect");
-          if (clip) clip.setAttribute("width", String(r * 4)), clip.setAttribute("x", String(-r * 2)), clip.setAttribute("height", String(r * 2));
+          if (clip)
+            (clip.setAttribute("width", String(r * 4)),
+              clip.setAttribute("x", String(-r * 2)),
+              clip.setAttribute("height", String(r * 2)));
         }
         back.style.opacity = (show * 0.9).toFixed(3);
         front.style.opacity = show.toFixed(3);
@@ -128,7 +157,12 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       plus.style.zIndex = inFront ? "2" : "0";
     };
 
-    const place = (el: HTMLElement | null, x: number, y: number, show: boolean) => {
+    const place = (
+      el: HTMLElement | null,
+      x: number,
+      y: number,
+      show: boolean,
+    ) => {
       if (!el) return;
       el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
       el.style.opacity = show ? "1" : "0";
@@ -149,7 +183,12 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       }
       const hd = globe.routeHead();
       const hp = globe.project(hd.lon, hd.lat);
-      place(headRef.current, hp.x, hp.y, vis && hp.front && f.route > 0.01 && f.route < 0.95 && f.labels > 0.5);
+      place(
+        headRef.current,
+        hp.x,
+        hp.y,
+        vis && hp.front && f.route > 0.01 && f.route < 0.95 && f.labels > 0.5,
+      );
       const txt = `${formatLat(hd.lat)}  ${formatLon(hd.lon)}`;
       if (txt !== lastHeadText && headTextRef.current) {
         headTextRef.current.textContent = txt;
@@ -161,9 +200,14 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
     };
 
     (async () => {
-      const [{ createGlobe }] = await Promise.all([import("@/lib/globe/createGlobe"), tierSettled()]);
+      const [{ createGlobe }] = await Promise.all([
+        import("@/lib/globe/createGlobe"),
+        tierSettled(),
+      ]);
       if (disposed) return;
-      globe = createGlobe(canvas, { hiRes: stage.tier === "high" && !stage.mobile });
+      globe = createGlobe(canvas, {
+        hiRes: stage.tier === "high" && !stage.mobile,
+      });
       size();
       ro = new ResizeObserver(size);
       ro.observe(wrap);
@@ -172,7 +216,18 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       markReady("globe");
 
       if (mode === "static") {
-        const f: GlobeDerived = { lon: 62, lat: 26, dist: stage.mobile ? 6 : 4.4, ox: 0, oy: 0, reveal: 1, route: 1, env: 0, opacity: 1, labels: 1 };
+        const f: GlobeDerived = {
+          lon: 62,
+          lat: 26,
+          dist: stage.mobile ? 6 : 4.4,
+          ox: 0,
+          oy: 0,
+          reveal: 1,
+          route: 1,
+          env: 0,
+          opacity: 1,
+          labels: 1,
+        };
         globe.render(f);
         drawMarkers(f);
         return;
@@ -180,7 +235,9 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
 
       // the opening turns slowly by itself (one revolution ≈ 2 min); the
       // turn eases out as the story begins, back into the scroll choreography
-      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const still = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
       let idle = 0;
       const shown: GlobeDerived = { ...cur };
       stopFrame = onFrame((dt) => {
@@ -206,9 +263,12 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
         wrap.style.opacity = cur.opacity.toFixed(3);
         wrap.style.visibility = visible ? "visible" : "hidden";
         if (!visible) return;
-        const w = still || stage.p.closing > 0 ? 0 : 1 - smooth(range(stage.p.hero, 0, 0.22));
+        const w =
+          still || stage.p.closing > 0
+            ? 0
+            : 1 - smooth(range(stage.p.hero, 0, 0.22));
         if (w > 0.001) idle = (idle + dt * 3) % 360;
-        const off = (((idle + 180) % 360) + 360) % 360 - 180;
+        const off = ((((idle + 180) % 360) + 360) % 360) - 180;
         Object.assign(shown, cur);
         shown.lon = cur.lon - off * w;
         if (moving || dirty || w > 0.001) {
@@ -231,7 +291,9 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
   return (
     <div
       ref={wrapRef}
-      className={mode === "fixed" ? `stage-layer ${styles.fixed}` : styles.static}
+      className={
+        mode === "fixed" ? `stage-layer ${styles.fixed}` : styles.static
+      }
       aria-hidden="true"
       dir="ltr"
     >
@@ -246,7 +308,11 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       )}
       <canvas ref={canvasRef} className={styles.canvas} />
       {mode === "fixed" && (
-        <svg ref={orbitFrontRef} className={`${styles.orbits} ${styles.front}`} aria-hidden="true">
+        <svg
+          ref={orbitFrontRef}
+          className={`${styles.orbits} ${styles.front}`}
+          aria-hidden="true"
+        >
           <defs>
             <clipPath id="orbit-front">
               <rect y="0" />
@@ -274,7 +340,8 @@ export default function GlobeLayer({ mode = "fixed" }: { mode?: "fixed" | "stati
       <div ref={homeRef} className={`${styles.marker} ${styles.home}`}>
         <i className={styles.plus} />
         <span className={`t-label ${styles.coord}`}>
-          {dict.company.city} &nbsp;{formatLat(COMPANY.coordinates.lat)} {formatLon(COMPANY.coordinates.lon)}
+          {dict.company.city} &nbsp;{formatLat(COMPANY.coordinates.lat)}{" "}
+          {formatLon(COMPANY.coordinates.lon)}
         </span>
       </div>
     </div>

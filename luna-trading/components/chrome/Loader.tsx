@@ -36,7 +36,12 @@ export default function Loader() {
     const finishIntro = () => {
       html.classList.remove("intro-pending");
       window.dispatchEvent(new Event("luna:intro"));
-      gsap.to(stage, { intro: 1, duration: 1.4, ease: "power2.inOut", onUpdate: () => void stage.version++ });
+      gsap.to(stage, {
+        intro: 1,
+        duration: 1.4,
+        ease: "power2.inOut",
+        onUpdate: () => void stage.version++,
+      });
     };
     if (!html.classList.contains("cine")) {
       stage.intro = 1;
@@ -60,10 +65,16 @@ export default function Loader() {
     let done = false;
     const ctx = gsap.context(() => {
       gsap.set(plate.current, { xPercent: -50, yPercent: -50 });
-      gsap.fromTo(plus.current, { scale: 0, rotate: -90 }, { scale: 1, rotate: 0, duration: 0.5, ease: "expo.out", delay: 0.05 });
+      gsap.fromTo(
+        plus.current,
+        { scale: 0, rotate: -90 },
+        { scale: 1, rotate: 0, duration: 0.5, ease: "expo.out", delay: 0.05 },
+      );
     }, root);
 
-    const fontsReady = document.fonts?.ready.then(() => (stage.ready.fonts = true)) ?? Promise.resolve();
+    const fontsReady =
+      document.fonts?.ready.then(() => (stage.ready.fonts = true)) ??
+      Promise.resolve();
     void fontsReady;
 
     const tick = () => {
@@ -77,7 +88,11 @@ export default function Loader() {
       const v = shown.v;
       if (lineL.current) lineL.current.style.transform = `scaleX(${v})`;
       if (lineR.current) lineR.current.style.transform = `scaleX(${v})`;
-      if (count.current) count.current.textContent = String(Math.round(v * 100)).padStart(3, "0");
+      if (count.current)
+        count.current.textContent = String(Math.round(v * 100)).padStart(
+          3,
+          "0",
+        );
       if ((v > 0.97 && real === 1) || elapsed > MAX_MS) {
         done = true;
         exit();
@@ -102,8 +117,17 @@ export default function Loader() {
       tl.to([lineL.current, lineR.current], { scaleX: 0, duration: 0.4 }, 0);
       tl.to(count.current, { opacity: 0, duration: 0.2 }, 0);
       if (!seen) {
-        tl.fromTo(plate.current, { clipPath: "inset(50% 50% 50% 50%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6 }, 0.2);
-        tl.to(plus.current, { scale: 0, duration: 0.35, ease: "power3.in" }, 0.2);
+        tl.fromTo(
+          plate.current,
+          { clipPath: "inset(50% 50% 50% 50%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 0.6 },
+          0.2,
+        );
+        tl.to(
+          plus.current,
+          { scale: 0, duration: 0.35, ease: "power3.in" },
+          0.2,
+        );
         tl.to({}, { duration: 0.2 });
         if (brand && plate.current) {
           const b = brand.getBoundingClientRect();
@@ -115,10 +139,30 @@ export default function Loader() {
             duration: 0.7,
           });
         }
-        tl.to(root.current, { backgroundColor: "rgba(6,6,7,0)", duration: 0.5, ease: "power2.out" }, "<0.2");
+        tl.to(
+          root.current,
+          {
+            backgroundColor: "rgba(6,6,7,0)",
+            duration: 0.5,
+            ease: "power2.out",
+          },
+          "<0.2",
+        );
       } else {
-        tl.to(plus.current, { scale: 0, duration: 0.35, ease: "power3.in" }, 0.1);
-        tl.to(root.current, { backgroundColor: "rgba(6,6,7,0)", duration: 0.45, ease: "power2.out" }, 0.25);
+        tl.to(
+          plus.current,
+          { scale: 0, duration: 0.35, ease: "power3.in" },
+          0.1,
+        );
+        tl.to(
+          root.current,
+          {
+            backgroundColor: "rgba(6,6,7,0)",
+            duration: 0.45,
+            ease: "power2.out",
+          },
+          0.25,
+        );
       }
       tl.add(() => finishIntro(), seen ? 0.3 : "-=0.45");
       if (!seen) tl.set(plate.current, { opacity: 0 });
@@ -140,7 +184,9 @@ export default function Loader() {
           <i />
           <i />
         </div>
-        <span ref={count} className={`t-label t-mono ${styles.count}`}>000</span>
+        <span ref={count} className={`t-label t-mono ${styles.count}`}>
+          000
+        </span>
       </div>
       <div ref={plate} className={styles.plate}>
         <LunaLogo height="100%" />

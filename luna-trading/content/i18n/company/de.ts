@@ -10,9 +10,9 @@ const de: CompanyCopy = {
     eyebrow: "Unternehmen",
     h1a: "Handel verbindet.",
     h1b: "Wir bauen darauf.",
-    lead: "Die Luna Trading GmbH verbindet internationalen Handel mit Produktentwicklung, Markenaufbau, E-Commerce und Distribution. Mit Sitz in Köln, ausgerichtet auf den europäischen Markt.",
+    lead: "Luna Trading verbindet internationalen Handel mit Produktentwicklung, Markenaufbau, E-Commerce und Distribution. Mit Sitz in Köln, ausgerichtet auf den europäischen Markt.",
     layers: ["Handel", "Produkt", "Marke", "E-Commerce", "Distribution"],
-    base: "Luna Trading GmbH · Köln",
+    base: "Luna Trading · Köln",
   },
   profile: {
     tag: "Das Unternehmen",
@@ -22,7 +22,13 @@ const de: CompanyCopy = {
     statement: "Ein Handelsunternehmen, das Produkte und Märkte verbindet.",
     body: "Luna Trading ist nicht auf eine Warengruppe festgelegt. Das Unternehmen verbindet Beschaffung, Produktentwicklung, Markenaufbau und Vertrieb in einer gemeinsamen kaufmännischen Struktur.",
     areasTag: "Ausrichtung",
-    areas: ["Internationaler Handel", "Produktentwicklung", "Marken", "E-Commerce", "Distribution"],
+    areas: [
+      "Internationaler Handel",
+      "Produktentwicklung",
+      "Marken",
+      "E-Commerce",
+      "Distribution",
+    ],
   },
   idea: {
     tag: "Die Idee",
@@ -45,10 +51,22 @@ const de: CompanyCopy = {
     tag: "Wie wir arbeiten",
     title: "Was die Struktur anders macht.",
     items: [
-      { title: "Ein kaufmännischer Blick auf das Ganze.", body: "Beschaffung, Produkt, Marke und Vertrieb werden gemeinsam bewertet, nicht nacheinander." },
-      { title: "Vom Produkt aus gedacht. Vom Markt her geprüft.", body: "Die Anforderungen an ein Produkt und die Anforderungen seines Marktes gehören an denselben Tisch." },
-      { title: "Physisch und digital.", body: "Ware bewegt sich real, verkauft wird zunehmend digital. Wir arbeiten in beiden Welten." },
-      { title: "Aufbauen, was der Markt trägt.", body: "Sortimente und Marken wachsen in dem Tempo, das Nachfrage und Struktur zulassen." },
+      {
+        title: "Ein kaufmännischer Blick auf das Ganze.",
+        body: "Beschaffung, Produkt, Marke und Vertrieb werden gemeinsam bewertet, nicht nacheinander.",
+      },
+      {
+        title: "Vom Produkt aus gedacht. Vom Markt her geprüft.",
+        body: "Die Anforderungen an ein Produkt und die Anforderungen seines Marktes gehören an denselben Tisch.",
+      },
+      {
+        title: "Physisch und digital.",
+        body: "Ware bewegt sich real, verkauft wird zunehmend digital. Wir arbeiten in beiden Welten.",
+      },
+      {
+        title: "Aufbauen, was der Markt trägt.",
+        body: "Sortimente und Marken wachsen in dem Tempo, das Nachfrage und Struktur zulassen.",
+      },
     ],
   },
   pd: {
@@ -56,8 +74,14 @@ const de: CompanyCopy = {
     title1: "Zwei Welten.",
     title2: "Eine Verbindung.",
     lead: "Kein klassischer Großhändler. Kein reines E-Commerce-Unternehmen. Luna Trading verbindet den physischen Warenfluss mit dem digitalen Handel.",
-    physical: { name: "Physischer Handel", items: ["Produkt", "Verpackung", "Container", "Bewegung", "Distribution"] },
-    digital: { name: "Digitaler Handel", items: ["Onlineshop", "Marktplatz", "Daten", "Kunde", "Handel"] },
+    physical: {
+      name: "Physischer Handel",
+      items: ["Produkt", "Verpackung", "Container", "Bewegung", "Distribution"],
+    },
+    digital: {
+      name: "Digitaler Handel",
+      items: ["Onlineshop", "Marktplatz", "Daten", "Kunde", "Handel"],
+    },
     note: "Dieselbe Ware. Dieselbe Verantwortung. Vom physischen Warenfluss bis zum digitalen Markt.",
   },
   base: {
@@ -78,18 +102,33 @@ const de: CompanyCopy = {
     body: "Ein Produkt, das in Europa verkauft wird, muss für diesen Markt vorbereitet sein. Diese Arbeit beginnt lange vor dem Versand.",
     doc: "Marktvorbereitung",
     rows: [
-      { name: "Produktanforderungen", line: "Material, Ausführung und Verwendung klar definiert." },
-      { name: "Dokumentation", line: "Kaufmännische und technische Unterlagen vollständig." },
-      { name: "Kennzeichnung", line: "Verpackung und Angaben passend zum Zielmarkt." },
-      { name: "Marktreife", line: "Vorgaben des Marktes vor dem Verkauf berücksichtigt." },
-      { name: "Kaufmännische Struktur", line: "Preise, Kanäle und Abläufe geordnet." },
+      {
+        name: "Produktanforderungen",
+        line: "Material, Ausführung und Verwendung klar definiert.",
+      },
+      {
+        name: "Dokumentation",
+        line: "Kaufmännische und technische Unterlagen vollständig.",
+      },
+      {
+        name: "Kennzeichnung",
+        line: "Verpackung und Angaben passend zum Zielmarkt.",
+      },
+      {
+        name: "Marktreife",
+        line: "Vorgaben des Marktes vor dem Verkauf berücksichtigt.",
+      },
+      {
+        name: "Kaufmännische Struktur",
+        line: "Preise, Kanäle und Abläufe geordnet.",
+      },
     ],
   },
   brand: {
     tag: "Vom Unternehmen zur Marke",
     title: "Aus der Struktur entstehen eigene Marken.",
     chain: ["Luna Trading", "Eigenmarken"],
-    body: "LUVISCENT® ist die erste Eigenmarke der Luna Trading GmbH: Raumduft, aufgebaut auf derselben Kette aus Beschaffung, Entwicklung, Marke und Handel.",
+    body: "LUVISCENT® ist die erste Eigenmarke von Luna Trading: Raumduft, aufgebaut auf derselben Kette aus Beschaffung, Entwicklung, Marke und Handel.",
     link: "Marken entdecken",
   },
   bridges: {

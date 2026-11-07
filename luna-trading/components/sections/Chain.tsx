@@ -35,9 +35,14 @@ function Content() {
 
       <ol className={s.grid}>
         {CHAIN.map((id, i) => (
-          <li key={id} className={`${s.step} ${i === COMMERCE_STEP ? s.key : ""}`}>
+          <li
+            key={id}
+            className={`${s.step} ${i === COMMERCE_STEP ? s.key : ""}`}
+          >
             <span className={s.node} aria-hidden="true" />
-            <span className={`t-label t-mono ${s.num}`}>{String(i + 1).padStart(2, "0")}</span>
+            <span className={`t-label t-mono ${s.num}`}>
+              {String(i + 1).padStart(2, "0")}
+            </span>
             <ChainArt id={id} className={s.art} redClass={s.artRed} />
             <h3 className={s.name}>{t.steps[id].label}</h3>
             <p className={s.line}>{t.steps[id].line}</p>

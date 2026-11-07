@@ -25,7 +25,11 @@
   padding: 18px 22px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.02)
+  );
   color: #f2f2f0;
   font-weight: 650;
   font-size: 1.05rem;
@@ -75,8 +79,10 @@
   height: 12px;
   flex: none;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 @media (max-width: 767px) {
   .hubRow {

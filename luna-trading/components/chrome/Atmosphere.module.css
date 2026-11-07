@@ -31,9 +31,23 @@
   position: absolute;
   inset: 0;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.022) 0 1px, transparent 1px 4px),
-    radial-gradient(80% 75% at 10% 2%, rgba(214, 217, 222, 0.24), transparent 70%),
-    linear-gradient(104deg, transparent 0%, transparent 44%, rgba(220, 223, 228, 0.06) 54%, transparent 66%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.022) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(
+      80% 75% at 10% 2%,
+      rgba(214, 217, 222, 0.24),
+      transparent 70%
+    ),
+    linear-gradient(
+      104deg,
+      transparent 0%,
+      transparent 44%,
+      rgba(220, 223, 228, 0.06) 54%,
+      transparent 66%
+    ),
     radial-gradient(70% 75% at 90% 95%, rgba(8, 9, 11, 0.5), transparent 72%),
     linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(8, 9, 11, 0.25) 100%);
 }
@@ -49,20 +63,40 @@
   will-change: transform, opacity;
 }
 .daylight {
-  background: radial-gradient(38% 34% at 30% 26%, rgba(226, 229, 234, 0.34), transparent 70%);
+  background: radial-gradient(
+    38% 34% at 30% 26%,
+    rgba(226, 229, 234, 0.34),
+    transparent 70%
+  );
   animation: daylight 34s ease-in-out infinite alternate;
 }
 .daylightWarm {
-  background: radial-gradient(34% 30% at 76% 72%, rgba(201, 204, 210, 0.16), transparent 72%);
+  background: radial-gradient(
+    34% 30% at 76% 72%,
+    rgba(201, 204, 210, 0.16),
+    transparent 72%
+  );
   animation: daylightWarm 47s ease-in-out infinite alternate;
 }
 @keyframes daylight {
-  0% { transform: translate3d(-6%, -3%, 0); opacity: 0.7; }
-  100% { transform: translate3d(14%, 8%, 0); opacity: 1; }
+  0% {
+    transform: translate3d(-6%, -3%, 0);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate3d(14%, 8%, 0);
+    opacity: 1;
+  }
 }
 @keyframes daylightWarm {
-  0% { transform: translate3d(6%, 4%, 0); opacity: 0.5; }
-  100% { transform: translate3d(-10%, -6%, 0); opacity: 1; }
+  0% {
+    transform: translate3d(6%, 4%, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate3d(-10%, -6%, 0);
+    opacity: 1;
+  }
 }
 :global(html.static) .daylight,
 :global(html.static) .daylightWarm {
@@ -95,15 +129,33 @@
   inset: 0;
   opacity: 0;
   background:
-    radial-gradient(90% 80% at 14% 0%, rgba(255, 253, 248, 0.32), transparent 75%),
-    radial-gradient(90% 70% at 92% 104%, rgba(176, 168, 152, 0.28), transparent 70%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0) 70%, rgba(150, 142, 128, 0.12) 100%);
+    radial-gradient(
+      90% 80% at 14% 0%,
+      rgba(255, 253, 248, 0.32),
+      transparent 75%
+    ),
+    radial-gradient(
+      90% 70% at 92% 104%,
+      rgba(176, 168, 152, 0.28),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 70%,
+      rgba(150, 142, 128, 0.12) 100%
+    );
 }
 /* a soft plane of daylight, as through a tall window; it travels with the scroll */
 .shaft {
   position: absolute;
   inset: 0 -30%;
-  background: linear-gradient(112deg, transparent 30%, rgba(255, 252, 245, 0.24) 45%, rgba(255, 252, 245, 0.1) 54%, transparent 66%);
+  background: linear-gradient(
+    112deg,
+    transparent 30%,
+    rgba(255, 252, 245, 0.24) 45%,
+    rgba(255, 252, 245, 0.1) 54%,
+    transparent 66%
+  );
   will-change: transform;
 }
 .brandTex::after {
@@ -134,13 +186,21 @@
   background-size: 72px 72px;
   background-position: center center;
   mask-image: radial-gradient(70% 70% at 50% 50%, #000 30%, transparent 85%);
-  -webkit-mask-image: radial-gradient(70% 70% at 50% 50%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(
+    70% 70% at 50% 50%,
+    #000 30%,
+    transparent 85%
+  );
 }
 /* the transition: silver warms before the emerald arrives */
 .warm {
   inset: 0;
   background:
-    radial-gradient(60% 50% at 50% 50%, rgba(246, 239, 224, 0.9), transparent 75%),
+    radial-gradient(
+      60% 50% at 50% 50%,
+      rgba(246, 239, 224, 0.9),
+      transparent 75%
+    ),
     linear-gradient(180deg, #efe8da 0%, #e8dfcc 100%);
 }
 
@@ -148,8 +208,17 @@
 .forest {
   inset: 0;
   background:
-    radial-gradient(110% 80% at 24% 110%, rgba(33, 72, 59, 0.85) 0%, rgba(23, 55, 45, 0.45) 40%, transparent 72%),
-    radial-gradient(80% 70% at 86% 6%, rgba(14, 37, 30, 0.9) 0%, transparent 70%),
+    radial-gradient(
+      110% 80% at 24% 110%,
+      rgba(33, 72, 59, 0.85) 0%,
+      rgba(23, 55, 45, 0.45) 40%,
+      transparent 72%
+    ),
+    radial-gradient(
+      80% 70% at 86% 6%,
+      rgba(14, 37, 30, 0.9) 0%,
+      transparent 70%
+    ),
     linear-gradient(180deg, #06130f 0%, #0a1c16 52%, #06120e 100%);
 }
 /* the warm ivory wave front of the bloom (gradient set per frame) */
@@ -163,7 +232,13 @@
   width: 72vmax;
   height: 72vmax;
   margin: -36vmax 0 0 -36vmax;
-  background: radial-gradient(closest-side, rgba(241, 236, 226, 0.15), rgba(201, 204, 210, 0.08) 40%, rgba(160, 163, 168, 0.025) 62%, transparent 76%);
+  background: radial-gradient(
+    closest-side,
+    rgba(241, 236, 226, 0.15),
+    rgba(201, 204, 210, 0.08) 40%,
+    rgba(160, 163, 168, 0.025) 62%,
+    transparent 76%
+  );
   will-change: transform, opacity;
 }
 :global([dir="rtl"]) .key {
@@ -176,15 +251,27 @@
   right: -10%;
   bottom: 6%;
   height: 34vh;
-  background: radial-gradient(50% 50% at 50% 60%, rgba(241, 236, 226, 0.07), transparent 75%);
+  background: radial-gradient(
+    50% 50% at 50% 60%,
+    rgba(241, 236, 226, 0.07),
+    transparent 75%
+  );
   filter: blur(20px);
 }
 /* brighter, calm closing: a silver dawn behind the world, leading to the paper footer */
 .dawn {
   inset: 0;
   background:
-    radial-gradient(60% 55% at 70% 62%, rgba(214, 216, 220, 0.22), transparent 70%),
-    radial-gradient(120% 60% at 50% 120%, rgba(242, 242, 240, 0.2), transparent 65%),
+    radial-gradient(
+      60% 55% at 70% 62%,
+      rgba(214, 216, 220, 0.22),
+      transparent 70%
+    ),
+    radial-gradient(
+      120% 60% at 50% 120%,
+      rgba(242, 242, 240, 0.2),
+      transparent 65%
+    ),
     linear-gradient(180deg, #0c0d0f 0%, #1b1c1f 100%);
 }
 :global([dir="rtl"]) .dawn {

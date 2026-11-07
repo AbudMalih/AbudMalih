@@ -8,10 +8,11 @@ import contactPage from "./contact/de";
 const de: Dictionary = {
   meta: {
     title: "Luna Trading GmbH · Handel ohne Grenzen",
-    titleTemplate: "%s · Luna Trading GmbH",
+    titleTemplate: "%s · Luna Trading",
     description:
       "Luna Trading GmbH, Köln. Globale Beschaffung, Import und Export, Produkt- und Markenentwicklung, E-Commerce und Distribution in Europa.",
-    ogDescription: "Globale Beschaffung. Europäische Distribution. Marken und E-Commerce.",
+    ogDescription:
+      "Globale Beschaffung. Europäische Distribution. Marken und E-Commerce.",
   },
   a11y: {
     skip: "Zum Inhalt springen",
@@ -26,7 +27,15 @@ const de: Dictionary = {
     language: "Sprache",
     scroll: "Scrollen",
   },
-  nav: { home: "Start", whatWeDo: "Leistungen", import: "Import", brands: "Marken", company: "Unternehmen", contact: "Kontakt", cta: "Kontakt" },
+  nav: {
+    home: "Start",
+    whatWeDo: "Leistungen",
+    import: "Import",
+    brands: "Marken",
+    company: "Unternehmen",
+    contact: "Kontakt",
+    cta: "Kontakt",
+  },
   legal: { impressum: "Impressum", datenschutz: "Datenschutz" },
   company: { place: "Köln, Deutschland", city: "Köln" },
   chapters: {
@@ -54,7 +63,11 @@ const de: Dictionary = {
     tag: "Von der Quelle zum Markt",
     l1: "Von der Quelle",
     l2: "bis zum Markt.",
-    supporting: ["Globale Beschaffung", "Europäische Distribution", "Markenentwicklung"],
+    supporting: [
+      "Globale Beschaffung",
+      "Europäische Distribution",
+      "Markenentwicklung",
+    ],
   },
   transport: {
     tag: "Europäischer Transport",
@@ -67,20 +80,48 @@ const de: Dictionary = {
     tag: "Distribution",
     l1: "Deutschland als Basis.",
     l2: "Europa als Markt.",
-    labels: { germany: "Deutschland", eu: "EU-Distribution", ecommerce: "E-Commerce", b2b: "B2B" },
+    labels: {
+      germany: "Deutschland",
+      eu: "EU-Distribution",
+      ecommerce: "E-Commerce",
+      b2b: "B2B",
+    },
   },
-  brands: { a1: "Wir bewegen nicht", a2: "nur Produkte.", b1: "Wir bauen", b2: "Marken" },
+  brands: {
+    a1: "Wir bewegen nicht",
+    a2: "nur Produkte.",
+    b1: "Wir bauen",
+    b2: "Marken",
+  },
   chain: {
     tag: "Die Kette",
     h1: "Sechs Disziplinen.",
     h2: "Eine Kette.",
     steps: {
-      sourcing: { label: "Beschaffung", line: "Hersteller und Materialien finden, die ein Produkt wirklich braucht." },
-      import: { label: "Import", line: "Fracht, Zoll und Dokumentation in die Europäische Union koordinieren." },
-      development: { label: "Entwicklung", line: "Spezifikation, Material, Verpackung und Konformität. Bevor produziert wird." },
-      brand: { label: "Marke", line: "Positionierung, Zielgruppe und Auftritt. Damit ein Produkt eine Haltung hat." },
-      ecommerce: { label: "E-Commerce", line: "Digitale Vertriebswege: Marktplätze, eigene Kanäle und direkter Kundenzugang." },
-      distribution: { label: "Distribution", line: "Produkte in den Handel, ins B2B-Geschäft und zu Endkunden bringen." },
+      sourcing: {
+        label: "Beschaffung",
+        line: "Hersteller und Materialien finden, die ein Produkt wirklich braucht.",
+      },
+      import: {
+        label: "Import",
+        line: "Fracht, Zoll und Dokumentation in die Europäische Union koordinieren.",
+      },
+      development: {
+        label: "Entwicklung",
+        line: "Spezifikation, Material, Verpackung und Konformität. Bevor produziert wird.",
+      },
+      brand: {
+        label: "Marke",
+        line: "Positionierung, Zielgruppe und Auftritt. Damit ein Produkt eine Haltung hat.",
+      },
+      ecommerce: {
+        label: "E-Commerce",
+        line: "Digitale Vertriebswege: Marktplätze, eigene Kanäle und direkter Kundenzugang.",
+      },
+      distribution: {
+        label: "Distribution",
+        line: "Produkte in den Handel, ins B2B-Geschäft und zu Endkunden bringen.",
+      },
     },
   },
   commerce: {
@@ -97,7 +138,7 @@ const de: Dictionary = {
     owned: "Eigenmarke",
   },
   luviscent: {
-    owner: "Eigenmarke der Luna Trading GmbH",
+    owner: "Eigenmarke von Luna Trading",
     category: "Raumduft",
     body: "Eine Premium-Marke für Raumdüfte. Aufgebaut auf der Beschaffung, Entwicklung und Distribution von Luna Trading, mit einer ganz eigenen Welt.",
     cta: "LUVISCENT entdecken",
@@ -118,14 +159,18 @@ const de: Dictionary = {
     caption: "Luna verbindet die gesamte Handelskette.",
     ownedBrands: "Eigenmarken",
     center: "Luna Trading",
-    legend: { origin: "Ursprung", capability: "Kompetenz", brand: "Eigenmarke" },
+    legend: {
+      origin: "Ursprung",
+      capability: "Kompetenz",
+      brand: "Eigenmarke",
+    },
     title: "Das Ökosystem von Luna Trading",
     desc: "Luna Trading im Zentrum, verbunden mit sechs Kompetenzen und den eigenen Marken.",
   },
   closing: {
     lines: ["Wir verbinden", "Produkte.", "Märkte.", "Chancen."],
     cta: "Sprechen wir über Ihr Geschäft",
-    sign: "Luna Trading GmbH · Köln",
+    sign: "Luna Trading · Köln",
   },
   footer: {
     localTime: "Ortszeit",
@@ -148,17 +193,37 @@ const de: Dictionary = {
       t2: "bis zum Markt.",
       lead: "Beschaffung, Import, Entwicklung, Marke, E-Commerce und Distribution. Als eine durchgehende Kette.",
     },
-    brands: { eyebrow: "Marken", t1: "Wir bauen", t2: "Marken.", lead: "Eigenmarken der Luna Trading GmbH." },
+    brands: {
+      eyebrow: "Marken",
+      t1: "Wir bauen",
+      t2: "Marken.",
+      lead: "Eigenmarken von Luna Trading.",
+    },
     company: {
       eyebrow: "Unternehmen",
       t1: "Ein Unternehmen.",
       t2: "Viele Märkte.",
-      lead: "Die Luna Trading GmbH hat ihren Sitz in Köln.",
+      lead: "Luna Trading hat seinen Sitz in Köln.",
       items: ["Unternehmensprofil", "Führung", "Standorte"],
     },
-    contact: { eyebrow: "Kontakt", t1: "Sprechen wir", t2: "über Ihr Geschäft", pending: "Kontaktdaten und Anfrageformular folgen in Phase 2." },
-    notFound: { eyebrow: "Seite nicht gefunden", lead: "Die angeforderte Seite existiert nicht oder wurde verschoben.", home: "Zur Startseite", t1: "Hier führt", t2: "keine Route hin." },
-    error: { title: "Etwas ist schiefgelaufen.", lead: "Die Seite konnte nicht geladen werden. Bitte versuchen Sie es erneut.", retry: "Erneut versuchen" },
+    contact: {
+      eyebrow: "Kontakt",
+      t1: "Sprechen wir",
+      t2: "über Ihr Geschäft",
+      pending: "Kontaktdaten und Anfrageformular folgen in Phase 2.",
+    },
+    notFound: {
+      eyebrow: "Seite nicht gefunden",
+      lead: "Die angeforderte Seite existiert nicht oder wurde verschoben.",
+      home: "Zur Startseite",
+      t1: "Hier führt",
+      t2: "keine Route hin.",
+    },
+    error: {
+      title: "Etwas ist schiefgelaufen.",
+      lead: "Die Seite konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+      retry: "Erneut versuchen",
+    },
     legalEyebrow: "Rechtliches",
     legalNote: { impressum: "", datenschutz: "" },
   },

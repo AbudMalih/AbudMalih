@@ -53,7 +53,11 @@
   bottom: 10px;
   width: 1px;
   height: 64px;
-  background: linear-gradient(to top, rgba(242, 242, 240, 0.5), rgba(242, 242, 240, 0));
+  background: linear-gradient(
+    to top,
+    rgba(242, 242, 240, 0.5),
+    rgba(242, 242, 240, 0)
+  );
 }
 .text {
   position: absolute;

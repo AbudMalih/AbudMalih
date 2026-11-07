@@ -41,7 +41,10 @@
   top: 50%;
   height: 1px;
   background: var(--graphite-500);
-  transition: background var(--dur-2), left var(--dur-2), right var(--dur-2);
+  transition:
+    background var(--dur-2),
+    left var(--dur-2),
+    right var(--dur-2);
 }
 .tick[data-active]::before {
   background: var(--paper);
@@ -56,7 +59,9 @@
   white-space: nowrap;
   opacity: 0;
   color: var(--paper);
-  transition: opacity var(--dur-2), transform var(--dur-2) var(--ease-out);
+  transition:
+    opacity var(--dur-2),
+    transform var(--dur-2) var(--ease-out);
   pointer-events: none;
 }
 .idx {
@@ -77,8 +82,10 @@
   margin: -5.5px 0 0 -5.5px;
   pointer-events: none;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 @media (max-width: 860px) {
   .rail {

@@ -4,7 +4,11 @@ export type ContactCopy = {
   meta: { title: string; description: string };
   hero: { eyebrow: string; h1a: string; h1b: string; lead: string };
   direct: { tag: string; title: string };
-  inquiry: { title: string; typeLegend: string; types: Record<InquiryType, string> };
+  inquiry: {
+    title: string;
+    typeLegend: string;
+    types: Record<InquiryType, string>;
+  };
   fields: {
     name: string;
     company: string;
@@ -13,7 +17,12 @@ export type ContactCopy = {
     optional: string;
     required: string;
   };
-  errors: Record<FieldError, string> & { summary: string; messageRequired: string; nameRequired: string; emailRequired: string };
+  errors: Record<FieldError, string> & {
+    summary: string;
+    messageRequired: string;
+    nameRequired: string;
+    emailRequired: string;
+  };
   privacy: { text: string; link: string };
   submit: { idle: string; sending: string };
   failure: { title: string; text: string; retry: string; rate: string };

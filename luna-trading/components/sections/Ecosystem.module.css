@@ -68,7 +68,10 @@
 }
 .node .dot,
 .node .label {
-  transition: opacity var(--dur-2), fill var(--dur-2), stroke var(--dur-2);
+  transition:
+    opacity var(--dur-2),
+    fill var(--dur-2),
+    stroke var(--dur-2);
 }
 .hit {
   fill: transparent;
@@ -77,7 +80,9 @@
   fill: var(--ink-950);
   stroke: var(--paper);
   stroke-width: 2.5;
-  transition: fill var(--dur-2), stroke var(--dur-2);
+  transition:
+    fill var(--dur-2),
+    stroke var(--dur-2);
 }
 .label {
   fill: var(--paper);
@@ -159,8 +164,10 @@
 }
 .lgPlus {
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 .lgSq {
   border-radius: 50%;

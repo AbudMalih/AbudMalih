@@ -20,7 +20,7 @@ import {
   kit as s,
 } from "@/components/kit/Kit";
 import svc from "./Services.module.css";
-import { Photo, Carton } from "@/components/kit/Ambient";
+import { Photo, Pallet } from "@/components/kit/Ambient";
 import a from "@/components/kit/Ambient.module.css";
 import { STORY } from "@/content/story";
 
@@ -229,7 +229,7 @@ export default function ServicesPage() {
         button={t.cta.button}
         href={href("/contact")}
         more={{ label: t.cta.company, href: href("/company") }}
-        visual={<Carton label={story.visual.carton} />}
+        visual={<Pallet label={story.visual.route} />}
       />
     </article>
   );

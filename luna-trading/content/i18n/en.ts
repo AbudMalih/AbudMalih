@@ -8,10 +8,11 @@ import contactPage from "./contact/en";
 const en: Dictionary = {
   meta: {
     title: "Luna Trading GmbH · Trade without borders",
-    titleTemplate: "%s · Luna Trading GmbH",
+    titleTemplate: "%s · Luna Trading",
     description:
       "Luna Trading GmbH, Cologne. Global sourcing, import and export, product and brand development, e-commerce and European distribution.",
-    ogDescription: "Global sourcing. European distribution. Brands and e-commerce.",
+    ogDescription:
+      "Global sourcing. European distribution. Brands and e-commerce.",
   },
   a11y: {
     skip: "Skip to content",
@@ -26,7 +27,15 @@ const en: Dictionary = {
     language: "Language",
     scroll: "Scroll",
   },
-  nav: { home: "Home", whatWeDo: "What we do", import: "Import", brands: "Brands", company: "Company", contact: "Contact", cta: "Let’s talk" },
+  nav: {
+    home: "Home",
+    whatWeDo: "What we do",
+    import: "Import",
+    brands: "Brands",
+    company: "Company",
+    contact: "Contact",
+    cta: "Let’s talk",
+  },
   legal: { impressum: "Legal notice", datenschutz: "Privacy policy" },
   company: { place: "Cologne, Germany", city: "Cologne" },
   chapters: {
@@ -54,7 +63,11 @@ const en: Dictionary = {
     tag: "From source to market",
     l1: "From source",
     l2: "to market.",
-    supporting: ["Global sourcing", "European distribution", "Brand development"],
+    supporting: [
+      "Global sourcing",
+      "European distribution",
+      "Brand development",
+    ],
   },
   transport: {
     tag: "European transport",
@@ -67,20 +80,48 @@ const en: Dictionary = {
     tag: "Distribution",
     l1: "Germany as the base.",
     l2: "Europe as the market.",
-    labels: { germany: "Germany", eu: "EU distribution", ecommerce: "E-commerce", b2b: "B2B" },
+    labels: {
+      germany: "Germany",
+      eu: "EU distribution",
+      ecommerce: "E-commerce",
+      b2b: "B2B",
+    },
   },
-  brands: { a1: "We don’t just", a2: "move products.", b1: "We build", b2: "brands" },
+  brands: {
+    a1: "We don’t just",
+    a2: "move products.",
+    b1: "We build",
+    b2: "brands",
+  },
   chain: {
     tag: "The chain",
     h1: "Six disciplines.",
     h2: "One chain.",
     steps: {
-      sourcing: { label: "Sourcing", line: "Finding the manufacturers and materials a product truly needs." },
-      import: { label: "Import", line: "Coordinating freight, customs and documentation into the European Union." },
-      development: { label: "Development", line: "Specification, materials, packaging and compliance. Before production begins." },
-      brand: { label: "Brand", line: "Positioning, audience and identity. So a product stands for something." },
-      ecommerce: { label: "E-commerce", line: "Digital channels: marketplaces, owned platforms and direct access to the customer." },
-      distribution: { label: "Distribution", line: "Placing products into retail, B2B and consumer markets." },
+      sourcing: {
+        label: "Sourcing",
+        line: "Finding the manufacturers and materials a product truly needs.",
+      },
+      import: {
+        label: "Import",
+        line: "Coordinating freight, customs and documentation into the European Union.",
+      },
+      development: {
+        label: "Development",
+        line: "Specification, materials, packaging and compliance. Before production begins.",
+      },
+      brand: {
+        label: "Brand",
+        line: "Positioning, audience and identity. So a product stands for something.",
+      },
+      ecommerce: {
+        label: "E-commerce",
+        line: "Digital channels: marketplaces, owned platforms and direct access to the customer.",
+      },
+      distribution: {
+        label: "Distribution",
+        line: "Placing products into retail, B2B and consumer markets.",
+      },
     },
   },
   commerce: {
@@ -97,7 +138,7 @@ const en: Dictionary = {
     owned: "Owned brand",
   },
   luviscent: {
-    owner: "Owned brand of Luna Trading GmbH",
+    owner: "Owned brand of Luna Trading",
     category: "Home fragrance",
     body: "A premium home fragrance brand. Built on Luna Trading’s sourcing, development and distribution, with a world entirely its own.",
     cta: "Discover LUVISCENT",
@@ -118,14 +159,18 @@ const en: Dictionary = {
     caption: "Luna connects the entire commercial chain.",
     ownedBrands: "Owned brands",
     center: "Luna Trading",
-    legend: { origin: "Origin", capability: "Capability", brand: "Owned brand" },
+    legend: {
+      origin: "Origin",
+      capability: "Capability",
+      brand: "Owned brand",
+    },
     title: "The Luna Trading ecosystem",
     desc: "Luna Trading at the centre, connected to six capabilities and its owned brands.",
   },
   closing: {
     lines: ["Connecting", "products.", "markets.", "opportunities."],
     cta: "Let’s do business",
-    sign: "Luna Trading GmbH · Cologne",
+    sign: "Luna Trading · Cologne",
   },
   footer: {
     localTime: "Local time",
@@ -148,19 +193,44 @@ const en: Dictionary = {
       t2: "to market.",
       lead: "Sourcing, import, development, brand, e-commerce and distribution. As one continuous chain.",
     },
-    brands: { eyebrow: "Brands", t1: "We build", t2: "brands.", lead: "Owned brands of Luna Trading GmbH." },
+    brands: {
+      eyebrow: "Brands",
+      t1: "We build",
+      t2: "brands.",
+      lead: "Owned brands of Luna Trading.",
+    },
     company: {
       eyebrow: "Company",
       t1: "One company.",
       t2: "Multiple markets.",
-      lead: "Luna Trading GmbH is based in Cologne, Germany.",
+      lead: "Luna Trading is based in Cologne, Germany.",
       items: ["Company profile", "Leadership", "Locations"],
     },
-    contact: { eyebrow: "Contact", t1: "Let’s do", t2: "business", pending: "Contact details and an enquiry form follow in Phase 2." },
-    notFound: { eyebrow: "Page not found", lead: "The page you requested does not exist or has moved.", home: "To the homepage", t1: "No route", t2: "here." },
-    error: { title: "Something went wrong.", lead: "The page could not be loaded. Please try again.", retry: "Try again" },
+    contact: {
+      eyebrow: "Contact",
+      t1: "Let’s do",
+      t2: "business",
+      pending: "Contact details and an enquiry form follow in Phase 2.",
+    },
+    notFound: {
+      eyebrow: "Page not found",
+      lead: "The page you requested does not exist or has moved.",
+      home: "To the homepage",
+      t1: "No route",
+      t2: "here.",
+    },
+    error: {
+      title: "Something went wrong.",
+      lead: "The page could not be loaded. Please try again.",
+      retry: "Try again",
+    },
     legalEyebrow: "Legal",
-    legalNote: { impressum: "This page is provided in German. The German version is authoritative.", datenschutz: "This privacy policy is provided in German. The German version is authoritative." },
+    legalNote: {
+      impressum:
+        "This page is provided in German. The German version is authoritative.",
+      datenschutz:
+        "This privacy policy is provided in German. The German version is authoritative.",
+    },
   },
   services,
   brandsPage,

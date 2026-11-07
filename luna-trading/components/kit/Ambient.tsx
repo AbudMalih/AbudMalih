@@ -133,13 +133,21 @@ export function Carton({
         <div className={a.float}>
           <div className={a.cube}>
             <div className={`${a.face} ${a.front}`}>
-              <span className={a.mark} />
+              <span className={a.tapeV} />
+              <span className={a.sticker}>
+                <span className={a.mark} />
+              </span>
             </div>
-            <div className={`${a.face} ${a.back}`} />
+            <div className={`${a.face} ${a.back}`}>
+              <span className={a.tapeV} />
+            </div>
             <div className={`${a.face} ${a.right}`}>
-              <span className={a.lines} />
+              <span className={a.shipLabel}>
+                <i />
+                <b />
+              </span>
             </div>
-            <div className={`${a.face} ${a.left}`} />
+            <div className={`${a.face} ${a.left}`}></div>
             <div className={`${a.face} ${a.top}`}>
               <span className={a.tape} />
             </div>
@@ -263,6 +271,86 @@ export function Gyro({
             </div>
           </div>
         </div>
+      </div>
+      {label && <p className={a.label}>{label}</p>}
+    </div>
+  );
+}
+
+const STACK: [number, number, number][] = [
+  [-1, 0, -1],
+  [1, 0, -1],
+  [-1, 0, 1],
+  [1, 0, 1],
+  [-1, 1, -1],
+  [1, 1, -1],
+  [-1, 1, 1],
+  [1, 1, 1],
+];
+
+/** Distribution: a wrapped pallet of cartons turning slowly. */
+export function Pallet({
+  label,
+  className = "",
+}: {
+  label?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`${a.wrap} ${className}`} aria-hidden="true">
+      <div className={a.yardSm}>
+        <div className={a.float}>
+          <div className={a.palletSpin}>
+            <Box className={a.palletBase} />
+            {STACK.map(([x, y, z], i) => (
+              <Box
+                key={i}
+                className={`${a.plain} ${a.pCarton} ${(x + y + z + 3) % 2 ? a.pCartonAlt : ""}`}
+                style={{
+                  transform: `translate3d(calc(var(--pc) * ${x * 0.51}), calc(var(--pc) * ${-0.48 - y * 0.8}), calc(var(--pc) * ${z * 0.51}))`,
+                }}
+              >
+                {y === 1 && x === 1 && z === 1 && (
+                  <span className={a.sticker}>
+                    <span className={a.mark} />
+                  </span>
+                )}
+              </Box>
+            ))}
+            <Box className={a.wrapFoil} />
+          </div>
+        </div>
+        <div className={a.shadow} />
+      </div>
+      {label && <p className={a.label}>{label}</p>}
+    </div>
+  );
+}
+
+/** Brands: a product inside a glass cube, the brand around the product. */
+export function BrandCube({
+  label,
+  className = "",
+}: {
+  label?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`${a.wrap} ${className}`} aria-hidden="true">
+      <div className={a.yardSm}>
+        <div className={a.float}>
+          <div className={a.glassSpin}>
+            <Box className={a.glassBox} />
+            <div className={a.innerSpin}>
+              <Box className={`${a.plain} ${a.innerBox}`}>
+                <span className={a.mark} />
+              </Box>
+            </div>
+            <span className={a.spark} />
+            <span className={`${a.spark} ${a.spark2}`} />
+          </div>
+        </div>
+        <div className={a.shadow} />
       </div>
       {label && <p className={a.label}>{label}</p>}
     </div>

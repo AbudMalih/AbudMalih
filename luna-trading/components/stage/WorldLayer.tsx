@@ -3,16 +3,32 @@
 import { useEffect, useRef } from "react";
 import type { WorldHandle } from "@/lib/world/createWorld";
 import { ANCHOR_DEFS } from "@/lib/world/anchors";
-import { stage, journeyT, range, smooth, JOURNEY_SEGMENTS, tierSettled } from "@/lib/stage/store";
+import {
+  stage,
+  journeyT,
+  range,
+  smooth,
+  JOURNEY_SEGMENTS,
+  tierSettled,
+} from "@/lib/stage/store";
 import { onFrame, damp } from "@/lib/stage/ticker";
 import { worldShared } from "@/lib/world/shared";
-import { SEQUENCES, type SequenceManifest, type SequenceTier } from "@/content/sequences";
+import {
+  SEQUENCES,
+  type SequenceManifest,
+  type SequenceTier,
+} from "@/content/sequences";
 import { FrameSequence } from "@/lib/sequence/FrameSequence";
 import { isCine } from "@/lib/motion/env";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import styles from "./WorldLayer.module.css";
 
-const LABEL_IDX: Record<string, string> = { germany: "03.1", eu: "03.2", ecommerce: "03.3", b2b: "03.4" };
+const LABEL_IDX: Record<string, string> = {
+  germany: "03.1",
+  eu: "03.2",
+  ecommerce: "03.3",
+  b2b: "03.4",
+};
 
 /** World visibility as a pure function of chapter progress. */
 function worldOpacity() {
@@ -49,8 +65,15 @@ export default function WorldLayer() {
     let built = false;
 
     // ---- production sequences (only those with manifests) -----------------
-    const tierKey: SequenceTier = stage.mobile ? "mobile" : stage.vw < 1600 ? "laptop" : "desktop";
-    const players = new Map<string, { m: SequenceManifest; seq: FrameSequence; from: number; to: number }>();
+    const tierKey: SequenceTier = stage.mobile
+      ? "mobile"
+      : stage.vw < 1600
+        ? "laptop"
+        : "desktop";
+    const players = new Map<
+      string,
+      { m: SequenceManifest; seq: FrameSequence; from: number; to: number }
+    >();
     for (const m of Object.values(SEQUENCES)) {
       if (!m) continue;
       const seg = JOURNEY_SEGMENTS.find((s) => s.id === m.segment)!;
@@ -61,7 +84,10 @@ export default function WorldLayer() {
 
     const size = () => {
       const r = wrap.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, stage.tier === "high" ? 2 : 1.5);
+      const dpr = Math.min(
+        window.devicePixelRatio || 1,
+        stage.tier === "high" ? 2 : 1.5,
+      );
       world?.setSize(Math.max(1, r.width), Math.max(1, r.height), dpr);
       seqCanvas.width = Math.round(r.width * Math.min(dpr, 1.5));
       seqCanvas.height = Math.round(r.height * Math.min(dpr, 1.5));
@@ -72,7 +98,10 @@ export default function WorldLayer() {
     const build = async () => {
       if (built) return;
       built = true;
-      const [{ createWorld }] = await Promise.all([import("@/lib/world/createWorld"), tierSettled()]);
+      const [{ createWorld }] = await Promise.all([
+        import("@/lib/world/createWorld"),
+        tierSettled(),
+      ]);
       if (disposed) return;
       world = createWorld(canvas, stage.tier);
       size();
@@ -84,7 +113,11 @@ export default function WorldLayer() {
     // Build lazily: as soon as the hero is a third through (well before needed),
     // or immediately if the page was loaded deeper down.
     stop = onFrame((dt) => {
-      if (!built && (stage.p.hero > 0.3 || stage.p.source > 0 || journeyT() > 0)) build();
+      if (
+        !built &&
+        (stage.p.hero > 0.3 || stage.p.source > 0 || journeyT() > 0)
+      )
+        build();
       if (!seqStarted && players.size && stage.p.hero > 0.5) {
         seqStarted = true;
         players.forEach((p) => p.seq.start());
@@ -110,7 +143,9 @@ export default function WorldLayer() {
       let usedSeq = false;
       players.forEach((p) => {
         if (cur >= p.from && cur <= p.to && seqCtx) {
-          usedSeq = p.seq.draw(seqCtx, (cur - p.from) / (p.to - p.from), p.m.focus) || usedSeq;
+          usedSeq =
+            p.seq.draw(seqCtx, (cur - p.from) / (p.to - p.from), p.m.focus) ||
+            usedSeq;
         }
       });
       seqCanvas.style.opacity = usedSeq ? "1" : "0";
@@ -124,10 +159,14 @@ export default function WorldLayer() {
         const el = labelRefs.current[a.id];
         const def = ANCHOR_DEFS.find((x) => x.id === a.id)!;
         if (!el) continue;
-        const k = Math.min(range(cur, def.from, def.from + 0.015), 1 - range(cur, def.to - 0.015, def.to));
+        const k = Math.min(
+          range(cur, def.from, def.from + 0.015),
+          1 - range(cur, def.to - 0.015, def.to),
+        );
         const show = a.visible && k > 0 && !usedSeq;
         el.style.opacity = show ? String(k) : "0";
-        if (show) el.style.transform = `translate3d(${a.x.toFixed(1)}px, ${a.y.toFixed(1)}px, 0)`;
+        if (show)
+          el.style.transform = `translate3d(${a.x.toFixed(1)}px, ${a.y.toFixed(1)}px, 0)`;
       }
     });
 
@@ -143,12 +182,21 @@ export default function WorldLayer() {
   }, []);
 
   return (
-    <div ref={wrapRef} className={`stage-layer ${styles.layer}`} aria-hidden="true" dir="ltr">
+    <div
+      ref={wrapRef}
+      className={`stage-layer ${styles.layer}`}
+      aria-hidden="true"
+      dir="ltr"
+    >
       <canvas ref={canvasRef} className={styles.canvas} />
       <canvas ref={seqRef} className={`${styles.canvas} ${styles.seq}`} />
       <div className={styles.labels}>
         {ANCHOR_DEFS.map((a) => (
-          <div key={a.id} ref={(el) => void (labelRefs.current[a.id] = el)} className={styles.label}>
+          <div
+            key={a.id}
+            ref={(el) => void (labelRefs.current[a.id] = el)}
+            className={styles.label}
+          >
             <i className={styles.pin} />
             <span className={styles.stem} />
             <span className={styles.text}>

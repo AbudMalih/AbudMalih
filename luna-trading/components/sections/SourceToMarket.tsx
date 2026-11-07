@@ -24,17 +24,55 @@ function Content() {
   const { dict, locale } = useI18n();
   const t = dict.source;
   const scope = useRef<HTMLDivElement>(null);
-  useChapterTimeline(scope, (tl, q) => {
-    tl.fromTo(q("[data-scrim]"), { opacity: 0 }, { opacity: 1, duration: 0.1 }, 0.24)
-      .fromTo(q("[data-tag]"), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.06 }, 0.26)
-      .fromTo(q("[data-tag-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.1 }, 0.26)
-      .fromTo(q("[data-l1]"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.14, ease: "power2.out" }, 0.32)
-      .fromTo(q("[data-l2]"), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.14, ease: "power2.out" }, 0.38)
-      .fromTo(q("[data-support] span"), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.06, stagger: 0.03 }, 0.5)
-      .to(q("[data-l1], [data-l2]"), { opacity: 0, duration: 0.08 }, 0.86)
-      .to(q("[data-support] span, [data-tag]"), { opacity: 0, duration: 0.06 }, 0.86)
-      .to(q("[data-scrim]"), { opacity: 0.4, duration: 0.08 }, 0.9);
-  }, [locale]);
+  useChapterTimeline(
+    scope,
+    (tl, q) => {
+      tl.fromTo(
+        q("[data-scrim]"),
+        { opacity: 0 },
+        { opacity: 1, duration: 0.1 },
+        0.24,
+      )
+        .fromTo(
+          q("[data-tag]"),
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.06 },
+          0.26,
+        )
+        .fromTo(
+          q("[data-tag-rule]"),
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.1 },
+          0.26,
+        )
+        .fromTo(
+          q("[data-l1]"),
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.14, ease: "power2.out" },
+          0.32,
+        )
+        .fromTo(
+          q("[data-l2]"),
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.14, ease: "power2.out" },
+          0.38,
+        )
+        .fromTo(
+          q("[data-support] span"),
+          { opacity: 0, y: 8 },
+          { opacity: 1, y: 0, duration: 0.06, stagger: 0.03 },
+          0.5,
+        )
+        .to(q("[data-l1], [data-l2]"), { opacity: 0, duration: 0.08 }, 0.86)
+        .to(
+          q("[data-support] span, [data-tag]"),
+          { opacity: 0, duration: 0.06 },
+          0.86,
+        )
+        .to(q("[data-scrim]"), { opacity: 0.4, duration: 0.08 }, 0.9);
+    },
+    [locale],
+  );
 
   return (
     <div ref={scope} className={s.wrap}>

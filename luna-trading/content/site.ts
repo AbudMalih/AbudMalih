@@ -13,6 +13,8 @@ export const CONTACT_EMAIL = "info@luna-trading.de";
 
 export const COMPANY = {
   legalName: "Luna Trading GmbH",
+  /** Short name for running text; the legal name stays where it matters. */
+  name: "Luna Trading",
   city: "Köln",
   countryCode: "DE",
   /** Geographic coordinates of Cologne (city centre): the route terminus. */

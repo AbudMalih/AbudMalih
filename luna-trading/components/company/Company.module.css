@@ -18,8 +18,10 @@
   width: 12px;
   height: 12px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 .textLink {
   display: inline-flex;
@@ -103,8 +105,16 @@
   z-index: -1;
   pointer-events: none;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
-    radial-gradient(70% 70% at 82% 20%, rgba(255, 255, 255, 0.55), transparent 70%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(
+      70% 70% at 82% 20%,
+      rgba(255, 255, 255, 0.55),
+      transparent 70%
+    ),
     linear-gradient(180deg, transparent 70%, rgba(60, 62, 68, 0.06));
 }
 .heroGrid {
@@ -227,7 +237,11 @@
 .card {
   grid-column: 1 / span 5;
   padding: clamp(28px, 4vw, 52px);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.18));
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0.18)
+  );
   border: 1px solid var(--line);
   box-shadow: 0 30px 60px -40px rgba(20, 21, 24, 0.35);
 }
@@ -334,8 +348,20 @@
     linear-gradient(0deg, rgba(20, 21, 24, 0.035) 1px, transparent 1px);
   background-size: calc((100% - 2 * var(--margin)) / 12) 120px;
   background-position: var(--margin) 0;
-  mask-image: linear-gradient(180deg, transparent 0, #000 var(--seam), #000 80%, transparent);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--seam), #000 80%, transparent);
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 var(--seam),
+    #000 80%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 var(--seam),
+    #000 80%,
+    transparent
+  );
 }
 .ideaHead {
   display: grid;
@@ -475,8 +501,10 @@
   width: clamp(18px, 2.2vw, 30px);
   height: clamp(18px, 2.2vw, 30px);
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 3px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 3px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 3px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 3px 100%
+      no-repeat;
   transform: rotate(-90deg) scale(0.3);
   opacity: 0;
   transition:
@@ -511,8 +539,10 @@
   width: clamp(36px, 5vw, 80px);
   height: clamp(36px, 5vw, 80px);
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 18% no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 18% 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 18%
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 18% 100%
+      no-repeat;
   transform: rotate(-90deg) scale(0.2);
   transition: transform 1.2s var(--ease-out) 0.3s;
 }
@@ -679,8 +709,10 @@
   width: 30px;
   height: 30px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 4px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 4px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 4px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 4px 100%
+      no-repeat;
 }
 .pdNote {
   margin-top: clamp(70px, 11vh, 120px);
@@ -738,8 +770,10 @@
   height: 10px;
   margin-inline-end: 12px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 .baseFigure {
   grid-column: 7 / -1;
@@ -1028,8 +1062,16 @@
   z-index: -1;
   pointer-events: none;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px),
-    radial-gradient(60% 50% at 85% 30%, rgba(214, 217, 222, 0.08), transparent 70%);
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.018) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(
+      60% 50% at 85% 30%,
+      rgba(214, 217, 222, 0.08),
+      transparent 70%
+    );
   mask-image: linear-gradient(180deg, transparent 0, #000 var(--seam));
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 var(--seam));
 }
@@ -1098,8 +1140,10 @@
 .dirLine:last-child .dirNode {
   border: 0;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
   background-color: var(--bg);
 }
 

@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { setProgress, stage } from "@/lib/stage/store";
 import { CHAPTERS, type ChapterId } from "@/content/chapters";
@@ -32,7 +40,13 @@ type Props = {
  *   3. toggles stage visibility with half-open intervals so exactly one
  *      chapter stage is visible at any scroll position.
  */
-export default function Chapter({ id, title, className, stageClassName, children }: Props) {
+export default function Chapter({
+  id,
+  title,
+  className,
+  stageClassName,
+  children,
+}: Props) {
   const { dict } = useI18n();
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -100,7 +114,10 @@ export default function Chapter({ id, title, className, stageClassName, children
         data-chapter={id}
         aria-label={title ?? dict.chapters[id]}
         className={`chapter ${className ?? ""}`}
-        style={{ ["--len" as string]: meta.len, ["--len-m" as string]: meta.lenM }}
+        style={{
+          ["--len" as string]: meta.len,
+          ["--len-m" as string]: meta.lenM,
+        }}
       >
         <div ref={stageRef} className={`chapter-stage ${stageClassName ?? ""}`}>
           {children}
@@ -118,13 +135,16 @@ export default function Chapter({ id, title, className, stageClassName, children
 export function useChapterTimeline(
   scope: RefObject<HTMLElement | null>,
   build: (tl: gsap.core.Timeline, q: (sel: string) => Element[]) => void,
-  deps: unknown[] = []
+  deps: unknown[] = [],
 ) {
   const ctx = useContext(ChapterCtx);
   useIso(() => {
     if (!ctx || !scope.current || !isCine()) return;
     const gctx = gsap.context(() => {
-      const tl = gsap.timeline({ paused: true, defaults: { ease: "none", duration: 0.1 } });
+      const tl = gsap.timeline({
+        paused: true,
+        defaults: { ease: "none", duration: 0.1 },
+      });
       build(tl, gsap.utils.selector(scope.current));
       // normalise to exactly 1 unit
       if (tl.duration() < 1) tl.set({}, {}, 1);

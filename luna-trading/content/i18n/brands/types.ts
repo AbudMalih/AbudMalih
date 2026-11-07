@@ -21,7 +21,14 @@ export type OwnedBrandCopy = {
 
 export type BrandsCopy = {
   meta: { title: string; description: string };
-  hero: { eyebrow: string; h1a: string; h1b: string; lead: string; luna: string; brand: string };
+  hero: {
+    eyebrow: string;
+    h1a: string;
+    h1b: string;
+    lead: string;
+    luna: string;
+    brand: string;
+  };
   principle: {
     tag: string;
     title1: string;
@@ -33,6 +40,19 @@ export type BrandsCopy = {
   /** captions for the passage between Luna Trading and a brand world */
   passage: { from: string; to: string; back: string };
   brands: Record<string, OwnedBrandCopy>;
-  system: { tag: string; title1: string; title2: string; body: string; link: string };
-  cta: { tag: string; h1: string; h2: string; lead: string; button: string; company: string };
+  system: {
+    tag: string;
+    title1: string;
+    title2: string;
+    body: string;
+    link: string;
+  };
+  cta: {
+    tag: string;
+    h1: string;
+    h2: string;
+    lead: string;
+    button: string;
+    company: string;
+  };
 };

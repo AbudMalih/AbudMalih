@@ -96,18 +96,54 @@
   width: 1px;
   height: 16px;
 }
-.c[data-pos="tl"] { left: -28px; top: -28px; }
-.c[data-pos="tl"]::before { right: 0; bottom: 6px; }
-.c[data-pos="tl"]::after { right: 6px; bottom: 0; }
-.c[data-pos="tr"] { right: -28px; top: -28px; }
-.c[data-pos="tr"]::before { left: 0; bottom: 6px; }
-.c[data-pos="tr"]::after { left: 6px; bottom: 0; }
-.c[data-pos="bl"] { left: -28px; bottom: -28px; }
-.c[data-pos="bl"]::before { right: 0; top: 6px; }
-.c[data-pos="bl"]::after { right: 6px; top: 0; }
-.c[data-pos="br"] { right: -28px; bottom: -28px; }
-.c[data-pos="br"]::before { left: 0; top: 6px; }
-.c[data-pos="br"]::after { left: 6px; top: 0; }
+.c[data-pos="tl"] {
+  left: -28px;
+  top: -28px;
+}
+.c[data-pos="tl"]::before {
+  right: 0;
+  bottom: 6px;
+}
+.c[data-pos="tl"]::after {
+  right: 6px;
+  bottom: 0;
+}
+.c[data-pos="tr"] {
+  right: -28px;
+  top: -28px;
+}
+.c[data-pos="tr"]::before {
+  left: 0;
+  bottom: 6px;
+}
+.c[data-pos="tr"]::after {
+  left: 6px;
+  bottom: 0;
+}
+.c[data-pos="bl"] {
+  left: -28px;
+  bottom: -28px;
+}
+.c[data-pos="bl"]::before {
+  right: 0;
+  top: 6px;
+}
+.c[data-pos="bl"]::after {
+  right: 6px;
+  top: 0;
+}
+.c[data-pos="br"] {
+  right: -28px;
+  bottom: -28px;
+}
+.c[data-pos="br"]::before {
+  left: 0;
+  top: 6px;
+}
+.c[data-pos="br"]::after {
+  left: 6px;
+  top: 0;
+}
 
 :global(html:not(.cine)) .first,
 :global(html:not(.cine)) .second {

@@ -4,12 +4,32 @@ import { createContext, useContext, type ReactNode } from "react";
 import type { Dictionary } from "./types";
 import { localePath, type Locale, LOCALE_META } from "./config";
 
-type Ctx = { locale: Locale; dict: Dictionary; dir: "ltr" | "rtl"; href: (path: string) => string };
+type Ctx = {
+  locale: Locale;
+  dict: Dictionary;
+  dir: "ltr" | "rtl";
+  href: (path: string) => string;
+};
 const I18nCtx = createContext<Ctx | null>(null);
 
-export function I18nProvider({ locale, dict, children }: { locale: Locale; dict: Dictionary; children: ReactNode }) {
+export function I18nProvider({
+  locale,
+  dict,
+  children,
+}: {
+  locale: Locale;
+  dict: Dictionary;
+  children: ReactNode;
+}) {
   return (
-    <I18nCtx.Provider value={{ locale, dict, dir: LOCALE_META[locale].dir, href: (p) => localePath(locale, p) }}>
+    <I18nCtx.Provider
+      value={{
+        locale,
+        dict,
+        dir: LOCALE_META[locale].dir,
+        href: (p) => localePath(locale, p),
+      }}
+    >
       {children}
     </I18nCtx.Provider>
   );

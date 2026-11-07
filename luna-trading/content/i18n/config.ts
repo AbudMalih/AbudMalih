@@ -6,13 +6,23 @@ export const LOCALES = ["de", "en", "ar"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "de";
 
-export const LOCALE_META: Record<Locale, { label: string; name: string; dir: "ltr" | "rtl"; htmlLang: string; og: string }> = {
+export const LOCALE_META: Record<
+  Locale,
+  {
+    label: string;
+    name: string;
+    dir: "ltr" | "rtl";
+    htmlLang: string;
+    og: string;
+  }
+> = {
   de: { label: "DE", name: "Deutsch", dir: "ltr", htmlLang: "de", og: "de_DE" },
   en: { label: "EN", name: "English", dir: "ltr", htmlLang: "en", og: "en_GB" },
   ar: { label: "AR", name: "العربية", dir: "rtl", htmlLang: "ar", og: "ar_AR" },
 };
 
-export const isLocale = (v: string | undefined): v is Locale => !!v && (LOCALES as readonly string[]).includes(v);
+export const isLocale = (v: string | undefined): v is Locale =>
+  !!v && (LOCALES as readonly string[]).includes(v);
 
 /**
  * Localized URL slugs. Code always uses the canonical path (the app route,
@@ -30,7 +40,12 @@ export const SLUGS: Record<string, Record<Locale, string>> = {
 /** Canonical path → the localized slug for a locale (keeps sub-paths, query, hash). */
 export function localizeSlug(locale: Locale, path: string) {
   for (const [canon, map] of Object.entries(SLUGS)) {
-    if (path === canon || path.startsWith(canon + "/") || path.startsWith(canon + "#") || path.startsWith(canon + "?")) {
+    if (
+      path === canon ||
+      path.startsWith(canon + "/") ||
+      path.startsWith(canon + "#") ||
+      path.startsWith(canon + "?")
+    ) {
       return map[locale] + path.slice(canon.length);
     }
   }
@@ -41,7 +56,8 @@ export function localizeSlug(locale: Locale, path: string) {
 export function canonicalPath(path: string) {
   for (const [canon, map] of Object.entries(SLUGS)) {
     for (const slug of [...new Set(Object.values(map)), canon]) {
-      if (path === slug || path.startsWith(slug + "/")) return canon + path.slice(slug.length);
+      if (path === slug || path.startsWith(slug + "/"))
+        return canon + path.slice(slug.length);
     }
   }
   return path;

@@ -28,7 +28,9 @@ import styles from "./Navigation.module.css";
 export default function Navigation() {
   const { dict, href, locale } = useI18n();
   const quote = QUOTE_COPY[locale].nav;
-  const contactHref = href(NAV.find((n) => n.key === "contact")?.href ?? "/contact");
+  const contactHref = href(
+    NAV.find((n) => n.key === "contact")?.href ?? "/contact",
+  );
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -54,10 +56,17 @@ export default function Navigation() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
       if (e.key === "Tab" && panelRef.current) {
-        const all = [toggleRef.current!, ...Array.from(panelRef.current.querySelectorAll<HTMLElement>("a,button"))];
+        const all = [
+          toggleRef.current!,
+          ...Array.from(
+            panelRef.current.querySelectorAll<HTMLElement>("a,button"),
+          ),
+        ];
         const i = all.indexOf(document.activeElement as HTMLElement);
-        if (e.shiftKey && i <= 0) (e.preventDefault(), all[all.length - 1].focus());
-        else if (!e.shiftKey && i === all.length - 1) (e.preventDefault(), all[0].focus());
+        if (e.shiftKey && i <= 0)
+          (e.preventDefault(), all[all.length - 1].focus());
+        else if (!e.shiftKey && i === all.length - 1)
+          (e.preventDefault(), all[0].focus());
       }
     };
     window.addEventListener("keydown", onKey);
@@ -69,53 +78,80 @@ export default function Navigation() {
 
   return (
     <>
-      <header className={`${styles.bar} ${solid ? styles.solid : ""} ${open ? styles.isOpen : ""}`}>
+      <header
+        className={`${styles.bar} ${solid ? styles.solid : ""} ${open ? styles.isOpen : ""}`}
+      >
         <span className={styles.plate} aria-hidden="true" />
-        <Link href={href("/")} className={styles.brand} aria-label={dict.a11y.home} data-cursor="link" id="nav-brand">
+        <Link
+          href={href("/")}
+          className={styles.brand}
+          aria-label={dict.a11y.home}
+          data-cursor="link"
+          id="nav-brand"
+        >
           <LunaLogo height="100%" priority className={styles.logoDark} />
           {/* light chapters use the master wordmark (its native ground) */}
-          <LunaLogo height="100%" variant="master" className={styles.logoLight} />
+          <LunaLogo
+            height="100%"
+            variant="master"
+            className={styles.logoLight}
+          />
         </Link>
 
         <div className={styles.right}>
           <div className={styles.group}>
-          <nav className={styles.links} aria-label={dict.a11y.primaryNav}>
-            <ul>
-              {NAV.filter((n) => n.key !== "contact").map((n) => (
-                <li key={n.href}>
-                  <Link href={href(n.href)} data-cursor="link" aria-current={current === n.href ? "page" : undefined}>
-                    {dict.nav[n.key]}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div className={styles.lang}>
-            <span className={styles.divider} aria-hidden="true" />
-            <LanguageSelector />
+            <nav className={styles.links} aria-label={dict.a11y.primaryNav}>
+              <ul>
+                {NAV.filter((n) => n.key !== "contact").map((n) => (
+                  <li key={n.href}>
+                    <Link
+                      href={href(n.href)}
+                      data-cursor="link"
+                      aria-current={current === n.href ? "page" : undefined}
+                    >
+                      {dict.nav[n.key]}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className={styles.lang}>
+              <span className={styles.divider} aria-hidden="true" />
+              <LanguageSelector />
+            </div>
+
+            <button
+              ref={toggleRef}
+              type="button"
+              className={styles.toggle}
+              aria-expanded={open}
+              aria-controls="site-menu"
+              onClick={() => setOpen((o) => !o)}
+              data-cursor="link"
+            >
+              <span className="t-label">
+                {open ? dict.a11y.close : dict.a11y.menu}
+              </span>
+              <span className={styles.plus} aria-hidden="true">
+                <i />
+                <i />
+              </span>
+            </button>
           </div>
 
-          <button
-            ref={toggleRef}
-            type="button"
-            className={styles.toggle}
-            aria-expanded={open}
-            aria-controls="site-menu"
-            onClick={() => setOpen((o) => !o)}
-            data-cursor="link"
+          <Link
+            href={href("/quote")}
+            className={styles.quote}
+            aria-current={current === "/quote" ? "page" : undefined}
           >
-            <span className="t-label">{open ? dict.a11y.close : dict.a11y.menu}</span>
-            <span className={styles.plus} aria-hidden="true">
-              <i />
-              <i />
-            </span>
-          </button>
-          </div>
-
-          <Link href={href("/quote")} className={styles.quote} aria-current={current === "/quote" ? "page" : undefined}>
             {quote}
           </Link>
-          <Link href={contactHref} className={styles.cta} data-cursor="invert" aria-current={current === "/contact" ? "page" : undefined}>
+          <Link
+            href={contactHref}
+            className={styles.cta}
+            data-cursor="invert"
+            aria-current={current === "/contact" ? "page" : undefined}
+          >
             <span className={styles.ctaLabel}>{dict.nav.cta}</span>
             <span className={styles.ctaPlus} aria-hidden="true" />
           </Link>
@@ -135,8 +171,15 @@ export default function Navigation() {
           <ol className={styles.big}>
             {NAV.map((n, i) => (
               <li key={n.href} style={{ ["--i" as string]: i }}>
-                <Link href={href(n.href)} onClick={close} data-cursor="link" aria-current={current === n.href ? "page" : undefined}>
-                  <span className={`t-label ${styles.num}`}>{String(i).padStart(2, "0")}</span>
+                <Link
+                  href={href(n.href)}
+                  onClick={close}
+                  data-cursor="link"
+                  aria-current={current === n.href ? "page" : undefined}
+                >
+                  <span className={`t-label ${styles.num}`}>
+                    {String(i).padStart(2, "0")}
+                  </span>
                   <span className={styles.word}>{dict.nav[n.key]}</span>
                   <span className={styles.mark} aria-hidden="true" />
                 </Link>
@@ -144,30 +187,52 @@ export default function Navigation() {
             ))}
           </ol>
           <div className={styles.direct}>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={styles.mail} dir="ltr" data-cursor="link">
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className={styles.mail}
+              dir="ltr"
+              data-cursor="link"
+            >
               {CONTACT_EMAIL}
             </a>
-            <Link href={href("/quote")} onClick={close} className={styles.quotePanel}>
+            <Link
+              href={href("/quote")}
+              onClick={close}
+              className={styles.quotePanel}
+            >
               {quote}
             </Link>
-            <Link href={contactHref} onClick={close} className={`${styles.cta} ${styles.ctaPanel}`} data-cursor="invert">
+            <Link
+              href={contactHref}
+              onClick={close}
+              className={`${styles.cta} ${styles.ctaPanel}`}
+              data-cursor="invert"
+            >
               {/* the index already lists "Kontakt": the action says what happens there */}
-              <span className={styles.ctaLabel}>{dict.contactPage.inquiry.title}</span>
+              <span className={styles.ctaLabel}>
+                {dict.contactPage.inquiry.title}
+              </span>
               <span className={styles.ctaPlus} aria-hidden="true" />
             </Link>
           </div>
           <div className={styles.panelFoot}>
             <LanguageSelector size="l" />
             <p className="t-label">
-              {COMPANY.legalName} · {dict.company.place}
+              {COMPANY.name} · {dict.company.place}
             </p>
             <p className="t-label t-mono" dir="ltr">
-              {formatLat(COMPANY.coordinates.lat)} {formatLon(COMPANY.coordinates.lon)}
+              {formatLat(COMPANY.coordinates.lat)}{" "}
+              {formatLon(COMPANY.coordinates.lon)}
             </p>
             <ul className={styles.legal}>
               {LEGAL_NAV.map((n) => (
                 <li key={n.href}>
-                  <Link href={href(n.href)} className="link-line t-label" onClick={close} data-cursor="link">
+                  <Link
+                    href={href(n.href)}
+                    className="link-line t-label"
+                    onClick={close}
+                    data-cursor="link"
+                  >
                     {dict.legal[n.key]}
                   </Link>
                 </li>

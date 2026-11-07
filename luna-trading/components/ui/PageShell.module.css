@@ -3,7 +3,11 @@
   min-height: 100svh;
   padding-top: clamp(140px, 22vh, 240px);
   background:
-    radial-gradient(90% 60% at 85% 0%, rgba(255, 254, 250, 0.7), transparent 70%),
+    radial-gradient(
+      90% 60% at 85% 0%,
+      rgba(255, 254, 250, 0.7),
+      transparent 70%
+    ),
     #ecebe6;
   --paper: #141518;
   --fg: #141518;
