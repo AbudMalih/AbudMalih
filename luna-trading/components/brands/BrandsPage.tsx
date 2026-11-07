@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useRef, type ComponentType, type CSSProperties } from "react";
+import {
+  Fragment,
+  useRef,
+  type ComponentType,
+  type CSSProperties,
+} from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import type { OwnedBrandCopy } from "@/content/i18n/brands/types";
 import { OWNED_BRANDS, type OwnedBrand } from "@/content/brands";
@@ -11,6 +16,9 @@ import { usePageMotion } from "@/components/services/usePageMotion";
 import svc from "@/components/services/Services.module.css";
 import s from "./Brands.module.css";
 import "./panchang.css";
+import { Carton } from "@/components/kit/Ambient";
+import a from "@/components/kit/Ambient.module.css";
+import { STORY } from "@/content/story";
 
 /**
  * MARKEN / BRANDS: what can emerge from the Luna Trading system.
@@ -23,16 +31,27 @@ import "./panchang.css";
  * redesign; nothing is shown for brands that do not exist.
  */
 
-const LOGOS: Record<string, ComponentType<{ width?: number | string; className?: string }>> = {
+const LOGOS: Record<
+  string,
+  ComponentType<{ width?: number | string; className?: string }>
+> = {
   luviscent: LuviscentLogo,
 };
 
 // Luna Trading grounds (the brand grounds come from OWNED_BRANDS)
-const LUNA = { hero: "#e6e3dd", principle: "#dedbd5", system: "#e2e0db", cta: "#e9e7e2" };
-const ground = (bg: string, from: string): CSSProperties => ({ ["--bg" as string]: bg, ["--from" as string]: from });
+const LUNA = {
+  hero: "#e6e3dd",
+  principle: "#dedbd5",
+  system: "#e2e0db",
+  cta: "#e9e7e2",
+};
+const ground = (bg: string, from: string): CSSProperties => ({
+  ["--bg" as string]: bg,
+  ["--from" as string]: from,
+});
 
 export default function BrandsPage() {
-  const { dict, href } = useI18n();
+  const { dict, href, locale } = useI18n();
   const t = dict.brandsPage;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
@@ -42,7 +61,12 @@ export default function BrandsPage() {
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
       {/* ------------------------------------------------------------ HERO */}
-      <section className={`${svc.section} ${s.nh}`} style={ground(LUNA.hero, LUNA.hero)} data-tone="light" aria-labelledby="brands-title">
+      <section
+        className={`${svc.section} ${s.nh}`}
+        style={ground(LUNA.hero, LUNA.hero)}
+        data-tone="light"
+        aria-labelledby="brands-title"
+      >
         <div className={`frame ${s.nhGrid}`}>
           <div className={s.nhCopy}>
             <p className={`t-label ${s.eyebrow}`} data-reveal>
@@ -50,29 +74,55 @@ export default function BrandsPage() {
               <span className={s.redRule} />
               {t.hero.eyebrow}
             </p>
-            <h1 id="brands-title" className={s.nhTitle} data-reveal style={{ ["--d" as string]: "80ms" }}>
+            <h1
+              id="brands-title"
+              className={s.nhTitle}
+              data-reveal
+              style={{ ["--d" as string]: "80ms" }}
+            >
               <span>{t.hero.h1a}</span>
               <span className={s.dim}>
                 {t.hero.h1b.replace(/\.$/, "")}
                 <span className={s.period}>.</span>
               </span>
             </h1>
-            <p className={`t-lead ${s.nhLead}`} data-reveal style={{ ["--d" as string]: "160ms" }}>
+            <p
+              className={`t-lead ${s.nhLead}`}
+              data-reveal
+              style={{ ["--d" as string]: "160ms" }}
+            >
               {t.hero.lead}
             </p>
-            <div className={s.nhActions} data-reveal style={{ ["--d" as string]: "220ms" }}>
-              <Link href={href("/contact")} className={svc.ctaButton} data-cursor="invert">
+            <div
+              className={s.nhActions}
+              data-reveal
+              style={{ ["--d" as string]: "220ms" }}
+            >
+              <Link
+                href={href("/contact")}
+                className={svc.ctaButton}
+                data-cursor="invert"
+              >
                 <span className={svc.ctaLabel}>{t.cta.button}</span>
                 <span className={svc.ctaPlus} aria-hidden="true" />
               </Link>
               {hero && (
-                <a href={`#${hero.id}`} className={s.nhGhost} data-cursor="link" dir="ltr">
+                <a
+                  href={`#${hero.id}`}
+                  className={s.nhGhost}
+                  data-cursor="link"
+                  dir="ltr"
+                >
                   {hero.name}
                   {hero.mark}
                 </a>
               )}
             </div>
-            <ul className={s.nhPillars} data-reveal style={{ ["--d" as string]: "280ms" }}>
+            <ul
+              className={s.nhPillars}
+              data-reveal
+              style={{ ["--d" as string]: "280ms" }}
+            >
               {t.principle.pillars.map((p, i) => (
                 <li key={p.name}>
                   <span>{String(i + 1).padStart(2, "0")}</span>
@@ -83,14 +133,26 @@ export default function BrandsPage() {
           </div>
 
           {hero && heroCopy && (
-            <a href={`#${hero.id}`} className={s.nhCard} data-reveal style={{ ["--d" as string]: "120ms" }} aria-label={`${hero.name}${hero.mark} · ${heroCopy.category}`}>
+            <a
+              href={`#${hero.id}`}
+              className={s.nhCard}
+              data-reveal
+              style={{ ["--d" as string]: "120ms" }}
+              aria-label={`${hero.name}${hero.mark} · ${heroCopy.category}`}
+            >
               <span className={s.nhChips}>
                 <span>{heroCopy.owner}</span>
                 <span>{heroCopy.category}</span>
               </span>
               <span className={s.nhArch} aria-hidden="true" />
               {hero.media.hero?.type === "image" && (
-                <img src={hero.media.hero.src} alt="" width={hero.media.hero.width} height={hero.media.hero.height} className={s.nhProduct} />
+                <img
+                  src={hero.media.hero.src}
+                  alt=""
+                  width={hero.media.hero.width}
+                  height={hero.media.hero.height}
+                  className={s.nhProduct}
+                />
               )}
               <span className={s.nhFoot}>
                 <span className={s.nhLogo}>
@@ -113,12 +175,21 @@ export default function BrandsPage() {
       </section>
 
       {/* ------------------------------------------------------- PRINCIPLE */}
-      <section className={`${svc.section} ${s.principle}`} style={ground(LUNA.principle, LUNA.hero)} data-tone="light" aria-labelledby="brands-principle">
+      <section
+        className={`${svc.section} ${s.principle}`}
+        style={ground(LUNA.principle, LUNA.hero)}
+        data-tone="light"
+        aria-labelledby="brands-principle"
+      >
         <div className="frame">
           <p className={`t-label ${svc.tag}`} data-reveal>
             {t.principle.tag}
           </p>
-          <h2 id="brands-principle" className={`${svc.h2} ${s.principleTitle}`} data-reveal>
+          <h2
+            id="brands-principle"
+            className={`${svc.h2} ${s.principleTitle}`}
+            data-reveal
+          >
             {t.principle.title1}
             <br />
             <span className={s.dim}>{t.principle.title2}</span>
@@ -127,8 +198,14 @@ export default function BrandsPage() {
           <div className={s.plinth} data-reveal>
             <ol className={s.pillars}>
               {t.principle.pillars.map((p, i) => (
-                <li key={p.name} className={s.pillar} style={{ ["--i" as string]: i }}>
-                  <span className={s.pillarIdx}>{String(i + 1).padStart(2, "0")}</span>
+                <li
+                  key={p.name}
+                  className={s.pillar}
+                  style={{ ["--i" as string]: i }}
+                >
+                  <span className={s.pillarIdx}>
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <span className={s.pillarName}>{p.name}</span>
                   <span className={s.pillarLine}>{p.line}</span>
                 </li>
@@ -139,7 +216,9 @@ export default function BrandsPage() {
               <span className={s.basePlus} aria-hidden="true" />
             </div>
             <div className={s.foundation}>
-              <p className={`t-label ${s.foundationName}`}>{t.principle.foundation}</p>
+              <p className={`t-label ${s.foundationName}`}>
+                {t.principle.foundation}
+              </p>
               <ul className={s.services}>
                 {t.principle.services.map((x) => (
                   <li key={x}>{x}</li>
@@ -163,7 +242,12 @@ export default function BrandsPage() {
       })}
 
       {/* -------------------------------------------------------- SYSTEM */}
-      <section className={`${svc.section} ${s.system}`} style={ground(LUNA.system, LUNA.system)} data-tone="light" aria-labelledby="brands-system">
+      <section
+        className={`${svc.section} ${s.system}`}
+        style={ground(LUNA.system, LUNA.system)}
+        data-tone="light"
+        aria-labelledby="brands-system"
+      >
         <div className={`frame ${s.systemGrid}`}>
           <div>
             <p className={`t-label ${svc.tag}`} data-reveal>
@@ -175,9 +259,17 @@ export default function BrandsPage() {
               <span className={s.dim}>{t.system.title2}</span>
             </h2>
           </div>
-          <div className={s.systemSide} data-reveal style={{ ["--d" as string]: "160ms" }}>
+          <div
+            className={s.systemSide}
+            data-reveal
+            style={{ ["--d" as string]: "160ms" }}
+          >
             <p className="t-lead">{t.system.body}</p>
-            <Link href={href("/what-we-do")} className={s.systemLink} data-cursor="link">
+            <Link
+              href={href("/what-we-do")}
+              className={s.systemLink}
+              data-cursor="link"
+            >
               <span className={s.systemRoute} aria-hidden="true" />
               <span className={s.systemLabel}>{t.system.link}</span>
               <span className={svc.arrow} aria-hidden="true">
@@ -189,35 +281,60 @@ export default function BrandsPage() {
       </section>
 
       {/* ----------------------------------------------------------- CTA */}
-      <section className={`${svc.section} ${svc.cta}`} style={ground(LUNA.cta, LUNA.system)} data-tone="light" aria-labelledby="brands-cta">
-        <div className={`frame ${svc.ctaInner}`}>
-          <p className={`t-label ${svc.tag}`} data-reveal>
-            {t.cta.tag}
-          </p>
-          <h2 id="brands-cta" className={svc.ctaTitle}>
-            <span className="mask">
-              <span className={svc.rise} data-reveal>
-                {t.cta.h1}
+      <section
+        className={`${svc.section} ${svc.cta}`}
+        style={ground(LUNA.cta, LUNA.system)}
+        data-tone="light"
+        aria-labelledby="brands-cta"
+      >
+        <div className={`frame ${svc.ctaInner} ${a.sideGrid}`}>
+          <div>
+            <p className={`t-label ${svc.tag}`} data-reveal>
+              {t.cta.tag}
+            </p>
+            <h2 id="brands-cta" className={`${svc.ctaTitle} ${a.ctaSide}`}>
+              <span className="mask">
+                <span className={svc.rise} data-reveal>
+                  {t.cta.h1}
+                </span>
               </span>
-            </span>
-            <span className="mask">
-              <span className={`${svc.rise} ${svc.dimLine}`} data-reveal style={{ ["--d" as string]: "90ms" }}>
-                {t.cta.h2.replace(/\.$/, "")}
-                <span className={svc.period}>.</span>
+              <span className="mask">
+                <span
+                  className={`${svc.rise} ${svc.dimLine}`}
+                  data-reveal
+                  style={{ ["--d" as string]: "90ms" }}
+                >
+                  {t.cta.h2.replace(/\.$/, "")}
+                  <span className={svc.period}>.</span>
+                </span>
               </span>
-            </span>
-          </h2>
-          <div className={svc.ctaRow} data-reveal>
-            <p className={`t-lead ${svc.ctaLead}`}>{t.cta.lead}</p>
-            <div className={svc.ctaActions}>
-              <Link href={href("/contact")} className={svc.ctaButton} data-cursor="invert">
-                <span className={svc.ctaLabel}>{t.cta.button}</span>
-                <span className={svc.ctaPlus} aria-hidden="true" />
-              </Link>
-              <Link href={href("/company")} className={`link-line t-label ${svc.ctaMore}`} data-cursor="link">
-                {t.cta.company} <span className={svc.arrow} aria-hidden="true">→</span>
-              </Link>
+            </h2>
+            <div className={svc.ctaRow} data-reveal>
+              <p className={`t-lead ${svc.ctaLead}`}>{t.cta.lead}</p>
+              <div className={svc.ctaActions}>
+                <Link
+                  href={href("/contact")}
+                  className={svc.ctaButton}
+                  data-cursor="invert"
+                >
+                  <span className={svc.ctaLabel}>{t.cta.button}</span>
+                  <span className={svc.ctaPlus} aria-hidden="true" />
+                </Link>
+                <Link
+                  href={href("/company")}
+                  className={`link-line t-label ${svc.ctaMore}`}
+                  data-cursor="link"
+                >
+                  {t.cta.company}{" "}
+                  <span className={svc.arrow} aria-hidden="true">
+                    →
+                  </span>
+                </Link>
+              </div>
             </div>
+          </div>
+          <div className={a.sideVisual} data-reveal>
+            <Carton tone="light" label={STORY[locale].visual.carton} />
           </div>
         </div>
       </section>
@@ -227,10 +344,23 @@ export default function BrandsPage() {
 
 /* ------------------------------------------------------------------------ */
 
-function Passage({ dir, brand, mineral, from, to }: { dir: "in" | "out"; brand: OwnedBrand; mineral: string; from: string; to: string }) {
+function Passage({
+  dir,
+  brand,
+  mineral,
+  from,
+  to,
+}: {
+  dir: "in" | "out";
+  brand: OwnedBrand;
+  mineral: string;
+  from: string;
+  to: string;
+}) {
   const style = {
     ["--min" as string]: mineral,
-    ["--em" as string]: dir === "in" ? brand.palette.ground : brand.palette.world,
+    ["--em" as string]:
+      dir === "in" ? brand.palette.ground : brand.palette.world,
     ["--deep" as string]: brand.palette.deep,
     ["--accent" as string]: brand.palette.accent,
     ["--light" as string]: brand.palette.light,
@@ -238,7 +368,13 @@ function Passage({ dir, brand, mineral, from, to }: { dir: "in" | "out"; brand: 
     ["--from" as string]: mineral,
   } as CSSProperties;
   return (
-    <section className={`${svc.section} ${s.passage}`} data-passage={dir} data-tone={dir === "in" ? "light" : "dark"} style={style} aria-hidden="true">
+    <section
+      className={`${svc.section} ${s.passage}`}
+      data-passage={dir}
+      data-tone={dir === "in" ? "light" : "dark"}
+      style={style}
+      aria-hidden="true"
+    >
       <div className={s.stage}>
         <span className={s.pMineral} />
         <span className={s.pGrid} />
@@ -254,7 +390,11 @@ function Passage({ dir, brand, mineral, from, to }: { dir: "in" | "out"; brand: 
             <i className={s.pDot} />
           </span>
         </div>
-        <svg className={s.pArch} viewBox="0 0 220 300" preserveAspectRatio="xMidYMax meet">
+        <svg
+          className={s.pArch}
+          viewBox="0 0 220 300"
+          preserveAspectRatio="xMidYMax meet"
+        >
           <path d="M10 300 V110 A100 100 0 0 1 210 110 V300" pathLength={1} />
         </svg>
         <p className={`${s.pLabel} ${s.pFrom}`}>
@@ -268,7 +408,13 @@ function Passage({ dir, brand, mineral, from, to }: { dir: "in" | "out"; brand: 
 }
 
 /** The established brand scene: its own type, light and rhythm. */
-function BrandScene({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }) {
+function BrandScene({
+  brand,
+  copy,
+}: {
+  brand: OwnedBrand;
+  copy: OwnedBrandCopy;
+}) {
   const Logo = LOGOS[brand.id];
   const discover = brand.url ?? `#${brand.id}-world`;
   const vars = {
@@ -279,31 +425,72 @@ function BrandScene({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }
     ["--lv-i" as string]: brand.palette.ink,
   } as CSSProperties;
   return (
-    <section id={brand.id} className={`${svc.section} ${s.scene}`} style={vars} data-tone="dark" aria-labelledby={`${brand.id}-name`}>
+    <section
+      id={brand.id}
+      className={`${svc.section} ${s.scene}`}
+      style={vars}
+      data-tone="dark"
+      aria-labelledby={`${brand.id}-name`}
+    >
       <span className={s.sceneLight} aria-hidden="true" />
       <div className={`frame ${s.sceneGrid}`}>
         <div className={s.sceneRoom} data-parallax>
-          <BrandMediaSlot media={brand.media.hero ? { ...brand.media.hero, alt: copy.world.productAlts.tower ?? copy.world.productAlt } : null} className={s.sceneNiche} />
+          <BrandMediaSlot
+            media={
+              brand.media.hero
+                ? {
+                    ...brand.media.hero,
+                    alt: copy.world.productAlts.tower ?? copy.world.productAlt,
+                  }
+                : null
+            }
+            className={s.sceneNiche}
+          />
         </div>
         <div className={s.sceneCopy}>
           <p className={s.owner} data-reveal>
             {copy.owner}
           </p>
-          <h2 id={`${brand.id}-name`} className={s.sceneLogo} data-reveal style={{ ["--d" as string]: "120ms" }}>
+          <h2
+            id={`${brand.id}-name`}
+            className={s.sceneLogo}
+            data-reveal
+            style={{ ["--d" as string]: "120ms" }}
+          >
             {Logo ? <Logo /> : `${brand.name}${brand.mark}`}
           </h2>
-          <p className={s.category} data-reveal style={{ ["--d" as string]: "200ms" }}>
+          <p
+            className={s.category}
+            data-reveal
+            style={{ ["--d" as string]: "200ms" }}
+          >
             {copy.category}
           </p>
-          <p className={s.claim} lang={brand.claimLang} dir="ltr" data-reveal style={{ ["--d" as string]: "280ms" }}>
+          <p
+            className={s.claim}
+            lang={brand.claimLang}
+            dir="ltr"
+            data-reveal
+            style={{ ["--d" as string]: "280ms" }}
+          >
             {brand.claim}
           </p>
-          <p className={s.statement} data-reveal style={{ ["--d" as string]: "360ms" }}>
+          <p
+            className={s.statement}
+            data-reveal
+            style={{ ["--d" as string]: "360ms" }}
+          >
             {copy.statement}
           </p>
           <div data-reveal style={{ ["--d" as string]: "440ms" }}>
             {brand.url ? (
-              <a href={discover} className={s.lvCta} target="_blank" rel="noopener" data-cursor="link">
+              <a
+                href={discover}
+                className={s.lvCta}
+                target="_blank"
+                rel="noopener"
+                data-cursor="link"
+              >
                 <span>{copy.cta}</span>
                 <span className={s.lvPlus} aria-hidden="true" />
               </a>
@@ -331,7 +518,13 @@ function BrandScene({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }
  * editorial grid. Only categories with real images show products; the
  * others are named as areas of the brand, never as empty slots.
  */
-function BrandWorld({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }) {
+function BrandWorld({
+  brand,
+  copy,
+}: {
+  brand: OwnedBrand;
+  copy: OwnedBrandCopy;
+}) {
   const w = copy.world;
   const vars = {
     ["--bg" as string]: brand.palette.world,
@@ -341,9 +534,17 @@ function BrandWorld({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }
     ["--lv-i" as string]: brand.palette.ink,
   } as CSSProperties;
   const products = brand.media.products;
-  const shown = w.categories.find((c) => products.some((p) => p.category === c.id));
+  const shown = w.categories.find((c) =>
+    products.some((p) => p.category === c.id),
+  );
   return (
-    <section id={`${brand.id}-world`} className={`${svc.section} ${s.world}`} style={vars} data-tone="dark" aria-labelledby={`${brand.id}-world-title`}>
+    <section
+      id={`${brand.id}-world`}
+      className={`${svc.section} ${s.world}`}
+      style={vars}
+      data-tone="dark"
+      aria-labelledby={`${brand.id}-world-title`}
+    >
       <div className={`frame ${s.worldHead}`}>
         <p className={s.owner} data-reveal>
           {w.tag}
@@ -351,29 +552,47 @@ function BrandWorld({ brand, copy }: { brand: OwnedBrand; copy: OwnedBrandCopy }
         <h3 id={`${brand.id}-world-title`} className={s.worldTitle} data-reveal>
           {w.title1} <em>{w.title2}</em>
         </h3>
-        <p className={s.worldIntro} data-reveal style={{ ["--d" as string]: "160ms" }}>
+        <p
+          className={s.worldIntro}
+          data-reveal
+          style={{ ["--d" as string]: "160ms" }}
+        >
           {w.intro}
         </p>
       </div>
       {products.length > 0 && (
         <div className={`frame ${s.gallery}`}>
           {products.map((p, i) => (
-            <figure key={p.id} className={`${s.tile} ${s[`tile_${p.id}`] ?? ""}`} data-reveal style={{ ["--d" as string]: `${(i % 2) * 140}ms` }}>
+            <figure
+              key={p.id}
+              className={`${s.tile} ${s[`tile_${p.id}`] ?? ""}`}
+              data-reveal
+              style={{ ["--d" as string]: `${(i % 2) * 140}ms` }}
+            >
               <span className={s.tileLight} aria-hidden="true" />
               <span className={s.tileFloor} aria-hidden="true" />
               <img
                 src={p.src}
                 width={p.width}
                 height={p.height}
-                alt={w.productAlts[p.id] ?? `${w.productAlt} ${String(i + 1).padStart(2, "0")}`}
+                alt={
+                  w.productAlts[p.id] ??
+                  `${w.productAlt} ${String(i + 1).padStart(2, "0")}`
+                }
                 className={s.tileImg}
                 loading="lazy"
                 decoding="async"
               />
-              <figcaption className={s.tileIdx}>{`LV · ${String(i + 1).padStart(2, "0")}`}</figcaption>
+              <figcaption
+                className={s.tileIdx}
+              >{`LV · ${String(i + 1).padStart(2, "0")}`}</figcaption>
             </figure>
           ))}
-          <div className={s.collection} data-reveal style={{ ["--d" as string]: "280ms" }}>
+          <div
+            className={s.collection}
+            data-reveal
+            style={{ ["--d" as string]: "280ms" }}
+          >
             {shown && (
               <>
                 <p className={s.owner}>{w.collection}</p>
