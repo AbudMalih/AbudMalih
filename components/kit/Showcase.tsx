@@ -21,7 +21,13 @@ export type ShowcaseItem = {
  * autoplay; text never moves while it is read). Each item shows its own
  * crop of the port photograph under its technical drawing.
  */
-export default function Showcase({ items, label }: { items: ShowcaseItem[]; label: string }) {
+export default function Showcase({
+  items,
+  label,
+}: {
+  items: ShowcaseItem[];
+  label: string;
+}) {
   const [i, setI] = useState(0);
   const uid = useId();
   const it = items[i];
@@ -49,7 +55,12 @@ export default function Showcase({ items, label }: { items: ShowcaseItem[]; labe
       {items.map((x) => (
         <span key={x.key} id={x.key} className={s.anchor} aria-hidden="true" />
       ))}
-      <div className={s.tabs} role="tablist" aria-label={label} onKeyDown={onKey}>
+      <div
+        className={s.tabs}
+        role="tablist"
+        aria-label={label}
+        onKeyDown={onKey}
+      >
         {items.map((x, n) => (
           <button
             key={x.key}
@@ -67,7 +78,13 @@ export default function Showcase({ items, label }: { items: ShowcaseItem[]; labe
           </button>
         ))}
       </div>
-      <div id={`${uid}-panel`} role="tabpanel" aria-labelledby={`${uid}-tab-${i}`} className={s.panel} key={it.key}>
+      <div
+        id={`${uid}-panel`}
+        role="tabpanel"
+        aria-labelledby={`${uid}-tab-${i}`}
+        className={s.panel}
+        key={it.key}
+      >
         <div className={s.panelText}>
           <span className={s.panelNum} aria-hidden="true">
             {String(i + 1).padStart(2, "0")}
@@ -84,7 +101,11 @@ export default function Showcase({ items, label }: { items: ShowcaseItem[]; labe
           </ul>
           {it.extra}
         </div>
-        <div className={s.panelMedia} style={{ backgroundPosition: it.pos }} aria-hidden="true">
+        <div
+          className={s.panelMedia}
+          style={{ backgroundPosition: it.pos }}
+          aria-hidden="true"
+        >
           <div className={s.panelArt}>{it.art}</div>
         </div>
       </div>

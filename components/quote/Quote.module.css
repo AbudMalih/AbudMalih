@@ -75,7 +75,9 @@
   font: inherit;
   font-size: 1rem;
   color: #141518;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 .field textarea {
   resize: vertical;
@@ -126,7 +128,10 @@
   border: 1px solid rgba(20, 21, 24, 0.12);
   background: #fff;
   cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s, transform 0.2s;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    transform 0.2s;
 }
 .mode:hover {
   border-color: rgba(20, 21, 24, 0.35);
@@ -191,7 +196,9 @@
   font-weight: 600;
   font-size: 0.92rem;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 }
 .pill.on {
   background: #141518;
@@ -273,7 +280,9 @@
   font-weight: 650;
   cursor: pointer;
   box-shadow: 0 16px 34px -14px rgba(201, 2, 22, 0.7);
-  transition: background-color 0.25s, transform 0.25s var(--ease-out);
+  transition:
+    background-color 0.25s,
+    transform 0.25s var(--ease-out);
 }
 .submit:hover:not(:disabled) {
   background: #a90013;
@@ -292,15 +301,19 @@
   height: 44px;
   border-radius: 50%;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 14px 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 14px no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 14px 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 14px
+      no-repeat,
     #fff;
 }
 .spin {
   animation: spin 1.1s linear infinite;
 }
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* live summary */
@@ -341,7 +354,11 @@
   width: 2px;
   height: 18px;
   margin-inline-start: 9px;
-  background: repeating-linear-gradient(180deg, var(--luna-red) 0 4px, transparent 4px 7px);
+  background: repeating-linear-gradient(
+    180deg,
+    var(--luna-red) 0 4px,
+    transparent 4px 7px
+  );
 }
 .sumList {
   margin: 0;

@@ -25,20 +25,33 @@ const en: BrandsCopy = {
       { name: "Commerce", line: "Where customers find it." },
     ],
     foundation: "Foundation: Luna Trading",
-    services: ["Sourcing", "Product development", "Import", "Brand building", "E-commerce", "Distribution"],
+    services: [
+      "Sourcing",
+      "Product development",
+      "Import",
+      "Brand building",
+      "E-commerce",
+      "Distribution",
+    ],
   },
-  passage: { from: "Luna Trading", to: "Owned brand", back: "Back to Luna Trading" },
+  passage: {
+    from: "Luna Trading",
+    to: "Owned brand",
+    back: "Back to Luna Trading",
+  },
   brands: {
     luviscent: {
-      owner: "An owned brand of Luna Trading GmbH",
+      owner: "An owned brand of Luna Trading",
       category: "Home fragrance",
-      statement: "LUVISCENT gives rooms an atmosphere. A home-fragrance brand with a world of its own: light, material and calm.",
+      statement:
+        "LUVISCENT gives rooms an atmosphere. A home-fragrance brand with a world of its own: light, material and calm.",
       cta: "Discover LUVISCENT",
       world: {
         tag: "The brand world",
         title1: "Fragrance as",
         title2: "part of the room.",
-        intro: "LUVISCENT is built around home fragrance. Three areas form the world of the brand.",
+        intro:
+          "LUVISCENT is built around home fragrance. Three areas form the world of the brand.",
         categories: [
           { id: "machines", name: "Scent machines", note: "Light · Form" },
           { id: "oils", name: "Fragrance oils", note: "Essence · Amber" },
@@ -47,7 +60,14 @@ const en: BrandsCopy = {
         collection: "Collection",
         areas: "Areas of the brand",
         productAlt: "LUVISCENT scent machine",
-        productAlts: { tower: "LUVISCENT scent diffuser, slim black tower with a gold side panel", box: "LUVISCENT scent diffuser, compact black box form", lamp: "LUVISCENT scent diffuser with a fabric cover and a warm light top", ribbed: "LUVISCENT scent diffuser, white with a ribbed finish", cylinder: "LUVISCENT scent diffuser, anthracite cylinder" },
+        productAlts: {
+          tower:
+            "LUVISCENT scent diffuser, slim black tower with a gold side panel",
+          box: "LUVISCENT scent diffuser, compact black box form",
+          lamp: "LUVISCENT scent diffuser with a fabric cover and a warm light top",
+          ribbed: "LUVISCENT scent diffuser, white with a ribbed finish",
+          cylinder: "LUVISCENT scent diffuser, anthracite cylinder",
+        },
       },
     },
   },

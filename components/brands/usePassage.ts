@@ -18,7 +18,9 @@ export function usePassage(root: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = root.current;
     if (!el) return;
-    const passages = Array.from(el.querySelectorAll<HTMLElement>("[data-passage]"));
+    const passages = Array.from(
+      el.querySelectorAll<HTMLElement>("[data-passage]"),
+    );
     if (document.documentElement.classList.contains("static")) {
       passages.forEach((sec) => {
         // a short static band: its upper part still carries the ground it comes from

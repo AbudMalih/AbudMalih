@@ -41,7 +41,11 @@ export default function PageShell({
       </header>
       <div className={`frame ${styles.body}`}>{children}</div>
       <div className={`frame ${styles.back}`}>
-        <Link href={localePath(locale, "/")} className={`link-line t-label ${styles.backLink}`} data-cursor="link">
+        <Link
+          href={localePath(locale, "/")}
+          className={`link-line t-label ${styles.backLink}`}
+          data-cursor="link"
+        >
           <span className={styles.arrow} aria-hidden="true">
             ←
           </span>
@@ -52,7 +56,13 @@ export default function PageShell({
   );
 }
 
-export function InPreparation({ label, items }: { label: string; items?: string[] }) {
+export function InPreparation({
+  label,
+  items,
+}: {
+  label: string;
+  items?: string[];
+}) {
   return (
     <div className={styles.prep}>
       <p className="t-label">{label}</p>

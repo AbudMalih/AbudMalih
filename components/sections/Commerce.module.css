@@ -114,7 +114,13 @@
 .layer {
   position: absolute;
   width: 1px;
-  background: linear-gradient(180deg, transparent, var(--ink-950) 16%, var(--ink-950) 84%, transparent);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--ink-950) 16%,
+    var(--ink-950) 84%,
+    transparent
+  );
   transform-origin: 50% 50%;
 }
 .layer:nth-of-type(odd) {
@@ -242,8 +248,10 @@
   margin-inline-end: 10px;
   vertical-align: 0.05em;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100%
+      no-repeat;
 }
 .platforms {
   position: absolute;

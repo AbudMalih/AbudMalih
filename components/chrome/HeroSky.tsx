@@ -19,18 +19,22 @@ export default function HeroSky() {
   useEffect(() => {
     const el = ref.current!;
     const html = document.documentElement;
-    const still = html.classList.contains("static") || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const still =
+      html.classList.contains("static") ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // sunrise once the intro hands over
     const rise = () => el.setAttribute("data-risen", "");
     if (still) {
       el.setAttribute("data-still", "");
       rise();
-    } else if (!html.classList.contains("intro-pending")) requestAnimationFrame(() => requestAnimationFrame(rise));
+    } else if (!html.classList.contains("intro-pending"))
+      requestAnimationFrame(() => requestAnimationFrame(rise));
     else window.addEventListener("luna:intro", rise, { once: true });
 
     // pointer depth (fine pointers only) + the moon's climb with the scroll
-    const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches && !still;
+    const fine =
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches && !still;
     const tgt = { x: 0, y: 0 };
     const cur = { x: 0, y: 0 };
     const move = (e: PointerEvent) => {

@@ -108,7 +108,7 @@ export default function ContactPage() {
             </RedButton>
           </div>
           <p className={k.note} data-reveal>
-            {COMPANY.legalName} · {t.closing.line}
+            {COMPANY.name} · {t.closing.line}
           </p>
         </div>
       </section>

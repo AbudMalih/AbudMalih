@@ -10,9 +10,9 @@ const en: CompanyCopy = {
     eyebrow: "Company",
     h1a: "Trade connects.",
     h1b: "We build on it.",
-    lead: "Luna Trading GmbH connects international trade with product development, brand building, e-commerce and distribution. Based in Cologne, oriented towards the European market.",
+    lead: "Luna Trading connects international trade with product development, brand building, e-commerce and distribution. Based in Cologne, oriented towards the European market.",
     layers: ["Trade", "Product", "Brand", "E-commerce", "Distribution"],
-    base: "Luna Trading GmbH · Cologne",
+    base: "Luna Trading · Cologne",
   },
   profile: {
     tag: "The company",
@@ -22,7 +22,13 @@ const en: CompanyCopy = {
     statement: "A trading company that connects products with markets.",
     body: "Luna Trading is not tied to one product category. The company brings sourcing, product development, brand building and sales together in one shared commercial structure.",
     areasTag: "Orientation",
-    areas: ["International trade", "Product development", "Brands", "E-commerce", "Distribution"],
+    areas: [
+      "International trade",
+      "Product development",
+      "Brands",
+      "E-commerce",
+      "Distribution",
+    ],
   },
   idea: {
     tag: "The idea",
@@ -45,10 +51,22 @@ const en: CompanyCopy = {
     tag: "How we work",
     title: "What makes the structure different.",
     items: [
-      { title: "One commercial view of the whole.", body: "Sourcing, product, brand and sales are assessed together, not one after another." },
-      { title: "Designed from the product. Tested against the market.", body: "What a product requires and what its market requires belong at the same table." },
-      { title: "Physical and digital.", body: "Goods move in the real world, and more and more of them are sold digitally. We work in both." },
-      { title: "Build what the market can support.", body: "Ranges and brands grow at the pace that demand and structure allow." },
+      {
+        title: "One commercial view of the whole.",
+        body: "Sourcing, product, brand and sales are assessed together, not one after another.",
+      },
+      {
+        title: "Designed from the product. Tested against the market.",
+        body: "What a product requires and what its market requires belong at the same table.",
+      },
+      {
+        title: "Physical and digital.",
+        body: "Goods move in the real world, and more and more of them are sold digitally. We work in both.",
+      },
+      {
+        title: "Build what the market can support.",
+        body: "Ranges and brands grow at the pace that demand and structure allow.",
+      },
     ],
   },
   pd: {
@@ -56,8 +74,14 @@ const en: CompanyCopy = {
     title1: "Two worlds.",
     title2: "One connection.",
     lead: "Not a traditional wholesaler. Not a pure e-commerce company. Luna Trading connects the physical flow of goods with digital commerce.",
-    physical: { name: "Physical trade", items: ["Product", "Packaging", "Container", "Movement", "Distribution"] },
-    digital: { name: "Digital commerce", items: ["Online store", "Marketplace", "Data", "Customer", "Commerce"] },
+    physical: {
+      name: "Physical trade",
+      items: ["Product", "Packaging", "Container", "Movement", "Distribution"],
+    },
+    digital: {
+      name: "Digital commerce",
+      items: ["Online store", "Marketplace", "Data", "Customer", "Commerce"],
+    },
     note: "The same goods. The same responsibility. From the physical flow of goods to the digital market.",
   },
   base: {
@@ -78,18 +102,33 @@ const en: CompanyCopy = {
     body: "A product sold in Europe has to be prepared for that market. This work starts long before anything ships.",
     doc: "Market preparation",
     rows: [
-      { name: "Product requirements", line: "Material, finish and use clearly defined." },
-      { name: "Documentation", line: "Commercial and technical documents complete." },
-      { name: "Labelling", line: "Packaging and information suited to the target market." },
-      { name: "Market readiness", line: "Market requirements considered before sale." },
-      { name: "Commercial structure", line: "Prices, channels and processes in order." },
+      {
+        name: "Product requirements",
+        line: "Material, finish and use clearly defined.",
+      },
+      {
+        name: "Documentation",
+        line: "Commercial and technical documents complete.",
+      },
+      {
+        name: "Labelling",
+        line: "Packaging and information suited to the target market.",
+      },
+      {
+        name: "Market readiness",
+        line: "Market requirements considered before sale.",
+      },
+      {
+        name: "Commercial structure",
+        line: "Prices, channels and processes in order.",
+      },
     ],
   },
   brand: {
     tag: "From company to brand",
     title: "The structure gives rise to brands of its own.",
     chain: ["Luna Trading", "Owned brands"],
-    body: "LUVISCENT® is the first owned brand of Luna Trading GmbH: home fragrance, built on the same chain of sourcing, development, brand and commerce.",
+    body: "LUVISCENT® is the first owned brand of Luna Trading: home fragrance, built on the same chain of sourcing, development, brand and commerce.",
     link: "Discover our brands",
   },
   bridges: {

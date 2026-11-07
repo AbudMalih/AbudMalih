@@ -39,7 +39,10 @@ export const conventionalSrc =
   (id: string) => (i: number, tier: SequenceTier, format: "avif" | "webp") =>
     `/sequences/${id}/${tier}/${id}_${pad(i)}.${format}`;
 
-export const SEQUENCES: Record<"terminal" | "transport" | "warehouse" | "product", SequenceManifest | null> = {
+export const SEQUENCES: Record<
+  "terminal" | "transport" | "warehouse" | "product",
+  SequenceManifest | null
+> = {
   // Example of a production manifest (enable when renders are delivered):
   // terminal: {
   //   id: "terminal",

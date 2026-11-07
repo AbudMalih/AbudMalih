@@ -66,11 +66,29 @@ const ART: Record<StepId, { d: string; red: boolean }[]> = {
   ],
 };
 
-export default function ChainArt({ id, className, redClass }: { id: StepId; className?: string; redClass?: string }) {
+export default function ChainArt({
+  id,
+  className,
+  redClass,
+}: {
+  id: StepId;
+  className?: string;
+  redClass?: string;
+}) {
   return (
-    <svg viewBox="0 0 320 200" className={className} data-art aria-hidden="true">
+    <svg
+      viewBox="0 0 320 200"
+      className={className}
+      data-art
+      aria-hidden="true"
+    >
       {ART[id].map((p, i) => (
-        <path key={i} d={p.d} pathLength={1} className={p.red ? redClass : undefined} />
+        <path
+          key={i}
+          d={p.d}
+          pathLength={1}
+          className={p.red ? redClass : undefined}
+        />
       ))}
     </svg>
   );

@@ -13,7 +13,13 @@ export type BrandMedia =
  * set on the ledge (contain, bottom centre); a video fills the niche. The
  * light, ledge and shadow stay, so the scene needs no redesign.
  */
-export default function BrandMediaSlot({ media, className }: { media?: BrandMedia | null; className?: string }) {
+export default function BrandMediaSlot({
+  media,
+  className,
+}: {
+  media?: BrandMedia | null;
+  className?: string;
+}) {
   return (
     <figure className={`${styles.slot} ${className ?? ""}`} data-media-slot>
       <div className={styles.study} aria-hidden="true">
@@ -36,10 +42,27 @@ export default function BrandMediaSlot({ media, className }: { media?: BrandMedi
         <span className={styles.ledge} />
       </div>
       {media?.type === "image" && (
-        <img src={media.src} alt={media.alt} width={media.width} height={media.height} className={styles.product} loading="lazy" decoding="async" />
+        <img
+          src={media.src}
+          alt={media.alt}
+          width={media.width}
+          height={media.height}
+          className={styles.product}
+          loading="lazy"
+          decoding="async"
+        />
       )}
       {media?.type === "video" && (
-        <video className={styles.media} src={media.src} poster={media.poster} muted playsInline loop autoPlay aria-label={media.alt} />
+        <video
+          className={styles.media}
+          src={media.src}
+          poster={media.poster}
+          muted
+          playsInline
+          loop
+          autoPlay
+          aria-label={media.alt}
+        />
       )}
       <span className={styles.edge} aria-hidden="true" />
     </figure>

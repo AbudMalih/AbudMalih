@@ -18,7 +18,9 @@
 .cursor i {
   position: absolute;
   background: #fff;
-  transition: transform 0.35s var(--ease-out), background-color 0.25s;
+  transition:
+    transform 0.35s var(--ease-out),
+    background-color 0.25s;
 }
 .cursor i:first-child {
   width: 15px;

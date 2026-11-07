@@ -36,13 +36,43 @@ function Content() {
     scope,
     (tl, q) => {
       // arrival (same scroll distance as before)
-      tl.fromTo(q("[data-origin]"), { scale: 0.55, opacity: 1 }, { scale: 0, opacity: 0, duration: 0.06, ease: "power2.in" }, 0)
-        .fromTo(q("[data-c] > span > span"), { yPercent: 135 }, { yPercent: 0, duration: 0.06, stagger: 0.03, ease: "power3.out" }, 0.03)
-        .fromTo(q("[data-cta-rule]"), { scaleX: 0 }, { scaleX: 1, duration: 0.08, ease: "power2.inOut" }, 0.15)
-        .fromTo(q("[data-cta]"), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.05 }, 0.17)
-        .fromTo(q("[data-sign]"), { opacity: 0 }, { opacity: 1, duration: 0.05 }, 0.21)
+      tl.fromTo(
+        q("[data-origin]"),
+        { scale: 0.55, opacity: 1 },
+        { scale: 0, opacity: 0, duration: 0.06, ease: "power2.in" },
+        0,
+      )
+        .fromTo(
+          q("[data-c] > span > span"),
+          { yPercent: 135 },
+          { yPercent: 0, duration: 0.06, stagger: 0.03, ease: "power3.out" },
+          0.03,
+        )
+        .fromTo(
+          q("[data-cta-rule]"),
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.08, ease: "power2.inOut" },
+          0.15,
+        )
+        .fromTo(
+          q("[data-cta]"),
+          { opacity: 0, y: 16 },
+          { opacity: 1, y: 0, duration: 0.05 },
+          0.17,
+        )
+        .fromTo(
+          q("[data-sign]"),
+          { opacity: 0 },
+          { opacity: 1, duration: 0.05 },
+          0.21,
+        )
         // the held CTA keeps breathing: its red underline completes
-        .fromTo(q("[data-cta-line]"), { scaleX: 0 }, { scaleX: 1, duration: 0.36, ease: "power1.inOut" }, 0.22);
+        .fromTo(
+          q("[data-cta-line]"),
+          { scaleX: 0 },
+          { scaleX: 1, duration: 0.36, ease: "power1.inOut" },
+          0.22,
+        );
 
       // Footer hand-over, evaluated in the same scroll update (never a frame
       // behind): the block rides just above the rising footer's edge and
@@ -62,25 +92,32 @@ function Content() {
         // each part fades only as it nears the navigation's protected zone:
         // the statement first, the CTA last
         const restTop = restBottom - el.offsetHeight;
-        const fade = (y: number, span: number) => Math.min(1, Math.max(0, (y - lift - vh * 0.1) / (vh * span)));
+        const fade = (y: number, span: number) =>
+          Math.min(1, Math.max(0, (y - lift - vh * 0.1) / (vh * span)));
         const oS = fade(restTop + stmt.offsetTop, 0.14);
         const oC = fade(restTop + row.offsetTop, 0.18);
         const k = `${lift.toFixed(1)}|${oS.toFixed(3)}|${oC.toFixed(3)}`;
         if (k === last) return;
         last = k;
-        el.style.transform = lift > 0 ? `translate3d(0, ${(-lift).toFixed(1)}px, 0)` : "";
+        el.style.transform =
+          lift > 0 ? `translate3d(0, ${(-lift).toFixed(1)}px, 0)` : "";
         stmt.style.opacity = oS < 1 ? oS.toFixed(3) : "";
         row.style.opacity = oC < 1 ? oC.toFixed(3) : "";
       };
       tl.eventCallback("onUpdate", handOver);
       handOver();
     },
-    [locale]
+    [locale],
   );
 
   return (
     <div ref={scope} className={s.wrap}>
-      <span className={s.origin} data-origin data-cine-only aria-hidden="true" />
+      <span
+        className={s.origin}
+        data-origin
+        data-cine-only
+        aria-hidden="true"
+      />
       <div ref={block} className={s.block}>
         <h2 className={`t-display ${s.statement}`} data-c>
           {t.lines.map((l, i) => (
@@ -95,7 +132,12 @@ function Content() {
             <MagneticLink href={href("/contact")} className={s.cta}>
               <span className={s.ctaText}>
                 {t.cta}
-                <span className={s.ctaLine} data-cta-line data-cine-only aria-hidden="true" />
+                <span
+                  className={s.ctaLine}
+                  data-cta-line
+                  data-cine-only
+                  aria-hidden="true"
+                />
               </span>
               <span className={s.plus} aria-hidden="true" />
             </MagneticLink>

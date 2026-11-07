@@ -32,9 +32,21 @@
   z-index: -1;
   pointer-events: none;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
-    radial-gradient(80% 70% at 12% 6%, rgba(255, 255, 255, 0.5), transparent 70%),
-    radial-gradient(50% 50% at 84% 40%, rgba(255, 250, 238, 0.4), transparent 70%);
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(
+      80% 70% at 12% 6%,
+      rgba(255, 255, 255, 0.5),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 50% at 84% 40%,
+      rgba(255, 250, 238, 0.4),
+      transparent 70%
+    );
 }
 .heroGrid {
   display: grid;
@@ -248,8 +260,10 @@
   width: 14px;
   height: 14px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 .foundation {
   display: flex;
@@ -311,7 +325,11 @@
 }
 .pMineral {
   background:
-    radial-gradient(80% 70% at 18% 0%, rgba(255, 255, 255, 0.42), transparent 70%),
+    radial-gradient(
+      80% 70% at 18% 0%,
+      rgba(255, 255, 255, 0.42),
+      transparent 70%
+    ),
     var(--min);
 }
 /* survey grid: the technical geometry that softens away */
@@ -323,7 +341,11 @@
   background-size: calc(100% / 12) calc(100% / 8);
   background-position: var(--margin) 0;
   mask-image: radial-gradient(70% 70% at 50% 58%, #000 30%, transparent 85%);
-  -webkit-mask-image: radial-gradient(70% 70% at 50% 58%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(
+    70% 70% at 50% 58%,
+    #000 30%,
+    transparent 85%
+  );
 }
 /* the brand ground opens out of the route like a horizon: a band that
    widens up and down from the line, with a narrow soft edge (no wide
@@ -331,8 +353,20 @@
 .pEmerald {
   --r: calc(var(--turn) * 66%);
   background: radial-gradient(70% 60% at 50% 58%, #193b30 0%, var(--em) 72%);
-  mask-image: linear-gradient(180deg, transparent calc(58% - var(--r) - 7%), #000 calc(58% - var(--r)), #000 calc(58% + var(--r)), transparent calc(58% + var(--r) + 7%));
-  -webkit-mask-image: linear-gradient(180deg, transparent calc(58% - var(--r) - 7%), #000 calc(58% - var(--r)), #000 calc(58% + var(--r)), transparent calc(58% + var(--r) + 7%));
+  mask-image: linear-gradient(
+    180deg,
+    transparent calc(58% - var(--r) - 7%),
+    #000 calc(58% - var(--r)),
+    #000 calc(58% + var(--r)),
+    transparent calc(58% + var(--r) + 7%)
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent calc(58% - var(--r) - 7%),
+    #000 calc(58% - var(--r)),
+    #000 calc(58% + var(--r)),
+    transparent calc(58% + var(--r) + 7%)
+  );
 }
 /* warm architectural light from a concealed source above */
 .pLight {
@@ -341,8 +375,17 @@
   mask-image: linear-gradient(180deg, transparent 0, #000 24%);
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 24%);
   background:
-    radial-gradient(24% 58% at 50% -8%, rgba(246, 238, 220, 0.34), rgba(160, 163, 168, 0.07) 55%, transparent 76%),
-    radial-gradient(60% 40% at 50% 60%, rgba(232, 220, 192, 0.07), transparent 70%);
+    radial-gradient(
+      24% 58% at 50% -8%,
+      rgba(246, 238, 220, 0.34),
+      rgba(160, 163, 168, 0.07) 55%,
+      transparent 76%
+    ),
+    radial-gradient(
+      60% 40% at 50% 60%,
+      rgba(232, 220, 192, 0.07),
+      transparent 70%
+    );
 }
 .pRoute {
   position: absolute;
@@ -356,7 +399,11 @@
   top: 8px;
   height: 9px;
   opacity: calc((1 - var(--soften)) * 0.9);
-  background: repeating-linear-gradient(90deg, rgba(20, 21, 24, 0.34) 0 1px, transparent 1px calc(100% / 24));
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(20, 21, 24, 0.34) 0 1px,
+    transparent 1px calc(100% / 24)
+  );
 }
 .pRed,
 .pGold,
@@ -380,14 +427,26 @@
   height: 1px;
   top: 0.5px;
   opacity: var(--turn);
-  background: linear-gradient(90deg, rgba(200, 144, 79, 0.15), var(--accent) 30%, var(--light) 50%, var(--accent) 70%, rgba(200, 144, 79, 0.15));
+  background: linear-gradient(
+    90deg,
+    rgba(200, 144, 79, 0.15),
+    var(--accent) 30%,
+    var(--light) 50%,
+    var(--accent) 70%,
+    rgba(200, 144, 79, 0.15)
+  );
   transform: scaleX(calc(0.2 + var(--turn) * 0.8));
 }
 .pGlow {
   top: -44px;
   height: 90px;
   opacity: calc(var(--rise) * 0.9);
-  background: radial-gradient(50% 50% at 50% 50%, rgba(228, 213, 179, 0.18), rgba(200, 144, 79, 0.05) 45%, transparent 70%);
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(228, 213, 179, 0.18),
+    rgba(200, 144, 79, 0.05) 45%,
+    transparent 70%
+  );
   filter: blur(8px);
 }
 .pTraveler {
@@ -409,8 +468,10 @@
 .pPlus {
   opacity: calc(1 - var(--turn));
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 3px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 3px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 3px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 3px 100%
+      no-repeat;
 }
 .pDot {
   opacity: var(--turn);
@@ -493,11 +554,35 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(34% 56% at 25% -4%, rgba(232, 220, 192, 0.11), transparent 72%),
-    radial-gradient(90% 70% at 22% 104%, rgba(33, 72, 59, 0.62), transparent 70%),
-    radial-gradient(50% 50% at 80% 40%, rgba(241, 236, 226, 0.035), transparent 70%);
-  mask-image: linear-gradient(180deg, transparent 0, #000 22%, #000 78%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 22%, #000 78%, transparent 100%);
+    radial-gradient(
+      34% 56% at 25% -4%,
+      rgba(232, 220, 192, 0.11),
+      transparent 72%
+    ),
+    radial-gradient(
+      90% 70% at 22% 104%,
+      rgba(33, 72, 59, 0.62),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 50% at 80% 40%,
+      rgba(241, 236, 226, 0.035),
+      transparent 70%
+    );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 22%,
+    #000 78%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 22%,
+    #000 78%,
+    transparent 100%
+  );
 }
 .sceneGrid {
   flex: 1;
@@ -592,7 +677,9 @@
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--lv-i);
-  transition: background-color 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+  transition:
+    background-color 0.4s var(--ease-out),
+    border-color 0.4s var(--ease-out);
 }
 .lvCta:hover,
 .lvCta:focus-visible {
@@ -627,10 +714,18 @@
 .threadLine {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, rgba(201, 204, 210, 0.7), rgba(201, 204, 210, 0.12));
+  background: linear-gradient(
+    90deg,
+    rgba(201, 204, 210, 0.7),
+    rgba(201, 204, 210, 0.12)
+  );
 }
 :global([dir="rtl"]) .threadLine {
-  background: linear-gradient(270deg, rgba(201, 204, 210, 0.7), rgba(201, 204, 210, 0.12));
+  background: linear-gradient(
+    270deg,
+    rgba(201, 204, 210, 0.7),
+    rgba(201, 204, 210, 0.12)
+  );
 }
 .threadNode {
   order: -1;
@@ -722,15 +817,27 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(60% 46% at 50% 0%, rgba(255, 252, 244, 0.85), transparent 72%),
-    radial-gradient(50% 60% at 50% 60%, rgba(201, 204, 210, 0.08), transparent 70%);
+    radial-gradient(
+      60% 46% at 50% 0%,
+      rgba(255, 252, 244, 0.85),
+      transparent 72%
+    ),
+    radial-gradient(
+      50% 60% at 50% 60%,
+      rgba(201, 204, 210, 0.08),
+      transparent 70%
+    );
 }
 .tileFloor {
   position: absolute;
   inset-inline: 0;
   bottom: 0;
   height: 13%;
-  background: linear-gradient(180deg, rgba(196, 184, 156, 0.26), rgba(170, 158, 132, 0.14));
+  background: linear-gradient(
+    180deg,
+    rgba(196, 184, 156, 0.26),
+    rgba(170, 158, 132, 0.14)
+  );
   border-top: 1px solid rgba(160, 146, 116, 0.22);
 }
 .tileFloor::before {
@@ -742,7 +849,11 @@
   top: -7px;
   height: 14px;
   border-radius: 50%;
-  background: radial-gradient(50% 50% at 50% 50%, rgba(40, 34, 24, 0.28), transparent 72%);
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(40, 34, 24, 0.28),
+    transparent 72%
+  );
   filter: blur(3px);
 }
 .tileImg {
@@ -1151,7 +1262,9 @@
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
-  transition: background-color 0.25s, border-color 0.25s;
+  transition:
+    background-color 0.25s,
+    border-color 0.25s;
 }
 .systemLink:hover {
   border-color: rgba(20, 21, 24, 0.5);
@@ -1175,7 +1288,8 @@
 
 /* ---- hero, new style: copy and actions beside the brand card ---- */
 .nh {
-  padding: calc(var(--header-h) + clamp(32px, 6vh, 72px)) 0 clamp(56px, 9vh, 110px);
+  padding: calc(var(--header-h) + clamp(32px, 6vh, 72px)) 0
+    clamp(56px, 9vh, 110px);
 }
 .nhGrid {
   display: grid;
@@ -1219,7 +1333,9 @@
   border: 1px solid rgba(20, 21, 24, 0.2);
   color: #141518;
   font-weight: 600;
-  transition: border-color 0.25s, background-color 0.25s;
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
 }
 .nhGhost:hover {
   border-color: rgba(20, 21, 24, 0.5);
@@ -1267,11 +1383,17 @@
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(70% 55% at 50% 38%, rgba(232, 236, 240, 0.16), transparent 70%),
+    radial-gradient(
+      70% 55% at 50% 38%,
+      rgba(232, 236, 240, 0.16),
+      transparent 70%
+    ),
     linear-gradient(180deg, #0f251d, #05110d);
   color: #f2f2f0;
   box-shadow: 0 50px 90px -50px rgba(5, 17, 13, 0.75);
-  transition: transform 0.5s var(--ease-out), box-shadow 0.5s var(--ease-out);
+  transition:
+    transform 0.5s var(--ease-out),
+    box-shadow 0.5s var(--ease-out);
 }
 .nhCard:hover {
   transform: translateY(-4px);
@@ -1311,7 +1433,12 @@
   height: 62%;
   translate: -50% 0;
   border-radius: 999px 999px 0 0;
-  background: radial-gradient(60% 50% at 50% 30%, rgba(232, 236, 240, 0.2), rgba(35, 72, 60, 0.35) 60%, transparent 100%);
+  background: radial-gradient(
+    60% 50% at 50% 30%,
+    rgba(232, 236, 240, 0.2),
+    rgba(35, 72, 60, 0.35) 60%,
+    transparent 100%
+  );
   border: 1px solid rgba(201, 204, 210, 0.18);
   border-bottom: 0;
 }
@@ -1344,7 +1471,12 @@
   inset-inline: -28px;
   bottom: calc(100% + 18px);
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201, 204, 210, 0.35), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 204, 210, 0.35),
+    transparent
+  );
 }
 .nhLogo {
   width: min(56%, 260px);
@@ -1421,6 +1553,8 @@
   box-shadow: none;
   animation: none;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }

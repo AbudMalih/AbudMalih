@@ -17,7 +17,10 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
     const el = root.current;
     if (!el) return;
     const items = Array.from(el.querySelectorAll<HTMLElement>("[data-reveal]"));
-    if (!("IntersectionObserver" in window) || document.documentElement.classList.contains("static")) {
+    if (
+      !("IntersectionObserver" in window) ||
+      document.documentElement.classList.contains("static")
+    ) {
       items.forEach((i) => i.setAttribute("data-in", ""));
       return;
     }
@@ -29,11 +32,15 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
           io.unobserve(e.target);
         });
       },
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.12 }
+      { rootMargin: "0px 0px -12% 0px", threshold: 0.12 },
     );
     items.forEach((i) => {
       // anything already in the first viewport (the hero route sits low) reveals at once
-      if (window.scrollY < 10 && i.getBoundingClientRect().top < window.innerHeight) i.setAttribute("data-in", "");
+      if (
+        window.scrollY < 10 &&
+        i.getBoundingClientRect().top < window.innerHeight
+      )
+        i.setAttribute("data-in", "");
       else io.observe(i);
     });
     return () => io.disconnect();
@@ -44,8 +51,12 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
     const el = root.current;
     if (!el) return;
     if (document.documentElement.classList.contains("static")) {
-      el.querySelectorAll<HTMLElement>("[data-fill]").forEach((f) => f.style.setProperty("--p", "1"));
-      el.querySelectorAll<HTMLElement>("[data-node]").forEach((n) => n.setAttribute("data-on", ""));
+      el.querySelectorAll<HTMLElement>("[data-fill]").forEach((f) =>
+        f.style.setProperty("--p", "1"),
+      );
+      el.querySelectorAll<HTMLElement>("[data-node]").forEach((n) =>
+        n.setAttribute("data-on", ""),
+      );
       return;
     }
     const ctx = gsap.context(() => {
@@ -63,7 +74,8 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
         ScrollTrigger.create({
           trigger: n,
           start: n.dataset.at ?? "top 62%",
-          onToggle: (st) => n.toggleAttribute("data-on", st.isActive || st.progress > 0),
+          onToggle: (st) =>
+            n.toggleAttribute("data-on", st.isActive || st.progress > 0),
           onUpdate: (st) => n.toggleAttribute("data-on", st.progress > 0),
           end: "max",
         });
@@ -78,7 +90,12 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
     if (!el) return;
     const html = document.documentElement;
     // the page's sections, then the (dark) footer that closes every page
-    const sections = [...Array.from(el.querySelectorAll<HTMLElement>("[data-tone]")), ...Array.from(document.querySelectorAll<HTMLElement>("footer[data-tone]"))];
+    const sections = [
+      ...Array.from(el.querySelectorAll<HTMLElement>("[data-tone]")),
+      ...Array.from(
+        document.querySelectorAll<HTMLElement>("footer[data-tone]"),
+      ),
+    ];
     let last = "";
     const probe = () => {
       // each section fades in from the previous ground over its seam, so the
@@ -88,7 +105,8 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
       const y = Math.min(60, vh * 0.06) - seam / 2;
       let tone = "dark";
       for (const s of sections) {
-        if (s.getBoundingClientRect().top <= y || s === sections[0]) tone = s.dataset.tone === "light" ? "light" : "dark";
+        if (s.getBoundingClientRect().top <= y || s === sections[0])
+          tone = s.dataset.tone === "light" ? "light" : "dark";
       }
       if (tone !== last) {
         last = tone;

@@ -25,20 +25,33 @@ const de: BrandsCopy = {
       { name: "Handel", line: "Wo Kunden sie finden." },
     ],
     foundation: "Fundament: Luna Trading",
-    services: ["Beschaffung", "Produktentwicklung", "Import", "Markenaufbau", "E-Commerce", "Distribution"],
+    services: [
+      "Beschaffung",
+      "Produktentwicklung",
+      "Import",
+      "Markenaufbau",
+      "E-Commerce",
+      "Distribution",
+    ],
   },
-  passage: { from: "Luna Trading", to: "Eigenmarke", back: "Zurück zu Luna Trading" },
+  passage: {
+    from: "Luna Trading",
+    to: "Eigenmarke",
+    back: "Zurück zu Luna Trading",
+  },
   brands: {
     luviscent: {
-      owner: "Eigenmarke der Luna Trading GmbH",
+      owner: "Eigenmarke von Luna Trading",
       category: "Raumduft",
-      statement: "LUVISCENT gibt Räumen eine Atmosphäre. Eine Marke für Raumduft mit eigener Welt aus Licht, Material und Ruhe.",
+      statement:
+        "LUVISCENT gibt Räumen eine Atmosphäre. Eine Marke für Raumduft mit eigener Welt aus Licht, Material und Ruhe.",
       cta: "LUVISCENT entdecken",
       world: {
         tag: "Die Markenwelt",
         title1: "Duft als",
         title2: "Teil des Raums.",
-        intro: "LUVISCENT entsteht rund um Raumduft. Drei Bereiche bilden die Welt der Marke.",
+        intro:
+          "LUVISCENT entsteht rund um Raumduft. Drei Bereiche bilden die Welt der Marke.",
         categories: [
           { id: "machines", name: "Duftgeräte", note: "Licht · Form" },
           { id: "oils", name: "Duftöle", note: "Essenz · Bernstein" },
@@ -47,7 +60,14 @@ const de: BrandsCopy = {
         collection: "Kollektion",
         areas: "Bereiche der Marke",
         productAlt: "LUVISCENT Duftgerät",
-        productAlts: { tower: "LUVISCENT Duftgerät in schlanker Turmform, schwarz mit goldener Seite", box: "LUVISCENT Duftgerät in kompakter, schwarzer Kastenform", lamp: "LUVISCENT Duftgerät mit Stoffbezug und warm leuchtendem Kopf", ribbed: "LUVISCENT Duftgerät, weiß mit gerippter Oberfläche", cylinder: "LUVISCENT Duftgerät in anthrazitfarbener Zylinderform" },
+        productAlts: {
+          tower:
+            "LUVISCENT Duftgerät in schlanker Turmform, schwarz mit goldener Seite",
+          box: "LUVISCENT Duftgerät in kompakter, schwarzer Kastenform",
+          lamp: "LUVISCENT Duftgerät mit Stoffbezug und warm leuchtendem Kopf",
+          ribbed: "LUVISCENT Duftgerät, weiß mit gerippter Oberfläche",
+          cylinder: "LUVISCENT Duftgerät in anthrazitfarbener Zylinderform",
+        },
       },
     },
   },

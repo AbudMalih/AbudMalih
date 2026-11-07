@@ -9,7 +9,14 @@ import { BRANDS } from "@/content/site";
  * Only real brands belong here: no placeholders, no announced slots.
  */
 /** An approved product image, filed under one of the brand's categories. */
-export type BrandProduct = { id: string; category: string; src: string; width: number; height: number; tone: "dark" | "light" };
+export type BrandProduct = {
+  id: string;
+  category: string;
+  src: string;
+  width: number;
+  height: number;
+  tone: "dark" | "light";
+};
 
 export type OwnedBrand = {
   id: string;
@@ -22,7 +29,14 @@ export type OwnedBrand = {
   /** external brand site once live; otherwise the page links to the brand world */
   url: string | null;
   /** the brand's own ground: the passage blends Luna mineral into these */
-  palette: { ground: string; deep: string; world: string; light: string; accent: string; ink: string };
+  palette: {
+    ground: string;
+    deep: string;
+    world: string;
+    light: string;
+    accent: string;
+    ink: string;
+  };
   /** approved product photography; the hero stands in the lit niche */
   media: { hero: BrandMedia | null; products: BrandProduct[] };
 };
@@ -44,12 +58,46 @@ export const OWNED_BRANDS: OwnedBrand[] = [
       ink: "#f2f2f0",
     },
     media: {
-      hero: { type: "image", src: "/brand/luviscent/diffuser-tower.webp", alt: "LUVISCENT", width: 778, height: 1400 },
+      hero: {
+        type: "image",
+        src: "/brand/luviscent/diffuser-tower.webp",
+        alt: "LUVISCENT",
+        width: 778,
+        height: 1400,
+      },
       products: [
-        { id: "box", category: "machines", src: "/brand/luviscent/diffuser-box.webp", width: 1124, height: 945, tone: "dark" },
-        { id: "lamp", category: "machines", src: "/brand/luviscent/diffuser-lamp.webp", width: 1185, height: 1171, tone: "light" },
-        { id: "ribbed", category: "machines", src: "/brand/luviscent/diffuser-ribbed.webp", width: 328, height: 882, tone: "light" },
-        { id: "cylinder", category: "machines", src: "/brand/luviscent/diffuser-cylinder.webp", width: 281, height: 536, tone: "dark" },
+        {
+          id: "box",
+          category: "machines",
+          src: "/brand/luviscent/diffuser-box.webp",
+          width: 1124,
+          height: 945,
+          tone: "dark",
+        },
+        {
+          id: "lamp",
+          category: "machines",
+          src: "/brand/luviscent/diffuser-lamp.webp",
+          width: 1185,
+          height: 1171,
+          tone: "light",
+        },
+        {
+          id: "ribbed",
+          category: "machines",
+          src: "/brand/luviscent/diffuser-ribbed.webp",
+          width: 328,
+          height: 882,
+          tone: "light",
+        },
+        {
+          id: "cylinder",
+          category: "machines",
+          src: "/brand/luviscent/diffuser-cylinder.webp",
+          width: 281,
+          height: 536,
+          tone: "dark",
+        },
       ],
     },
   },

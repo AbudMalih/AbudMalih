@@ -31,7 +31,13 @@ export function FlagEU({ className }: { className?: string }) {
     <svg viewBox="0 0 30 20" className={className} aria-hidden="true">
       <rect width="30" height="20" fill="#003399" />
       {stars.map(([x, y], i) => (
-        <circle key={i} cx={x.toFixed(2)} cy={y.toFixed(2)} r="0.8" fill="#FFCC00" />
+        <circle
+          key={i}
+          cx={x.toFixed(2)}
+          cy={y.toFixed(2)}
+          r="0.8"
+          fill="#FFCC00"
+        />
       ))}
     </svg>
   );

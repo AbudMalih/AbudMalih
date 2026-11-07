@@ -55,7 +55,7 @@ export const STORY: Record<Locale, StoryCopy> = {
     ],
     quote:
       "Wir verkaufen nicht nur Ware. Wir stehen für jeden Schritt, den sie geht.",
-    quoteBy: "Luna Trading GmbH · Köln",
+    quoteBy: "Luna Trading · Köln",
     visual: {
       globe: "Köln + China",
       carton: "Produkt + Marke",
@@ -92,7 +92,7 @@ export const STORY: Record<Locale, StoryCopy> = {
       },
     ],
     quote: "We do not just sell goods. We stand behind every step they take.",
-    quoteBy: "Luna Trading GmbH · Cologne",
+    quoteBy: "Luna Trading · Cologne",
     visual: {
       globe: "Cologne + China",
       carton: "Product + Brand",
@@ -129,7 +129,7 @@ export const STORY: Record<Locale, StoryCopy> = {
       },
     ],
     quote: "نحن لا نبيع البضاعة فقط. نحن نقف وراء كل خطوة تخطوها.",
-    quoteBy: "Luna Trading GmbH · كولونيا",
+    quoteBy: "Luna Trading · كولونيا",
     visual: {
       globe: "كولونيا + الصين",
       carton: "منتج + علامة",

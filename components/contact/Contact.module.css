@@ -24,8 +24,10 @@
 .typePlus,
 .successPlus {
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 
 /* ------------------------------------------------------------------ HERO */
@@ -43,10 +45,18 @@
   pointer-events: none;
   background:
     var(--lift, linear-gradient(transparent, transparent)),
-    repeating-linear-gradient(90deg, rgba(20, 21, 24, 0.016) 0 1px, transparent 1px 3px);
+    repeating-linear-gradient(
+      90deg,
+      rgba(20, 21, 24, 0.016) 0 1px,
+      transparent 1px 3px
+    );
 }
 .hero {
-  --lift: radial-gradient(90% 80% at 82% 0%, rgba(255, 254, 250, 0.7), transparent 70%);
+  --lift: radial-gradient(
+    90% 80% at 82% 0%,
+    rgba(255, 254, 250, 0.7),
+    transparent 70%
+  );
 }
 .heroCopy {
   display: grid;
@@ -430,8 +440,10 @@
   height: 9px;
   margin-top: -4.5px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
   opacity: 0;
   transform: rotate(-90deg) scale(0.4);
   transition:

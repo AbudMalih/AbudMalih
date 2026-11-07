@@ -20,7 +20,9 @@
   font-weight: 600;
   font-variation-settings: "wght" 600;
   letter-spacing: 0.04em;
-  transition: color var(--dur-2), background-color var(--dur-2);
+  transition:
+    color var(--dur-2),
+    background-color var(--dur-2);
 }
 .item:hover,
 .item:focus-visible {

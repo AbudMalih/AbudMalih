@@ -4,11 +4,28 @@ import type { BrandsCopy } from "./brands/types";
 import type { CompanyCopy } from "./company/types";
 import type { ContactCopy } from "./contact/types";
 
-export type CapabilityId = "sourcing" | "trade" | "product" | "brand" | "ecommerce" | "distribution";
-export type StepId = "sourcing" | "import" | "development" | "brand" | "ecommerce" | "distribution";
+export type CapabilityId =
+  | "sourcing"
+  | "trade"
+  | "product"
+  | "brand"
+  | "ecommerce"
+  | "distribution";
+export type StepId =
+  | "sourcing"
+  | "import"
+  | "development"
+  | "brand"
+  | "ecommerce"
+  | "distribution";
 
 export type Dictionary = {
-  meta: { title: string; description: string; ogDescription: string; titleTemplate: string };
+  meta: {
+    title: string;
+    description: string;
+    ogDescription: string;
+    titleTemplate: string;
+  };
   a11y: {
     skip: string;
     home: string;
@@ -22,14 +39,41 @@ export type Dictionary = {
     language: string;
     scroll: string;
   };
-  nav: { home: string; whatWeDo: string; import: string; brands: string; company: string; contact: string; cta: string };
+  nav: {
+    home: string;
+    whatWeDo: string;
+    import: string;
+    brands: string;
+    company: string;
+    contact: string;
+    cta: string;
+  };
   legal: { impressum: string; datenschutz: string };
   company: { place: string; city: string };
   chapters: Record<ChapterId, string>;
-  hero: { lines: [string, string, string]; route: string; routeSpan: string; index: string[]; eyebrow: string; lead: string; ctaImport: string };
+  hero: {
+    lines: [string, string, string];
+    route: string;
+    routeSpan: string;
+    index: string[];
+    eyebrow: string;
+    lead: string;
+    ctaImport: string;
+  };
   source: { tag: string; l1: string; l2: string; supporting: string[] };
-  transport: { tag: string; l1: string; l2: string; leadStrong: string; lead: string };
-  warehouse: { tag: string; l1: string; l2: string; labels: { germany: string; eu: string; ecommerce: string; b2b: string } };
+  transport: {
+    tag: string;
+    l1: string;
+    l2: string;
+    leadStrong: string;
+    lead: string;
+  };
+  warehouse: {
+    tag: string;
+    l1: string;
+    l2: string;
+    labels: { germany: string; eu: string; ecommerce: string; b2b: string };
+  };
   brands: { a1: string; a2: string; b1: string; b2: string };
   chain: {
     tag: string;
@@ -52,7 +96,13 @@ export type Dictionary = {
     destinations: [string, string];
     owned: string;
   };
-  luviscent: { owner: string; category: string; body: string; cta: string; allBrands: string };
+  luviscent: {
+    owner: string;
+    category: string;
+    body: string;
+    cta: string;
+    allBrands: string;
+  };
   ecosystem: {
     tag: string;
     h1: string;
@@ -65,16 +115,42 @@ export type Dictionary = {
     title: string;
     desc: string;
   };
-  closing: { lines: [string, string, string, string]; cta: string; sign: string };
-  footer: { statement: string; company: string; navigate: string; owned: string; legal: string; localTime: string; top: string; language: string; write: string };
+  closing: {
+    lines: [string, string, string, string];
+    cta: string;
+    sign: string;
+  };
+  footer: {
+    statement: string;
+    company: string;
+    navigate: string;
+    owned: string;
+    legal: string;
+    localTime: string;
+    top: string;
+    language: string;
+    write: string;
+  };
   pages: {
     back: string;
     prep: string;
     whatWeDo: { eyebrow: string; t1: string; t2: string; lead: string };
     brands: { eyebrow: string; t1: string; t2: string; lead: string };
-    company: { eyebrow: string; t1: string; t2: string; lead: string; items: string[] };
+    company: {
+      eyebrow: string;
+      t1: string;
+      t2: string;
+      lead: string;
+      items: string[];
+    };
     contact: { eyebrow: string; t1: string; t2: string; pending: string };
-    notFound: { eyebrow: string; lead: string; home: string; t1: string; t2: string };
+    notFound: {
+      eyebrow: string;
+      lead: string;
+      home: string;
+      t1: string;
+      t2: string;
+    };
     error: { title: string; lead: string; retry: string };
     legalEyebrow: string;
     legalNote: { impressum: string; datenschutz: string };

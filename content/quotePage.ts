@@ -1,5 +1,11 @@
 import type { Locale } from "@/content/i18n/config";
-import type { Mode, Container, Incoterm, Service, QuoteError } from "@/lib/quote/schema";
+import type {
+  Mode,
+  Container,
+  Incoterm,
+  Service,
+  QuoteError,
+} from "@/lib/quote/schema";
 
 /**
  * FREIGHT QUOTE page copy (DE / EN / AR). Honest by design: no promised
@@ -8,7 +14,14 @@ import type { Mode, Container, Incoterm, Service, QuoteError } from "@/lib/quote
 export type QuoteCopy = {
   meta: { title: string; description: string };
   nav: string;
-  hero: { eyebrow: string; h1a: string; h1b: string; lead: string; primary: string; secondary: string };
+  hero: {
+    eyebrow: string;
+    h1a: string;
+    h1b: string;
+    lead: string;
+    primary: string;
+    secondary: string;
+  };
   facts: { k: string; v: string }[];
   form: {
     tag: string;
@@ -59,14 +72,19 @@ export type QuoteCopy = {
     summary: string;
     summaryEmpty: string;
   };
-  next: { tag: string; title: string; steps: { title: string; text: string }[] };
+  next: {
+    tag: string;
+    title: string;
+    steps: { title: string; text: string }[];
+  };
   needs: { tag: string; title: string; items: string[] };
 };
 
 const de: QuoteCopy = {
   meta: {
     title: "Frachtangebot China – Deutschland anfragen",
-    description: "Angebot für Seefracht, Schienenfracht oder Luftfracht von China nach Deutschland anfragen: Abholung, Fracht, Zollabwicklung und Zustellung aus einer Hand.",
+    description:
+      "Angebot für Seefracht, Schienenfracht oder Luftfracht von China nach Deutschland anfragen: Abholung, Fracht, Zollabwicklung und Zustellung aus einer Hand.",
   },
   nav: "Angebot anfragen",
   hero: {
@@ -85,7 +103,8 @@ const de: QuoteCopy = {
   form: {
     tag: "Anfrage",
     title: "Sendung beschreiben.",
-    intro: "Je genauer die Angaben, desto genauer das Angebot. Felder ohne Kennzeichnung sind Pflicht.",
+    intro:
+      "Je genauer die Angaben, desto genauer das Angebot. Felder ohne Kennzeichnung sind Pflicht.",
     s1: "Sendung",
     s2: "Ware",
     s3: "Kontakt",
@@ -98,13 +117,25 @@ const de: QuoteCopy = {
       advice: { name: "Beratung", hint: "Noch offen" },
     },
     container: "Container",
-    containers: { c20: "20' Standard", c40: "40' Standard", c40hc: "40' High Cube", unsure: "Noch offen" },
+    containers: {
+      c20: "20' Standard",
+      c40: "40' Standard",
+      c40hc: "40' High Cube",
+      unsure: "Noch offen",
+    },
     origin: "Abholort in China",
     originPh: "z. B. Shenzhen, Ningbo, Yiwu",
     destination: "Ziel in Deutschland",
     destinationPh: "PLZ und Ort",
     incoterm: "Incoterm",
-    incoterms: { exw: "EXW", fob: "FOB", cif: "CIF", dap: "DAP", ddp: "DDP", unknown: "Weiß ich nicht" },
+    incoterms: {
+      exw: "EXW",
+      fob: "FOB",
+      cif: "CIF",
+      dap: "DAP",
+      ddp: "DDP",
+      unknown: "Weiß ich nicht",
+    },
     ready: "Ware bereit ab",
     goods: "Ware",
     goodsPh: "z. B. Haushaltswaren, Kartons auf Paletten",
@@ -113,7 +144,12 @@ const de: QuoteCopy = {
     volume: "Volumen (m³)",
     dangerous: "Gefahrgut (z. B. Akkus, Flüssigkeiten)",
     services: "Zusatzleistungen",
-    serviceNames: { customs: "Zollabwicklung", insurance: "Versicherung", warehouse: "Lager / Fulfilment", delivery: "Zustellung bis Empfänger" },
+    serviceNames: {
+      customs: "Zollabwicklung",
+      insurance: "Versicherung",
+      warehouse: "Lager / Fulfilment",
+      delivery: "Zustellung bis Empfänger",
+    },
     name: "Name",
     company: "Unternehmen",
     email: "E-Mail",
@@ -121,18 +157,28 @@ const de: QuoteCopy = {
     note: "Anmerkung",
     notePh: "Zieltermin, Verpackung, Besonderheiten",
     optional: "optional",
-    privacy: "Ihre Angaben verwenden wir ausschließlich, um Ihre Anfrage zu bearbeiten.",
+    privacy:
+      "Ihre Angaben verwenden wir ausschließlich, um Ihre Anfrage zu bearbeiten.",
     privacyLink: "Datenschutz",
     submit: "Angebot anfordern",
     sending: "Wird gesendet",
-    errors: { required: "Bitte ausfüllen.", email: "Bitte eine gültige E-Mail-Adresse angeben.", long: "Bitte kürzer fassen.", number: "Bitte eine Zahl angeben.", phone: "Bitte eine gültige Telefonnummer angeben.", summary: "Bitte prüfen Sie die markierten Felder." },
+    errors: {
+      required: "Bitte ausfüllen.",
+      email: "Bitte eine gültige E-Mail-Adresse angeben.",
+      long: "Bitte kürzer fassen.",
+      number: "Bitte eine Zahl angeben.",
+      phone: "Bitte eine gültige Telefonnummer angeben.",
+      summary: "Bitte prüfen Sie die markierten Felder.",
+    },
     failTitle: "Ihre Anfrage konnte nicht gesendet werden.",
     failText: "Bitte schreiben Sie uns direkt an",
-    mailHint: " Senden Sie sie mit einem Klick aus Ihrem E-Mail-Programm, alle Angaben sind bereits eingetragen.",
+    mailHint:
+      " Senden Sie sie mit einem Klick aus Ihrem E-Mail-Programm, alle Angaben sind bereits eingetragen.",
     mailSend: "Per E-Mail senden",
     rate: "Zu viele Anfragen in kurzer Zeit. Bitte versuchen Sie es später erneut.",
     okTitle: "Danke. Ihre Anfrage ist eingegangen.",
-    okText: "Wir prüfen Ihre Angaben und melden uns mit einem Angebot oder gezielten Rückfragen.",
+    okText:
+      "Wir prüfen Ihre Angaben und melden uns mit einem Angebot oder gezielten Rückfragen.",
     again: "Weitere Anfrage",
     summary: "Ihre Sendung",
     summaryEmpty: "Noch keine Angaben",
@@ -141,23 +187,43 @@ const de: QuoteCopy = {
     tag: "Ablauf",
     title: "Von der Anfrage bis zur Zustellung.",
     steps: [
-      { title: "Anfrage prüfen", text: "Wir prüfen Route, Ware und Termine und klären offene Punkte." },
-      { title: "Angebot erhalten", text: "Sie erhalten ein Angebot mit Transportart, Leistungen und Richtlaufzeit." },
-      { title: "Buchung & Abholung", text: "Nach Ihrer Freigabe buchen wir und organisieren die Abholung beim Lieferanten." },
-      { title: "Zoll & Zustellung", text: "Verzollung in der EU und Zustellung an Ihre Adresse oder Ihr Lager." },
+      {
+        title: "Anfrage prüfen",
+        text: "Wir prüfen Route, Ware und Termine und klären offene Punkte.",
+      },
+      {
+        title: "Angebot erhalten",
+        text: "Sie erhalten ein Angebot mit Transportart, Leistungen und Richtlaufzeit.",
+      },
+      {
+        title: "Buchung & Abholung",
+        text: "Nach Ihrer Freigabe buchen wir und organisieren die Abholung beim Lieferanten.",
+      },
+      {
+        title: "Zoll & Zustellung",
+        text: "Verzollung in der EU und Zustellung an Ihre Adresse oder Ihr Lager.",
+      },
     ],
   },
   needs: {
     tag: "Gut vorbereitet",
     title: "Was ein genaues Angebot braucht.",
-    items: ["Abholort und Ziel", "Art der Ware", "Anzahl, Gewicht und Volumen", "Gewünschter Termin", "Incoterm, falls bekannt", "Besonderheiten wie Gefahrgut"],
+    items: [
+      "Abholort und Ziel",
+      "Art der Ware",
+      "Anzahl, Gewicht und Volumen",
+      "Gewünschter Termin",
+      "Incoterm, falls bekannt",
+      "Besonderheiten wie Gefahrgut",
+    ],
   },
 };
 
 const en: QuoteCopy = {
   meta: {
     title: "Request a freight quote China – Germany",
-    description: "Request a quote for sea, rail or air freight from China to Germany: pickup, freight, customs clearance and delivery from one source.",
+    description:
+      "Request a quote for sea, rail or air freight from China to Germany: pickup, freight, customs clearance and delivery from one source.",
   },
   nav: "Get a quote",
   hero: {
@@ -176,7 +242,8 @@ const en: QuoteCopy = {
   form: {
     tag: "Request",
     title: "Describe your shipment.",
-    intro: "The more precise the details, the more precise the quote. Fields without a label are required.",
+    intro:
+      "The more precise the details, the more precise the quote. Fields without a label are required.",
     s1: "Shipment",
     s2: "Goods",
     s3: "Contact",
@@ -189,13 +256,25 @@ const en: QuoteCopy = {
       advice: { name: "Advice", hint: "Not sure yet" },
     },
     container: "Container",
-    containers: { c20: "20' standard", c40: "40' standard", c40hc: "40' high cube", unsure: "Not sure yet" },
+    containers: {
+      c20: "20' standard",
+      c40: "40' standard",
+      c40hc: "40' high cube",
+      unsure: "Not sure yet",
+    },
     origin: "Pickup location in China",
     originPh: "e.g. Shenzhen, Ningbo, Yiwu",
     destination: "Destination in Germany",
     destinationPh: "Postcode and city",
     incoterm: "Incoterm",
-    incoterms: { exw: "EXW", fob: "FOB", cif: "CIF", dap: "DAP", ddp: "DDP", unknown: "I don’t know" },
+    incoterms: {
+      exw: "EXW",
+      fob: "FOB",
+      cif: "CIF",
+      dap: "DAP",
+      ddp: "DDP",
+      unknown: "I don’t know",
+    },
     ready: "Goods ready from",
     goods: "Goods",
     goodsPh: "e.g. household goods, cartons on pallets",
@@ -204,7 +283,12 @@ const en: QuoteCopy = {
     volume: "Volume (m³)",
     dangerous: "Dangerous goods (e.g. batteries, liquids)",
     services: "Additional services",
-    serviceNames: { customs: "Customs clearance", insurance: "Insurance", warehouse: "Warehousing / fulfilment", delivery: "Delivery to consignee" },
+    serviceNames: {
+      customs: "Customs clearance",
+      insurance: "Insurance",
+      warehouse: "Warehousing / fulfilment",
+      delivery: "Delivery to consignee",
+    },
     name: "Name",
     company: "Company",
     email: "E-mail",
@@ -216,14 +300,23 @@ const en: QuoteCopy = {
     privacyLink: "Privacy policy",
     submit: "Request quote",
     sending: "Sending",
-    errors: { required: "Please fill in.", email: "Please enter a valid e-mail address.", long: "Please keep it shorter.", number: "Please enter a number.", phone: "Please enter a valid phone number.", summary: "Please check the marked fields." },
+    errors: {
+      required: "Please fill in.",
+      email: "Please enter a valid e-mail address.",
+      long: "Please keep it shorter.",
+      number: "Please enter a number.",
+      phone: "Please enter a valid phone number.",
+      summary: "Please check the marked fields.",
+    },
     failTitle: "Your request could not be sent.",
     failText: "Please write to us directly at",
-    mailHint: " Send it with one click from your e-mail app, all details are already filled in.",
+    mailHint:
+      " Send it with one click from your e-mail app, all details are already filled in.",
     mailSend: "Send by e-mail",
     rate: "Too many requests in a short time. Please try again later.",
     okTitle: "Thank you. Your request has arrived.",
-    okText: "We will review your details and come back with a quote or specific questions.",
+    okText:
+      "We will review your details and come back with a quote or specific questions.",
     again: "Another request",
     summary: "Your shipment",
     summaryEmpty: "No details yet",
@@ -232,23 +325,43 @@ const en: QuoteCopy = {
     tag: "Process",
     title: "From request to delivery.",
     steps: [
-      { title: "Review", text: "We check route, goods and dates and clarify open points." },
-      { title: "Your quote", text: "You receive a quote with mode, services and typical transit time." },
-      { title: "Booking & pickup", text: "Once you approve, we book and organise pickup at your supplier." },
-      { title: "Customs & delivery", text: "Customs clearance in the EU and delivery to your address or warehouse." },
+      {
+        title: "Review",
+        text: "We check route, goods and dates and clarify open points.",
+      },
+      {
+        title: "Your quote",
+        text: "You receive a quote with mode, services and typical transit time.",
+      },
+      {
+        title: "Booking & pickup",
+        text: "Once you approve, we book and organise pickup at your supplier.",
+      },
+      {
+        title: "Customs & delivery",
+        text: "Customs clearance in the EU and delivery to your address or warehouse.",
+      },
     ],
   },
   needs: {
     tag: "Well prepared",
     title: "What a precise quote needs.",
-    items: ["Pickup and destination", "Type of goods", "Number, weight and volume", "Desired date", "Incoterm, if known", "Specifics such as dangerous goods"],
+    items: [
+      "Pickup and destination",
+      "Type of goods",
+      "Number, weight and volume",
+      "Desired date",
+      "Incoterm, if known",
+      "Specifics such as dangerous goods",
+    ],
   },
 };
 
 const ar: QuoteCopy = {
   meta: {
     title: "اطلب عرض سعر للشحن من الصين إلى ألمانيا",
-    description: "اطلب عرض سعر للشحن البحري أو بالقطار أو الجوي من الصين إلى ألمانيا: الاستلام والشحن والتخليص الجمركي والتسليم من مصدر واحد.",
+    description:
+      "اطلب عرض سعر للشحن البحري أو بالقطار أو الجوي من الصين إلى ألمانيا: الاستلام والشحن والتخليص الجمركي والتسليم من مصدر واحد.",
   },
   nav: "اطلب عرض سعر",
   hero: {
@@ -267,7 +380,8 @@ const ar: QuoteCopy = {
   form: {
     tag: "الطلب",
     title: "صِف شحنتك.",
-    intro: "كلما كانت البيانات أدق، كان العرض أدق. الحقول غير المعلّمة إلزامية.",
+    intro:
+      "كلما كانت البيانات أدق، كان العرض أدق. الحقول غير المعلّمة إلزامية.",
     s1: "الشحنة",
     s2: "البضاعة",
     s3: "التواصل",
@@ -280,13 +394,25 @@ const ar: QuoteCopy = {
       advice: { name: "استشارة", hint: "لم أحدد بعد" },
     },
     container: "الحاوية",
-    containers: { c20: "‎20' عادية", c40: "‎40' عادية", c40hc: "‎40' عالية", unsure: "لم أحدد بعد" },
+    containers: {
+      c20: "‎20' عادية",
+      c40: "‎40' عادية",
+      c40hc: "‎40' عالية",
+      unsure: "لم أحدد بعد",
+    },
     origin: "مكان الاستلام في الصين",
     originPh: "مثل شنجن، نينغبو، ييوو",
     destination: "الوجهة في ألمانيا",
     destinationPh: "الرمز البريدي والمدينة",
     incoterm: "شروط التسليم (Incoterm)",
-    incoterms: { exw: "EXW", fob: "FOB", cif: "CIF", dap: "DAP", ddp: "DDP", unknown: "لا أعرف" },
+    incoterms: {
+      exw: "EXW",
+      fob: "FOB",
+      cif: "CIF",
+      dap: "DAP",
+      ddp: "DDP",
+      unknown: "لا أعرف",
+    },
     ready: "البضاعة جاهزة اعتبارًا من",
     goods: "البضاعة",
     goodsPh: "مثل أدوات منزلية، كراتين على منصات",
@@ -295,7 +421,12 @@ const ar: QuoteCopy = {
     volume: "الحجم (م³)",
     dangerous: "بضائع خطرة (مثل البطاريات والسوائل)",
     services: "خدمات إضافية",
-    serviceNames: { customs: "التخليص الجمركي", insurance: "التأمين", warehouse: "التخزين / التنفيذ", delivery: "التسليم حتى المستلم" },
+    serviceNames: {
+      customs: "التخليص الجمركي",
+      insurance: "التأمين",
+      warehouse: "التخزين / التنفيذ",
+      delivery: "التسليم حتى المستلم",
+    },
     name: "الاسم",
     company: "الشركة",
     email: "البريد الإلكتروني",
@@ -307,10 +438,18 @@ const ar: QuoteCopy = {
     privacyLink: "سياسة الخصوصية",
     submit: "اطلب العرض",
     sending: "جارٍ الإرسال",
-    errors: { required: "يرجى التعبئة.", email: "يرجى إدخال بريد إلكتروني صحيح.", long: "يرجى الاختصار.", number: "يرجى إدخال رقم.", phone: "يرجى إدخال رقم هاتف صحيح.", summary: "يرجى مراجعة الحقول المعلّمة." },
+    errors: {
+      required: "يرجى التعبئة.",
+      email: "يرجى إدخال بريد إلكتروني صحيح.",
+      long: "يرجى الاختصار.",
+      number: "يرجى إدخال رقم.",
+      phone: "يرجى إدخال رقم هاتف صحيح.",
+      summary: "يرجى مراجعة الحقول المعلّمة.",
+    },
     failTitle: "تعذّر إرسال طلبك.",
     failText: "يرجى مراسلتنا مباشرة على",
-    mailHint: " أرسله بنقرة واحدة من برنامج البريد لديك، جميع البيانات مُدخلة مسبقًا.",
+    mailHint:
+      " أرسله بنقرة واحدة من برنامج البريد لديك، جميع البيانات مُدخلة مسبقًا.",
     mailSend: "إرسال بالبريد الإلكتروني",
     rate: "طلبات كثيرة في وقت قصير. يرجى المحاولة لاحقًا.",
     okTitle: "شكرًا. وصلنا طلبك.",
@@ -323,16 +462,35 @@ const ar: QuoteCopy = {
     tag: "خطوات العمل",
     title: "من الطلب حتى التسليم.",
     steps: [
-      { title: "مراجعة الطلب", text: "نراجع المسار والبضاعة والمواعيد ونوضّح النقاط المفتوحة." },
-      { title: "استلام العرض", text: "تحصل على عرض يتضمن وسيلة النقل والخدمات ومدة العبور التقديرية." },
-      { title: "الحجز والاستلام", text: "بعد موافقتك نحجز وننظّم الاستلام من المورّد." },
-      { title: "الجمارك والتسليم", text: "التخليص الجمركي في الاتحاد الأوروبي والتسليم إلى عنوانك أو مستودعك." },
+      {
+        title: "مراجعة الطلب",
+        text: "نراجع المسار والبضاعة والمواعيد ونوضّح النقاط المفتوحة.",
+      },
+      {
+        title: "استلام العرض",
+        text: "تحصل على عرض يتضمن وسيلة النقل والخدمات ومدة العبور التقديرية.",
+      },
+      {
+        title: "الحجز والاستلام",
+        text: "بعد موافقتك نحجز وننظّم الاستلام من المورّد.",
+      },
+      {
+        title: "الجمارك والتسليم",
+        text: "التخليص الجمركي في الاتحاد الأوروبي والتسليم إلى عنوانك أو مستودعك.",
+      },
     ],
   },
   needs: {
     tag: "تحضير جيد",
     title: "ما يحتاجه عرض السعر الدقيق.",
-    items: ["مكان الاستلام والوجهة", "نوع البضاعة", "العدد والوزن والحجم", "الموعد المطلوب", "شروط التسليم إن كانت معروفة", "خصائص مثل البضائع الخطرة"],
+    items: [
+      "مكان الاستلام والوجهة",
+      "نوع البضاعة",
+      "العدد والوزن والحجم",
+      "الموعد المطلوب",
+      "شروط التسليم إن كانت معروفة",
+      "خصائص مثل البضائع الخطرة",
+    ],
   },
 };
 

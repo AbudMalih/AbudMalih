@@ -24,7 +24,8 @@ export default function MagneticLink({
   const ref = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
     const el = ref.current;
-    if (!el || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (!el || !window.matchMedia("(hover: hover) and (pointer: fine)").matches)
+      return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const xTo = gsap.quickTo(el, "x", { duration: 0.6, ease: "power3.out" });
     const yTo = gsap.quickTo(el, "y", { duration: 0.6, ease: "power3.out" });
@@ -49,7 +50,14 @@ export default function MagneticLink({
 
   if (external)
     return (
-      <a ref={ref} href={href} className={className} target="_blank" rel="noopener" data-cursor="link">
+      <a
+        ref={ref}
+        href={href}
+        className={className}
+        target="_blank"
+        rel="noopener"
+        data-cursor="link"
+      >
         {children}
       </a>
     );

@@ -16,7 +16,10 @@ export default function Cursor() {
   useEffect(() => {
     if (!document.documentElement.classList.contains("has-cursor")) return;
     const el = ref.current!;
-    let x = -100, y = -100, raf = 0, idle = 0;
+    let x = -100,
+      y = -100,
+      raf = 0,
+      idle = 0;
     const rest = () => (el.dataset.visible = "false");
     const arm = (ms: number) => {
       window.clearTimeout(idle);
@@ -35,7 +38,9 @@ export default function Cursor() {
       el.dataset.visible = "true";
       arm(1400);
       if (!raf) raf = requestAnimationFrame(paint);
-      const t = (e.target as Element | null)?.closest?.("a, button, [data-cursor], input, textarea, select, label");
+      const t = (e.target as Element | null)?.closest?.(
+        "a, button, [data-cursor], input, textarea, select, label",
+      );
       el.dataset.state = t
         ? t.matches("input, textarea")
           ? "text"
@@ -64,7 +69,13 @@ export default function Cursor() {
     };
   }, []);
   return (
-    <div ref={ref} className={styles.cursor} aria-hidden="true" data-visible="false" data-state="idle">
+    <div
+      ref={ref}
+      className={styles.cursor}
+      aria-hidden="true"
+      data-visible="false"
+      data-state="idle"
+    >
       <i />
       <i />
     </div>

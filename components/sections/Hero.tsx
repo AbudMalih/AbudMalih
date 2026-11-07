@@ -36,8 +36,16 @@ function HeroContent() {
     const play = () => {
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
       tl.to(q("[data-word]"), { yPercent: 0, duration: 1.1, stagger: 0.08 }, 0)
-        .to(q("[data-hrule]"), { scaleX: 1, duration: 1.0, ease: "expo.inOut" }, 0.1)
-        .to(q("[data-meta]"), { opacity: 1, duration: 0.7, stagger: 0.06, ease: "power2.out" }, 0.4);
+        .to(
+          q("[data-hrule]"),
+          { scaleX: 1, duration: 1.0, ease: "expo.inOut" },
+          0.1,
+        )
+        .to(
+          q("[data-meta]"),
+          { opacity: 1, duration: 0.7, stagger: 0.06, ease: "power2.out" },
+          0.4,
+        );
     };
     if (!document.documentElement.classList.contains("intro-pending")) play();
     else window.addEventListener("luna:intro", play, { once: true });
@@ -49,9 +57,13 @@ function HeroContent() {
   useChapterTimeline(
     scope,
     (tl, q) => {
-      tl.to(q("[data-block]"), { y: "-6vh", opacity: 0, duration: 0.26, ease: "power1.in" }, 0.04).to(q("[data-meta]"), { opacity: 0, duration: 0.1 }, 0.04);
+      tl.to(
+        q("[data-block]"),
+        { y: "-6vh", opacity: 0, duration: 0.26, ease: "power1.in" },
+        0.04,
+      ).to(q("[data-meta]"), { opacity: 0, duration: 0.1 }, 0.04);
     },
-    [locale]
+    [locale],
   );
 
   return (
@@ -68,13 +80,20 @@ function HeroContent() {
             return (
               <Fragment key={i}>
                 {i > 0 && " "}
-                <span className={`${styles.line} ${i === 1 ? styles.red : ""}`} data-line={i + 1}>
+                <span
+                  className={`${styles.line} ${i === 1 ? styles.red : ""}`}
+                  data-line={i + 1}
+                >
                   <span className="mask">
                     <span data-move>
                       <span data-word>
                         {last ? w.slice(0, -1) : w}
                         {last && (
-                          <span ref={period} className={styles.period} data-period>
+                          <span
+                            ref={period}
+                            className={styles.period}
+                            data-period
+                          >
                             .
                           </span>
                         )}
@@ -90,11 +109,19 @@ function HeroContent() {
           {dict.hero.lead}
         </p>
         <div className={`${styles.actions} interactive`} data-meta>
-          <Link href={href("/contact")} className={styles.btnRed} data-cursor="invert">
+          <Link
+            href={href("/contact")}
+            className={styles.btnRed}
+            data-cursor="invert"
+          >
             {dict.nav.cta}
             <span className={styles.badge} aria-hidden="true" />
           </Link>
-          <Link href={href("/import")} className={styles.btnGhost} data-cursor="link">
+          <Link
+            href={href("/import")}
+            className={styles.btnGhost}
+            data-cursor="link"
+          >
             {dict.hero.ctaImport}
           </Link>
         </div>
@@ -103,13 +130,15 @@ function HeroContent() {
       <div className={styles.foot}>
         <span className={styles.hrule} data-hrule />
         <p className={`t-label ${styles.metaL}`} data-meta>
-          {COMPANY.legalName} · {dict.company.place}
+          {COMPANY.name} · {dict.company.place}
         </p>
         <p className={`t-label t-mono ${styles.metaC}`} data-meta dir="ltr">
-          {formatLat(COMPANY.coordinates.lat)} &nbsp;{formatLon(COMPANY.coordinates.lon)}
+          {formatLat(COMPANY.coordinates.lat)} &nbsp;
+          {formatLon(COMPANY.coordinates.lon)}
         </p>
         <p className={`t-label ${styles.metaR}`} data-meta data-cine-only>
-          {dict.a11y.scroll} <span className={styles.scrollCue} aria-hidden="true" />
+          {dict.a11y.scroll}{" "}
+          <span className={styles.scrollCue} aria-hidden="true" />
         </p>
       </div>
 

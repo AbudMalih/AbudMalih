@@ -13,7 +13,8 @@
 .section {
   position: relative;
   background:
-    linear-gradient(180deg, var(--from) 0, var(--bg) var(--seam)) top / 100% var(--seam) no-repeat,
+    linear-gradient(180deg, var(--from) 0, var(--bg) var(--seam)) top / 100%
+      var(--seam) no-repeat,
     var(--bg);
   color: var(--ink);
   isolation: isolate;
@@ -103,7 +104,9 @@
 
 /* reveal (once, on entering the viewport) */
 .page [data-reveal] {
-  transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+  transition:
+    opacity 0.9s var(--ease-out),
+    transform 0.9s var(--ease-out);
   transition-delay: var(--d, 0ms);
 }
 :global(html.cine) .page [data-reveal]:not([data-in]) {
@@ -146,9 +149,21 @@
   z-index: -1;
   pointer-events: none;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px),
-    radial-gradient(80% 70% at 12% 6%, rgba(255, 255, 255, 0.5), transparent 70%),
-    radial-gradient(55% 45% at 86% 52%, rgba(96, 99, 106, 0.13), transparent 70%);
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(
+      80% 70% at 12% 6%,
+      rgba(255, 255, 255, 0.5),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 45% at 86% 52%,
+      rgba(96, 99, 106, 0.13),
+      transparent 70%
+    );
 }
 .heroInner {
   display: grid;
@@ -221,7 +236,9 @@
   margin-top: -4px;
   border: 1px solid var(--ink);
   background: var(--bg);
-  transition: background 0.4s var(--ease-out), border-color 0.4s;
+  transition:
+    background 0.4s var(--ease-out),
+    border-color 0.4s;
   transition-delay: calc(var(--i) * 260ms + 300ms);
 }
 .stopNode[data-first],
@@ -231,8 +248,10 @@
   margin-top: -7px;
   border: 0;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 2px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
+      no-repeat;
 }
 .stopNode[data-last] {
   background: var(--luna-red);
@@ -309,8 +328,13 @@
   animation: cue 2.4s var(--ease-in-out) infinite;
 }
 @keyframes cue {
-  0% { transform: translateY(0); }
-  70%, 100% { transform: translateY(350%); }
+  0% {
+    transform: translateY(0);
+  }
+  70%,
+  100% {
+    transform: translateY(350%);
+  }
 }
 
 /* -------------------------------------------------------- OPERATING MODEL */
@@ -362,7 +386,10 @@
   margin-top: -6px;
   background: var(--bg);
   border: 1px solid var(--line-strong);
-  transition: background 0.35s var(--ease-out), border-color 0.35s, transform 0.35s var(--ease-out);
+  transition:
+    background 0.35s var(--ease-out),
+    border-color 0.35s,
+    transform 0.35s var(--ease-out);
 }
 .mapItem[data-on] .mapNode {
   background: var(--luna-red);
@@ -440,7 +467,10 @@
   margin-inline-start: -5px;
   border: 1px solid var(--line-strong);
   background: var(--bg);
-  transition: background 0.35s, border-color 0.35s, transform 0.35s var(--ease-out);
+  transition:
+    background 0.35s,
+    border-color 0.35s,
+    transform 0.35s var(--ease-out);
 }
 .threadNode[data-on] {
   background: var(--luna-red);
@@ -503,8 +533,10 @@
   width: 9px;
   height: 9px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100%
+      no-repeat;
 }
 
 /* chapter grounds: small material differences inside the tone */
@@ -516,14 +548,24 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(70% 60% at 85% 20%, rgba(200, 203, 210, 0.07), transparent 70%);
+  background: radial-gradient(
+    70% 60% at 85% 20%,
+    rgba(200, 203, 210, 0.07),
+    transparent 70%
+  );
 }
 .c_development::after {
   /* industrial: a faint technical grid */
   background:
-    linear-gradient(rgba(242, 242, 240, 0.035) 1px, transparent 1px) 0 0 / 48px 48px,
-    linear-gradient(90deg, rgba(242, 242, 240, 0.035) 1px, transparent 1px) 0 0 / 48px 48px,
-    radial-gradient(70% 60% at 80% 30%, rgba(200, 203, 210, 0.06), transparent 70%);
+    linear-gradient(rgba(242, 242, 240, 0.035) 1px, transparent 1px) 0 0 / 48px
+      48px,
+    linear-gradient(90deg, rgba(242, 242, 240, 0.035) 1px, transparent 1px) 0
+      0 / 48px 48px,
+    radial-gradient(
+      70% 60% at 80% 30%,
+      rgba(200, 203, 210, 0.06),
+      transparent 70%
+    );
   mask-image: linear-gradient(180deg, transparent 0, #000 var(--seam));
 }
 .c_brand::after {
@@ -534,8 +576,17 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(80% 70% at 14% 10%, rgba(255, 253, 248, 0.55), transparent 70%),
-    linear-gradient(112deg, transparent 38%, rgba(255, 252, 245, 0.2) 50%, transparent 62%);
+    radial-gradient(
+      80% 70% at 14% 10%,
+      rgba(255, 253, 248, 0.55),
+      transparent 70%
+    ),
+    linear-gradient(
+      112deg,
+      transparent 38%,
+      rgba(255, 252, 245, 0.2) 50%,
+      transparent 62%
+    );
 }
 .c_ecommerce::after {
   content: "";
@@ -667,8 +718,12 @@
   animation: parcel 3.2s var(--ease-in-out) 0.6s both;
 }
 @keyframes parcel {
-  0% { transform: translate(40px, 110px); }
-  100% { transform: translate(300px, 110px); }
+  0% {
+    transform: translate(40px, 110px);
+  }
+  100% {
+    transform: translate(300px, 110px);
+  }
 }
 :global(html.static) .parcel,
 :global(html.static) .figure[data-in] .parcel {
@@ -763,8 +818,10 @@
   width: 8px;
   height: 8px;
   background:
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px no-repeat,
-    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100% no-repeat;
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 100% 1.5px
+      no-repeat,
+    linear-gradient(var(--luna-red), var(--luna-red)) center / 1.5px 100%
+      no-repeat;
 }
 .groupName {
   color: var(--soft);
@@ -835,7 +892,9 @@
   background: var(--bg);
   position: relative;
   z-index: 1;
-  transition: background 0.4s var(--ease-out), border-color 0.4s;
+  transition:
+    background 0.4s var(--ease-out),
+    border-color 0.4s;
   transition-delay: calc(var(--i) * 320ms + 300ms);
 }
 .complete[data-in] .completeNode,
@@ -877,10 +936,24 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(90% 80% at 22% 100%, rgba(33, 72, 59, 0.8), transparent 70%),
-    radial-gradient(60% 50% at 24% 30%, rgba(241, 236, 226, 0.06), transparent 70%);
+    radial-gradient(
+      90% 80% at 22% 100%,
+      rgba(33, 72, 59, 0.8),
+      transparent 70%
+    ),
+    radial-gradient(
+      60% 50% at 24% 30%,
+      rgba(241, 236, 226, 0.06),
+      transparent 70%
+    );
   /* fades out at both seams so the next ground takes over without an edge */
-  mask-image: linear-gradient(180deg, transparent 0, #000 var(--seam), #000 calc(100% - var(--seam)), transparent 100%);
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    #000 var(--seam),
+    #000 calc(100% - var(--seam)),
+    transparent 100%
+  );
 }
 .lvGrid {
   display: grid;
@@ -905,15 +978,29 @@
   position: absolute;
   inset: -6% -10% auto;
   height: 80%;
-  background: radial-gradient(40% 30% at 50% 6%, rgba(246, 238, 220, 0.5), transparent 80%),
-    radial-gradient(60% 80% at 50% 0%, rgba(232, 214, 176, 0.2), transparent 78%);
+  background:
+    radial-gradient(
+      40% 30% at 50% 6%,
+      rgba(246, 238, 220, 0.5),
+      transparent 80%
+    ),
+    radial-gradient(
+      60% 80% at 50% 0%,
+      rgba(232, 214, 176, 0.2),
+      transparent 78%
+    );
   mix-blend-mode: screen;
 }
 .lvLedge {
   position: absolute;
   inset: auto 0 0;
   height: 11%;
-  background: linear-gradient(180deg, rgba(232, 222, 198, 0.4) 0 1px, rgba(196, 184, 156, 0.14) 1px, rgba(6, 16, 12, 0.5) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(232, 222, 198, 0.4) 0 1px,
+    rgba(196, 184, 156, 0.14) 1px,
+    rgba(6, 16, 12, 0.5) 100%
+  );
 }
 .lvCopy {
   grid-column: 7 / span 5;
@@ -964,7 +1051,9 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--lv-ivory);
-  transition: background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+  transition:
+    background-color 0.3s var(--ease-out),
+    border-color 0.3s var(--ease-out);
 }
 .lvCta:hover,
 .lvCta:focus-visible {
@@ -1024,8 +1113,16 @@
   z-index: -1;
   pointer-events: none;
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 4px),
-    radial-gradient(70% 60% at 12% 10%, rgba(214, 217, 222, 0.1), transparent 70%);
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.018) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(
+      70% 60% at 12% 10%,
+      rgba(214, 217, 222, 0.1),
+      transparent 70%
+    );
   mask-image: linear-gradient(180deg, transparent 0, #000 var(--seam));
 }
 .ctaInner {
@@ -1080,7 +1177,10 @@
   font-variation-settings: "wght" 550;
   letter-spacing: 0.005em;
   box-shadow: 0 14px 34px -16px rgba(20, 21, 24, 0.55);
-  transition: background-color 0.25s var(--ease-out), transform 0.25s var(--ease-out), box-shadow 0.25s var(--ease-out);
+  transition:
+    background-color 0.25s var(--ease-out),
+    transform 0.25s var(--ease-out),
+    box-shadow 0.25s var(--ease-out);
 }
 .ctaPlus {
   position: relative;
