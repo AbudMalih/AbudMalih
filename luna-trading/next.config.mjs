@@ -50,6 +50,9 @@ const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: path.dirname(fileURLToPath(import.meta.url)),
   poweredByHeader: false,
+  // Linting is a development step (npm run lint), not part of the production
+  // build: the deployed install carries no ESLint toolchain at all.
+  eslint: { ignoreDuringBuilds: true },
   images: {
     // Production photography / renders will be served through next/image.
     formats: ["image/avif", "image/webp"],
