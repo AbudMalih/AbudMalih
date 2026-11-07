@@ -424,10 +424,11 @@ def main() -> None:
 def save(rows_out: list[Row], out_dir: str, label: str) -> None:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    (out / f"hannover-{label}.json").write_text(
+    prefix = (CITY or "hannover").lower()
+    (out / f"{prefix}-{label}.json").write_text(
         json.dumps([{"size": r.size, "method": r.method, "seconds": r.seconds, **r.ev.__dict__, **r.extra} for r in rows_out], indent=1)
     )
-    (out / f"hannover-{label}.md").write_text(summarize(rows_out) + "\n")
+    (out / f"{prefix}-{label}.md").write_text(summarize(rows_out) + "\n")
 
 
 if __name__ == "__main__":

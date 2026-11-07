@@ -175,9 +175,50 @@ the evaluation). Imported order = shuffled manifest order.
 - Not proven optimal (no exact lower bound for 80–200 stops). OR-Tools alone with 30 s is
   between 0.6 % longer (80 stops) and 2.3 % shorter (200 stops) than the 10 s hybrid.
 
+### C. Germany-wide graph: Hannover, Kassel, Bremen, Suhl (built and tested locally 2026-11-07)
+Graph: OSM Germany extract 2026-11-06 (GWDG mirror of Geofabrik, md5 `788ca110…`), OSRM v26.4.1
+CH, car profile – the same binaries as the staging image. Not deployed anywhere yet.
+
+| Step | Wall time | Peak memory | Output |
+|---|---:|---:|---|
+| extract (2 threads) | 32 min | 13.9 GB RSS + 5.5 GB swap (OOM-killed twice without swap) | |
+| contract (4 threads) | 57 min | 8.0 GB | graph 7.5 GB on disk |
+| serve, default (`osrm-routed`) | load 15 s | 4.8 GB RSS | |
+| serve, `--mmap` | load 1 s | 0.8 GB idle, ~3 GB after a Flensburg–Konstanz route (file-backed, evictable) | |
+| archive for `deploy.sh --osrm-import` | 3 min | | 3.6 GB `.tar.gz` |
+
+City check (`deploy/staging/osrm/check.sh`): Suhl, Hannover, Kassel, Bremen, Cologne and
+Suhl → Hannover (288.9 km, 207 min) all pass; München, Berlin and Flensburg → Konstanz
+(987 km) route too. 100 × 100 matrices in all four cities: 0 zero-cost legs between different
+addresses, 0 unroutable pairs, max snap 35–137 m, 0.12–0.19 s. Points outside Germany (Paris,
+Vienna) snap 190–300 km away and are refused by the API (`OSRM_MAX_SNAP_METERS=1000` →
+`routing_out_of_coverage`), never routed in a straight line.
+
+Delivery tours (`BENCH_PICKUPS=0`), 3 tours per size, stops drawn from the **whole city**
+(wider than one driver's district, so absolute km are high). Full tables:
+`docs/benchmarks/{hannover,kassel,bremen,suhl}-germany-graph-2026-11-07.md`.
+
+| City | Stops | Import order km | TURVIO km | TURVIO drive min | Saving | vs previous solver | Late / dropped | Runtime |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Hannover | 80 | 845.8 | 171.8 | 330 | −73 % | −13.1 % drive | 0 / 0 | 9.7 s |
+| Hannover | 100 | 1140.9 | 182.8 | 365 | −77 % | −12.4 % | 0 / 0 | 9.2 s |
+| Kassel | 80 | 483.1 | 95.1 | 200 | −76 % | −16.1 % | 0 / 0 | 9.7 s |
+| Kassel | 100 | 587.0 | 115.0 | 243 | −76 % | −18.3 % | 0 / 0 | 9.2 s |
+| Bremen | 80 | 627.3 | 131.5 | 257 | −74 % | −16.4 % | 0 / 0 | 9.6 s |
+| Bremen | 100 | 808.3 | 142.3 | 292 | −77 % | −18.0 % | 0 / 0 | 9.3 s |
+| Suhl | 80 | 339.8 | 69.1 | 160 | −74 % | −15.8 % | 0 / 0 | 9.5 s |
+| Suhl | 100 | 420.4 | 74.9 | 176 | −77 % | −19.5 % | 0 / 0 | 9.9 s |
+
+TURVIO drives 0–2.3 % less than plain VROOM everywhere. "Nearest neighbour + 2-opt" is
+between 2.4 % longer and 5.6 % shorter, but it ignores deadlines and is late at 3–6 stops per
+tour, so it is not a valid alternative. Optimizer process peak memory:
+154–156 MB for the whole run of 100-stop tours.
+
 ## 5. Limits (stated, not hidden)
 - **No traffic**: OSRM uses static road speeds. Rush-hour delays are not in the travel times.
-- **Coverage**: Region Hannover only. Stops outside are refused with a clear message.
+- **Coverage**: staging still serves Region Hannover only. The Germany graph (section 4C) is
+  built and tested but not imported – importing needs the owner's approval and a server with
+  ≥ 6 GB free RAM (or `OSRM_MMAP=true`) and ~12 GB free disk during the switch.
 - **Not tested** with real JARBOU tours yet (addresses are real, the tours are synthetic).
 - Grouping: identical-building stops are always consecutive (0 split in all TURVIO runs);
   street re-entries at 150–200 stops are 5–9 per tour (district boundaries, deadlines).
@@ -193,10 +234,9 @@ the evaluation). Imported order = shuffled manifest order.
 | Google Route Optimization API | Paid per optimized shipment (check current Google pricing); data processed by Google | Traffic-aware, but recurring cost per stop and personal data (addresses) leave the EU/own systems – not recommended for the core |
 
 ## 7. Decisions that need the owner (no cost incurred so far)
-1. **Road data beyond Region Hannover** (Lower Saxony or Germany): self-hosted OSRM for Germany
-   needs a server with substantially more RAM than the planned 4 GB staging server (CH
-   preprocessing estimate in `deploy/staging/osrm/prepare.sh`: ~16 GB). This is a paid
-   infrastructure change – please approve a size/provider (quote needed).
+1. **Road data for Germany**: the graph is prepared off-server (measured ~20 GB RAM incl. swap
+   for extract), so the staging server only has to *serve* it (4.8 GB RAM, or <1 GB idle with
+   `OSRM_MMAP=true`). Import with `deploy.sh --osrm-import FILE SHA256` needs approval.
 2. **Traffic-aware travel times**: only via a paid data source (e.g. a commercial traffic API)
    or historical speed profiles. Not started.
 3. **Time budget for very large tours**: 10 s is the current limit; 150–200 stops benefit from
