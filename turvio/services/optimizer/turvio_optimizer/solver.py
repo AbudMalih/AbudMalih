@@ -26,6 +26,7 @@ very good solution; it is NOT proven optimal. Violations are listed, never hidde
 
 from __future__ import annotations
 
+import os
 import time
 
 from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -45,6 +46,52 @@ PRIORITY_LATE_COST = 1_000
 SPAN_COST = 1
 SLACK_COST = 0
 ARC_SCALE = 1  # driving-cost multiplier relative to the span/slack weights
+
+
+# Warm start (bench/hannover.py): VROOM (BSD-2, pyvroom) builds the first routes on the same
+# matrix in about a second; OR-Tools continues from there with the full TURVIO model (soft
+# deadlines, overtime, pairs). "none" = OR-Tools construction only. Falls back silently when
+# pyvroom is missing or its routes are not a valid start for the OR-Tools model.
+WARM_START = os.environ.get("TURVIO_WARM_START", "none")
+
+
+def _vroom_routes(req: OptimizeRequest, dur: list[list[int]], stop_offset: int) -> list[list[int]] | None:
+    """Initial routes (stop node numbers per vehicle) from VROOM, or None."""
+    if req.pickup_deliveries:
+        return None
+    try:
+        import vroom  # type: ignore[import-not-found]
+    except ImportError:
+        return None
+    p = vroom.Input()
+    p.set_durations_matrix(profile="car", matrix_input=dur)
+    soft_shift = req.overtime_penalty_per_minute is not None
+    vehicles = []
+    for i, v in enumerate(req.vehicles):
+        start = v.shift_start * 60
+        end = DAY_SECONDS * 2 - 1 if soft_shift else start + v.max_shift_minutes * 60
+        kw = {"capacity": [v.capacity]} if v.capacity is not None else {}
+        vehicles.append(vroom.Vehicle(i + 1, start=2 * i, end=2 * i + 1, time_window=vroom.TimeWindow(start, end), **kw))
+    p.add_vehicle(vehicles)
+    jobs = []
+    for k, s in enumerate(req.stops):
+        kw: dict = {}
+        if s.time_window:
+            kw["time_windows"] = [vroom.TimeWindow(s.time_window.start * 60, s.time_window.end * 60)]
+        if any(v.capacity is not None for v in req.vehicles):
+            kw["delivery"] = [s.demand]
+        jobs.append(vroom.Job(k + 1, location=stop_offset + k, default_service=s.service_seconds, priority=100 if s.priority else 0, **kw))
+    p.add_job(jobs)
+    try:
+        sol = p.solve(exploration_level=5, nb_threads=4)
+    except Exception:
+        return None
+    r = sol.routes
+    routes: list[list[int]] = [[] for _ in req.vehicles]
+    for vid, typ, jid in zip(r["vehicle_id"].tolist(), r["type"].tolist(), r["id"].tolist()):
+        if typ == "job":
+            routes[int(vid) - 1].append(stop_offset + int(jid) - 1)
+    return routes
 
 
 def solve(req: OptimizeRequest, matrix: Matrix | None = None) -> OptimizeResponse:
@@ -149,7 +196,18 @@ def solve(req: OptimizeRequest, matrix: Matrix | None = None) -> OptimizeRespons
     params.local_search_metaheuristic = routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
     params.time_limit.seconds = req.time_limit_seconds
 
-    solution = routing.SolveWithParameters(params)
+    solution = None
+    if WARM_START == "vroom":
+        t0 = time.monotonic()
+        initial = _vroom_routes(req, dur, stop_offset)
+        if initial is not None:
+            params.time_limit.seconds = max(1, int(req.time_limit_seconds - (time.monotonic() - t0)))
+            routing.CloseModelWithParameters(params)
+            start_assignment = routing.ReadAssignmentFromRoutes([[manager.NodeToIndex(n) for n in r] for r in initial], True)
+            if start_assignment is not None:
+                solution = routing.SolveFromAssignmentWithParameters(start_assignment, params)
+    if solution is None:
+        solution = routing.SolveWithParameters(params)
     if solution is None:
         return OptimizeResponse(
             routes=[],
@@ -183,7 +241,7 @@ def solve(req: OptimizeRequest, matrix: Matrix | None = None) -> OptimizeRespons
                 assigned.add(stop.id)
                 late = max(0, service_start - stop.time_window.end * 60) / 60 if stop.time_window else 0
                 visits.append(
-                    Visit(stop_id=stop.id, arrival_minute=arrival / 60, service_start_minute=service_start / 60, late_minutes=round(late, 1))
+                    Visit(stop_id=stop.id, arrival_minute=service_start / 60, travel_arrival_minute=arrival / 60, late_minutes=round(late, 1))
                 )
                 service_total += stop.service_seconds
                 if late > 0:

@@ -88,9 +88,10 @@ class OptimizeRequest(_Model):
 
 class Visit(_Model):
     stop_id: str
-    # Arrival at the stop; service starts at max(arrival, window start).
+    # Planned service start (after waiting for the window to open) – unchanged meaning.
     arrival_minute: float
-    service_start_minute: Optional[float] = None
+    # When the vehicle physically gets there (≤ arrival_minute; earlier = waiting).
+    travel_arrival_minute: Optional[float] = None
     # Minutes after the stop's deadline (0 when on time or no deadline).
     late_minutes: float = 0
 

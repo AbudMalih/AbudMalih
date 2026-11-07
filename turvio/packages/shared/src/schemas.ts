@@ -306,10 +306,10 @@ export type OptimizeRequest = z.input<typeof OptimizeRequest>;
 
 export const OptimizedVisit = z.object({
   stopId: z.string(),
-  /** Estimated arrival in minutes since midnight. */
+  /** Planned service start in minutes since midnight (after any waiting for the window). */
   arrivalMinute: z.number(),
-  /** Service start (after waiting for the window to open). */
-  serviceStartMinute: z.number().nullable().optional(),
+  /** When the vehicle physically arrives (earlier than arrivalMinute = waiting). */
+  travelArrivalMinute: z.number().nullable().optional(),
   /** Minutes after the stop's deadline; 0 when on time. */
   lateMinutes: z.number().optional(),
 });

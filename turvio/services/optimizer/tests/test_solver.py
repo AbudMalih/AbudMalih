@@ -195,3 +195,21 @@ def test_http_api_rejects_invalid_input():
         "stops": [{"id": "a", "location": {"lat": 95, "lng": 11}, "serviceSeconds": 60}],
     }
     assert client.post("/optimize", json=body).status_code == 422
+
+
+def test_vroom_warm_start_gives_a_complete_valid_route(monkeypatch):
+    import pytest
+
+    pytest.importorskip("vroom")
+    from turvio_optimizer import solver as S
+
+    monkeypatch.setattr(S, "WARM_START", "vroom")
+    stops = [{"id": i, "location": {"lat": la, "lng": ln}, "serviceSeconds": 120} for i, la, ln in ERFURT]
+    stops[1]["timeWindow"] = {"start": 480, "end": 500}
+    res = S.solve(req(stops))
+    assert sorted(visit_ids(res)) == sorted(i for i, *_ in ERFURT)
+    assert res.violations == []
+    # Pairs are not passed to VROOM: the model must still honour them (plain OR-Tools path).
+    res = S.solve(req(stops, pickupDeliveries=[{"pickupId": "e", "deliveryId": "d"}]))
+    order = visit_ids(res)
+    assert order.index("e") < order.index("d")
