@@ -38,6 +38,19 @@ AREAS = [
 ]
 # Depot: a position in the Hannover-Lahe commercial area (illustrative, not a real company site).
 DEPOT = GeoPoint(lat=52.4117, lng=9.8296)
+# BENCH_CITY=Kassel|Bremen|Suhl|Hannover: whole-city tours from a city address file
+# (TURVIO_CITY_ADDRESSES, columns area;street;house_number;postcode;city;lat;lng) and a depot in
+# a commercial area of that city (illustrative positions, not company sites).
+CITY = os.environ.get("BENCH_CITY")
+CITY_DEPOTS = {
+    "Hannover": GeoPoint(lat=52.4117, lng=9.8296),  # Lahe
+    "Kassel": GeoPoint(lat=51.2873, lng=9.4720),  # Waldau industrial area
+    "Bremen": GeoPoint(lat=53.0580, lng=8.8640),  # Hemelingen
+    "Suhl": GeoPoint(lat=50.6290, lng=10.7140),  # Suhl-Nord
+}
+if CITY:
+    DEPOT = CITY_DEPOTS[CITY]
+    ADDRESSES = os.environ.get("TURVIO_CITY_ADDRESSES", "/opt/turvio-de/city-addresses.csv")
 SHIFT_START = 8 * 60  # 08:00
 SERVICE_BASE_S = 90
 SERVICE_PER_EXTRA_PARCEL_S = 30
@@ -63,14 +76,15 @@ class BStop:
 
 def load_addresses() -> list[dict]:
     with open(ADDRESSES, encoding="utf-8") as f:
-        return [r for r in csv.DictReader(f, delimiter=";")]
+        rows = [r for r in csv.DictReader(f, delimiter=";")]
+    return [r for r in rows if r.get("area") == CITY] if CITY else rows
 
 
 def make_tour(rows: list[dict], n: int, seed: int) -> list[BStop]:
     """n stops with realistic structure: same-building groups, express deadlines, pickups."""
     rnd = random.Random(seed)
     area = AREAS[0] if n <= 80 else AREAS[1] if n <= 120 else AREAS[2]
-    pool = [r for r in rows if r["postcode"] in area]
+    pool = rows if CITY else [r for r in rows if r["postcode"] in area]
     stops: list[BStop] = []
     used: set[tuple[str, str]] = set()
     while len(stops) < n:
