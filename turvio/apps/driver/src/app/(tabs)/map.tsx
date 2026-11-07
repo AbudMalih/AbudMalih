@@ -1,6 +1,6 @@
 import { isOpen } from "@turvio/shared";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NavigateButton } from "../../components/NavigateButton";
@@ -8,7 +8,7 @@ import { StopCard } from "../../components/StopCard";
 import { TourMap } from "../../components/TourMap";
 import { Banner, EmptyState, IconButton } from "../../components/ui";
 import { useT } from "../../lib/i18n";
-import { currentPosition } from "../../lib/location";
+import { currentPosition, locationPermission } from "../../lib/location";
 import { useMyTour } from "../../store/useMyTour";
 import { radii, space, type as ty, useTheme } from "../../theme";
 
@@ -22,6 +22,10 @@ export default function MapScreen() {
   const [selected, setSelected] = useState<string | null>(null);
   const next = stops.find((s) => isOpen(s.status));
   const focus = stops.find((s) => s.id === selected) ?? next;
+  // Already allowed (e.g. for optimizing from here): show the blue dot right away, never prompt here.
+  useEffect(() => {
+    void locationPermission().then((p) => p === "granted" && setShowMe(true));
+  }, []);
 
   if (!tour) return <EmptyState icon="map-outline" title={t("home.noRoutes")} text={t("home.noRoutesText")} />;
 

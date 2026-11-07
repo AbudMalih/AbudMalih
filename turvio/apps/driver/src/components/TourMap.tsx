@@ -70,6 +70,13 @@ function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingP
   const t = useT();
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  // Stops that arrive after the first render (sync, tour switch, first geocode) – fit them once.
+  useEffect(() => {
+    if (initial && ready) {
+      mapRef.current?.animateToRegion(initial, 300);
+      setRegion(initial);
+    }
+  }, [initial, ready]);
   useEffect(() => {
     if (ready) return;
     const timer = setTimeout(() => setFailed(true), MAP_READY_TIMEOUT_MS);
@@ -118,7 +125,9 @@ function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingP
       )}
       {items.map((m) =>
         m.kind === "single" ? (
-          <StopMarker key={m.item.id} stop={m.item} index={indexOf.get(m.item.id) ?? 0} current={m.item.id === currentStopId} c={c} onPress={onStopPress} />
+          // tracksViewChanges is off, so Android keeps the first bitmap: the key changes with
+          // everything the pin shows (number after re-optimizing, done/failed, current stop).
+          <StopMarker key={`${m.item.id}:${m.item.status}:${indexOf.get(m.item.id) ?? 0}:${m.item.id === currentStopId ? 1 : 0}`} stop={m.item} index={indexOf.get(m.item.id) ?? 0} current={m.item.id === currentStopId} c={c} onPress={onStopPress} />
         ) : (
           <Marker
             key={`c-${m.id}`}

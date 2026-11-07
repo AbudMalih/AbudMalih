@@ -62,6 +62,7 @@ const config: ExpoConfig = {
   },
   web: { favicon: "./assets/favicon.png" },
   plugins: [
+    "./plugins/withReleaseSigning",
     "expo-router",
     ["expo-splash-screen", { image: "./assets/splash-icon.png", imageWidth: 160, resizeMode: "contain", backgroundColor: "#FFFFFF", dark: { backgroundColor: "#060B16" } }],
     "expo-system-ui",
