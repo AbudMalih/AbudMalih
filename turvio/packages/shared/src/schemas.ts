@@ -291,6 +291,12 @@ export const OptimizeRequest = z
     stops: z.array(OptimizeStop).min(1).max(2000),
     /** Solver time limit in seconds. */
     timeLimitSeconds: z.number().int().min(1).max(120).default(10),
+    /** Pickup must precede its delivery on the same vehicle. */
+    pickupDeliveries: z.array(z.object({ pickupId: z.string().min(1), deliveryId: z.string().min(1) })).max(1000).optional(),
+    /** true: a deadline that cannot be met drops the stop; default: served late and reported. */
+    strictTimeWindows: z.boolean().optional(),
+    /** Set: the shift may be exceeded at this cost per minute (reported); unset: hard shift limit. */
+    overtimePenaltyPerMinute: z.number().int().min(0).max(100_000).optional(),
   })
   .refine((r) => new Set(r.stops.map((s) => s.id)).size === r.stops.length, {
     message: "Stop ids must be unique",
@@ -302,7 +308,20 @@ export const OptimizedVisit = z.object({
   stopId: z.string(),
   /** Estimated arrival in minutes since midnight. */
   arrivalMinute: z.number(),
+  /** Service start (after waiting for the window to open). */
+  serviceStartMinute: z.number().nullable().optional(),
+  /** Minutes after the stop's deadline; 0 when on time. */
+  lateMinutes: z.number().optional(),
 });
+
+/** Why a plan is not fully within its constraints. */
+export const OptimizeViolation = z.object({
+  kind: z.enum(["late", "overtime", "unassigned_unreachable", "unassigned_infeasible", "pair_split"]),
+  stopId: z.string().nullable().optional(),
+  vehicleId: z.string().nullable().optional(),
+  minutes: z.number().nullable().optional(),
+});
+export type OptimizeViolation = z.infer<typeof OptimizeViolation>;
 
 export const OptimizeResponse = z.object({
   routes: z.array(
@@ -311,6 +330,12 @@ export const OptimizeResponse = z.object({
       visits: z.array(OptimizedVisit),
       distanceMeters: z.number().min(0),
       durationSeconds: z.number().min(0),
+      driveSeconds: z.number().min(0).optional(),
+      serviceSeconds: z.number().min(0).optional(),
+      waitSeconds: z.number().min(0).optional(),
+      startMinute: z.number().nullable().optional(),
+      endMinute: z.number().nullable().optional(),
+      overtimeMinutes: z.number().min(0).optional(),
     }),
   ),
   unassignedStopIds: z.array(z.string()),
@@ -321,5 +346,7 @@ export const OptimizeResponse = z.object({
   /** Solver status; "feasible" means a valid, not proven-optimal, solution. */
   status: z.enum(["feasible", "no_solution"]),
   engine: z.string(),
+  violations: z.array(OptimizeViolation).optional(),
+  solveSeconds: z.number().nullable().optional(),
 });
 export type OptimizeResponse = z.infer<typeof OptimizeResponse>;

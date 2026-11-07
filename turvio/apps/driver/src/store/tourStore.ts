@@ -461,7 +461,18 @@ export const useTourStore = create<TourState>()(
               const pendingForTour = get().outbox.some((o) => "tourId" in o && o.tourId === tourId);
               if (!pendingForTour) {
                 try {
-                  const r = await auth().request<{ stops: Stop[]; result: { matrixSource: "osrm" | "haversine_estimate"; unassignedStopIds: string[]; unlocatedStopIds?: string[]; lockedStopIds?: string[]; distanceMeters?: number; durationSeconds?: number } }>(
+                  const r = await auth().request<{
+                    stops: Stop[];
+                    result: {
+                      matrixSource: "osrm" | "haversine_estimate";
+                      unassignedStopIds: string[];
+                      unlocatedStopIds?: string[];
+                      lockedStopIds?: string[];
+                      distanceMeters?: number;
+                      durationSeconds?: number;
+                      violations?: { kind: string; stopId?: string | null; minutes?: number | null }[];
+                    };
+                  }>(
                     "POST",
                     `/v1/orgs/${tour.organizationId}/tours/${tourId}/optimize`,
                     { start: opts.start, end: opts.end, respectLocks: opts.respectLocks ?? true },
@@ -475,6 +486,9 @@ export const useTourStore = create<TourState>()(
                     lockedStopIds: r.result.lockedStopIds ?? [],
                     distanceMeters: r.result.distanceMeters,
                     durationSeconds: r.result.durationSeconds,
+                    lateStops: (r.result.violations ?? []).filter((v) => v.kind === "late" && v.stopId).map((v) => ({ stopId: v.stopId!, minutes: v.minutes ?? 0 })),
+                    overtimeMinutes: (r.result.violations ?? []).find((v) => v.kind === "overtime")?.minutes ?? 0,
+                    unreachableStopIds: (r.result.violations ?? []).filter((v) => v.kind === "unassigned_unreachable" && v.stopId).map((v) => v.stopId!),
                   };
                 } catch (e) {
                   // Road-routing problems are reported, never replaced by an on-device straight-line order.

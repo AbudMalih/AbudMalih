@@ -20,6 +20,10 @@ export interface OptimizationOutcome {
   lockedStopIds?: string[];
   distanceMeters?: number;
   durationSeconds?: number;
+  /** Server only: constraints the best order still cannot meet (shown, never hidden). */
+  lateStops?: { stopId: string; minutes: number }[];
+  overtimeMinutes?: number;
+  unreachableStopIds?: string[];
 }
 
 /**

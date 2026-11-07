@@ -6,6 +6,7 @@ import { ArrowUpFromLine, CalendarX2, ChevronDown, Loader2, PackagePlus, Plus, S
 import { useMemo, useState, type ReactNode } from "react";
 import { errorMessage } from "../lib/api";
 import { driverBusy, tourColor, vehicleBusy } from "../lib/helpers";
+import { optimizeNotes, optimizeProblems } from "../lib/optimize";
 import { useDispatch } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -88,10 +89,10 @@ function TourCard({ s }: { s: TourSummary }) {
   const optimize = async () => {
     setBusy("optimize");
     try {
-      const r = await optimizeTour(s.tour.id);
-      toast.success(`${s.tour.name} optimized and saved`, {
-        description: `${r.matrixSource === "osrm" ? "Road-network times" : "Straight-line time estimates"}${r.unassignedStopIds.length ? ` · ${r.unassignedStopIds.length} stop(s) could not be scheduled` : ""}`,
-      });
+      // Tours on the road answer 409 here: they are re-sequenced from the tour detail with a preview.
+      const r = (await optimizeTour(s.tour)).result;
+      const problems = optimizeProblems(r);
+      (problems.length ? toast.warning : toast.success)(`${s.tour.name} optimized and saved`, { description: [...problems, ...optimizeNotes(r)].join(" · ") });
     } catch (e) {
       toast.error("Optimization failed", { description: errorMessage(e) });
     } finally {

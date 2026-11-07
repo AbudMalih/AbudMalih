@@ -237,6 +237,36 @@ describe.runIf(available)("TURVIO API on PostgreSQL", () => {
       expect(events.filter((e: { source: string }) => e.source === "stop")).toHaveLength(5);
     });
 
+    it("re-optimizing a tour on the road needs a preview and explicit confirmation", async () => {
+      const url = `/v1/orgs/${jarbou()}/tours/${tour.id}/optimize`;
+      const current = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${jarbou()}/tours/${tour.id}`)).json();
+      const order = current.stops.map((s: { id: string }) => s.id);
+      // Dispatcher without confirmation: refused, nothing changes.
+      const refused = await env.as(U.dispatcherHannover, "POST", url, {});
+      expect(refused.statusCode).toBe(409);
+      expect(refused.json().error.code).toBe("active_tour_confirmation_required");
+      // Preview: proposed order and figures, tour untouched.
+      const preview = await env.as(U.dispatcherHannover, "POST", url, { apply: false, expectedVersion: current.tour.version });
+      expect(preview.statusCode).toBe(200);
+      expect(preview.json().preview).toBe(true);
+      // Only the 20 open stops are re-sequenced; the 5 completed ones are not part of the proposal.
+      expect(preview.json().proposedStopIds).toHaveLength(order.length - 5);
+      expect(preview.json().proposedStopIds).not.toContain(order[0]);
+      expect(preview.json().stops.map((s: { id: string }) => s.id)).toEqual(order);
+      // A stale version is rejected even with confirmation.
+      const stale = await env.as(U.dispatcherHannover, "POST", url, { confirmActive: true, expectedVersion: current.tour.version - 1 });
+      expect(stale.statusCode).toBe(409);
+      expect(stale.json().error.code).toBe("version_conflict");
+      // Confirmed: applied.
+      const applied = await env.as(U.dispatcherHannover, "POST", url, { confirmActive: true, expectedVersion: current.tour.version });
+      expect(applied.statusCode).toBe(200);
+      expect(applied.json().preview).toBe(false);
+      // Completed stops keep their place, followed by the confirmed proposal.
+      expect(applied.json().stops.map((s: { id: string }) => s.id)).toEqual([...order.slice(0, 5), ...preview.json().proposedStopIds]);
+      // The assigned driver's own Optimize button is the confirmation.
+      expect((await env.as(U.driverHannover1, "POST", url, {})).statusCode).toBe(200);
+    });
+
     it("emits change notifications for the dispatcher's depot", async () => {
       const seen: unknown[] = [];
       const off = env.events.subscribe((e) => seen.push(e));

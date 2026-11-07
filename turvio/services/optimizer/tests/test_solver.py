@@ -54,13 +54,24 @@ def test_respects_time_windows():
     assert visit_ids(res).index("b") < visit_ids(res).index("a")
 
 
-def test_drops_infeasible_stop_instead_of_failing():
+def test_unmeetable_deadline_is_served_late_and_reported():
     stops = [{"id": i, "location": {"lat": la, "lng": ln}, "serviceSeconds": 120} for i, la, ln in ERFURT]
-    # Window closes before the shift starts -> cannot be served.
+    # Window closes before the shift starts -> cannot be met; the parcel still has to be delivered.
     stops[2]["timeWindow"] = {"start": 300, "end": 330}
     res = solve(req(stops))
     assert res.status == "feasible"
+    assert res.unassigned_stop_ids == []
+    late = [v for v in res.violations if v.kind == "late"]
+    assert [v.stop_id for v in late] == ["c"] and late[0].minutes >= 150
+    assert {v.stop_id: v.late_minutes for v in res.routes[0].visits}["c"] == late[0].minutes
+
+
+def test_strict_time_windows_drop_instead():
+    stops = [{"id": i, "location": {"lat": la, "lng": ln}, "serviceSeconds": 120} for i, la, ln in ERFURT]
+    stops[2]["timeWindow"] = {"start": 300, "end": 330}
+    res = solve(req(stops, strictTimeWindows=True))
     assert res.unassigned_stop_ids == ["c"]
+    assert [(v.kind, v.stop_id) for v in res.violations] == [("unassigned_infeasible", "c")]
 
 
 def test_shift_limit_is_enforced():
@@ -71,11 +82,56 @@ def test_shift_limit_is_enforced():
     assert len(res.unassigned_stop_ids) >= 4
 
 
-def test_priority_stop_is_served_early():
+def test_express_deadline_is_met_before_cheaper_order():
     stops = [{"id": i, "location": {"lat": la, "lng": ln}, "serviceSeconds": 120} for i, la, ln in ERFURT]
-    stops[5]["priority"] = True  # "f" is the far west stop
+    # "f" (far west) must be served within the first 15 minutes of the shift.
+    stops[5].update(priority=True, timeWindow={"start": 480, "end": 495})
     res = solve(req(stops))
     assert visit_ids(res)[0] == "f"
+    assert res.violations == []
+
+
+def test_express_without_tight_deadline_does_not_distort_the_route():
+    # Priority alone (no deadline) must not force the stop first: no "as early as possible" cost.
+    stops = [{"id": i, "location": {"lat": la, "lng": ln}, "serviceSeconds": 120} for i, la, ln in ERFURT]
+    plain = solve(req(stops))
+    stops[5]["priority"] = True
+    flagged = solve(req(stops))
+    assert flagged.routes[0].drive_seconds <= plain.routes[0].drive_seconds * 1.001
+
+
+def test_pickup_before_delivery_same_vehicle():
+    stops = [{"id": i, "location": {"lat": la, "lng": ln}, "serviceSeconds": 120} for i, la, ln in ERFURT]
+    # Pick up at "e" (north) and deliver to "d" (south), and pick up at "a" before delivering "c".
+    res = solve(req(stops, pickupDeliveries=[{"pickupId": "e", "deliveryId": "d"}, {"pickupId": "a", "deliveryId": "c"}]))
+    order = visit_ids(res)
+    assert order.index("e") < order.index("d") and order.index("a") < order.index("c")
+    assert res.unassigned_stop_ids == []
+
+
+def test_pickup_delivery_pairs_are_validated():
+    import pytest
+    with pytest.raises(ValueError):
+        req(pickupDeliveries=[{"pickupId": "a", "deliveryId": "zz"}])
+    with pytest.raises(ValueError):
+        req(pickupDeliveries=[{"pickupId": "a", "deliveryId": "b"}, {"pickupId": "a", "deliveryId": "c"}])
+
+
+def test_soft_shift_keeps_every_stop_and_reports_overtime():
+    stops = [{"id": i, "location": {"lat": la, "lng": ln}, "serviceSeconds": 1800} for i, la, ln in ERFURT]
+    res = solve(req(stops, vehicles=[{"id": "v1", "start": DEPOT, "shiftStart": 480, "maxShiftMinutes": 60}], overtimePenaltyPerMinute=600))
+    assert res.unassigned_stop_ids == []
+    over = [v for v in res.violations if v.kind == "overtime"]
+    assert len(over) == 1 and over[0].minutes >= 120
+    assert res.routes[0].overtime_minutes == over[0].minutes
+
+
+def test_route_time_breakdown_adds_up():
+    res = solve(req())
+    r = res.routes[0]
+    assert r.drive_seconds > 0 and r.service_seconds == 120 * len(ERFURT)
+    assert abs(r.drive_seconds + r.service_seconds + r.wait_seconds - r.duration_seconds) <= 1
+    assert abs((r.end_minute - r.start_minute) - r.duration_seconds / 60) < 1e-6
 
 
 def test_multiple_vehicles_and_capacity():
@@ -128,7 +184,7 @@ def test_http_api_roundtrip_uses_camel_case():
     res = client.post("/optimize", json=body)
     assert res.status_code == 200
     data = res.json()
-    assert set(data) == {"routes", "unassignedStopIds", "matrixSource", "matrixNote", "status", "engine"}
+    assert set(data) == {"routes", "unassignedStopIds", "matrixSource", "matrixNote", "status", "engine", "violations", "solveSeconds"}
     assert len(data["routes"][0]["visits"]) == 3
 
 

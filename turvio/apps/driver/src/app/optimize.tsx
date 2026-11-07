@@ -112,7 +112,14 @@ export default function OptimizeScreen() {
             <Stat label={t("home.remainingDistance")} value={`${km(shown.meters)} km`} hint={shownHint} />
             <Stat label={t("home.remainingTime")} value={duration(shown.seconds)} hint={shownHint} />
           </View>
-          {result.unassignedStopIds.length > 0 && <Banner text={t("optimize.unassigned", { n: result.unassignedStopIds.length })} tone="warning" />}
+          {!!result.lateStops?.length && (
+            <Banner text={t("optimize.late", { n: result.lateStops.length, minutes: Math.round(Math.max(...result.lateStops.map((x) => x.minutes))) })} tone="danger" />
+          )}
+          {!!result.overtimeMinutes && <Banner text={t("optimize.overtime", { minutes: Math.round(result.overtimeMinutes) })} tone="warning" />}
+          {!!result.unreachableStopIds?.length && <Banner text={t("optimize.unreachable", { n: result.unreachableStopIds.length })} tone="warning" />}
+          {result.unassignedStopIds.length > (result.unreachableStopIds?.length ?? 0) && (
+            <Banner text={t("optimize.unassigned", { n: result.unassignedStopIds.length - (result.unreachableStopIds?.length ?? 0) })} tone="warning" />
+          )}
           {result.unlocatedStopIds.length > 0 && <Banner text={t("optimize.unlocated", { n: result.unlocatedStopIds.length })} tone="warning" />}
         </Card>
       )}

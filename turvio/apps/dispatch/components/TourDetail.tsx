@@ -30,7 +30,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { api, errorMessage } from "../lib/api";
 import { tourColor } from "../lib/helpers";
 import { routeKey, useRoadRoute } from "../lib/road";
-import { useDispatch } from "../lib/store";
+import { optimizeNotes, optimizeProblems } from "../lib/optimize";
+import { useDispatch, type OptimizeMeta } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ProofList } from "./ProofViewer";
@@ -262,16 +263,22 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
   const road = useRoadRoute(session.organizationId, s.tour.id, routeKey(s.stops));
   const rm = road?.source === "osrm" ? road.metrics : undefined;
 
+  const active = s.tour.status === "in_progress" || s.tour.status === "paused";
+  const [preview, setPreview] = useState<OptimizeMeta | null>(null);
+
   const optimize = async () => {
     setBusy("optimize");
     try {
-      const r = await optimizeTour(s.tour.id);
-      const notes = [
-        r.matrixSource === "osrm" ? "road-network travel times" : "straight-line travel-time ESTIMATE (no road routing configured)",
-        r.unassignedStopIds.length ? `${r.unassignedStopIds.length} stop(s) could not be scheduled within windows/shift` : null,
-        r.unlocatedStopIds?.length ? `${r.unlocatedStopIds.length} stop(s) without map position kept at the end` : null,
-      ].filter(Boolean);
-      toast.success("Route optimized and saved", { description: notes.join(" · ") });
+      if (active) {
+        // A tour on the road is never re-sequenced without the dispatcher seeing the new plan.
+        setPreview((await optimizeTour(s.tour, { apply: false })).result);
+        return;
+      }
+      const r = (await optimizeTour(s.tour)).result;
+      const problems = optimizeProblems(r);
+      (problems.length ? toast.warning : toast.success)(problems.length ? "Route optimized – not every constraint can be met" : "Route optimized and saved", {
+        description: [...problems, ...optimizeNotes(r)].join(" · "),
+      });
     } catch (e) {
       toast.error("Optimization failed", { description: errorMessage(e) });
     } finally {
@@ -400,8 +407,44 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={optimize} disabled={busy !== null || s.remaining < 2}>
             {busy === "optimize" ? <Loader2 className="animate-spin" /> : <Sparkles />}
-            {busy === "optimize" ? "Optimizing…" : "Optimize & save"}
+            {busy === "optimize" ? "Optimizing…" : active ? "Re-optimize…" : "Optimize & save"}
           </Button>
+          <ConfirmDialog
+            open={preview !== null}
+            onOpenChange={(o) => !o && setPreview(null)}
+            title="Apply the new stop order?"
+            description={
+              preview && (
+                <div className="flex flex-col gap-2">
+                  <p>
+                    {s.tour.name} is being driven. The driver&apos;s remaining stops will be re-sequenced; completed stops and proofs are not touched,
+                    locked stops keep their place. The driver sees the new order with the next sync.
+                  </p>
+                  <p className="font-medium text-ink-1">
+                    {preview.driveSeconds != null ? `Driving ${formatDuration(preview.driveSeconds)}` : null}
+                    {preview.distanceMeters ? ` · ${(preview.distanceMeters / 1000).toFixed(1)} km` : null}
+                    {preview.endMinute != null ? ` · back by ${formatClock(Math.round(preview.endMinute))}` : null}
+                  </p>
+                  {optimizeProblems(preview).map((p) => (
+                    <p key={p} className="text-warning-ink">
+                      {p}
+                    </p>
+                  ))}
+                  <p className="text-ink-3">{optimizeNotes(preview).join(" · ")}</p>
+                </div>
+              )
+            }
+            confirmLabel="Apply new order"
+            onConfirm={async () => {
+              try {
+                const r = (await optimizeTour(s.tour, { confirmActive: true })).result;
+                toast.success("New stop order applied", { description: [...optimizeProblems(r), ...optimizeNotes(r)].join(" · ") });
+              } catch (e) {
+                toast.error("Optimization failed", { description: errorMessage(e) });
+                throw e;
+              }
+            }}
+          />
           {s.tour.origin === "driver" && <Badge tone="outline">Driver's own route</Badge>}
         {s.tour.publishedAt ? (
             s.tour.status === "planned" && (
@@ -519,3 +562,4 @@ export function TourDetailSheet() {
     </Sheet>
   );
 }
+

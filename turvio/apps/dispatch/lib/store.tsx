@@ -36,6 +36,17 @@ export interface OptimizeMeta {
   unlocatedStopIds?: string[];
   distanceMeters?: number;
   durationSeconds?: number;
+  driveSeconds?: number | null;
+  waitSeconds?: number | null;
+  endMinute?: number | null;
+  overtimeMinutes?: number;
+  violations?: { kind: "late" | "overtime" | "unassigned_unreachable" | "unassigned_infeasible" | "pair_split"; stopId?: string | null; minutes?: number | null }[];
+}
+
+export interface OptimizeOutcome {
+  preview: boolean;
+  proposedStopIds?: string[];
+  result: OptimizeMeta;
 }
 
 interface DispatchState {
@@ -66,7 +77,8 @@ interface DispatchState {
   deleteTour: (tour: Tour) => Promise<void>;
   publishTour: (tour: Tour) => Promise<void>;
   unpublishTour: (tour: Tour) => Promise<void>;
-  optimizeTour: (tourId: string) => Promise<OptimizeMeta>;
+  /** apply=false: preview only. confirmActive: the dispatcher confirmed re-sequencing a tour on the road. */
+  optimizeTour: (tour: Tour, opts?: { apply?: boolean; confirmActive?: boolean }) => Promise<OptimizeOutcome>;
   optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; matrixSource: string }>;
   addStops: (target: { tourId?: string; depotId?: string }, stops: NewStopInput[]) => Promise<string[]>;
   assignStops: (stopIds: string[], tourId: string | null) => Promise<void>;
@@ -192,7 +204,14 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     deleteTour: (tour) => run(() => api<void>("DELETE", `/v1/orgs/${org}/tours/${tour.id}?expectedVersion=${tour.version}`)),
     publishTour: (tour) => run(() => api<void>("POST", `/v1/orgs/${org}/tours/${tour.id}/publish`, { expectedVersion: tour.version })),
     unpublishTour: (tour) => run(() => api<void>("POST", `/v1/orgs/${org}/tours/${tour.id}/unpublish`, { expectedVersion: tour.version })),
-    optimizeTour: (tourId) => run(async () => (await api<{ result: OptimizeMeta }>("POST", `/v1/orgs/${org}/tours/${tourId}/optimize`, {})).result),
+    optimizeTour: (tour, opts) =>
+      run(() =>
+        api<OptimizeOutcome>("POST", `/v1/orgs/${org}/tours/${tour.id}/optimize`, {
+          expectedVersion: tour.version,
+          apply: opts?.apply ?? true,
+          confirmActive: opts?.confirmActive ?? false,
+        }),
+      ),
     optimizePlan: (tourIds, includeUnassigned) => run(() => api("POST", `/v1/orgs/${org}/plans/optimize`, { tourIds, includeUnassigned })),
     addStops: (target, stops) => run(async () => (await api<{ ids: string[] }>("POST", `/v1/orgs/${org}/stops`, { ...target, stops })).ids),
     assignStops: (stopIds, tourId) => run(() => api<void>("POST", `/v1/orgs/${org}/stops/assign`, { stopIds, tourId })),

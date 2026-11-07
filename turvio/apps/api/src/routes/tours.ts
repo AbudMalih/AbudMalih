@@ -421,16 +421,31 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
           start: z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }).optional(),
           end: z.union([z.enum(["depot", "none"]), z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) })]).optional(),
           respectLocks: z.boolean().default(true),
+          /** false: return the proposed order and figures without changing the tour (preview). */
+          apply: z.boolean().default(true),
+          /** Reject with 409 when the tour changed since the caller looked at it. */
+          expectedVersion: z.number().int().min(0).optional(),
+          /**
+           * A tour that is already being driven is only re-sequenced with explicit confirmation
+           * (the driver's own Optimize button, or a dispatcher who confirmed the preview).
+           */
+          confirmActive: z.boolean().default(false),
         })
-        .default({ respectLocks: true }),
+        .default({ respectLocks: true, apply: true, confirmActive: false }),
       req.body ?? {},
       reply,
     );
     if (!opts) return;
     await requireOptimizationPlan(req, orgId);
+    const isDriver = req.membership!.role === "driver";
     const input = await db.asUser(claims(req), async (tx) => {
       const tour = await loadTour(tx, orgId, id);
       if (tour.status === "completed") throw new ApiError(422, "invalid_operation", "Completed tours cannot be optimized");
+      if (opts.expectedVersion != null && tour.version !== opts.expectedVersion)
+        throw new ApiError(409, "version_conflict", "The tour was changed by someone else. Reload and try again.");
+      // The assigned driver pressing Optimize is the confirmation; anyone else must confirm explicitly.
+      if (opts.apply && !isDriver && !opts.confirmActive && (tour.status === "in_progress" || tour.status === "paused"))
+        throw new ApiError(409, "active_tour_confirmation_required", "This tour is being driven. Preview the new order and confirm it before it is applied.");
       const tz = await orgTimeZone(tx, orgId);
       const v = await vehicleFor(tx, tour, nowInZone(tz).minute);
       const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 and s.status in ('pending', 'in_progress') order by s.sequence`, [id])).rows;
@@ -461,6 +476,9 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         demand: Math.max(1, s.parcels?.length ?? 1),
       })),
       timeLimitSeconds: located.length > 60 ? 10 : 5,
+      // One driver's own tour: every parcel stays on the route; overtime and late deadlines are
+      // reported instead of stops silently dropping off (1 min overtime ≈ 10 min driving).
+      overtimePenaltyPerMinute: 600,
     });
     const result: OptimizeResponse = await guards.callOptimizer(request, request.timeLimitSeconds ?? 5);
     const optimized = result.routes[0]?.visits.map((x) => x.stopId) ?? [];
@@ -476,12 +494,29 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       unlocatedStopIds: input.stops.filter((s) => s.lat == null).map((s) => s.id),
       distanceMeters: result.routes[0]?.distanceMeters ?? 0,
       durationSeconds: result.routes[0]?.durationSeconds ?? 0,
+      driveSeconds: result.routes[0]?.driveSeconds ?? null,
+      waitSeconds: result.routes[0]?.waitSeconds ?? null,
+      endMinute: result.routes[0]?.endMinute ?? null,
+      overtimeMinutes: result.routes[0]?.overtimeMinutes ?? 0,
+      /** Every deadline missed, overtime and stop that could not be routed – never hidden. */
+      violations: result.violations ?? [],
+      solveSeconds: result.solveSeconds ?? null,
+      optimizedAt: new Date().toISOString(),
     };
+    if (!opts.apply) {
+      const current = await db.asUser(claims(req), async (tx) => tourWithStops(tx, orgId, id));
+      return { ...current, preview: true, proposedStopIds: ordered, result: meta };
+    }
     const saved = await db.asUser(claims(req), async (tx) => {
+      if (opts.expectedVersion != null) {
+        // Re-check inside the writing transaction (set_tour_sequence locks the tour row).
+        const v = (await tx.query<{ version: number }>(`select version from tours where id = $1 for update`, [id])).rows[0];
+        if (v && v.version !== opts.expectedVersion) throw new ApiError(409, "version_conflict", "The tour was changed by someone else. Reload and try again.");
+      }
       await tx.query(`select set_tour_sequence($1, $2::uuid[], $3::jsonb)`, [id, ordered, JSON.stringify(meta)]);
       return tourWithStops(tx, orgId, id);
     });
-    return { ...saved, result: meta };
+    return { ...saved, preview: false, result: meta };
   });
 
   /**

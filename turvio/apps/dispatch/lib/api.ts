@@ -14,6 +14,7 @@ const FRIENDLY: Record<string, string> = {
   api_unavailable: "The TURVIO service is not reachable. Check your connection and try again.",
   version_conflict: "Someone else changed this tour in the meantime. The view was refreshed – please repeat your change.",
   optimizer_unavailable: "The route optimizer is not reachable right now. Your tour was not changed.",
+  active_tour_confirmation_required: "This tour is being driven. Review the new order and confirm it first.",
 };
 
 export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<T> {
