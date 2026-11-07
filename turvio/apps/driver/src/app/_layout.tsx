@@ -1,3 +1,4 @@
+import "../lib/trackingSetup";
 import { Redirect, router, useSegments } from "expo-router";
 import { ShareIntentProvider, useShareIntentContext } from "expo-share-intent";
 import { Stack } from "expo-router/stack";

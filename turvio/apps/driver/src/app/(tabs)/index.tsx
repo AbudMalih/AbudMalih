@@ -5,6 +5,7 @@ import { Image, Pressable, RefreshControl, ScrollView, Text, View } from "react-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StopCard } from "../../components/StopCard";
 import { SyncPill } from "../../components/SyncPill";
+import { TrackingPill } from "../../components/Tracking";
 import { ActionTile, Banner, Button, Card, EmptyState, Ionicons, Pill, ProgressBar, SectionTitle, Stat, type IconName } from "../../components/ui";
 import { duration, km } from "../../lib/format";
 import { useLocale, useT } from "../../lib/i18n";
@@ -59,7 +60,10 @@ export default function HomeScreen() {
     >
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 32 }}>
         <Image source={dark ? require("../../../assets/brand/turvio-lockup-dark.png") : require("../../../assets/brand/turvio-lockup-light.png")} style={{ width: 92, height: 16 }} resizeMode="contain" accessibilityLabel="TURVIO" />
-        <SyncPill />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: space.xs }}>
+          <TrackingPill />
+          <SyncPill />
+        </View>
       </View>
 
       <View style={{ gap: space.xxs }}>

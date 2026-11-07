@@ -2,7 +2,9 @@ import { Tabs } from "expo-router/js-tabs";
 import { useEffect } from "react";
 import { AppState, StyleSheet, View, type ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TrackingNoticeHost } from "../../components/Tracking";
 import { Ionicons, type IconName } from "../../components/ui";
+import { useTourTracking } from "../../lib/useTourTracking";
 import { useT } from "../../lib/i18n";
 import { isServerMode, useTourStore } from "../../store/tourStore";
 import { useTheme } from "../../theme";
@@ -39,11 +41,14 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const bottom = insets.bottom;
   useBackgroundSync();
+  useTourTracking();
   const today = useIcon("home-outline", "home");
   const stops = useIcon("list-outline", "list");
   const map = useIcon("map-outline", "map");
   const settings = useIcon("person-circle-outline", "person-circle");
   return (
+    <>
+    <TrackingNoticeHost />
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: c.primary,
@@ -61,5 +66,6 @@ export default function TabLayout() {
       <Tabs.Screen name="map" options={{ title: t("tabs.map"), headerShown: false, tabBarIcon: map, tabBarButtonTestID: "tab-map" }} />
       <Tabs.Screen name="settings" options={{ title: t("tabs.settings"), tabBarIcon: settings, tabBarButtonTestID: "tab-settings" }} />
     </Tabs>
+    </>
   );
 }

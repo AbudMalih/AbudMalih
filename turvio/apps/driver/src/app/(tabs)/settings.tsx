@@ -3,6 +3,7 @@ import Constants from "expo-constants";
 import { useState } from "react";
 import { Alert, Platform, Text, View } from "react-native";
 import { Banner, Button, Card, ListRow, Pill, Screen, SectionTitle, Segmented } from "../../components/ui";
+import { TrackingSettingsSection } from "../../components/Tracking";
 import { useLocale, useT } from "../../lib/i18n";
 import { availableNavApps, type NavApp } from "../../lib/navigation";
 import { apiBaseUrl } from "../../lib/optimizer";
@@ -75,6 +76,13 @@ export default function SettingsScreen() {
         ))}
         {rtlNote && <Banner text={t("settings.rtlRestart")} tone="primary" />}
       </Card>
+
+      {isServerMode() && (
+        <Card>
+          <SectionTitle>{t("tracking.settingsTitle")}</SectionTitle>
+          <TrackingSettingsSection />
+        </Card>
+      )}
 
       <Card>
         <SectionTitle>{t("settings.navigation")}</SectionTitle>

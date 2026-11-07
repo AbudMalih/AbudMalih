@@ -44,10 +44,11 @@ const config: ExpoConfig = {
       monochromeImage: "./assets/android-icon-monochrome.png",
     },
     predictiveBackGestureEnabled: false,
-    // Only what the driver features need; no background location, no microphone.
+    // Only what the driver features need; no microphone. Background location exists only for
+    // live tour tracking: it is used while a tour is being driven, when the company switched
+    // tracking on and the driver acknowledged the notice (docs/LIVE_TRACKING.md).
     blockedPermissions: [
       "android.permission.RECORD_AUDIO",
-      "android.permission.ACCESS_BACKGROUND_LOCATION",
       "android.permission.SYSTEM_ALERT_WINDOW",
       "android.permission.USE_BIOMETRIC",
       "android.permission.USE_FINGERPRINT",
@@ -79,12 +80,16 @@ const config: ExpoConfig = {
     [
       "expo-location",
       {
-        locationWhenInUsePermission: "TURVIO shows your position on the route map and, if your company enabled it, stores it with proof of delivery. It is not tracked in the background.",
-        locationAlwaysAndWhenInUsePermission: false,
+        locationWhenInUsePermission: "TURVIO shows your position on the route map and, if your company enabled it, stores it with proof of delivery.",
+        // Live tour tracking only: while you drive a tour, if your company switched it on and you
+        // acknowledged the notice. Never outside a tour; the status bar shows when it is active.
+        locationAlwaysAndWhenInUsePermission:
+          "While you drive a tour, TURVIO shares your position with your dispatch team – also with the screen locked – if your company switched live tracking on. It stops when the tour is paused or finished.",
         locationAlwaysPermission: false,
         motionUsagePermission: false,
-        isIosBackgroundLocationEnabled: false,
-        isAndroidBackgroundLocationEnabled: false,
+        isIosBackgroundLocationEnabled: true,
+        isAndroidBackgroundLocationEnabled: true,
+        isAndroidForegroundServiceEnabled: true,
       },
     ],
     [

@@ -23,6 +23,7 @@ import {
 } from "@turvio/shared";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { stopTracking } from "../lib/tracking";
 import { createAuthClient, isTransient, type AuthClient, type SessionUser } from "../lib/auth";
 import { deleteFile, readFileBase64 } from "../lib/files";
 import { uuid } from "../lib/ids";
@@ -549,6 +550,8 @@ export const useTourStore = create<TourState>()(
         },
 
         signOut: async () => {
+          // Signing out ends any live tracking (the rest is uploaded first, while still signed in).
+          await stopTracking().catch(() => undefined);
           await auth().logout();
           for (const o of get().outbox) if (o.kind === "proof" && o.fileUri) await fileDeps.deleteFile(o.fileUri).catch(() => undefined);
           set({ ...EMPTY_SERVER, user: null, outbox: [], failed: [], scans: {}, activeTourId: null, settingsByOrg: {}, lastSyncAt: null, lastOptimization: null, syncState: "idle", syncMessage: null });
