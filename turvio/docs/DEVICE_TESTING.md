@@ -21,7 +21,7 @@ The three ids differ, so all three can be installed side by side. `EXPO_PUBLIC_A
 1. Copy the APK to the phone (USB, cloud drive or e-mail to yourself).
 2. Open it; Android asks to allow installing from this source (Settings → Apps → special access → *Install unknown apps* → allow for the file manager/browser you used).
 3. Install, open *TURVIO Driver (Test)*. Allow the camera when you first scan.
-4. The map needs a Google Maps key on Android (`GOOGLE_MAPS_ANDROID_API_KEY`); without it the map area stays empty – everything else works.
+4. The map needs a Google Maps key on Android (`GOOGLE_MAPS_ANDROID_API_KEY`); without it the Map tab shows a "map not available in this build" notice – everything else works. Setup: `docs/MOBILE_DESIGN_SYSTEM.md` → Maps.
 
 ### B. Your own builds with EAS (recommended)
 Prerequisites: an Expo account (owned by Lunapact), `npm i -g eas-cli`, then in `apps/driver`:

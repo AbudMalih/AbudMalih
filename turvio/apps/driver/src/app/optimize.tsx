@@ -2,7 +2,7 @@ import { isOpen, routeMetrics } from "@turvio/shared";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { Banner, Button, Card, Screen, SectionTitle, Segmented, Stat } from "../components/ui";
+import { Banner, BottomBar, Button, Card, Screen, SectionTitle, Segmented, Stat } from "../components/ui";
 import { duration, km } from "../lib/format";
 import { feedback } from "../lib/haptics";
 import { useT } from "../lib/i18n";
@@ -15,7 +15,7 @@ import { space, type as ty, useTheme } from "../theme";
 export default function OptimizeScreen() {
   const t = useT();
   const { c } = useTheme();
-  const { tour, depot, stops } = useMyTour();
+  const { tour, depot, stops, road } = useMyTour();
   const optimize = useTourStore((s) => s.optimize);
   const optimizing = useTourStore((s) => s.optimizing);
   const prefs = useTourStore((s) => s.prefs);
@@ -28,7 +28,19 @@ export default function OptimizeScreen() {
   if (!tour || !depot) return null;
   const open = stops.filter((s) => isOpen(s.status));
   const locked = open.filter((s) => s.locked).length;
-  const metrics = routeMetrics(tour.startLocation ?? depot.location, stops, end === "none" ? undefined : (tour.endLocation ?? depot.location));
+  const estimate = routeMetrics(tour.startLocation ?? depot.location, stops, end === "none" ? undefined : (tour.endLocation ?? depot.location));
+  // Road figures only from road routing (OSRM): the road route of the tour, or the optimizer's
+  // own road totals. Otherwise the straight-line estimate, labelled as such – never mixed.
+  const roadFig =
+    result?.engine === "server" && result.matrixSource === "osrm"
+      ? road?.metrics
+        ? { meters: road.metrics.remainingMeters, seconds: road.metrics.remainingDriveSeconds }
+        : result.distanceMeters != null && result.durationSeconds != null
+          ? { meters: result.distanceMeters, seconds: result.durationSeconds }
+          : null
+      : null;
+  const shown = roadFig ?? { meters: estimate.remainingMeters, seconds: estimate.remainingDriveSeconds };
+  const shownHint = roadFig ? t("common.roadNetwork") : t("common.straightLine");
 
   const run = async () => {
     setError(null);
@@ -50,9 +62,20 @@ export default function OptimizeScreen() {
   };
 
   return (
-    <Screen testID="optimize">
+    <Screen
+      testID="optimize"
+      footer={
+        <BottomBar>
+          {result ? (
+            <Button label={t("common.done")} size="lg" onPress={() => router.back()} testID="optimize-done" />
+          ) : (
+            <Button label={optimizing ? t("optimize.running") : t("optimize.run")} size="lg" icon="git-network-outline" loading={optimizing} disabled={!open.length} onPress={() => void run()} testID="optimize-run" />
+          )}
+        </BottomBar>
+      }
+    >
       <Card>
-        <Text style={[ty.title, { color: c.text }]}>{t("optimize.scopeRemaining", { n: open.length })}</Text>
+        <Text style={[ty.h2, { color: c.text }]}>{t("optimize.scopeRemaining", { n: open.length })}</Text>
         <Text style={[ty.small, { color: c.textMuted }]}>{t("optimize.considers")}</Text>
         <SectionTitle>{t("optimize.start")}</SectionTitle>
         <Segmented
@@ -78,7 +101,6 @@ export default function OptimizeScreen() {
       </Card>
       {notice && <Banner text={notice} tone="warning" />}
       {error && <Banner text={error} tone="danger" />}
-      <Button label={optimizing ? t("optimize.running") : t("optimize.run")} size="lg" icon="git-network-outline" loading={optimizing} disabled={!open.length} onPress={() => void run()} testID="optimize-run" />
 
       {result && (
         <Card testID="optimize-result">
@@ -87,12 +109,11 @@ export default function OptimizeScreen() {
             text={result.engine === "server" ? t("optimize.resultServer", { source: result.matrixSource === "osrm" ? t("common.roadNetwork") : t("common.straightLine") }) : t("optimize.resultLocal")}
           />
           <View style={{ flexDirection: "row", gap: space.md }}>
-            <Stat label={t("home.remainingDistance")} value={`${km(metrics.remainingMeters)} km`} hint={result.matrixSource === "osrm" ? t("common.roadNetwork") : t("common.straightLine")} />
-            <Stat label={t("home.remainingTime")} value={duration(metrics.remainingDriveSeconds)} hint={t("common.straightLine")} />
+            <Stat label={t("home.remainingDistance")} value={`${km(shown.meters)} km`} hint={shownHint} />
+            <Stat label={t("home.remainingTime")} value={duration(shown.seconds)} hint={shownHint} />
           </View>
           {result.unassignedStopIds.length > 0 && <Banner text={t("optimize.unassigned", { n: result.unassignedStopIds.length })} tone="warning" />}
           {result.unlocatedStopIds.length > 0 && <Banner text={t("optimize.unlocated", { n: result.unlocatedStopIds.length })} tone="warning" />}
-          <Button label={t("common.done")} onPress={() => router.back()} testID="optimize-done" />
         </Card>
       )}
     </Screen>

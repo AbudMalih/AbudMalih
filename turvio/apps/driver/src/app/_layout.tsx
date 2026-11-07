@@ -45,7 +45,7 @@ export default function RootLayout() {
           headerStyle: { backgroundColor: c.card },
           headerTintColor: c.text,
           headerShadowVisible: false,
-          headerTitleStyle: { fontWeight: "700" },
+          headerTitleStyle: { fontWeight: "700", fontSize: 17 },
           contentStyle: { backgroundColor: c.bg },
           animation: "slide_from_right",
           animationDuration: 220,

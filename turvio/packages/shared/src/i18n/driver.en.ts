@@ -332,7 +332,13 @@ export const driverEn = {
   "photoImport.pasteRead": "Find addresses",
   "photoImport.noneText": "No address found in the text.",
   "photoImport.text": "Text",
-  "map.unavailable": "Map not available in this test build (no Google Maps key). Use the address search instead.",
+  "map.unavailable": "Map not available in this build (Google Maps is not set up). Stops, address search and navigation work.",
+  "home.demoChip": "Demo",
+  "home.addStops": "Add stops",
+  "home.pullToRefresh": "Pull down to check for new routes.",
+  "photoImport.selectAll": "Select all",
+  "photoImport.selectNone": "Clear selection",
+  "map.loadFailed": "The map could not be loaded (no connection or map service not set up). Stops and directions still work.",
 } as const;
 
 export type DriverMessageKey = keyof typeof driverEn;

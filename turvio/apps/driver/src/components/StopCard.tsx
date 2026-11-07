@@ -6,6 +6,17 @@ import { radii, space, type as ty, useTheme } from "../theme";
 import { Ionicons, Pill, toneColors } from "./ui";
 
 /** Compact stop row: number, recipient, address, parcels and state at a glance. */
+function Meta({ icon, color, text }: { icon: React.ComponentProps<typeof Ionicons>["name"]; color: string; text: string }) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+      <Ionicons name={icon} size={13} color={color} />
+      <Text style={[ty.small, { color }]} numberOfLines={1}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
 export function StopCard({ stop, index, current, onPress, right, testID }: { stop: Stop; index: number; current?: boolean; onPress?: () => void; right?: React.ReactNode; testID?: string }) {
   const { c } = useTheme();
   const t = useT();
@@ -27,15 +38,16 @@ export function StopCard({ stop, index, current, onPress, right, testID }: { sto
         borderRadius: radii.lg,
         borderWidth: current ? 2 : 1,
         borderColor: current ? c.primary : c.border,
-        padding: space.md,
+        paddingHorizontal: space.md,
+        paddingVertical: 10,
         opacity: pressed ? 0.85 : open ? 1 : 0.72,
       })}
     >
-      <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: bg, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: 32, height: 32, borderRadius: radii.md, backgroundColor: bg, alignItems: "center", justifyContent: "center" }}>
         {open ? (
-          <Text style={{ color: fg, fontWeight: "800", fontSize: 15 }}>{index + 1}</Text>
+          <Text style={{ color: fg, fontWeight: "700", fontSize: 14, fontVariant: ["tabular-nums"] }}>{index + 1}</Text>
         ) : (
-          <Ionicons name={statusTone(stop.status) === "success" ? "checkmark" : "close"} size={20} color={fg} />
+          <Ionicons name={statusTone(stop.status) === "success" ? "checkmark" : "close"} size={18} color={fg} />
         )}
       </View>
       <View style={{ flex: 1, gap: 2 }}>
@@ -50,13 +62,21 @@ export function StopCard({ stop, index, current, onPress, right, testID }: { sto
         <Text style={[ty.small, { color: c.textMuted }]} numberOfLines={1}>
           {addressLine(stop)}
         </Text>
-        <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-          {!open && <Pill label={t(`stopStatus.${stop.status}` as never)} tone={statusTone(stop.status)} />}
-          {stop.status === "in_progress" && <Pill label={t("stopStatus.in_progress")} tone="primary" />}
-          {parcels > 0 && <Pill icon="cube-outline" label={`${loaded ? `${loaded}/` : ""}${parcels === 1 ? t("stops.oneParcel") : t("stops.parcelsCount", { n: parcels })}`} tone={loaded === parcels && parcels > 0 ? "success" : "neutral"} />}
-          {windowText(stop) && <Pill icon="time-outline" label={windowText(stop)!} tone="neutral" />}
-          {!stop.location && open && <Pill icon="location-outline" label={t("stops.needsLocation")} tone="warning" />}
-        </View>
+        {(parcels > 0 || windowText(stop)) && (
+          <View style={{ flexDirection: "row", gap: space.md, alignItems: "center" }}>
+            {parcels > 0 && (
+              <Meta icon="cube-outline" color={loaded === parcels ? c.successInk : c.textMuted} text={`${loaded ? `${loaded}/` : ""}${parcels === 1 ? t("stops.oneParcel") : t("stops.parcelsCount", { n: parcels })}`} />
+            )}
+            {windowText(stop) && <Meta icon="time-outline" color={c.textMuted} text={windowText(stop)!} />}
+          </View>
+        )}
+        {(!open || stop.status === "in_progress" || (!stop.location && open)) && (
+          <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+            {!open && <Pill label={t(`stopStatus.${stop.status}` as never)} tone={statusTone(stop.status)} />}
+            {stop.status === "in_progress" && <Pill label={t("stopStatus.in_progress")} tone="primary" />}
+            {!stop.location && open && <Pill icon="location-outline" label={t("stops.needsLocation")} tone="warning" />}
+          </View>
+        )}
       </View>
       {right}
     </Pressable>

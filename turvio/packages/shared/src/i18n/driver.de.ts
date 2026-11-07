@@ -333,5 +333,11 @@ export const driverDe: Record<DriverMessageKey, string> = {
   "photoImport.pasteRead": "Adressen finden",
   "photoImport.noneText": "Keine Adresse im Text gefunden.",
   "photoImport.text": "Text",
-  "map.unavailable": "Karte in diesem Test-Build nicht verfügbar (kein Google-Maps-Schlüssel). Bitte die Adresssuche verwenden.",
+  "map.unavailable": "Karte in diesem Build nicht verfügbar (Google Maps nicht eingerichtet). Stopps, Adresssuche und Navigation funktionieren.",
+  "home.demoChip": "Demo",
+  "home.addStops": "Stopps hinzufügen",
+  "home.pullToRefresh": "Nach unten ziehen, um nach neuen Routen zu suchen.",
+  "photoImport.selectAll": "Alle auswählen",
+  "photoImport.selectNone": "Auswahl aufheben",
+  "map.loadFailed": "Die Karte konnte nicht geladen werden (keine Verbindung oder Kartendienst nicht eingerichtet). Stopps und Navigation funktionieren weiter.",
 };

@@ -2,6 +2,7 @@ import type { GeoPoint } from "@turvio/shared";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AddressSearch } from "../../components/AddressSearch";
 import { TourMap } from "../../components/TourMap";
 import { Button } from "../../components/ui";
@@ -16,6 +17,7 @@ export default function PickLocation() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const t = useT();
   const { c } = useTheme();
+  const insets = useSafeAreaInsets();
   const { stop } = useStop(id);
   const { depot, stops } = useMyTour();
   const setStopLocation = useTourStore((s) => s.setStopLocation);
@@ -44,7 +46,7 @@ export default function PickLocation() {
           }}
         />
       </View>
-      <View style={{ padding: space.md }}>
+      <View style={{ padding: space.md, paddingBottom: insets.bottom + space.md }}>
         <Button
           label={t("map.pickConfirm")}
           icon="checkmark"

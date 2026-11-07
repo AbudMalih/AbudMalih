@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type { ComponentProps, ReactNode } from "react";
-import { ActivityIndicator, I18nManager, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native";
+import { ActivityIndicator, I18nManager, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { radii, space, touch, type as ty, useTheme, type Palette } from "../theme";
 
@@ -31,13 +31,14 @@ export function Button(props: {
   onPress: () => void;
   variant?: Variant;
   icon?: IconName;
-  size?: "md" | "lg";
+  size?: "sm" | "md" | "lg";
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
   testID?: string;
   accessibilityHint?: string;
 }) {
+  const height = props.size === "lg" ? touch.buttonLg : props.size === "sm" ? 40 : touch.button;
   const { c } = useTheme();
   const v = variantColors(c, props.variant ?? "primary");
   const disabled = props.disabled || props.loading;
@@ -52,7 +53,7 @@ export function Button(props: {
       onPress={props.onPress}
       style={({ pressed }) => [
         s.button,
-        { minHeight: props.size === "lg" ? touch.button + 4 : touch.button - 4, backgroundColor: v.bg, borderColor: v.border, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+        { minHeight: height, paddingHorizontal: props.size === "sm" ? space.md : space.lg, backgroundColor: v.bg, borderColor: v.border, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
         props.style,
       ]}
     >
@@ -60,8 +61,8 @@ export function Button(props: {
         <ActivityIndicator color={v.fg} />
       ) : (
         <>
-          {props.icon && <Ionicons name={props.icon} size={20} color={v.fg} />}
-          <Text style={[ty.bodyStrong, { color: v.fg, fontSize: props.size === "lg" ? 17 : 16 }]} numberOfLines={1}>
+          {props.icon && <Ionicons name={props.icon} size={props.size === "sm" ? 16 : 18} color={v.fg} />}
+          <Text style={[props.size === "sm" ? ty.smallStrong : ty.bodyStrong, { color: v.fg }]} numberOfLines={1}>
             {props.label}
           </Text>
         </>
@@ -84,16 +85,16 @@ export function HeroAction(props: { title: string; subtitle?: string; icon: Icon
       onPress={props.onPress}
       style={({ pressed }) => [s.hero, { backgroundColor: bg, opacity: props.disabled ? 0.5 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
     >
-      <View style={s.heroIcon}>{props.loading ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name={props.icon} size={28} color="#FFFFFF" />}</View>
+      <View style={s.heroIcon}>{props.loading ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name={props.icon} size={22} color="#FFFFFF" />}</View>
       <View style={{ flex: 1 }}>
-        <Text style={[ty.h2, { color: "#FFFFFF" }]}>{props.title}</Text>
+        <Text style={[ty.bodyStrong, { color: "#FFFFFF" }]} numberOfLines={1}>{props.title}</Text>
         {props.subtitle ? (
-          <Text style={[ty.small, { color: "rgba(255,255,255,0.8)", marginTop: 2 }]} numberOfLines={2}>
+          <Text style={[ty.small, { color: "rgba(255,255,255,0.82)" }]} numberOfLines={1}>
             {props.subtitle}
           </Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.85)" style={s.flipRtl} />
+      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.85)" style={s.flipRtl} />
     </Pressable>
   );
 }
@@ -137,7 +138,7 @@ export function Banner({ text, tone = "warning", icon, action }: { text: string;
   return (
     <View style={[s.banner, { backgroundColor: bg }]} accessibilityRole="alert">
       <Ionicons name={icon ?? (tone === "danger" ? "alert-circle" : tone === "success" ? "checkmark-circle" : "information-circle")} size={18} color={fg} />
-      <Text style={[ty.small, { color: fg, flex: 1, fontWeight: "600" }]}>{text}</Text>
+      <Text style={[ty.smallStrong, { color: fg, flex: 1 }]}>{text}</Text>
       {action && (
         <Pressable onPress={action.onPress} hitSlop={10} accessibilityRole="button">
           <Text style={[ty.small, { color: fg, fontWeight: "800" }]}>{action.label}</Text>
@@ -236,7 +237,7 @@ export function Sheet({ visible, onClose, title, children, testID }: { visible: 
       <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }]} onPress={onClose} accessibilityLabel="Close" />
       <View style={[s.sheet, { backgroundColor: c.card, paddingBottom: insets.bottom + space.lg }]} testID={testID}>
         <View style={[s.grabber, { backgroundColor: c.borderStrong }]} />
-        <Text style={[ty.title, { color: c.text, marginBottom: space.md }]}>{title}</Text>
+        <Text style={[ty.h2, { color: c.text, marginBottom: space.md }]}>{title}</Text>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: space.md }}>
           {children}
         </ScrollView>
@@ -279,9 +280,9 @@ export function ListRow({ icon, title, subtitle, right, onPress, testID, tone }:
 export function EmptyState({ icon, title, text, action }: { icon: IconName; title: string; text?: string; action?: ReactNode }) {
   const { c } = useTheme();
   return (
-    <View style={{ alignItems: "center", paddingVertical: space.xxl, paddingHorizontal: space.xl, gap: space.sm }}>
+    <View style={{ alignItems: "center", paddingVertical: space.xl, paddingHorizontal: space.lg, gap: space.xs }}>
       <View style={[s.emptyIcon, { backgroundColor: c.primarySoft }]}>
-        <Ionicons name={icon} size={28} color={c.primary} />
+        <Ionicons name={icon} size={24} color={c.primary} />
       </View>
       <Text style={[ty.h2, { color: c.text, textAlign: "center" }]}>{title}</Text>
       {text ? <Text style={[ty.small, { color: c.textMuted, textAlign: "center" }]}>{text}</Text> : null}
@@ -297,11 +298,11 @@ export function Stat({ label, value, hint }: { label: string; value: string; hin
       <Text style={[ty.caption, { color: c.textMuted, letterSpacing: 0 }]} numberOfLines={2}>
         {label}
       </Text>
-      <Text style={[ty.h2, { color: c.text }]} numberOfLines={1} adjustsFontSizeToFit>
+      <Text style={[ty.metric, { color: c.text }]} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
       {hint ? (
-        <Text style={[ty.small, { color: c.textSubtle, fontSize: 12 }]} numberOfLines={2}>
+        <Text style={[ty.caption, { color: c.textSubtle, fontWeight: "400", letterSpacing: 0 }]} numberOfLines={2}>
           {hint}
         </Text>
       ) : null}
@@ -309,34 +310,100 @@ export function Stat({ label, value, hint }: { label: string; value: string; hin
   );
 }
 
-export function Screen({ children, scroll = true, testID, padded = true }: { children: ReactNode; scroll?: boolean; testID?: string; padded?: boolean }) {
+/**
+ * Screen body for stack screens (the navigation header handles the top inset).
+ * - bottom: content clears the Android navigation bar / gesture area and the iPhone home
+ *   indicator (edge-to-edge), or sits above a sticky `footer` (BottomBar) that does so;
+ * - keyboard: the content moves above the on-screen keyboard on both platforms.
+ */
+export function Screen({ children, scroll = true, testID, padded = true, footer }: { children: ReactNode; scroll?: boolean; testID?: string; padded?: boolean; footer?: ReactNode }) {
   const { c } = useTheme();
-  if (!scroll) return <View style={{ flex: 1, backgroundColor: c.bg }} testID={testID}>{children}</View>;
-  return (
-    <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={padded ? { padding: space.lg, gap: space.md, paddingBottom: space.xxl * 2 } : undefined} keyboardShouldPersistTaps="handled" testID={testID}>
+  const insets = useSafeAreaInsets();
+  const body = !scroll ? (
+    <View style={{ flex: 1, paddingBottom: footer ? 0 : insets.bottom }}>{children}</View>
+  ) : (
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={padded ? { padding: space.lg, gap: space.md, paddingBottom: (footer ? space.lg : insets.bottom + space.xl) } : { paddingBottom: footer ? 0 : insets.bottom }}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      testID={testID}
+    >
       {children}
     </ScrollView>
+  );
+  return (
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"} testID={scroll ? undefined : testID}>
+      {body}
+      {footer}
+    </KeyboardAvoidingView>
+  );
+}
+
+/** Sticky action bar at the bottom of a screen, above the system navigation / home indicator. */
+export function BottomBar({ children, testID }: { children: ReactNode; testID?: string }) {
+  const { c } = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[s.bottomBar, { backgroundColor: c.card, borderTopColor: c.border, paddingBottom: Math.max(insets.bottom, space.sm) + space.sm }]} testID={testID}>
+      {children}
+    </View>
+  );
+}
+
+/** Compact square action (icon + short label), e.g. the home quick actions. */
+export function ActionTile({ icon, label, onPress, disabled, testID, tone = "neutral" }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean; testID?: string; tone?: "neutral" | "primary" }) {
+  const { c } = useTheme();
+  const primary = tone === "primary";
+  return (
+    <Pressable
+      testID={testID}
+      disabled={disabled}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled }}
+      style={({ pressed }) => [s.tile, { backgroundColor: primary ? c.primarySoft : c.card, borderColor: primary ? c.primarySoft : c.border, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 }]}
+    >
+      <Ionicons name={icon} size={20} color={c.primary} />
+      <Text style={[ty.caption, { color: c.text, letterSpacing: 0, textAlign: "center" }]} numberOfLines={2}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/** 24-pt checkbox with a 48-pt touch area. */
+export function Checkbox({ checked, onChange, label, testID }: { checked: boolean; onChange: () => void; label: string; testID?: string }) {
+  const { c } = useTheme();
+  return (
+    <Pressable onPress={onChange} hitSlop={12} accessibilityRole="checkbox" accessibilityState={{ checked }} accessibilityLabel={label} testID={testID} style={[s.checkbox, { borderColor: checked ? c.primary : c.borderStrong, backgroundColor: checked ? c.primary : "transparent" }]}>
+      {checked && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+    </Pressable>
   );
 }
 
 export const s = StyleSheet.create({
-  button: { borderRadius: radii.md, borderWidth: 1, paddingHorizontal: space.lg, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: space.sm },
-  hero: { minHeight: touch.hero + 8, borderRadius: radii.xl, padding: space.lg, flexDirection: "row", alignItems: "center", gap: space.md },
-  heroIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.16)", alignItems: "center", justifyContent: "center" },
-  card: { borderRadius: radii.lg, padding: space.lg, borderWidth: 1, gap: space.sm },
-  pill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radii.pill, alignSelf: "flex-start" },
-  banner: { flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, borderRadius: radii.md },
+  button: { borderRadius: radii.md, borderWidth: 1, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: space.sm },
+  hero: { minHeight: touch.hero, borderRadius: radii.lg, paddingHorizontal: space.md, paddingVertical: space.sm, flexDirection: "row", alignItems: "center", gap: space.md },
+  heroIcon: { width: 40, height: 40, borderRadius: radii.md, backgroundColor: "rgba(255,255,255,0.16)", alignItems: "center", justifyContent: "center" },
+  card: { borderRadius: radii.lg, padding: 14, borderWidth: 1, gap: space.sm },
+  bottomBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.xs },
+  tile: { flex: 1, minHeight: touch.tile, borderRadius: radii.lg, borderWidth: 1, alignItems: "center", justifyContent: "center", gap: space.xs, paddingHorizontal: space.xs, paddingVertical: space.sm },
+  checkbox: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  pill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill, alignSelf: "flex-start" },
+  banner: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingHorizontal: space.md, paddingVertical: 10, borderRadius: radii.md },
   track: { height: 8, borderRadius: 4, overflow: "hidden" },
   row: { flexDirection: "row", alignItems: "center", gap: space.sm },
   iconBtn: { borderRadius: radii.md, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  input: { minHeight: touch.min + 4, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: space.md, fontSize: 16, textAlign: "auto" },
+  input: { minHeight: touch.min, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: space.md, fontSize: 16, textAlign: "auto" },
   segment: { flexDirection: "row", padding: 3, borderRadius: radii.md, gap: 3 },
   segmentItem: { flex: 1, minHeight: 40, borderRadius: radii.sm, alignItems: "center", justifyContent: "center", paddingHorizontal: space.sm },
   sheet: { position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "88%", borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, padding: space.lg, paddingTop: space.sm },
   grabber: { width: 40, height: 5, borderRadius: 3, alignSelf: "center", marginBottom: space.md },
-  listRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: touch.button, paddingVertical: space.sm },
-  rowIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  emptyIcon: { width: 60, height: 60, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: space.sm },
+  listRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: touch.min + 4, paddingVertical: space.sm },
+  rowIcon: { width: 36, height: 36, borderRadius: radii.md, alignItems: "center", justifyContent: "center" },
+  emptyIcon: { width: 48, height: 48, borderRadius: radii.lg, alignItems: "center", justifyContent: "center", marginBottom: space.xs },
   // Directional icons follow the layout direction (RTL takes effect after an app restart).
   flipRtl: { transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] },
 });

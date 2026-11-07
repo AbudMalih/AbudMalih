@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router/js-tabs";
 import { useEffect } from "react";
-import { AppState, View, type ColorValue } from "react-native";
+import { AppState, StyleSheet, View, type ColorValue } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, type IconName } from "../../components/ui";
 import { useT } from "../../lib/i18n";
 import { isServerMode, useTourStore } from "../../store/tourStore";
@@ -24,8 +25,8 @@ function useBackgroundSync() {
 function useIcon(name: IconName, active: IconName) {
   const { c } = useTheme();
   return ({ color, focused }: { color: ColorValue; focused: boolean }) => (
-    <View style={{ width: 52, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: focused ? c.primarySoft : "transparent" }}>
-      <Ionicons name={focused ? active : name} color={typeof color === "string" ? color : undefined} size={22} />
+    <View style={{ width: 48, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: focused ? c.primarySoft : "transparent" }}>
+      <Ionicons name={focused ? active : name} color={typeof color === "string" ? color : undefined} size={21} />
     </View>
   );
 }
@@ -33,6 +34,10 @@ function useIcon(name: IconName, active: IconName) {
 export default function TabLayout() {
   const t = useT();
   const { c } = useTheme();
+  // Edge-to-edge (Android) / home indicator (iOS): the bar's own height plus the system's
+  // bottom inset, so tabs never sit on the 3-button bar or the gesture handle.
+  const insets = useSafeAreaInsets();
+  const bottom = insets.bottom;
   useBackgroundSync();
   const today = useIcon("home-outline", "home");
   const stops = useIcon("list-outline", "list");
@@ -43,11 +48,12 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: c.primary,
         tabBarInactiveTintColor: c.textMuted,
-        tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border, height: 70, paddingBottom: 10, paddingTop: 6 },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: "700" },
+        tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth, height: 62 + bottom, paddingBottom: bottom + 8, paddingTop: 6 },
+        tabBarItemStyle: { minHeight: 48 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600", marginTop: 1 },
         headerStyle: { backgroundColor: c.card },
         headerShadowVisible: false,
-        headerTitleStyle: { fontWeight: "800", color: c.text, fontSize: 20 },
+        headerTitleStyle: { fontWeight: "700", color: c.text, fontSize: 17 },
       }}
     >
       <Tabs.Screen name="index" options={{ title: t("tabs.today"), headerShown: false, tabBarIcon: today, tabBarButtonTestID: "tab-today" }} />

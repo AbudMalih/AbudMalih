@@ -1,9 +1,10 @@
 import { boundingRegion, clusterForRegion, isOpen, isSuccess, type GeoPoint, type MapRegion, type Stop } from "@turvio/shared";
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import Constants from "expo-constants";
 import { Platform, StyleSheet, Text, View } from "react-native";
-import MapView, { Marker, Polyline, type MapPressEvent } from "react-native-maps";
+import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE, Polyline, type MapPressEvent } from "react-native-maps";
 import { useT } from "../lib/i18n";
+import { Ionicons } from "./ui";
 import { useTheme, type Palette } from "../theme";
 import { markerTone, type TourMapProps } from "./TourMap.shared";
 export type { TourMapProps };
@@ -38,12 +39,18 @@ export function TourMap(props: TourMapProps) {
   return mapsAvailable ? <NativeTourMap {...props} /> : <MapUnavailable style={props.style} />;
 }
 
-function MapUnavailable({ style }: { style?: TourMapProps["style"] }) {
+/** Android: Google Maps (needs the restricted key). iOS: Apple Maps (no key, no extra SDK). */
+const PROVIDER = Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+/** A map that has not reported "ready" by then is treated as failed (wrong key, no network). */
+const MAP_READY_TIMEOUT_MS = 15_000;
+
+function MapUnavailable({ style, text }: { style?: TourMapProps["style"]; text?: string }) {
   const t = useT();
   const { c } = useTheme();
   return (
-    <View style={[StyleSheet.absoluteFill, s.unavailable, { backgroundColor: c.bg }, style]} testID="map-unavailable">
-      <Text style={{ color: c.textMuted, textAlign: "center" }}>{t("map.unavailable")}</Text>
+    <View style={[StyleSheet.absoluteFill, s.unavailable, { backgroundColor: c.bg }, style]} testID="map-unavailable" accessibilityRole="alert">
+      <Ionicons name="map-outline" size={28} color={c.textSubtle} />
+      <Text style={{ color: c.textMuted, textAlign: "center", fontSize: 14, lineHeight: 20 }}>{text ?? t("map.unavailable")}</Text>
     </View>
   );
 }
@@ -60,6 +67,14 @@ function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingP
     [depot?.id, located.length === 0],
   );
   const [region, setRegion] = useState<MapRegion | null>(initial);
+  const t = useT();
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (ready) return;
+    const timer = setTimeout(() => setFailed(true), MAP_READY_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [ready]);
   const items = useMemo(
     () => (region ? clusterForRegion(located, (x) => x.location, region, { keep: (x) => x.id === currentStopId, maxMarkers: 60 }) : []),
     [located, region, currentStopId],
@@ -72,9 +87,15 @@ function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingP
   }, [roadGeometry, located, depot]);
 
   return (
+    <View style={[StyleSheet.absoluteFill, style]}>
     <MapView
       ref={mapRef}
-      style={[StyleSheet.absoluteFill, style]}
+      provider={PROVIDER}
+      onMapReady={() => {
+        setReady(true);
+        setFailed(false);
+      }}
+      style={StyleSheet.absoluteFill}
       initialRegion={initial ?? undefined}
       onRegionChangeComplete={(r) => setRegion(r)}
       showsUserLocation={!!showUserLocation}
@@ -123,6 +144,8 @@ function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingP
         />
       )}
     </MapView>
+    {failed && !ready && <MapUnavailable text={t("map.loadFailed")} />}
+    </View>
   );
 }
 
@@ -132,5 +155,5 @@ const s = StyleSheet.create({
   pinText: { color: "#FFFFFF", fontWeight: "800", fontSize: 13 },
   cluster: { minWidth: 38, height: 38, paddingHorizontal: 8, borderRadius: 19, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   clusterText: { fontWeight: "800", fontSize: 14 },
-  unavailable: { alignItems: "center", justifyContent: "center", padding: 24 },
+  unavailable: { alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
 });

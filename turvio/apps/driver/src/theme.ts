@@ -46,16 +46,25 @@ export function useTheme(): { c: Palette; dark: boolean } {
   return { c: dark ? DARK : LIGHT, dark };
 }
 
-export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
-export const radii = { sm: 8, md: 12, lg: 16, xl: 22, pill: 999 } as const;
-/** Large, glove-friendly touch targets. */
-export const touch = { min: 48, button: 56, hero: 76 } as const;
+/**
+ * TURVIO mobile design tokens (see docs/MOBILE_DESIGN_SYSTEM.md).
+ * Dense but readable: drivers glance at the phone between stops, so hierarchy comes from
+ * weight and colour, not from size. 4-pt spacing grid, 1-px borders instead of shadows.
+ */
+export const space = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
+export const radii = { sm: 8, md: 10, lg: 14, xl: 18, pill: 999 } as const;
+/** Touch targets: never below 44 pt (iOS) / 48 dp (Material) for anything a driver taps. */
+export const touch = { min: 48, button: 48, buttonLg: 52, tile: 64, hero: 64 } as const;
 export const type = {
-  display: { fontSize: 28, fontWeight: "800" as const, letterSpacing: -0.5 },
-  title: { fontSize: 22, fontWeight: "700" as const, letterSpacing: -0.3 },
-  h2: { fontSize: 18, fontWeight: "700" as const },
-  body: { fontSize: 16, fontWeight: "400" as const },
-  bodyStrong: { fontSize: 16, fontWeight: "600" as const },
-  small: { fontSize: 14, fontWeight: "400" as const },
-  caption: { fontSize: 12, fontWeight: "600" as const, letterSpacing: 0.4 },
+  /** Screen titles on tab roots ("Hello, Lena"). */
+  display: { fontSize: 24, fontWeight: "700" as const, letterSpacing: -0.4, lineHeight: 30 },
+  title: { fontSize: 20, fontWeight: "700" as const, letterSpacing: -0.2, lineHeight: 26 },
+  h2: { fontSize: 17, fontWeight: "600" as const, lineHeight: 22 },
+  body: { fontSize: 15, fontWeight: "400" as const, lineHeight: 21 },
+  bodyStrong: { fontSize: 15, fontWeight: "600" as const, lineHeight: 21 },
+  small: { fontSize: 13, fontWeight: "400" as const, lineHeight: 18 },
+  smallStrong: { fontSize: 13, fontWeight: "600" as const, lineHeight: 18 },
+  caption: { fontSize: 12, fontWeight: "600" as const, letterSpacing: 0.3, lineHeight: 16 },
+  /** Key figures (km, minutes, counts). Tabular so numbers do not jump while updating. */
+  metric: { fontSize: 18, fontWeight: "700" as const, lineHeight: 22, fontVariant: ["tabular-nums" as const] },
 };

@@ -334,5 +334,11 @@ export const driverRo: Record<DriverMessageKey, string> = {
   "photoImport.pasteRead": "Găsește adresele",
   "photoImport.noneText": "Nicio adresă găsită în text.",
   "photoImport.text": "Text",
-  "map.unavailable": "Harta nu este disponibilă în această versiune de test (fără cheie Google Maps). Folosește căutarea adresei.",
+  "map.unavailable": "Harta nu este disponibilă în această versiune (Google Maps neconfigurat). Opririle, căutarea adresei și navigarea funcționează.",
+  "home.demoChip": "Demo",
+  "home.addStops": "Adaugă opriri",
+  "home.pullToRefresh": "Trage în jos pentru a verifica rute noi.",
+  "photoImport.selectAll": "Selectează tot",
+  "photoImport.selectNone": "Deselectează",
+  "map.loadFailed": "Harta nu a putut fi încărcată (fără conexiune sau serviciu de hărți neconfigurat). Opririle și navigarea funcționează în continuare.",
 };

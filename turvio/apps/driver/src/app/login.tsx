@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Banner, Button, Field } from "../components/ui";
 import { createAuthClient } from "../lib/auth";
 import { useT } from "../lib/i18n";
@@ -13,6 +14,7 @@ import { radii, space, type as ty, useTheme } from "../theme";
 export default function LoginScreen() {
   const t = useT();
   const { c, dark } = useTheme();
+  const insets = useSafeAreaInsets();
   const user = useTourStore((s) => s.user);
   const signIn = useTourStore((s) => s.signIn);
   const [email, setEmail] = useState("");
@@ -64,8 +66,11 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: space.xl, gap: space.xl }} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingHorizontal: space.xl, paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.xl, gap: space.xl }}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={{ alignItems: "center", gap: space.sm }}>
           <Image source={dark ? require("../../assets/brand/turvio-lockup-dark.png") : require("../../assets/brand/turvio-lockup-light.png")} style={{ width: 190, height: 34 }} resizeMode="contain" accessibilityLabel="TURVIO" />
           <Text style={[ty.caption, { color: c.textMuted, letterSpacing: 2 }]}>DRIVER</Text>

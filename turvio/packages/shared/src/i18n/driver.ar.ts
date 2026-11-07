@@ -334,5 +334,11 @@ export const driverAr: Record<DriverMessageKey, string> = {
   "photoImport.pasteRead": "ابحث عن العناوين",
   "photoImport.noneText": "لم يُعثر على عنوان في النص.",
   "photoImport.text": "نص",
-  "map.unavailable": "الخريطة غير متاحة في هذا الإصدار التجريبي (لا يوجد مفتاح Google Maps). استخدم البحث عن العنوان.",
+  "map.unavailable": "الخريطة غير متاحة في هذا الإصدار (لم يتم إعداد Google Maps). المحطات والبحث عن العنوان والملاحة تعمل.",
+  "home.demoChip": "تجريبي",
+  "home.addStops": "إضافة محطات",
+  "home.pullToRefresh": "اسحب للأسفل للتحقق من مسارات جديدة.",
+  "photoImport.selectAll": "تحديد الكل",
+  "photoImport.selectNone": "إلغاء التحديد",
+  "map.loadFailed": "تعذّر تحميل الخريطة (لا يوجد اتصال أو خدمة الخرائط غير مُعدّة). المحطات والملاحة تعمل كالمعتاد.",
 };
