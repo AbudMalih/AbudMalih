@@ -1,0 +1,500 @@
+/* ambient visuals: motion in place, never tied to scroll */
+.wrap {
+  --amb: #e9eaec;
+  --amb-soft: rgba(233, 234, 236, 0.22);
+  --edge: rgba(233, 234, 236, 0.4);
+  --f0: #4a4c52;
+  --f1: #3a3c41;
+  --f2: #2a2b30;
+  --f3: #1e1f23;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: 100%;
+  color: var(--amb);
+}
+.light {
+  --amb: #26272b;
+  --amb-soft: rgba(38, 39, 43, 0.2);
+  --edge: rgba(38, 39, 43, 0.28);
+  --f0: #ffffff;
+  --f1: #f6f5f2;
+  --f2: #e4e2dd;
+  --f3: #d3d1cb;
+}
+.label {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--amb-soft);
+  background: color-mix(in srgb, var(--amb) 6%, transparent);
+  backdrop-filter: blur(10px);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.label::before {
+  content: "+";
+  font-weight: 500;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.float {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  animation: ambFloat 9s ease-in-out infinite;
+}
+@keyframes ambFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ------------------------------------------------------------ globe */
+.globe {
+  display: block;
+  flex: none;
+  width: min(100%, 480px);
+  height: auto;
+  overflow: visible;
+}
+.rim {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.45;
+  stroke-width: 1.2;
+}
+.lat {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.16;
+  stroke-width: 1;
+}
+.meridian {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.26;
+  stroke-width: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ambTurn 36s ease-in-out infinite;
+}
+@keyframes ambTurn {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(-1);
+  }
+}
+.lane {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.7;
+  stroke-width: 1.4;
+  stroke-dasharray: 4 6;
+  animation: ambDash 2.6s linear infinite;
+}
+@keyframes ambDash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.pin {
+  fill: currentColor;
+}
+.pulse {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ambPulse 3.2s ease-out infinite;
+}
+.pulseLate {
+  animation-delay: 1.6s;
+}
+@keyframes ambPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(4.2);
+    opacity: 0;
+  }
+}
+.packet rect {
+  fill: currentColor;
+}
+.orbit {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.18;
+  stroke-width: 1;
+  stroke-dasharray: 2 7;
+}
+.sat {
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+/* ----------------------------------------------------------- carton */
+.scene {
+  position: relative;
+  width: 100%;
+  height: clamp(280px, 30vw, 400px);
+  display: grid;
+  place-items: center;
+  perspective: 1100px;
+}
+.cube {
+  --w: clamp(150px, 15vw, 210px);
+  --h: calc(var(--w) * 0.76);
+  --d: calc(var(--w) * 0.86);
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  transform-style: preserve-3d;
+  animation: ambSpin 30s linear infinite;
+}
+.float:has(.cube) {
+  transform-style: preserve-3d;
+}
+@keyframes ambSpin {
+  from {
+    transform: rotateX(-20deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-20deg) rotateY(360deg);
+  }
+}
+.face {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--edge);
+  background: linear-gradient(150deg, var(--f1), var(--f2));
+  backface-visibility: visible;
+}
+.front,
+.back {
+  width: var(--w);
+  height: var(--h);
+  margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
+}
+.left,
+.right {
+  width: var(--d);
+  height: var(--h);
+  margin: calc(var(--h) / -2) 0 0 calc(var(--d) / -2);
+}
+.top,
+.bottom {
+  width: var(--w);
+  height: var(--d);
+  margin: calc(var(--d) / -2) 0 0 calc(var(--w) / -2);
+}
+.front {
+  transform: translateZ(calc(var(--d) / 2));
+}
+.back {
+  transform: rotateY(180deg) translateZ(calc(var(--d) / 2));
+}
+.right {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2));
+}
+.left {
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+}
+.top {
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2));
+  background: linear-gradient(150deg, var(--f0), var(--f1));
+}
+.right,
+.left {
+  background: linear-gradient(150deg, var(--f2), var(--f3));
+}
+.bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--h) / 2));
+}
+.mark {
+  position: relative;
+  width: 34px;
+  height: 34px;
+}
+.mark::before,
+.mark::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 2px;
+  margin-top: -1px;
+  background: var(--amb);
+}
+.mark::after {
+  transform: rotate(90deg);
+}
+.lines {
+  width: 56%;
+  height: 26%;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--amb) 50%, transparent) 0 1px, transparent 1px 9px);
+}
+.tape {
+  width: 22%;
+  height: 100%;
+  background: color-mix(in srgb, var(--amb) 18%, transparent);
+  border-inline: 1px solid color-mix(in srgb, var(--amb) 35%, transparent);
+}
+.shadow {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  width: 46%;
+  height: 22px;
+  margin-left: -23%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, #000 55%, transparent), transparent);
+  animation: ambShadow 9s ease-in-out infinite;
+}
+@keyframes ambShadow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(0.88);
+    opacity: 0.55;
+  }
+}
+
+/* ------------------------------------------------------------ photo */
+.photo {
+  position: relative;
+  margin: 0;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #1a1b1e;
+  isolation: isolate;
+}
+.photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: ambDrift 28s ease-in-out infinite alternate;
+}
+@keyframes ambDrift {
+  from {
+    transform: scale(1.04) translate(0, 0);
+  }
+  to {
+    transform: scale(1.12) translate(-1.6%, -1.2%);
+  }
+}
+.photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(10, 11, 13, 0.55));
+  pointer-events: none;
+}
+.note {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  inset-inline-end: 14px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(10, 11, 13, 0.45);
+  backdrop-filter: blur(8px);
+  color: #d9dadd;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+.caption {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #f4f3f0;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float,
+  .meridian,
+  .lane,
+  .pulse,
+  .cube,
+  .shadow,
+  .photo img {
+    animation: none;
+  }
+  .pulse,
+  .packet,
+  .sat {
+    display: none;
+  }
+  .cube {
+    transform: rotateX(-20deg) rotateY(-32deg);
+  }
+}
+
+/* ------------------------------------------------------------ story */
+.storyHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: clamp(28px, 5vw, 80px);
+  align-items: end;
+}
+.quote {
+  margin: 0;
+  padding: clamp(22px, 2.4vw, 32px);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(160deg, rgba(36, 37, 41, 0.8), rgba(20, 21, 24, 0.8));
+}
+.quote p {
+  margin: 0;
+  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f4f3f0;
+}
+.quote p::before {
+  content: "+";
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  color: #9a9ba0;
+}
+.quote footer {
+  margin-top: 16px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a9ba0;
+}
+.storyGrid {
+  margin: clamp(36px, 6vh, 64px) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.storyItem {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.storyTitle {
+  margin: 18px 0 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #f4f3f0;
+}
+.storyBody {
+  margin: 6px 0 0;
+  color: #b9babe;
+  line-height: 1.6;
+  max-width: 30em;
+}
+.chip {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(10, 11, 13, 0.5);
+  backdrop-filter: blur(8px);
+  white-space: pre;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+:global(html[lang="ar"]) .chip {
+  letter-spacing: 0;
+}
+@media (max-width: 900px) {
+  .storyHead,
+  .storyGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------- side visual in sections */
+.sideGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+  width: 100%;
+}
+.sideGrid > :first-child {
+  display: grid;
+  justify-items: start;
+  gap: 24px;
+}
+@media (max-width: 900px) {
+  .sideGrid {
+    grid-template-columns: 1fr;
+  }
+  .sideVisual {
+    max-width: 420px;
+    width: 100%;
+    justify-self: center;
+  }
+}
+
+/* hero aside: photo with the route as a glass bar */
+.heroPhoto {
+  border-radius: 28px;
+}
+.routeBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.routeBar span {
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(10, 11, 13, 0.5);
+  backdrop-filter: blur(8px);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+/* the Marken CTA title is huge on its own; beside a visual it steps down */
+.ctaSide {
+  font-size: clamp(2.4rem, min(5.2vw, 11svh), 6rem) !important;
+}
+.disc {
+  fill: #0d0e10;
+  fill-opacity: 0.55;
+}
+.light .disc {
+  fill: #ffffff;
+  fill-opacity: 0.5;
+}

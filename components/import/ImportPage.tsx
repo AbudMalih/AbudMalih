@@ -10,6 +10,9 @@ import { FlagCN, FlagDE, FlagEU } from "./Flags";
 import RouteCard from "./RouteCard";
 import svc from "@/components/services/Services.module.css";
 import s from "@/components/kit/Kit.module.css";
+import { Cta } from "@/components/kit/Kit";
+import { Globe } from "@/components/kit/Ambient";
+import { STORY } from "@/content/story";
 
 /**
  * IMPORT: the trade lane from China to Germany, made tangible.
@@ -26,7 +29,9 @@ export default function ImportPage() {
   const t = IMPORT_COPY[locale];
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
-  const channels = PLATFORMS.filter((p) => CHANNELS.includes(p.id) && p.useMark);
+  const channels = PLATFORMS.filter(
+    (p) => CHANNELS.includes(p.id) && p.useMark,
+  );
 
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
@@ -39,16 +44,29 @@ export default function ImportPage() {
               <span className={s.dot} />
               {t.eyebrow}
             </p>
-            <h1 id="imp-title" className={s.title} data-reveal style={{ ["--d" as string]: "80ms" }}>
+            <h1
+              id="imp-title"
+              className={s.title}
+              data-reveal
+              style={{ ["--d" as string]: "80ms" }}
+            >
               <span>{t.h1a}</span>
               <span className={s.titleRed}>{t.h1b}</span>
             </h1>
-            <div className={s.flags} data-reveal style={{ ["--d" as string]: "160ms" }}>
+            <div
+              className={s.flags}
+              data-reveal
+              style={{ ["--d" as string]: "160ms" }}
+            >
               <span className={s.flagChip}>
                 <FlagCN className={s.flag} />
                 <span>
                   <small>{t.from}</small>
-                  {locale === "de" ? "China" : locale === "en" ? "China" : "الصين"}
+                  {locale === "de"
+                    ? "China"
+                    : locale === "en"
+                      ? "China"
+                      : "الصين"}
                 </span>
               </span>
               <span className={s.flagArrow} aria-hidden="true" />
@@ -56,7 +74,11 @@ export default function ImportPage() {
                 <FlagDE className={s.flag} />
                 <span>
                   <small>{t.to}</small>
-                  {locale === "de" ? "Deutschland" : locale === "en" ? "Germany" : "ألمانيا"}
+                  {locale === "de"
+                    ? "Deutschland"
+                    : locale === "en"
+                      ? "Germany"
+                      : "ألمانيا"}
                 </span>
               </span>
               <span className={s.flagChip}>
@@ -67,11 +89,23 @@ export default function ImportPage() {
                 </span>
               </span>
             </div>
-            <p className={`t-lead ${s.lead}`} data-reveal style={{ ["--d" as string]: "220ms" }}>
+            <p
+              className={`t-lead ${s.lead}`}
+              data-reveal
+              style={{ ["--d" as string]: "220ms" }}
+            >
               {t.lead}
             </p>
-            <div className={s.actions} data-reveal style={{ ["--d" as string]: "280ms" }}>
-              <Link href={href("/quote")} className={s.btnRed} data-cursor="invert">
+            <div
+              className={s.actions}
+              data-reveal
+              style={{ ["--d" as string]: "280ms" }}
+            >
+              <Link
+                href={href("/quote")}
+                className={s.btnRed}
+                data-cursor="invert"
+              >
                 {t.ctaPrimary}
                 <span className={s.badge} aria-hidden="true" />
               </Link>
@@ -92,7 +126,11 @@ export default function ImportPage() {
         <div className={s.marquee} dir="ltr">
           <div className={s.track}>
             {[...t.lanes, ...t.lanes].map((l, i) => (
-              <span key={i} className={s.lane} aria-hidden={i >= t.lanes.length}>
+              <span
+                key={i}
+                className={s.lane}
+                aria-hidden={i >= t.lanes.length}
+              >
                 <i className={s.laneDot} />
                 {l}
               </span>
@@ -102,7 +140,11 @@ export default function ImportPage() {
       </section>
 
       {/* ----------------------------------------------------------- MODES */}
-      <section className={s.light} data-tone="light" aria-labelledby="imp-modes">
+      <section
+        className={s.light}
+        data-tone="light"
+        aria-labelledby="imp-modes"
+      >
         <div className="frame">
           <p className={`t-label ${s.tag}`} data-reveal>
             <span className={s.tagRule} /> {t.modesTag}
@@ -112,7 +154,12 @@ export default function ImportPage() {
           </h2>
           <div className={s.modes}>
             {t.modes.map((m, i) => (
-              <div key={m.id} className={s.mode} data-reveal style={{ ["--d" as string]: `${i * 90}ms` }}>
+              <div
+                key={m.id}
+                className={s.mode}
+                data-reveal
+                style={{ ["--d" as string]: `${i * 90}ms` }}
+              >
                 <ModeIcon id={m.id} />
                 <h3 className={s.modeName}>{m.name}</h3>
                 <p className={s.modeTime}>
@@ -129,7 +176,12 @@ export default function ImportPage() {
       </section>
 
       {/* ----------------------------------------------------------- STEPS */}
-      <section id="ablauf" className={`${s.light} ${s.alt}`} data-tone="light" aria-labelledby="imp-steps">
+      <section
+        id="ablauf"
+        className={`${s.light} ${s.alt}`}
+        data-tone="light"
+        aria-labelledby="imp-steps"
+      >
         <div className="frame">
           <p className={`t-label ${s.tag}`} data-reveal>
             <span className={s.tagRule} /> {t.stepsTag}
@@ -139,8 +191,15 @@ export default function ImportPage() {
           </h2>
           <ol className={s.steps}>
             {t.steps.map((st, i) => (
-              <li key={i} className={s.step} data-reveal style={{ ["--d" as string]: `${i * 70}ms` }}>
-                <span className={s.stepNum}>{String(i + 1).padStart(2, "0")}</span>
+              <li
+                key={i}
+                className={s.step}
+                data-reveal
+                style={{ ["--d" as string]: `${i * 70}ms` }}
+              >
+                <span className={s.stepNum}>
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 <h3 className={s.stepTitle}>{st.title}</h3>
                 <p className={s.stepText}>{st.text}</p>
               </li>
@@ -160,7 +219,12 @@ export default function ImportPage() {
           </h2>
           <div className={s.values}>
             {t.values.map((v, i) => (
-              <div key={i} className={s.value} data-reveal style={{ ["--d" as string]: `${i * 80}ms` }}>
+              <div
+                key={i}
+                className={s.value}
+                data-reveal
+                style={{ ["--d" as string]: `${i * 80}ms` }}
+              >
                 <span className={s.check} aria-hidden="true" />
                 <h3 className={s.valueTitle}>{v.title}</h3>
                 <p className={s.valueText}>{v.text}</p>
@@ -171,7 +235,11 @@ export default function ImportPage() {
       </section>
 
       {/* -------------------------------------------------------- CHANNELS */}
-      <section className={s.light} data-tone="light" aria-labelledby="imp-channels">
+      <section
+        className={s.light}
+        data-tone="light"
+        aria-labelledby="imp-channels"
+      >
         <div className={`frame ${s.channelsGrid}`}>
           <div>
             <p className={`t-label ${s.tag}`} data-reveal>
@@ -201,23 +269,14 @@ export default function ImportPage() {
       </section>
 
       {/* ------------------------------------------------------------- CTA */}
-      <section className={s.cta} data-tone="dark" aria-labelledby="imp-cta">
-        <div className={s.heroPhoto} aria-hidden="true" />
-        <div className={`frame ${s.ctaInner}`}>
-          <h2 id="imp-cta" className={s.ctaTitle} data-reveal>
-            {t.ctaTitle}
-          </h2>
-          <p className={`t-lead ${s.ctaText}`} data-reveal>
-            {t.ctaText}
-          </p>
-          <div data-reveal>
-            <Link href={href("/quote")} className={s.btnRed} data-cursor="invert">
-              {t.ctaButton}
-              <span className={s.badge} aria-hidden="true" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <Cta
+        id="imp-cta"
+        title={t.ctaTitle}
+        text={t.ctaText}
+        button={t.ctaButton}
+        href={href("/quote")}
+        visual={<Globe label={STORY[locale].visual.globe} />}
+      />
     </article>
   );
 }
@@ -230,7 +289,10 @@ function ModeIcon({ id }: { id: "sea" | "rail" | "air" }) {
           <path d="M8 40h92l-10 14H20z" />
           <path d="M26 40V28h16v12M44 40V24h16v16M62 40V28h16v12" />
           <path d="M82 40V20h8v20" />
-          <path d="M4 58c8 0 8-3 16-3s8 3 16 3 8-3 16-3 8 3 16 3 8-3 16-3 8 3 16 3" className="red" />
+          <path
+            d="M4 58c8 0 8-3 16-3s8 3 16 3 8-3 16-3 8 3 16 3 8-3 16-3 8 3 16 3"
+            className="red"
+          />
         </>
       )}
       {id === "rail" && (

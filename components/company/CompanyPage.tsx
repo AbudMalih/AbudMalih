@@ -4,8 +4,19 @@ import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { usePageMotion } from "@/components/services/usePageMotion";
 import { FlagDE, FlagEU } from "@/components/import/Flags";
-import { PageHero, Band, Cta, Tag, RedButton, GhostButton, d, kit as s } from "@/components/kit/Kit";
+import {
+  PageHero,
+  Band,
+  Cta,
+  Tag,
+  RedButton,
+  GhostButton,
+  d,
+  kit as s,
+} from "@/components/kit/Kit";
 import svc from "@/components/services/Services.module.css";
+import { Globe } from "@/components/kit/Ambient";
+import Story from "@/components/kit/Story";
 
 /**
  * UNTERNEHMEN / COMPANY on the site kit. Only verified company facts.
@@ -32,31 +43,20 @@ export default function CompanyPage() {
             <GhostButton href={href("/what-we-do")}>{t.cta.more}</GhostButton>
           </>
         }
-        aside={
-          <div className={s.glass}>
-            <ol className={s.stack}>
-              {t.hero.layers.map((l, i) => (
-                <li key={l} className={s.stackItem} style={{ ["--i" as string]: i }}>
-                  <span className={s.num}>{num(i)}</span>
-                  {l}
-                </li>
-              ))}
-            </ol>
-            <p className={s.routeCap} style={{ marginTop: 18 }}>
-              <span className={s.live}>
-                <i />
-                {t.base.rings[0].note}
-              </span>
-              <span>{t.hero.base}</span>
-            </p>
-          </div>
-        }
+        aside={<Globe label={t.hero.base} />}
       />
 
-      <Band title={t.profile.areasTag} items={[...t.profile.areas, ...t.direction.lines]} />
+      <Band
+        title={t.profile.areasTag}
+        items={[...t.profile.areas, ...t.direction.lines]}
+      />
 
       {/* profile */}
-      <section className={s.light} data-tone="light" aria-labelledby="co-profile">
+      <section
+        className={s.light}
+        data-tone="light"
+        aria-labelledby="co-profile"
+      >
         <div className={`frame ${s.split}`}>
           <div>
             <Tag>{t.profile.tag}</Tag>
@@ -64,7 +64,14 @@ export default function CompanyPage() {
               {t.profile.name}
             </h2>
             <div className={s.flags} data-reveal>
-              <span className={s.flagChip} style={{ background: "#fff", color: "#141518", borderColor: "rgba(20,21,24,.1)" }}>
+              <span
+                className={s.flagChip}
+                style={{
+                  background: "#fff",
+                  color: "#141518",
+                  borderColor: "rgba(20,21,24,.1)",
+                }}
+              >
                 <FlagDE className={s.flag} />
                 <span>
                   <small>{t.profile.country}</small>
@@ -72,7 +79,12 @@ export default function CompanyPage() {
                 </span>
               </span>
             </div>
-            <div className={s.bentoHero} style={{ minHeight: 300, marginTop: 28 }} data-reveal aria-hidden="true">
+            <div
+              className={s.bentoHero}
+              style={{ minHeight: 300, marginTop: 28 }}
+              data-reveal
+              aria-hidden="true"
+            >
               <span className={s.chipDark} style={{ alignSelf: "flex-start" }}>
                 {t.hero.base}
               </span>
@@ -95,7 +107,11 @@ export default function CompanyPage() {
       </section>
 
       {/* the idea: before / now */}
-      <section className={`${s.light} ${s.alt}`} data-tone="light" aria-labelledby="co-idea">
+      <section
+        className={`${s.light} ${s.alt}`}
+        data-tone="light"
+        aria-labelledby="co-idea"
+      >
         <div className="frame">
           <Tag>{t.idea.tag}</Tag>
           <h2 id="co-idea" className={s.h2} data-reveal>
@@ -111,21 +127,38 @@ export default function CompanyPage() {
               </span>
               <ol className={s.chips}>
                 {t.idea.beforeSteps.map((x, i) => (
-                  <li key={x} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {i > 0 && <span className={s.arrowSep} style={{ background: "#8a8b8f" }} aria-hidden="true" />}
+                  <li
+                    key={x}
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    {i > 0 && (
+                      <span
+                        className={s.arrowSep}
+                        style={{ background: "#8a8b8f" }}
+                        aria-hidden="true"
+                      />
+                    )}
                     <span className={s.chip}>{x}</span>
                   </li>
                 ))}
               </ol>
             </div>
             <div className={s.card} data-reveal style={d(100)}>
-              <span className={s.numSoft} style={{ background: "var(--luna-red)" }}>
+              <span
+                className={s.numSoft}
+                style={{ background: "var(--luna-red)" }}
+              >
                 {t.idea.now}
               </span>
               <ol className={s.chips}>
                 {t.idea.nowSteps.map((x, i) => (
-                  <li key={x} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {i > 0 && <span className={s.arrowSep} aria-hidden="true" />}
+                  <li
+                    key={x}
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    {i > 0 && (
+                      <span className={s.arrowSep} aria-hidden="true" />
+                    )}
                     <span className={s.chip}>{x}</span>
                   </li>
                 ))}
@@ -145,7 +178,11 @@ export default function CompanyPage() {
       </section>
 
       {/* principles */}
-      <section className={s.dark} data-tone="dark" aria-labelledby="co-principles">
+      <section
+        className={s.dark}
+        data-tone="dark"
+        aria-labelledby="co-principles"
+      >
         <div className="frame">
           <Tag dark>{t.principles.tag}</Tag>
           <h2 id="co-principles" className={`${s.h2} ${s.h2Dark}`} data-reveal>
@@ -186,7 +223,11 @@ export default function CompanyPage() {
                 ))}
               </ul>
             </div>
-            <div className={s.cardDark} style={{ background: "#141518" }} data-reveal>
+            <div
+              className={s.cardDark}
+              style={{ background: "#141518" }}
+              data-reveal
+            >
               <h3 className={s.h3} style={{ marginTop: 0 }}>
                 {t.pd.digital.name}
               </h3>
@@ -206,12 +247,17 @@ export default function CompanyPage() {
       </section>
 
       {/* Cologne */}
-      <section className={`${s.light} ${s.alt}`} data-tone="light" aria-labelledby="co-base">
+      <section
+        className={`${s.light} ${s.alt}`}
+        data-tone="light"
+        aria-labelledby="co-base"
+      >
         <div className={`frame ${s.split}`}>
           <div>
             <Tag>{t.base.tag}</Tag>
             <h2 id="co-base" className={s.h2} data-reveal>
-              {t.base.title1} <span className={s.titleRed}>{t.base.title2}</span>
+              {t.base.title1}{" "}
+              <span className={s.titleRed}>{t.base.title2}</span>
             </h2>
             <p className={s.body} data-reveal>
               {t.base.body}
@@ -219,8 +265,24 @@ export default function CompanyPage() {
           </div>
           <div className={s.heroSide}>
             {t.base.rings.map((r, i) => (
-              <div key={r.name} className={s.card} data-reveal style={{ ...d(i * 90), display: "flex", alignItems: "center", gap: 16 }}>
-                {i === 0 ? <FlagDE className={s.flag} /> : i === 1 ? <FlagEU className={s.flag} /> : <span className={s.num}>{num(i)}</span>}
+              <div
+                key={r.name}
+                className={s.card}
+                data-reveal
+                style={{
+                  ...d(i * 90),
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                {i === 0 ? (
+                  <FlagDE className={s.flag} />
+                ) : i === 1 ? (
+                  <FlagEU className={s.flag} />
+                ) : (
+                  <span className={s.num}>{num(i)}</span>
+                )}
                 <div>
                   <h3 className={s.h3} style={{ marginTop: 0 }}>
                     {r.name}
@@ -236,12 +298,17 @@ export default function CompanyPage() {
       </section>
 
       {/* standards */}
-      <section className={s.light} data-tone="light" aria-labelledby="co-standards">
+      <section
+        className={s.light}
+        data-tone="light"
+        aria-labelledby="co-standards"
+      >
         <div className={`frame ${s.split} ${s.splitTop}`}>
           <div>
             <Tag>{t.standards.tag}</Tag>
             <h2 id="co-standards" className={s.h2} data-reveal>
-              {t.standards.title1} <span className={s.titleRed}>{t.standards.title2}</span>
+              {t.standards.title1}{" "}
+              <span className={s.titleRed}>{t.standards.title2}</span>
             </h2>
             <p className={s.body} data-reveal>
               {t.standards.body}
@@ -267,7 +334,11 @@ export default function CompanyPage() {
       </section>
 
       {/* own brand */}
-      <section className={s.emerald} data-tone="dark" aria-labelledby="co-brand">
+      <section
+        className={s.emerald}
+        data-tone="dark"
+        aria-labelledby="co-brand"
+      >
         <div className={`frame ${s.split}`}>
           <div>
             <p className={`t-label ${s.tag} ${s.gold}`} data-reveal>
@@ -278,7 +349,11 @@ export default function CompanyPage() {
             </h2>
             <p className={s.chips} data-reveal>
               <span className={s.chipDark}>{t.brand.chain[0]}</span>
-              <span className={s.arrowSep} style={{ background: "#c9ccd2" }} aria-hidden="true" />
+              <span
+                className={s.arrowSep}
+                style={{ background: "#c9ccd2" }}
+                aria-hidden="true"
+              />
               <span className={s.chipDark}>{t.brand.chain[1]}</span>
             </p>
             <p className={s.bodyDark} data-reveal>
@@ -292,10 +367,19 @@ export default function CompanyPage() {
             </div>
           </div>
           <figure className={s.media} data-reveal style={d(120)}>
-            <img src="/brand/luviscent/diffuser-lamp.webp" alt="LUVISCENT" width={1185} height={1171} loading="lazy" style={{ maxHeight: 400 }} />
+            <img
+              src="/brand/luviscent/diffuser-lamp.webp"
+              alt="LUVISCENT"
+              width={1185}
+              height={1171}
+              loading="lazy"
+              style={{ maxHeight: 400 }}
+            />
           </figure>
         </div>
       </section>
+
+      <Story id="co-story" />
 
       {/* facts + bridges */}
       <section className={s.dark} data-tone="dark" aria-labelledby="co-facts">
@@ -321,11 +405,20 @@ export default function CompanyPage() {
               {t.bridges.tag}
             </p>
             <a href={href("/what-we-do")} className={s.cardDark} data-reveal>
-              <span className={`t-label ${s.tagDark}`}>{t.bridges.what.kicker}</span>
+              <span className={`t-label ${s.tagDark}`}>
+                {t.bridges.what.kicker}
+              </span>
               <h3 className={s.h3}>{t.bridges.what.label}</h3>
             </a>
-            <a href={href("/brands")} className={s.cardDark} data-reveal style={d(90)}>
-              <span className={`t-label ${s.tagDark}`}>{t.bridges.build.kicker}</span>
+            <a
+              href={href("/brands")}
+              className={s.cardDark}
+              data-reveal
+              style={d(90)}
+            >
+              <span className={`t-label ${s.tagDark}`}>
+                {t.bridges.build.kicker}
+              </span>
               <h3 className={s.h3}>{t.bridges.build.label}</h3>
             </a>
           </div>
@@ -333,11 +426,16 @@ export default function CompanyPage() {
       </section>
 
       {/* direction */}
-      <section className={`${s.light} ${s.alt}`} data-tone="light" aria-labelledby="co-direction">
+      <section
+        className={`${s.light} ${s.alt}`}
+        data-tone="light"
+        aria-labelledby="co-direction"
+      >
         <div className="frame">
           <Tag>{t.direction.tag}</Tag>
           <h2 id="co-direction" className={s.h2} data-reveal>
-            {t.direction.title1} <span className={s.titleRed}>{t.direction.title2}</span>
+            {t.direction.title1}{" "}
+            <span className={s.titleRed}>{t.direction.title2}</span>
           </h2>
           <p className={s.body} data-reveal>
             {t.direction.body}
@@ -353,7 +451,14 @@ export default function CompanyPage() {
         </div>
       </section>
 
-      <Cta id="co-cta" title={`${t.cta.h1} ${t.cta.h2}`} text={t.cta.lead} button={t.cta.button} href={href("/contact")} more={{ label: t.cta.more, href: href("/what-we-do") }} />
+      <Cta
+        id="co-cta"
+        title={`${t.cta.h1} ${t.cta.h2}`}
+        text={t.cta.lead}
+        button={t.cta.button}
+        href={href("/contact")}
+        more={{ label: t.cta.more, href: href("/what-we-do") }}
+      />
     </article>
   );
 }

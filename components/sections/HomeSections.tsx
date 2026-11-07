@@ -20,6 +20,10 @@ import {
   kit as s,
 } from "@/components/kit/Kit";
 import h from "./HomeSections.module.css";
+import { Carton } from "@/components/kit/Ambient";
+import a from "@/components/kit/Ambient.module.css";
+import Story from "@/components/kit/Story";
+import { STORY } from "@/content/story";
 
 /**
  * The homepage after the opening: calm sections in the site's style, in
@@ -150,7 +154,9 @@ export default function HomeSections() {
                   <RedButton href={href("/import")}>
                     {dict.hero.ctaImport}
                   </RedButton>
-                  <GhostButton href={href("/quote")}>{im.ctaPrimary}</GhostButton>
+                  <GhostButton href={href("/quote")}>
+                    {im.ctaPrimary}
+                  </GhostButton>
                 </div>
               </div>
               <div data-reveal style={d(120)}>
@@ -248,24 +254,29 @@ export default function HomeSections() {
             data-tone="dark"
             aria-labelledby="home-brands"
           >
-            <div className="frame">
-              <h2
-                id="home-brands"
-                className={`${s.h2} ${s.h2Dark}`}
-                style={{ maxWidth: "none" }}
-                data-reveal
-              >
-                <span style={{ color: "#8d8e93" }}>
-                  {dict.brands.a1} {dict.brands.a2}
-                </span>
-                <br />
-                {dict.brands.b1}{" "}
-                <span className={s.titleRed}>{dict.brands.b2}.</span>
-              </h2>
-              <div className={s.actions} data-reveal>
-                <GhostButton href={href("/brands")}>
-                  {dict.nav.brands}
-                </GhostButton>
+            <div className={`frame ${a.sideGrid}`}>
+              <div>
+                <h2
+                  id="home-brands"
+                  className={`${s.h2} ${s.h2Dark}`}
+                  style={{ maxWidth: "none" }}
+                  data-reveal
+                >
+                  <span style={{ color: "#8d8e93" }}>
+                    {dict.brands.a1} {dict.brands.a2}
+                  </span>
+                  <br />
+                  {dict.brands.b1}{" "}
+                  <span className={s.titleRed}>{dict.brands.b2}.</span>
+                </h2>
+                <div className={s.actions} data-reveal>
+                  <GhostButton href={href("/brands")}>
+                    {dict.nav.brands}
+                  </GhostButton>
+                </div>
+              </div>
+              <div className={a.sideVisual} data-reveal style={d(160)}>
+                <Carton label={STORY[locale].visual.carton} />
               </div>
             </div>
           </section>
@@ -396,6 +407,8 @@ export default function HomeSections() {
               </div>
             </div>
           </section>
+
+          <Story id="home-story" />
 
           {/* one company, many markets: Luna Trading as the bar that joins six capabilities */}
           <section
