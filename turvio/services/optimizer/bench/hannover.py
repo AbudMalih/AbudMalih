@@ -335,6 +335,15 @@ def run(sizes: list[int], seeds: list[int], methods: list[str], solver_seconds: 
                     from bench import legacy_solver
 
                     order, unassigned, _ = turvio_solver(stops, m, solver_seconds[meth], max_shift, legacy_solver.solve)
+                elif meth.startswith("turvio_hybrid"):
+                    # Same model and time budget, VROOM warm start (see solver.WARM_START).
+                    import turvio_optimizer.solver as S
+
+                    prev, S.WARM_START = S.WARM_START, "vroom"
+                    try:
+                        order, unassigned, _ = turvio_solver(stops, m, solver_seconds["turvio_prod"], max_shift, S.solve, overtime=600)
+                    finally:
+                        S.WARM_START = prev
                 elif meth.startswith("turvio_"):
                     # A driver's own tour: overtime is reported, never "solved" by dropping parcels.
                     order, unassigned, _ = turvio_solver(stops, m, solver_seconds[meth], max_shift, solve_fn, overtime=600)
