@@ -229,6 +229,31 @@ def local_search(order: list[int], m: Matrix, max_seconds: float = 30.0) -> list
     return [x - 1 for x in route[1:-1]]
 
 
+def vroom_solver(stops: list[BStop], m: Matrix, max_shift: int) -> tuple[list[int], int]:
+    """Independent baseline: VROOM (BSD-2, pyvroom) on the same OSRM duration matrix.
+
+    VROOM treats time windows as hard (a stop that cannot be on time is left unassigned) and
+    has no "late with penalty" mode, so unassigned stops are appended in import order for
+    the evaluation – and counted.
+    """
+    import vroom
+
+    p = vroom.Input()
+    p.set_durations_matrix(profile="car", matrix_input=m.durations_s)
+    start = SHIFT_START * 60
+    p.add_vehicle([vroom.Vehicle(1, start=0, end=0, time_window=vroom.TimeWindow(start, start + max_shift * 60))])
+    jobs = []
+    for i, s in enumerate(stops):
+        kw = {"time_windows": [vroom.TimeWindow(s.tw[0] * 60, s.tw[1] * 60)]} if s.tw else {}
+        jobs.append(vroom.Job(i + 1, location=i + 1, default_service=s.service_s, priority=100 if s.priority else 0, **kw))
+    p.add_job(jobs)
+    sol = p.solve(exploration_level=5, nb_threads=4)
+    r = sol.routes
+    order = [int(x) - 1 for x in r[r["type"] == "job"]["id"].tolist()]
+    missing = [i for i in range(len(stops)) if i not in set(order)]
+    return order + missing, len(missing)
+
+
 def sorted_by_address(stops: list[BStop]) -> list[int]:
     def hn(h: str) -> tuple:
         digits = "".join(ch for ch in h if ch.isdigit())
@@ -302,6 +327,8 @@ def run(sizes: list[int], seeds: list[int], methods: list[str], solver_seconds: 
                     order = nearest_neighbour(m, n)
                 elif meth == "nn_2opt_oropt":
                     order = local_search(nearest_neighbour(m, n), m)
+                elif meth == "vroom":
+                    order, unassigned = vroom_solver(stops, m, max_shift)
                 elif meth.startswith("legacy_"):
                     from bench import legacy_solver
 
