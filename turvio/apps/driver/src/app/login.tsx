@@ -29,12 +29,14 @@ export default function LoginScreen() {
   if (user) return <Redirect href="/" />;
 
   // Development and preview builds only; production always uses the built-in server.
-  const showServer = canOverrideServerUrl() && !!buildServerUrl();
+  const showServer = canOverrideServerUrl();
   const saveServer = async (value: string | null) => {
     setServerError(null);
     const r = await setServerUrlOverride(value);
     if (!r.ok) return setServerError(t(r.reason === "insecure" ? "login.serverInsecure" : "login.serverInvalid"));
     const active = apiBaseUrl() ?? "";
+    // Test build without a built-in server: "reset" goes back to demo mode.
+    if (!active) return router.replace("/");
     setServer(active);
     setServerOpen(false);
     setInfo(t("login.serverSaved", { url: active }));

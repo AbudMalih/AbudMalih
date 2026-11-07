@@ -2,11 +2,13 @@ import { LOCALE_LABELS, SUPPORTED_LOCALES, isRtl, type Locale } from "@turvio/sh
 import Constants from "expo-constants";
 import { useState } from "react";
 import { Alert, Platform, Text, View } from "react-native";
-import { Banner, Button, Card, ListRow, Pill, Screen, SectionTitle, Segmented } from "../../components/ui";
+import { Banner, Button, Card, Field, ListRow, Pill, Screen, SectionTitle, Segmented } from "../../components/ui";
 import { TrackingSettingsSection } from "../../components/Tracking";
 import { useLocale, useT } from "../../lib/i18n";
 import { availableNavApps, type NavApp } from "../../lib/navigation";
 import { apiBaseUrl } from "../../lib/optimizer";
+import { canOverrideServerUrl, setServerUrlOverride } from "../../lib/serverUrl";
+import { router } from "expo-router";
 import { isServerMode, useTourStore } from "../../store/tourStore";
 import { space, type as ty, useTheme } from "../../theme";
 
@@ -38,6 +40,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen testID="settings" inTabs>
+      {!isServerMode() && canOverrideServerUrl() && <ConnectServerCard />}
       {isServerMode() && s.user && (
         <Card>
           <SectionTitle>{t("settings.account")}</SectionTitle>
@@ -120,5 +123,29 @@ export default function SettingsScreen() {
         {!isServerMode() && <Button label={t("settings.resetData")} variant="secondary" onPress={() => s.resetData()} />}
       </Card>
     </Screen>
+  );
+}
+
+/** Test builds in demo mode: connect to a real TURVIO server (then sign in). */
+function ConnectServerCard() {
+  const t = useT();
+  const { c } = useTheme();
+  const resetData = useTourStore((x) => x.resetData);
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const connect = async () => {
+    setError(null);
+    const r = await setServerUrlOverride(url);
+    if (!r.ok) return setError(t(r.reason === "insecure" ? "login.serverInsecure" : "login.serverInvalid"));
+    resetData();
+    router.replace("/login");
+  };
+  return (
+    <Card testID="connect-server">
+      <SectionTitle>{t("settings.connectServerTitle")}</SectionTitle>
+      <Text style={[ty.small, { color: c.textMuted }]}>{t("settings.connectServerText")}</Text>
+      <Field label={t("login.serverLabel")} value={url} onChangeText={setUrl} autoCapitalize="none" autoCorrect={false} keyboardType="url" error={error} placeholder="https://" testID="connect-server-url" />
+      <Button label={t("settings.connectServer")} icon="link-outline" onPress={() => void connect()} disabled={!url.trim()} testID="connect-server-save" />
+    </Card>
   );
 }

@@ -5,8 +5,9 @@ import Constants from "expo-constants";
  * Runtime TURVIO server address for development and preview (test) builds.
  *
  * Production builds always use the build-time EXPO_PUBLIC_API_URL; a stored
- * override is ignored there. The override only changes *which* server a
- * server-mode build talks to – it never turns a demo build into a server build.
+ * override is ignored there. In development/preview builds the override selects
+ * the server – it can also connect a demo build (no built-in server) to a real
+ * TURVIO server for internal testing.
  */
 const KEY = "turvio.serverUrl";
 
@@ -58,7 +59,7 @@ export function buildServerUrl(): string | null {
 
 /** The active override (null when none, or in production builds). */
 export function serverUrlOverride(): string | null {
-  return canOverrideServerUrl() ? override : null;
+  return override !== null && canOverrideServerUrl() ? override : null;
 }
 
 /** Reads the stored override once at start-up (before the first API call). */

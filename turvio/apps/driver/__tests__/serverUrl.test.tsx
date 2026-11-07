@@ -97,9 +97,15 @@ describe("runtime server override", () => {
     expect(apiBaseUrl()).toBe(BUILD);
   });
 
-  it("never turns a demo build (no built-in server) into a server build", async () => {
-    await setServerUrlOverride("https://api.other.test");
+  it("test builds can connect a demo build (no built-in server) to a server; production builds cannot", async () => {
     delete process.env.EXPO_PUBLIC_API_URL;
+    expect(apiBaseUrl()).toBeNull(); // demo
+    await setServerUrlOverride("https://api.other.test");
+    expect(apiBaseUrl()).toBe("https://api.other.test");
+    await setServerUrlOverride(null);
+    expect(apiBaseUrl()).toBeNull(); // back to demo
+    mockConfig.extra.variant = "production";
+    expect((await setServerUrlOverride("https://api.other.test")).ok).toBe(false);
     expect(apiBaseUrl()).toBeNull();
   });
 });

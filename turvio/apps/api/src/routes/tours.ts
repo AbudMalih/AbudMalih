@@ -153,6 +153,11 @@ interface VehicleInputRow {
   shiftStart: number;
 }
 
+/** Solver time budget: 5 s up to 60 stops, 10 s up to 150, 15 s above (large tours gain from it). */
+export function optimizeSeconds(stops: number): number {
+  return stops > 150 ? 15 : stops > 60 ? 10 : 5;
+}
+
 /** A live position younger than this is used as the origin of the remaining route. */
 export const FRESH_GPS_SECONDS = 120;
 
@@ -491,7 +496,8 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         priority: s.priority,
         demand: Math.max(1, s.parcels?.length ?? 1),
       })),
-      timeLimitSeconds: located.length > 60 ? 10 : 5,
+      // Solver budget by size (measured, docs/ROUTE_OPTIMIZATION.md); the HTTP call allows +30 s.
+      timeLimitSeconds: optimizeSeconds(located.length),
       // One driver's own tour: every parcel stays on the route; overtime and late deadlines are
       // reported instead of stops silently dropping off (1 min overtime ≈ 10 min driving).
       overtimePenaltyPerMinute: 600,
@@ -583,9 +589,9 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         priority: s.priority,
         demand: Math.max(1, s.parcels?.length ?? 1),
       })),
-      timeLimitSeconds: 10,
+      timeLimitSeconds: optimizeSeconds(located.length),
     });
-    const result = await guards.callOptimizer(request, 10);
+    const result = await guards.callOptimizer(request, request.timeLimitSeconds ?? 10);
     await db.asUser(claims(req), async (tx) => {
       for (const route of result.routes) {
         let seq = 1000;

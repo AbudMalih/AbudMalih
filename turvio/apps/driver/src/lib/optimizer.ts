@@ -32,9 +32,9 @@ export interface OptimizationOutcome {
  * Null = demo mode (no server).
  */
 export function apiBaseUrl(): string | null {
-  const build = buildServerUrl();
-  if (!build) return null;
-  return serverUrlOverride() ?? build;
+  // Test builds: a server entered in the app (also connects a demo build to a real server).
+  // Production builds: always the built-in server (the override is ignored there).
+  return serverUrlOverride() ?? buildServerUrl();
 }
 
 /**

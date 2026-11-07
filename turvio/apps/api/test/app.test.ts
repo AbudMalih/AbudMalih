@@ -211,3 +211,10 @@ describe("road-routing failures from the optimizer", () => {
     expect(res.json().error.code).toBe("routing_unavailable");
   });
 });
+
+describe("optimizer time budget", () => {
+  it("gives large tours more time (15 s above 150 stops)", async () => {
+    const { optimizeSeconds } = await import("../src/routes/tours");
+    expect([optimizeSeconds(20), optimizeSeconds(61), optimizeSeconds(150), optimizeSeconds(151), optimizeSeconds(200)]).toEqual([5, 10, 10, 15, 15]);
+  });
+});
