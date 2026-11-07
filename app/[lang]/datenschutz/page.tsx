@@ -96,8 +96,9 @@ export default async function Page({ params }: P) {
           berechtigtes Interesse liegt in der Beantwortung Ihrer Anfrage.
         </p>
         <p>
-          Für den Empfang, den Versand und die Speicherung von E-Mails nutzen wir den E-Mail-Dienst von Hostinger. Ihre Nachrichten
-          werden dabei auf den Servern dieses Anbieters gespeichert und verarbeitet.
+          Für den Empfang, den Versand und die Speicherung von E-Mails nutzen wir den E-Mail-Dienst der Hostinger International Ltd.,
+          61 Lordou Vironos Street, 6023 Larnaka, Zypern. Ihre Nachrichten werden dabei auf den Servern dieses Anbieters gespeichert
+          und verarbeitet; Hostinger ist dabei als technischer Dienstleister für uns tätig.
         </p>
 
         <h2>5. Kontaktformular</h2>
