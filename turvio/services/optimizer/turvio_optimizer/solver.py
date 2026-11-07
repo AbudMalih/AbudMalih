@@ -48,11 +48,13 @@ SLACK_COST = 0
 ARC_SCALE = 1  # driving-cost multiplier relative to the span/slack weights
 
 
-# Warm start (bench/hannover.py): VROOM (BSD-2, pyvroom) builds the first routes on the same
-# matrix in about a second; OR-Tools continues from there with the full TURVIO model (soft
-# deadlines, overtime, pairs). "none" = OR-Tools construction only. Falls back silently when
-# pyvroom is missing or its routes are not a valid start for the OR-Tools model.
-WARM_START = os.environ.get("TURVIO_WARM_START", "none")
+# Warm start (default; measured in bench/hannover.py, docs/ROUTE_OPTIMIZATION.md): VROOM (BSD-2,
+# pyvroom) builds first routes on the same matrix within ~0.1–6 s; stops it leaves out (hard
+# deadlines/shift there) are inserted where they cause the least lateness; OR-Tools continues
+# with the full TURVIO model (soft deadlines, overtime, pairs) in the remaining budget.
+# "none" = OR-Tools construction only. Falls back to that when pyvroom is missing or the start
+# is not valid for the OR-Tools model.
+WARM_START = os.environ.get("TURVIO_WARM_START", "vroom")
 
 
 def _vroom_routes(req: OptimizeRequest, dur: list[list[int]], stop_offset: int) -> list[list[int]] | None:
@@ -83,7 +85,9 @@ def _vroom_routes(req: OptimizeRequest, dur: list[list[int]], stop_offset: int) 
         jobs.append(vroom.Job(k + 1, location=stop_offset + k, default_service=s.service_seconds, priority=100 if s.priority else 0, **kw))
     p.add_job(jobs)
     try:
-        sol = p.solve(exploration_level=5, nb_threads=4)
+        # Measured (bench/hannover.py): level 2 matches level 5 on 150–200 stops at a third of
+        # the time, leaving most of the budget to OR-Tools.
+        sol = p.solve(exploration_level=5 if len(req.stops) <= 100 else 2, nb_threads=4)
     except Exception:
         return None
     r = sol.routes
@@ -91,6 +95,39 @@ def _vroom_routes(req: OptimizeRequest, dur: list[list[int]], stop_offset: int) 
     for vid, typ, jid in zip(r["vehicle_id"].tolist(), r["type"].tolist(), r["id"].tolist()):
         if typ == "job":
             routes[int(vid) - 1].append(stop_offset + int(jid) - 1)
+    # VROOM treats deadlines (and the shift) as hard and leaves such stops out. In TURVIO a parcel
+    # stays on the route and the delay is reported, so put every left-out stop where it causes
+    # the least lateness (then the least extra driving) before OR-Tools continues; strict mode
+    # keeps them out.
+    if not req.strict_time_windows:
+        service = [0] * stop_offset + [s.service_seconds for s in req.stops]
+        windows = [None] * stop_offset + [(s.time_window.start * 60, s.time_window.end * 60) if s.time_window else None for s in req.stops]
+
+        def lateness(v: int, route: list[int]) -> int:
+            t, prev, late = req.vehicles[v].shift_start * 60, 2 * v, 0
+            for n in route:
+                t += service[prev] + dur[prev][n]
+                w = windows[n]
+                if w:
+                    t = max(t, w[0])
+                    late += max(0, t - w[1])
+                prev = n
+            return late
+
+        placed = {n for route in routes for n in route}
+        for node in range(stop_offset, stop_offset + len(req.stops)):
+            if node in placed:
+                continue
+            best: tuple[int, int, int, int] | None = None  # (lateness, extra seconds, vehicle, position)
+            for v, route in enumerate(routes):
+                seq = [2 * v, *route, 2 * v + 1]
+                for k in range(len(seq) - 1):
+                    a, b = seq[k], seq[k + 1]
+                    cand = (lateness(v, route[:k] + [node] + route[k:]), dur[a][node] + dur[node][b] - dur[a][b], v, k)
+                    if best is None or cand[:2] < best[:2]:
+                        best = cand
+            if best is not None:
+                routes[best[2]].insert(best[3], node)
     return routes
 
 
