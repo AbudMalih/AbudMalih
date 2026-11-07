@@ -116,7 +116,7 @@ export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; se
           <div className="flex flex-col gap-1">
             <div className="text-ink">
               {nextEta ? <>Next stop ETA <strong>{formatClock(nextEta.etaMinute)}</strong> · </> : null}
-              back by <strong>{formatClock(eta.finishMinute!)}</strong> · {formatDuration(eta.remainingDriveSeconds!)} driving, {(eta.remainingMeters! / 1000).toFixed(1)} km left
+              back by <strong>{formatClock(eta.finishMinute!)}</strong> · {formatDuration(eta.remainingDriveSeconds! / 60)} driving, {(eta.remainingMeters! / 1000).toFixed(1)} km left
             </div>
             <div className="text-subtle">Road route from the current GPS position (OSRM), planned stop order.</div>
             {eta.suggestReoptimize && (
