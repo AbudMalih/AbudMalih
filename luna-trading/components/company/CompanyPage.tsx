@@ -14,7 +14,8 @@ import {
   kit as s,
 } from "@/components/kit/Kit";
 import svc from "@/components/services/Services.module.css";
-import { Globe, Photo } from "@/components/kit/Ambient";
+import { Globe, Photo, LayerStack } from "@/components/kit/Ambient";
+import a from "@/components/kit/Ambient.module.css";
 import { STORY } from "@/content/story";
 
 /**
@@ -100,73 +101,31 @@ export default function CompanyPage() {
         </div>
       </section>
 
-      {/* the idea: before / now */}
+      {/* the idea: separate steps, one company */}
       <section
         className={`${s.light} ${s.alt}`}
         data-tone="light"
         aria-labelledby="co-idea"
       >
-        <div className="frame">
-          <Tag>{t.idea.tag}</Tag>
-          <h2 id="co-idea" className={s.h2} data-reveal>
-            {t.idea.title1} <span className={s.titleRed}>{t.idea.title2}</span>
-          </h2>
-          <p className={s.body} data-reveal>
-            {t.idea.body}
-          </p>
-          <div className={s.grid2}>
-            <div className={s.card} data-reveal>
-              <span className={s.numSoft} style={{ background: "#8a8b8f" }}>
-                {t.idea.before}
-              </span>
-              <ol className={s.chips}>
-                {t.idea.beforeSteps.map((x, i) => (
-                  <li
-                    key={x}
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    {i > 0 && (
-                      <span
-                        className={s.arrowSep}
-                        style={{ background: "#8a8b8f" }}
-                        aria-hidden="true"
-                      />
-                    )}
-                    <span className={s.chip}>{x}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className={s.card} data-reveal style={d(100)}>
-              <span
-                className={s.numSoft}
-                style={{ background: "var(--luna-red)" }}
-              >
-                {t.idea.now}
-              </span>
-              <ol className={s.chips}>
-                {t.idea.nowSteps.map((x, i) => (
-                  <li
-                    key={x}
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    {i > 0 && (
-                      <span className={s.arrowSep} aria-hidden="true" />
-                    )}
-                    <span className={s.chip}>{x}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
+        <div className={`frame ${a.sideGrid}`}>
+          <div>
+            <Tag>{t.idea.tag}</Tag>
+            <h2 id="co-idea" className={s.h2} data-reveal>
+              {t.idea.title1}{" "}
+              <span className={s.titleRed}>{t.idea.title2}</span>
+            </h2>
+            <p className={s.body} data-reveal>
+              {t.idea.body}
+            </p>
+            <p className={a.compare} data-reveal>
+              <span>{t.idea.before}</span>
+              <s>{t.idea.beforeSteps.join(" + ")}</s>
+              <span className={a.compareNow}>{t.idea.now}</span>
+              <b>{t.idea.nowSteps.join(" + ")}</b>
+            </p>
           </div>
-          <div className={s.grid4}>
-            {t.idea.pairs.map(([a, b], i) => (
-              <div key={a + b} className={s.card} data-reveal style={d(i * 70)}>
-                <p className={s.h3} style={{ marginTop: 0 }}>
-                  {a} <span className={s.titleRed}>+</span> {b}
-                </p>
-              </div>
-            ))}
+          <div className={a.sideVisual} data-reveal style={d(160)}>
+            <LayerStack layers={t.idea.nowSteps} />
           </div>
         </div>
       </section>

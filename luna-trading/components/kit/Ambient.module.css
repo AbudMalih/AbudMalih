@@ -1205,3 +1205,131 @@
   top: 0;
   left: 39%;
 }
+
+/* ------------------------------------------------- the layer stack */
+.stackCam {
+  --pc: clamp(64px, 6vw, 88px);
+  position: relative;
+  width: 1px;
+  height: 1px;
+  transform-style: preserve-3d;
+  animation: ambStackCam 22s ease-in-out infinite alternate;
+}
+@keyframes ambStackCam {
+  from {
+    transform: rotateX(-24deg) rotateY(-38deg);
+  }
+  to {
+    transform: rotateX(-18deg) rotateY(-8deg);
+  }
+}
+.slab {
+  --bw: calc(var(--pc) * 2.7);
+  --bh: calc(var(--pc) * 0.34);
+  --bd: calc(var(--pc) * 1.7);
+  --c-long: #ffffff;
+  --c-side: #e2e0db;
+  --c-top: #f6f5f2;
+  --c-edge: rgba(20, 21, 24, 0.14);
+  animation: ambSlab 9s ease-in-out infinite;
+}
+.slabTop {
+  --c-long: #c90216;
+  --c-side: #a10212;
+  --c-top: #d81a2b;
+  --c-edge: rgba(255, 220, 220, 0.4);
+}
+@keyframes ambSlab {
+  0%,
+  100% {
+    transform: translateY(calc(var(--i) * var(--pc) * -0.82));
+  }
+  45%,
+  60% {
+    transform: translateY(calc(var(--i) * var(--pc) * -0.34));
+  }
+}
+.slab .bFront {
+  display: flex;
+  align-items: center;
+  padding-inline: 14px;
+}
+.slabText {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: clamp(0.72rem, 0.9vw, 0.88rem);
+  font-weight: 650;
+  color: #141518;
+  white-space: nowrap;
+}
+.slabText em {
+  font-style: normal;
+  font-family: var(--font-data);
+  font-size: 0.7em;
+  letter-spacing: 0.1em;
+  color: #8a8b8f;
+}
+.slabTop .slabText,
+.slabTop .slabText em {
+  color: #fff;
+}
+.slab .bTop::after {
+  content: "";
+  position: absolute;
+  inset: 18% 30%;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(20, 21, 24, 0.05),
+    rgba(20, 21, 24, 0.1)
+  );
+}
+.slabTop .bTop::after {
+  inset: 34% 44%;
+  background:
+    linear-gradient(#fff, #fff) center / 100% 2px no-repeat,
+    linear-gradient(#fff, #fff) center / 2px 100% no-repeat;
+  border-radius: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stackCam,
+  .slab {
+    animation: none;
+  }
+  .stackCam {
+    transform: rotateX(-22deg) rotateY(-28deg);
+  }
+  .slab {
+    transform: translateY(calc(var(--i) * var(--pc) * -0.6));
+  }
+}
+.compare {
+  margin: 28px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 0.95rem;
+  color: #6b6c71;
+}
+.compare > span {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #d9d8d3;
+  color: #3a3b40;
+  font-weight: 650;
+  font-size: 0.8rem;
+}
+.compare s {
+  color: #8a8b8f;
+}
+.compare > .compareNow {
+  margin-inline-start: 8px;
+  background: var(--luna-red);
+  color: #fff;
+}
+.compare b {
+  color: #141518;
+  font-weight: 650;
+}
