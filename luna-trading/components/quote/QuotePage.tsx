@@ -3,10 +3,16 @@
 import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { QUOTE_COPY } from "@/content/quotePage";
-import { IMPORT_COPY } from "@/content/importPage";
 import { usePageMotion } from "@/components/services/usePageMotion";
-import RouteCard from "@/components/import/RouteCard";
-import { PageHero, Tag, RedButton, GhostButton, d, kit as k } from "@/components/kit/Kit";
+import { Containers } from "@/components/kit/Ambient";
+import {
+  PageHero,
+  Tag,
+  RedButton,
+  GhostButton,
+  d,
+  kit as k,
+} from "@/components/kit/Kit";
 import QuoteForm from "./QuoteForm";
 import svc from "@/components/services/Services.module.css";
 
@@ -18,7 +24,6 @@ import svc from "@/components/services/Services.module.css";
 export default function QuotePage() {
   const { locale, href } = useI18n();
   const t = QUOTE_COPY[locale];
-  const im = IMPORT_COPY[locale];
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
 
@@ -38,11 +43,18 @@ export default function QuotePage() {
         }
         aside={
           <div style={{ display: "grid", gap: 12 }}>
-            <RouteCard t={im} />
+            <Containers />
             <div className={k.grid3} style={{ marginTop: 0, gap: 10 }}>
               {t.facts.map((f) => (
-                <div key={f.k} className={k.glass} style={{ padding: "16px 18px" }}>
-                  <p className={k.textDark} style={{ margin: 0, fontSize: "0.8rem" }}>
+                <div
+                  key={f.k}
+                  className={k.glass}
+                  style={{ padding: "16px 18px" }}
+                >
+                  <p
+                    className={k.textDark}
+                    style={{ margin: 0, fontSize: "0.8rem" }}
+                  >
                     {f.k}
                   </p>
                   <p style={{ margin: "4px 0 0", fontWeight: 650 }}>{f.v}</p>
@@ -53,7 +65,12 @@ export default function QuotePage() {
         }
       />
 
-      <section id="anfrage" className={`${k.light} ${k.alt}`} data-tone="light" aria-labelledby="qt-form">
+      <section
+        id="anfrage"
+        className={`${k.light} ${k.alt}`}
+        data-tone="light"
+        aria-labelledby="qt-form"
+      >
         <div className="frame">
           <Tag>{t.form.tag}</Tag>
           <h2 id="qt-form" className={k.h2} data-reveal>
@@ -62,11 +79,20 @@ export default function QuotePage() {
           <p className={k.body} data-reveal>
             {t.form.intro}
           </p>
-          <QuoteForm t={t.form} locale={locale} privacyHref={href("/datenschutz")} />
+          <QuoteForm
+            t={t.form}
+            locale={locale}
+            privacyHref={href("/datenschutz")}
+          />
         </div>
       </section>
 
-      <section id="ablauf" className={k.dark} data-tone="dark" aria-labelledby="qt-next">
+      <section
+        id="ablauf"
+        className={k.dark}
+        data-tone="dark"
+        aria-labelledby="qt-next"
+      >
         <div className="frame">
           <Tag dark>{t.next.tag}</Tag>
           <h2 id="qt-next" className={`${k.h2} ${k.h2Dark}`} data-reveal>

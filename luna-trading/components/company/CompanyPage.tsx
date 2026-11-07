@@ -6,7 +6,6 @@ import { usePageMotion } from "@/components/services/usePageMotion";
 import { FlagDE, FlagEU } from "@/components/import/Flags";
 import {
   PageHero,
-  Band,
   Cta,
   Tag,
   RedButton,
@@ -15,8 +14,8 @@ import {
   kit as s,
 } from "@/components/kit/Kit";
 import svc from "@/components/services/Services.module.css";
-import { Globe } from "@/components/kit/Ambient";
-import Story from "@/components/kit/Story";
+import { Globe, Photo } from "@/components/kit/Ambient";
+import { STORY } from "@/content/story";
 
 /**
  * UNTERNEHMEN / COMPANY on the site kit. Only verified company facts.
@@ -24,7 +23,7 @@ import Story from "@/components/kit/Story";
 const num = (i: number) => String(i + 1).padStart(2, "0");
 
 export default function CompanyPage() {
-  const { dict, href } = useI18n();
+  const { dict, href, locale } = useI18n();
   const t = dict.companyPage;
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
@@ -44,11 +43,6 @@ export default function CompanyPage() {
           </>
         }
         aside={<Globe label={t.hero.base} />}
-      />
-
-      <Band
-        title={t.profile.areasTag}
-        items={[...t.profile.areas, ...t.direction.lines]}
       />
 
       {/* profile */}
@@ -379,8 +373,6 @@ export default function CompanyPage() {
         </div>
       </section>
 
-      <Story id="co-story" />
-
       {/* facts + bridges */}
       <section className={s.dark} data-tone="dark" aria-labelledby="co-facts">
         <div className={`frame ${s.split} ${s.splitTop}`}>
@@ -458,6 +450,13 @@ export default function CompanyPage() {
         button={t.cta.button}
         href={href("/contact")}
         more={{ label: t.cta.more, href: href("/what-we-do") }}
+        visual={
+          <Photo
+            src="desk"
+            alt={STORY[locale].steps[0].alt}
+            note={STORY[locale].note}
+          />
+        }
       />
     </article>
   );

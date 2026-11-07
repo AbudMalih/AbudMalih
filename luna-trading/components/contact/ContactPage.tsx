@@ -5,7 +5,13 @@ import { useI18n } from "@/content/i18n/I18nProvider";
 import { CONTACT_EMAIL, COMPANY } from "@/content/site";
 import { usePageMotion } from "@/components/services/usePageMotion";
 import { FlagDE } from "@/components/import/Flags";
-import { PageHero, RedButton, GhostButton, kit as k } from "@/components/kit/Kit";
+import { Gyro } from "@/components/kit/Ambient";
+import {
+  PageHero,
+  RedButton,
+  GhostButton,
+  kit as k,
+} from "@/components/kit/Kit";
 import ContactForm from "./ContactForm";
 import { QUOTE_COPY } from "@/content/quotePage";
 import svc from "@/components/services/Services.module.css";
@@ -34,40 +40,61 @@ export default function ContactPage() {
         actions={
           <>
             <RedButton href="#anfrage">{t.inquiry.title}</RedButton>
-            <GhostButton href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</GhostButton>
+            <GhostButton href={`mailto:${CONTACT_EMAIL}`}>
+              {CONTACT_EMAIL}
+            </GhostButton>
           </>
         }
         aside={
-          <div className={k.glass}>
-            <p className={`t-label ${k.tagDark}`}>{t.direct.tag}</p>
-            <p className={k.h3} style={{ marginTop: 10 }}>
-              {t.direct.title}
-            </p>
-            <a href={`mailto:${CONTACT_EMAIL}`} className={k.big} dir="ltr" style={{ display: "inline-block", marginTop: 18, borderBottom: "2px solid var(--luna-red)", paddingBottom: 6, wordBreak: "break-all" }}>
-              {CONTACT_EMAIL}
-            </a>
-            <div className={k.flags}>
-              <span className={k.flagChip}>
-                <FlagDE className={k.flag} />
-                <span>
-                  <small>{COMPANY.legalName}</small>
-                  {dict.company.place}
-                </span>
+          <div style={{ display: "grid", justifyItems: "center", gap: 14 }}>
+            <Gyro />
+            <span className={k.flagChip}>
+              <FlagDE className={k.flag} />
+              <span>
+                <small>{COMPANY.legalName}</small>
+                {dict.company.place}
               </span>
-            </div>
+            </span>
           </div>
         }
       />
 
-      <section id="anfrage" className={k.light} data-tone="light" aria-label={t.inquiry.title}>
+      <section
+        id="anfrage"
+        className={k.light}
+        data-tone="light"
+        aria-label={t.inquiry.title}
+      >
         <div className="frame">
-          <div className={k.card} style={{ background: "#fbfaf8" }} data-reveal aria-label={t.inquiry.title} role="region">
+          <div
+            className={k.card}
+            style={{ background: "#fbfaf8" }}
+            data-reveal
+            aria-label={t.inquiry.title}
+            role="region"
+          >
             <div className={s.formArea}>
-              <ContactForm copy={t} locale={locale} privacyHref={href("/datenschutz")} />
+              <ContactForm
+                copy={t}
+                locale={locale}
+                privacyHref={href("/datenschutz")}
+              />
             </div>
           </div>
           {/* freight enquiries have their own, structured form */}
-          <div className={k.cardDark} style={{ marginTop: 16, background: "#141518", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 20 }} data-reveal>
+          <div
+            className={k.cardDark}
+            style={{
+              marginTop: 16,
+              background: "#141518",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 20,
+            }}
+            data-reveal
+          >
             <div>
               <p className={`t-label ${k.tagDark}`} style={{ margin: 0 }}>
                 {QUOTE_COPY[locale].hero.eyebrow}
@@ -76,7 +103,9 @@ export default function ContactPage() {
                 {QUOTE_COPY[locale].hero.lead}
               </p>
             </div>
-            <RedButton href={href("/quote")}>{QUOTE_COPY[locale].nav}</RedButton>
+            <RedButton href={href("/quote")}>
+              {QUOTE_COPY[locale].nav}
+            </RedButton>
           </div>
           <p className={k.note} data-reveal>
             {COMPANY.legalName} · {t.closing.line}

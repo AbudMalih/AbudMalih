@@ -11,7 +11,6 @@ import RouteCard from "@/components/import/RouteCard";
 import CommerceFlow from "./CommerceFlow";
 import { FlagCN, FlagDE, FlagEU } from "@/components/import/Flags";
 import {
-  Band,
   Cta,
   Tag,
   RedButton,
@@ -52,7 +51,6 @@ export default function HomeSections() {
   const { dict, locale, href } = useI18n();
   const sv = dict.services;
   const im = IMPORT_COPY[locale];
-  const co = dict.companyPage;
   const root = useRef<HTMLDivElement>(null);
   usePageMotion(root as unknown as React.RefObject<HTMLElement>);
 
@@ -60,8 +58,6 @@ export default function HomeSections() {
     <div ref={root} className={`${s.page} ${h.wrap}`}>
       {true && (
         <>
-          <Band title={im.lanesTitle} items={im.lanes} />
-
           {/* 01 · from the source to the market */}
           <section
             className={s.light}
@@ -351,151 +347,7 @@ export default function HomeSections() {
 
       {true && (
         <>
-          {/* Cologne: the company behind it */}
-          <section
-            className={`${s.light} ${s.alt}`}
-            data-tone="light"
-            aria-labelledby="home-base"
-          >
-            <div className={`frame ${s.split}`}>
-              <div>
-                <Tag>{co.base.tag}</Tag>
-                <h2 id="home-base" className={s.h2} data-reveal>
-                  {co.base.title1}{" "}
-                  <span className={s.titleRed}>{co.base.title2}</span>
-                </h2>
-                <p className={s.body} data-reveal>
-                  {co.base.body}
-                </p>
-                <div className={s.actions} data-reveal>
-                  <a href={href("/company")} className={s.btnDark}>
-                    {dict.nav.company}
-                    <span className={s.badge} aria-hidden="true" />
-                  </a>
-                </div>
-              </div>
-              <div className={s.heroSide}>
-                {co.base.rings.map((r, i) => (
-                  <div
-                    key={r.name}
-                    className={s.card}
-                    data-reveal
-                    style={{
-                      ...d(i * 90),
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 16,
-                    }}
-                  >
-                    {i === 0 ? (
-                      <FlagDE className={s.flag} />
-                    ) : i === 1 ? (
-                      <FlagEU className={s.flag} />
-                    ) : (
-                      <span className={s.num}>{num(i)}</span>
-                    )}
-                    <div>
-                      <h3 className={s.h3} style={{ marginTop: 0 }}>
-                        {r.name}
-                      </h3>
-                      <p className={s.text} style={{ marginTop: 2 }}>
-                        {r.note}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
           <Story id="home-story" />
-
-          {/* one company, many markets: Luna Trading as the bar that joins six capabilities */}
-          <section
-            className={s.dark}
-            data-tone="dark"
-            aria-labelledby="home-eco"
-          >
-            <div className="frame">
-              <Tag dark>{dict.ecosystem.tag}</Tag>
-              <h2 id="home-eco" className={`${s.h2} ${s.h2Dark}`} data-reveal>
-                {dict.ecosystem.h1}{" "}
-                <span className={s.titleRed}>{dict.ecosystem.h2}</span>
-              </h2>
-              <p className={s.bodyDark} data-reveal>
-                {dict.ecosystem.caption}
-              </p>
-              <div className={h.hub}>
-                <div className={`${h.hubRow} ${h.hubTop}`}>
-                  {Object.values(dict.ecosystem.capabilities)
-                    .slice(0, 3)
-                    .map((c, n) => (
-                      <div
-                        key={c}
-                        className={h.hubCard}
-                        data-reveal
-                        style={d(n * 60)}
-                      >
-                        <span className={h.hubNum}>{num(n)}</span>
-                        {c}
-                      </div>
-                    ))}
-                </div>
-                <div className={h.hubBar} data-reveal>
-                  <span className={h.hubPlus} aria-hidden="true" />
-                  {dict.ecosystem.center}
-                  <small>{dict.company.place}</small>
-                </div>
-                <div className={`${h.hubRow} ${h.hubBottom}`}>
-                  {Object.values(dict.ecosystem.capabilities)
-                    .slice(3)
-                    .map((c, n) => (
-                      <div
-                        key={c}
-                        className={h.hubCard}
-                        data-reveal
-                        style={d(n * 60)}
-                      >
-                        <span className={h.hubNum}>{num(n + 3)}</span>
-                        {c}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* why Luna Trading */}
-          <section
-            className={s.dark}
-            data-tone="dark"
-            aria-labelledby="home-values"
-          >
-            <div className="frame">
-              <Tag dark>{im.valuesTag}</Tag>
-              <h2
-                id="home-values"
-                className={`${s.h2} ${s.h2Dark}`}
-                data-reveal
-              >
-                {im.valuesTitle}
-              </h2>
-              <div className={s.values}>
-                {im.values.map((v, i) => (
-                  <div
-                    key={i}
-                    className={s.value}
-                    data-reveal
-                    style={d(i * 80)}
-                  >
-                    <span className={s.check} aria-hidden="true" />
-                    <h3 className={s.valueTitle}>{v.title}</h3>
-                    <p className={s.valueText}>{v.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
 
           <Cta
             id="home-cta"
