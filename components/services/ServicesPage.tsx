@@ -54,7 +54,7 @@ export default function ServicesPage() {
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
   const lvHref = BRANDS.luviscent.url ?? href("/brands");
-  const channels = PLATFORMS.filter((p) => p.useMark);
+  const channels = PLATFORMS;
 
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>

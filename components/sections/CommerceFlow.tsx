@@ -154,9 +154,6 @@ export default function CommerceFlow({
         </span>
         {nodes.map(({ p, at }) => (
           <span key={p.id} className={s.node} style={pct(at)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d={p.path} />
-            </svg>
             {p.name}
           </span>
         ))}
@@ -222,9 +219,6 @@ export default function CommerceFlow({
         </span>
         {vNodes.map(({ p, at }) => (
           <span key={p.id} className={`${s.node} ${s.nodeV}`} style={vpct(at)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d={p.path} />
-            </svg>
             {p.name}
           </span>
         ))}

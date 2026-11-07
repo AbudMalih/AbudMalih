@@ -23,8 +23,11 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
 /**
  * Impressum (§ 5 DDG). German in every locale; the German text is the
  * authoritative one. Verified data only (content/legal.ts). No telephone,
- * no fax, no EU ODR link (platform discontinued). A consumer-dispute
- * statement (§ 36 VSBG) is intentionally absent pending legal review.
+ * no fax, no EU ODR link (platform discontinued). No consumer-dispute
+ * statement: § 36 (3) VSBG exempts businesses with no more than ten
+ * employees on 31 December of the previous year (0 on 31 Dec 2025, owner
+ * confirmation, 7 Nov 2026) and the company has not committed to
+ * participate in dispute resolution. Re-check every January.
  */
 export default async function Page({ params }: P) {
   const locale = (await params).lang as Locale;

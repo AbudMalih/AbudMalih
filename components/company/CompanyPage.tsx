@@ -60,7 +60,7 @@ export default function CompanyPage() {
             </h2>
             <div className={s.flags} data-reveal>
               <span
-                className={s.flagChip}
+                className={`${s.flagChip} ${s.flagChipLight}`}
                 style={{
                   background: "#fff",
                   color: "#141518",

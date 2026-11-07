@@ -29,9 +29,7 @@ export default function ImportPage() {
   const t = IMPORT_COPY[locale];
   const root = useRef<HTMLElement>(null);
   usePageMotion(root);
-  const channels = PLATFORMS.filter(
-    (p) => CHANNELS.includes(p.id) && p.useMark,
-  );
+  const channels = PLATFORMS.filter((p) => CHANNELS.includes(p.id));
 
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
@@ -256,9 +254,6 @@ export default function ImportPage() {
             <ul className={s.channels}>
               {channels.map((c) => (
                 <li key={c.id} className={s.channel}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d={c.path} />
-                  </svg>
                   <span>{c.name}</span>
                 </li>
               ))}
