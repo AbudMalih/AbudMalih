@@ -17,6 +17,7 @@ import type { RoutingProvider } from "./routing";
 import { RateLimiter } from "./geocode";
 import { registerOrgRoutes } from "./routes/org";
 import { registerPlatformRoutes } from "./routes/platform";
+import { registerTrackingRoutes } from "./routes/tracking";
 import { registerTourRoutes } from "./routes/tours";
 import type { TenancyRepository } from "./tenancy";
 
@@ -200,6 +201,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     registerDriverRoutes(app, ctx);
     registerExecutionRoutes(app, ctx, { proofStore: deps.proofStore, geocoder: deps.geocoder, routing: deps.routing });
     registerPlatformRoutes(app, ctx);
+    registerTrackingRoutes(app, ctx);
     if (deps.events) registerEventRoutes(app, { ...ctx, events: deps.events });
   }
 

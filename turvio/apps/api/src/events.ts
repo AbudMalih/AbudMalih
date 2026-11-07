@@ -5,7 +5,7 @@ export interface ChangeEvent {
   org: string;
   depot: string | null;
   tour: string | null;
-  table: "tours" | "stops";
+  table: "tours" | "stops" | "driver_positions";
   op: "insert" | "update" | "delete";
 }
 

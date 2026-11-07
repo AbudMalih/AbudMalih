@@ -90,6 +90,9 @@ export function mapPgError(e: unknown): unknown {
     case "22023":
       return new ApiError(422, "invalid_operation", msg);
     case "42501":
+      // Live tracking refusals carry their own codes (the app reacts to each).
+      if (msg === "tracking_disabled") return new ApiError(409, "tracking_disabled", "Live tracking is switched off for this company");
+      if (msg === "tracking_notice_required") return new ApiError(409, "tracking_notice_required", "The driver has not acknowledged the current tracking notice");
       return new ApiError(403, "forbidden", /row-level security/.test(msg) ? "You are not allowed to change this record" : msg);
     case "23503":
       return new ApiError(422, "invalid_reference", "A referenced record does not exist or belongs to another company");
