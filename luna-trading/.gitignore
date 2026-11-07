@@ -4,4 +4,7 @@ out
 next-env.d.ts
 *.tsbuildinfo
 scripts/.tmp
-.env*.local
+# environment files never belong in git (secrets live in the hosting panel)
+.env
+.env.*
+!.env.example

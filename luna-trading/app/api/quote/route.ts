@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { clientIp, originAllowed } from "@/lib/request";
 import { normaliseQuote, validateQuote } from "@/lib/quote/schema";
 import { deliverQuote } from "@/lib/quote/deliver";
 
@@ -27,32 +28,45 @@ function limited(ip: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const origin = req.headers.get("origin");
-  const host = req.headers.get("host");
-  if (origin && host && new URL(origin).host !== host) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!originAllowed(req.headers))
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   let body: Record<string, unknown>;
   try {
     const text = await req.text();
-    if (text.length > 20000) return NextResponse.json({ error: "too_large" }, { status: 413 });
+    if (text.length > 20000)
+      return NextResponse.json({ error: "too_large" }, { status: 413 });
     body = JSON.parse(text);
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
   const filledHoneypot = typeof body.fax === "string" && body.fax.trim() !== "";
-  const tooFast = typeof body.elapsed !== "number" || body.elapsed < MIN_FILL_MS;
-  if (filledHoneypot || tooFast) return NextResponse.json({ ok: true }, { status: 202 });
+  const tooFast =
+    typeof body.elapsed !== "number" || body.elapsed < MIN_FILL_MS;
+  if (filledHoneypot || tooFast)
+    return NextResponse.json({ ok: true }, { status: 202 });
 
-  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "local";
-  if (limited(ip)) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+  const ip = clientIp(req.headers);
+  if (limited(ip))
+    return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
   const quote = normaliseQuote(body);
   const errors = validateQuote(quote);
-  if (Object.keys(errors).length) return NextResponse.json({ error: "invalid", fields: errors }, { status: 422 });
+  if (Object.keys(errors).length)
+    return NextResponse.json(
+      { error: "invalid", fields: errors },
+      { status: 422 },
+    );
 
-  const locale = ["de", "en", "ar"].includes(body.locale as string) ? (body.locale as string) : "de";
+  const locale = ["de", "en", "ar"].includes(body.locale as string)
+    ? (body.locale as string)
+    : "de";
   const result = await deliverQuote(quote, { locale });
-  if (!result.ok) return NextResponse.json({ error: "delivery_unavailable" }, { status: 503 });
+  if (!result.ok)
+    return NextResponse.json(
+      { error: "delivery_unavailable" },
+      { status: 503 },
+    );
   return NextResponse.json({ ok: true }, { status: 200 });
 }

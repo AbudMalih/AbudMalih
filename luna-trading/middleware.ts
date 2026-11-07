@@ -1,6 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { DEFAULT_LOCALE, SLUGS, canonicalPath, isLocale, localePath, type Locale } from "@/content/i18n/config";
+import {
+  DEFAULT_LOCALE,
+  SLUGS,
+  canonicalPath,
+  isLocale,
+  localePath,
+  type Locale,
+} from "@/content/i18n/config";
 import { SITE_HOST, SITE_ORIGIN } from "@/lib/origin";
+import { bareHost, publicHost } from "@/lib/request";
 
 /**
  * Locale routing
@@ -35,16 +43,19 @@ export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   const seg = pathname.split("/")[1];
 
-  // www.luna-trading.de → luna-trading.de (takes effect once the domain is
-  // attached in Vercel; assets are redirected by the Vercel domain setting)
-  if ((req.headers.get("host") ?? "").toLowerCase() === `www.${SITE_HOST}`) {
+  // www.luna-trading.de → luna-trading.de (once the domain is attached;
+  // behind a proxy the public host comes from X-Forwarded-Host, see lib/request.ts)
+  if (bareHost(publicHost(req.headers)) === `www.${SITE_HOST}`) {
     return NextResponse.redirect(`${SITE_ORIGIN}${pathname}${search}`, 308);
   }
 
   if (seg === "de") {
     // one hop straight to the German address ("/de/brands" → "/marken")
     const url = req.nextUrl.clone();
-    url.pathname = localePath(DEFAULT_LOCALE, canonicalPath(pathname.replace(/^\/de/, "") || "/"));
+    url.pathname = localePath(
+      DEFAULT_LOCALE,
+      canonicalPath(pathname.replace(/^\/de/, "") || "/"),
+    );
     return NextResponse.redirect(url, 308);
   }
   if (isLocale(seg)) {
@@ -61,5 +72,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/|api/|brand/|textures|sequences|icon|favicon|apple-touch-icon|site.webmanifest|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)"],
+  matcher: [
+    "/((?!_next/|api/|brand/|textures|sequences|icon|favicon|apple-touch-icon|site.webmanifest|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)",
+  ],
 };
