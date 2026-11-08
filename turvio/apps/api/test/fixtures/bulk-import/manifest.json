@@ -1,0 +1,2518 @@
+{
+"parcels": 1000,
+"addresses": 100,
+"largestAddressParcels": 120,
+"duplicates": {
+"exact": [
+"340031628158",
+"340094151371",
+"340010891816"
+],
+"otherAddress": [
+"JJD00014005440353",
+"TVO8000406DE"
+]
+},
+"addresses_detail": [
+{
+"index": 0,
+"canonical": {
+"street": "Borkumer Straße",
+"houseNumber": "31",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397376,
+"lng": 9.74687
+},
+"parcels": 120,
+"company": "Großhandel Leinetal GmbH (Wareneingang)",
+"trackingNumbers": [
+"TVO8000001DE",
+"340000209458",
+"JJD00014000023757",
+"TVO8000004DE",
+"340000523645",
+"JJD00014000047514",
+"TVO8000007DE",
+"340000837832",
+"JJD00014000071271",
+"TVO8000010DE",
+"340001152019",
+"JJD00014000095028",
+"TVO8000013DE",
+"340001466206",
+"JJD00014000118785",
+"TVO8000016DE",
+"340001780393",
+"JJD00014000142542",
+"TVO8000019DE",
+"340002094580",
+"JJD00014000166299",
+"TVO8000022DE",
+"340002408767",
+"JJD00014000190056",
+"TVO8000025DE",
+"340002722954",
+"JJD00014000213813",
+"TVO8000028DE",
+"340003037141",
+"JJD00014000237570",
+"TVO8000031DE",
+"340003351328",
+"JJD00014000261327",
+"TVO8000034DE",
+"340003665515",
+"JJD00014000285084",
+"TVO8000037DE",
+"340003979702",
+"JJD00014000308841",
+"TVO8000040DE",
+"340004293889",
+"JJD00014000332598",
+"TVO8000043DE",
+"340004608076",
+"JJD00014000356355",
+"TVO8000046DE",
+"340004922263",
+"JJD00014000380112",
+"TVO8000049DE",
+"340005236450",
+"JJD00014000403869",
+"TVO8000052DE",
+"340005550637",
+"JJD00014000427626",
+"TVO8000055DE",
+"340005864824",
+"JJD00014000451383",
+"TVO8000058DE",
+"340006179011",
+"JJD00014000475140",
+"TVO8000061DE",
+"340006493198",
+"JJD00014000498897",
+"TVO8000064DE",
+"340006807385",
+"JJD00014000522654",
+"TVO8000067DE",
+"340007121572",
+"JJD00014000546411",
+"TVO8000070DE",
+"340007435759",
+"JJD00014000570168",
+"TVO8000073DE",
+"340007749946",
+"JJD00014000593925",
+"TVO8000076DE",
+"340008064133",
+"JJD00014000617682",
+"TVO8000079DE",
+"340008378320",
+"JJD00014000641439",
+"TVO8000082DE",
+"340008692507",
+"JJD00014000665196",
+"TVO8000085DE",
+"340009006694",
+"JJD00014000688953",
+"TVO8000088DE",
+"340009320881",
+"JJD00014000712710",
+"TVO8000091DE",
+"340009635068",
+"JJD00014000736467",
+"TVO8000094DE",
+"340009949255",
+"JJD00014000760224",
+"TVO8000097DE",
+"340010263442",
+"JJD00014000783981",
+"TVO8000100DE",
+"340010577629",
+"JJD00014000807738",
+"TVO8000103DE",
+"340010891816",
+"JJD00014000831495",
+"TVO8000106DE",
+"340011206003",
+"JJD00014000855252",
+"TVO8000109DE",
+"340011520190",
+"JJD00014000879009",
+"TVO8000112DE",
+"340011834377",
+"JJD00014000902766",
+"TVO8000115DE",
+"340012148564",
+"JJD00014000926523",
+"TVO8000118DE",
+"340012462751",
+"JJD00014000950280"
+]
+},
+{
+"index": 1,
+"canonical": {
+"street": "Nordring",
+"houseNumber": "2A",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.403615,
+"lng": 9.745464
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"TVO8000121DE",
+"340012776938",
+"JJD00014000974037",
+"TVO8000124DE",
+"340013091125",
+"JJD00014000997794",
+"TVO8000127DE",
+"340013405312",
+"JJD00014001021551",
+"TVO8000130DE"
+]
+},
+{
+"index": 2,
+"canonical": {
+"street": "Vahrenwalder Straße",
+"houseNumber": "140",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.398823,
+"lng": 9.737126
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"340013719499",
+"JJD00014001045308",
+"TVO8000133DE",
+"340014033686",
+"JJD00014001069065",
+"TVO8000136DE",
+"340014347873",
+"JJD00014001092822"
+]
+},
+{
+"index": 3,
+"canonical": {
+"street": "Rotermundstraße",
+"houseNumber": "13B",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.4009,
+"lng": 9.73514
+},
+"parcels": 12,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"TVO8000139DE",
+"340014662060",
+"JJD00014001116579",
+"TVO8000142DE",
+"340014976247",
+"JJD00014001140336",
+"TVO8000145DE",
+"340015290434",
+"JJD00014001164093",
+"TVO8000148DE",
+"340015604621",
+"JJD00014001187850"
+]
+},
+{
+"index": 4,
+"canonical": {
+"street": "Auf dem Dorn",
+"houseNumber": "19A",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394772,
+"lng": 9.724703
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"TVO8000151DE",
+"340015918808",
+"JJD00014001211607",
+"TVO8000154DE",
+"340016232995",
+"JJD00014001235364",
+"TVO8000157DE",
+"340016547182",
+"JJD00014001259121"
+]
+},
+{
+"index": 5,
+"canonical": {
+"street": "In der Steinriede",
+"houseNumber": "11",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.386195,
+"lng": 9.749807
+},
+"parcels": 7,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"TVO8000160DE",
+"340016861369",
+"JJD00014001282878",
+"TVO8000163DE",
+"340017175556",
+"JJD00014001306635",
+"TVO8000166DE"
+]
+},
+{
+"index": 6,
+"canonical": {
+"street": "Schleswiger Straße",
+"houseNumber": "8",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401517,
+"lng": 9.731157
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"340017489743",
+"JJD00014001330392",
+"TVO8000169DE",
+"340017803930",
+"JJD00014001354149",
+"TVO8000172DE",
+"340018118117"
+]
+},
+{
+"index": 7,
+"canonical": {
+"street": "Halkettstraße",
+"houseNumber": "39",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.392996,
+"lng": 9.728418
+},
+"parcels": 15,
+"company": "",
+"trackingNumbers": [
+"JJD00014001377906",
+"TVO8000175DE",
+"340018432304",
+"JJD00014001401663",
+"TVO8000178DE",
+"340018746491",
+"JJD00014001425420",
+"TVO8000181DE",
+"340019060678",
+"JJD00014001449177",
+"TVO8000184DE",
+"340019374865",
+"JJD00014001472934",
+"TVO8000187DE",
+"340019689052"
+]
+},
+{
+"index": 8,
+"canonical": {
+"street": "Helmholtzstraße",
+"houseNumber": "19",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395379,
+"lng": 9.72632
+},
+"parcels": 9,
+"company": "Praxis am Park GmbH",
+"trackingNumbers": [
+"JJD00014001496691",
+"TVO8000190DE",
+"340020003239",
+"JJD00014001520448",
+"TVO8000193DE",
+"340020317426",
+"JJD00014001544205",
+"TVO8000196DE",
+"340020631613"
+]
+},
+{
+"index": 9,
+"canonical": {
+"street": "Juister Weg",
+"houseNumber": "1",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397025,
+"lng": 9.743569
+},
+"parcels": 9,
+"company": "Praxis am Park GmbH",
+"trackingNumbers": [
+"JJD00014001567962",
+"TVO8000199DE",
+"340020945800",
+"JJD00014001591719",
+"TVO8000202DE",
+"340021259987",
+"JJD00014001615476",
+"TVO8000205DE",
+"340021574174"
+]
+},
+{
+"index": 10,
+"canonical": {
+"street": "Vahrenwalder Straße",
+"houseNumber": "49",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.389673,
+"lng": 9.734253
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"JJD00014001639233",
+"TVO8000208DE",
+"340021888361",
+"JJD00014001662990",
+"TVO8000211DE",
+"340022202548",
+"JJD00014001686747",
+"TVO8000214DE",
+"340022516735"
+]
+},
+{
+"index": 11,
+"canonical": {
+"street": "Niedersachsenring",
+"houseNumber": "24",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.398687,
+"lng": 9.739421
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"JJD00014001710504",
+"TVO8000217DE",
+"340022830922",
+"JJD00014001734261",
+"TVO8000220DE",
+"340023145109",
+"JJD00014001758018",
+"TVO8000223DE",
+"340023459296",
+"JJD00014001781775"
+]
+},
+{
+"index": 12,
+"canonical": {
+"street": "Wellingtonweg",
+"houseNumber": "1",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399924,
+"lng": 9.746771
+},
+"parcels": 10,
+"company": "Apotheke am Markt",
+"trackingNumbers": [
+"TVO8000226DE",
+"340023773483",
+"JJD00014001805532",
+"TVO8000229DE",
+"340024087670",
+"JJD00014001829289",
+"TVO8000232DE",
+"340024401857",
+"JJD00014001853046",
+"TVO8000235DE"
+]
+},
+{
+"index": 13,
+"canonical": {
+"street": "Fraunhoferstraße",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.393806,
+"lng": 9.753986
+},
+"parcels": 13,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"340024716044",
+"JJD00014001876803",
+"TVO8000238DE",
+"340025030231",
+"JJD00014001900560",
+"TVO8000241DE",
+"340025344418",
+"JJD00014001924317",
+"TVO8000244DE",
+"340025658605",
+"JJD00014001948074",
+"TVO8000247DE",
+"340025972792"
+]
+},
+{
+"index": 14,
+"canonical": {
+"street": "Juister Weg",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397262,
+"lng": 9.744051
+},
+"parcels": 18,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"JJD00014001971831",
+"TVO8000250DE",
+"340026286979",
+"JJD00014001995588",
+"TVO8000253DE",
+"340026601166",
+"JJD00014002019345",
+"TVO8000256DE",
+"340026915353",
+"JJD00014002043102",
+"TVO8000259DE",
+"340027229540",
+"JJD00014002066859",
+"TVO8000262DE",
+"340027543727",
+"JJD00014002090616",
+"TVO8000265DE",
+"340027857914"
+]
+},
+{
+"index": 15,
+"canonical": {
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "58",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393643,
+"lng": 9.724386
+},
+"parcels": 12,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"JJD00014002114373",
+"TVO8000268DE",
+"340028172101",
+"JJD00014002138130",
+"TVO8000271DE",
+"340028486288",
+"JJD00014002161887",
+"TVO8000274DE",
+"340028800475",
+"JJD00014002185644",
+"TVO8000277DE",
+"340029114662"
+]
+},
+{
+"index": 16,
+"canonical": {
+"street": "Treitschkestraße",
+"houseNumber": "13",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395828,
+"lng": 9.720151
+},
+"parcels": 9,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"JJD00014002209401",
+"TVO8000280DE",
+"340029428849",
+"JJD00014002233158",
+"TVO8000283DE",
+"340029743036",
+"JJD00014002256915",
+"TVO8000286DE",
+"340030057223"
+]
+},
+{
+"index": 17,
+"canonical": {
+"street": "Sonderburger Straße",
+"houseNumber": "25",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.402119,
+"lng": 9.733673
+},
+"parcels": 7,
+"company": "Bäckerei Sonnenkorn",
+"trackingNumbers": [
+"JJD00014002280672",
+"TVO8000289DE",
+"340030371410",
+"JJD00014002304429",
+"TVO8000292DE",
+"340030685597",
+"JJD00014002328186"
+]
+},
+{
+"index": 18,
+"canonical": {
+"street": "Hamburger Allee",
+"houseNumber": "27",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.3812,
+"lng": 9.738575
+},
+"parcels": 3,
+"company": "",
+"trackingNumbers": [
+"TVO8000295DE",
+"340030999784",
+"JJD00014002351943"
+]
+},
+{
+"index": 19,
+"canonical": {
+"street": "Bogenstraße",
+"houseNumber": "5",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.410162,
+"lng": 9.703818
+},
+"parcels": 9,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"TVO8000298DE",
+"340031313971",
+"JJD00014002375700",
+"TVO8000301DE",
+"340031628158",
+"JJD00014002399457",
+"TVO8000304DE",
+"340031942345",
+"JJD00014002423214"
+]
+},
+{
+"index": 20,
+"canonical": {
+"street": "Schubertstraße",
+"houseNumber": "1",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.385744,
+"lng": 9.747121
+},
+"parcels": 8,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"TVO8000307DE",
+"340032256532",
+"JJD00014002446971",
+"TVO8000310DE",
+"340032570719",
+"JJD00014002470728",
+"TVO8000313DE",
+"340032884906"
+]
+},
+{
+"index": 21,
+"canonical": {
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "14",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394472,
+"lng": 9.723867
+},
+"parcels": 5,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"JJD00014002494485",
+"TVO8000316DE",
+"340033199093",
+"JJD00014002518242",
+"TVO8000319DE"
+]
+},
+{
+"index": 22,
+"canonical": {
+"street": "Parsevalstraße",
+"houseNumber": "11",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.400819,
+"lng": 9.739264
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"340033513280",
+"JJD00014002541999",
+"TVO8000322DE",
+"340033827467",
+"JJD00014002565756",
+"TVO8000325DE",
+"340034141654",
+"JJD00014002589513",
+"TVO8000328DE",
+"340034455841"
+]
+},
+{
+"index": 23,
+"canonical": {
+"street": "Schulenburger Landstraße",
+"houseNumber": "134A",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.407951,
+"lng": 9.712804
+},
+"parcels": 6,
+"company": "",
+"trackingNumbers": [
+"JJD00014002613270",
+"TVO8000331DE",
+"340034770028",
+"JJD00014002637027",
+"TVO8000334DE",
+"340035084215"
+]
+},
+{
+"index": 24,
+"canonical": {
+"street": "Rundestraße",
+"houseNumber": "10",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.379222,
+"lng": 9.740112
+},
+"parcels": 9,
+"company": "Praxis am Park GmbH",
+"trackingNumbers": [
+"JJD00014002660784",
+"TVO8000337DE",
+"340035398402",
+"JJD00014002684541",
+"TVO8000340DE",
+"340035712589",
+"JJD00014002708298",
+"TVO8000343DE",
+"340036026776"
+]
+},
+{
+"index": 25,
+"canonical": {
+"street": "Schubertstraße",
+"houseNumber": "6",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.385923,
+"lng": 9.746516
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"JJD00014002732055",
+"TVO8000346DE",
+"340036340963",
+"JJD00014002755812",
+"TVO8000349DE",
+"340036655150",
+"JJD00014002779569",
+"TVO8000352DE"
+]
+},
+{
+"index": 26,
+"canonical": {
+"street": "Borsigweg",
+"houseNumber": "12",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.399479,
+"lng": 9.731623
+},
+"parcels": 6,
+"company": "",
+"trackingNumbers": [
+"340036969337",
+"JJD00014002803326",
+"TVO8000355DE",
+"340037283524",
+"JJD00014002827083",
+"TVO8000358DE"
+]
+},
+{
+"index": 27,
+"canonical": {
+"street": "Norderneyer Weg",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397421,
+"lng": 9.745053
+},
+"parcels": 10,
+"company": "Optik Hellwig",
+"trackingNumbers": [
+"340037597711",
+"JJD00014002850840",
+"TVO8000361DE",
+"340037911898",
+"JJD00014002874597",
+"TVO8000364DE",
+"340038226085",
+"JJD00014002898354",
+"TVO8000367DE",
+"340038540272"
+]
+},
+{
+"index": 28,
+"canonical": {
+"street": "Borkumer Straße",
+"houseNumber": "44",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397548,
+"lng": 9.748587
+},
+"parcels": 7,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"JJD00014002922111",
+"TVO8000370DE",
+"340038854459",
+"JJD00014002945868",
+"TVO8000373DE",
+"340039168646",
+"JJD00014002969625"
+]
+},
+{
+"index": 29,
+"canonical": {
+"street": "Benzweg",
+"houseNumber": "2",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.398294,
+"lng": 9.728052
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"TVO8000376DE",
+"340039482833",
+"JJD00014002993382",
+"TVO8000379DE",
+"340039797020",
+"JJD00014003017139",
+"TVO8000382DE",
+"340040111207"
+]
+},
+{
+"index": 30,
+"canonical": {
+"street": "Melanchthonstraße",
+"houseNumber": "19",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.397963,
+"lng": 9.725756
+},
+"parcels": 6,
+"company": "",
+"trackingNumbers": [
+"JJD00014003040896",
+"TVO8000385DE",
+"340040425394",
+"JJD00014003064653",
+"TVO8000388DE",
+"340040739581"
+]
+},
+{
+"index": 31,
+"canonical": {
+"street": "Guts-Muths-Straße",
+"houseNumber": "9",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395389,
+"lng": 9.727842
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"JJD00014003088410",
+"TVO8000391DE",
+"340041053768",
+"JJD00014003112167",
+"TVO8000394DE",
+"340041367955",
+"JJD00014003135924"
+]
+},
+{
+"index": 32,
+"canonical": {
+"street": "Tonderner Straße",
+"houseNumber": "17",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401974,
+"lng": 9.732353
+},
+"parcels": 9,
+"company": "Optik Hellwig",
+"trackingNumbers": [
+"TVO8000397DE",
+"340041682142",
+"JJD00014003159681",
+"TVO8000400DE",
+"340041996329",
+"JJD00014003183438",
+"TVO8000403DE",
+"340042310516",
+"JJD00014003207195"
+]
+},
+{
+"index": 33,
+"canonical": {
+"street": "Katalonienweg",
+"houseNumber": "13",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399113,
+"lng": 9.746272
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"TVO8000406DE",
+"340042624703",
+"JJD00014003230952",
+"TVO8000409DE",
+"340042938890",
+"JJD00014003254709",
+"TVO8000412DE",
+"340043253077",
+"JJD00014003278466"
+]
+},
+{
+"index": 34,
+"canonical": {
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "13",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.390097,
+"lng": 9.748869
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"TVO8000415DE",
+"340043567264",
+"JJD00014003302223",
+"TVO8000418DE",
+"340043881451",
+"JJD00014003325980",
+"TVO8000421DE",
+"340044195638",
+"JJD00014003349737"
+]
+},
+{
+"index": 35,
+"canonical": {
+"street": "Sonderburger Straße",
+"houseNumber": "29",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.402282,
+"lng": 9.733791
+},
+"parcels": 8,
+"company": "Café Feldblick",
+"trackingNumbers": [
+"TVO8000424DE",
+"340044509825",
+"JJD00014003373494",
+"TVO8000427DE",
+"340044824012",
+"JJD00014003397251",
+"TVO8000430DE",
+"340045138199"
+]
+},
+{
+"index": 36,
+"canonical": {
+"street": "Schleswiger Straße",
+"houseNumber": "5",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401509,
+"lng": 9.730755
+},
+"parcels": 6,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"JJD00014003421008",
+"TVO8000433DE",
+"340045452386",
+"JJD00014003444765",
+"TVO8000436DE",
+"340045766573"
+]
+},
+{
+"index": 37,
+"canonical": {
+"street": "Fenskestraße",
+"houseNumber": "33",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.399078,
+"lng": 9.721211
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"JJD00014003468522",
+"TVO8000439DE",
+"340046080760",
+"JJD00014003492279",
+"TVO8000442DE",
+"340046394947",
+"JJD00014003516036",
+"TVO8000445DE",
+"340046709134",
+"JJD00014003539793"
+]
+},
+{
+"index": 38,
+"canonical": {
+"street": "Linsingenstraße",
+"houseNumber": "21A",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.400886,
+"lng": 9.739865
+},
+"parcels": 6,
+"company": "",
+"trackingNumbers": [
+"TVO8000448DE",
+"340047023321",
+"JJD00014003563550",
+"TVO8000451DE",
+"340047337508",
+"JJD00014003587307"
+]
+},
+{
+"index": 39,
+"canonical": {
+"street": "Philipsbornstraße",
+"houseNumber": "54",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393417,
+"lng": 9.729458
+},
+"parcels": 13,
+"company": "",
+"trackingNumbers": [
+"TVO8000454DE",
+"340047651695",
+"JJD00014003611064",
+"TVO8000457DE",
+"340047965882",
+"JJD00014003634821",
+"TVO8000460DE",
+"340048280069",
+"JJD00014003658578",
+"TVO8000463DE",
+"340048594256",
+"JJD00014003682335",
+"TVO8000466DE"
+]
+},
+{
+"index": 40,
+"canonical": {
+"street": "Großer Kolonnenweg",
+"houseNumber": "18C",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.405906,
+"lng": 9.738797
+},
+"parcels": 7,
+"company": "IT-Service Nord GmbH",
+"trackingNumbers": [
+"340048908443",
+"JJD00014003706092",
+"TVO8000469DE",
+"340049222630",
+"JJD00014003729849",
+"TVO8000472DE",
+"340049536817"
+]
+},
+{
+"index": 41,
+"canonical": {
+"street": "Raschplatz",
+"houseNumber": "7a",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.379067,
+"lng": 9.744242
+},
+"parcels": 10,
+"company": "IT-Service Nord GmbH",
+"trackingNumbers": [
+"JJD00014003753606",
+"TVO8000475DE",
+"340049851004",
+"JJD00014003777363",
+"TVO8000478DE",
+"340050165191",
+"JJD00014003801120",
+"TVO8000481DE",
+"340050479378",
+"JJD00014003824877"
+]
+},
+{
+"index": 42,
+"canonical": {
+"street": "Melanchthonstraße",
+"houseNumber": "46",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.398343,
+"lng": 9.731454
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"TVO8000484DE",
+"340050793565",
+"JJD00014003848634",
+"TVO8000487DE",
+"340051107752",
+"JJD00014003872391",
+"TVO8000490DE",
+"340051421939"
+]
+},
+{
+"index": 43,
+"canonical": {
+"street": "Cambridgeweg",
+"houseNumber": "8",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399529,
+"lng": 9.747997
+},
+"parcels": 10,
+"company": "Optik Hellwig",
+"trackingNumbers": [
+"JJD00014003896148",
+"TVO8000493DE",
+"340051736126",
+"JJD00014003919905",
+"TVO8000496DE",
+"340052050313",
+"JJD00014003943662",
+"TVO8000499DE",
+"340052364500",
+"JJD00014003967419"
+]
+},
+{
+"index": 44,
+"canonical": {
+"street": "De-Haën-Platz",
+"houseNumber": "3",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.393005,
+"lng": 9.753356
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"TVO8000502DE",
+"340052678687",
+"JJD00014003991176",
+"TVO8000505DE",
+"340052992874",
+"JJD00014004014933",
+"TVO8000508DE"
+]
+},
+{
+"index": 45,
+"canonical": {
+"street": "Raschplatz",
+"houseNumber": "6",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.378617,
+"lng": 9.744246
+},
+"parcels": 11,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"340053307061",
+"JJD00014004038690",
+"TVO8000511DE",
+"340053621248",
+"JJD00014004062447",
+"TVO8000514DE",
+"340053935435",
+"JJD00014004086204",
+"TVO8000517DE",
+"340054249622",
+"JJD00014004109961"
+]
+},
+{
+"index": 46,
+"canonical": {
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "11",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.389922,
+"lng": 9.749091
+},
+"parcels": 12,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"TVO8000520DE",
+"340054563809",
+"JJD00014004133718",
+"TVO8000523DE",
+"340054877996",
+"JJD00014004157475",
+"TVO8000526DE",
+"340055192183",
+"JJD00014004181232",
+"TVO8000529DE",
+"340055506370",
+"JJD00014004204989"
+]
+},
+{
+"index": 47,
+"canonical": {
+"street": "Lister Kirchweg",
+"houseNumber": "55",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.39521,
+"lng": 9.751381
+},
+"parcels": 13,
+"company": "Fahrradhaus Lenz",
+"trackingNumbers": [
+"TVO8000532DE",
+"340055820557",
+"JJD00014004228746",
+"TVO8000535DE",
+"340056134744",
+"JJD00014004252503",
+"TVO8000538DE",
+"340056448931",
+"JJD00014004276260",
+"TVO8000541DE",
+"340056763118",
+"JJD00014004300017",
+"TVO8000544DE"
+]
+},
+{
+"index": 48,
+"canonical": {
+"street": "Salamancaweg",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399831,
+"lng": 9.745905
+},
+"parcels": 14,
+"company": "",
+"trackingNumbers": [
+"340057077305",
+"JJD00014004323774",
+"TVO8000547DE",
+"340057391492",
+"JJD00014004347531",
+"TVO8000550DE",
+"340057705679",
+"JJD00014004371288",
+"TVO8000553DE",
+"340058019866",
+"JJD00014004395045",
+"TVO8000556DE",
+"340058334053",
+"JJD00014004418802"
+]
+},
+{
+"index": 49,
+"canonical": {
+"street": "Rundestraße",
+"houseNumber": "11",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.378888,
+"lng": 9.741604
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"TVO8000559DE",
+"340058648240",
+"JJD00014004442559",
+"TVO8000562DE",
+"340058962427",
+"JJD00014004466316",
+"TVO8000565DE"
+]
+},
+{
+"index": 50,
+"canonical": {
+"street": "Linsingenstraße",
+"houseNumber": "21",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.400863,
+"lng": 9.740227
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"340059276614",
+"JJD00014004490073",
+"TVO8000568DE",
+"340059590801",
+"JJD00014004513830",
+"TVO8000571DE",
+"340059904988",
+"JJD00014004537587",
+"TVO8000574DE",
+"340060219175"
+]
+},
+{
+"index": 51,
+"canonical": {
+"street": "Niebüller Weg",
+"houseNumber": "3",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.400548,
+"lng": 9.730789
+},
+"parcels": 7,
+"company": "Bäckerei Sonnenkorn",
+"trackingNumbers": [
+"JJD00014004561344",
+"TVO8000577DE",
+"340060533362",
+"JJD00014004585101",
+"TVO8000580DE",
+"340060847549",
+"JJD00014004608858"
+]
+},
+{
+"index": 52,
+"canonical": {
+"street": "Jakobistraße",
+"houseNumber": "3",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.388787,
+"lng": 9.749256
+},
+"parcels": 8,
+"company": "Fahrradhaus Lenz",
+"trackingNumbers": [
+"TVO8000583DE",
+"340061161736",
+"JJD00014004632615",
+"TVO8000586DE",
+"340061475923",
+"JJD00014004656372",
+"TVO8000589DE",
+"340061790110"
+]
+},
+{
+"index": 53,
+"canonical": {
+"street": "Waldstraße",
+"houseNumber": "22",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.392817,
+"lng": 9.747521
+},
+"parcels": 11,
+"company": "",
+"trackingNumbers": [
+"JJD00014004680129",
+"TVO8000592DE",
+"340062104297",
+"JJD00014004703886",
+"TVO8000595DE",
+"340062418484",
+"JJD00014004727643",
+"TVO8000598DE",
+"340062732671",
+"JJD00014004751400",
+"TVO8000601DE"
+]
+},
+{
+"index": 54,
+"canonical": {
+"street": "Bömelburgstraße",
+"houseNumber": "39b",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.39929,
+"lng": 9.720645
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"340063046858",
+"JJD00014004775157",
+"TVO8000604DE",
+"340063361045",
+"JJD00014004798914",
+"TVO8000607DE",
+"340063675232",
+"JJD00014004822671",
+"TVO8000610DE",
+"340063989419"
+]
+},
+{
+"index": 55,
+"canonical": {
+"street": "Linsingenstraße",
+"houseNumber": "27",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.401382,
+"lng": 9.740104
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"JJD00014004846428",
+"TVO8000613DE",
+"340064303606",
+"JJD00014004870185",
+"TVO8000616DE",
+"340064617793",
+"JJD00014004893942",
+"TVO8000619DE"
+]
+},
+{
+"index": 56,
+"canonical": {
+"street": "Spichernstraße",
+"houseNumber": "22",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.387582,
+"lng": 9.739991
+},
+"parcels": 12,
+"company": "Steuerbüro Arslan",
+"trackingNumbers": [
+"340064931980",
+"JJD00014004917699",
+"TVO8000622DE",
+"340065246167",
+"JJD00014004941456",
+"TVO8000625DE",
+"340065560354",
+"JJD00014004965213",
+"TVO8000628DE",
+"340065874541",
+"JJD00014004988970",
+"TVO8000631DE"
+]
+},
+{
+"index": 57,
+"canonical": {
+"street": "Franckestraße",
+"houseNumber": "9",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.390743,
+"lng": 9.732392
+},
+"parcels": 5,
+"company": "Blumen Lindner",
+"trackingNumbers": [
+"340066188728",
+"JJD00014005012727",
+"TVO8000634DE",
+"340066502915",
+"JJD00014005036484"
+]
+},
+{
+"index": 58,
+"canonical": {
+"street": "Wöhlerstraße",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.39326,
+"lng": 9.746525
+},
+"parcels": 11,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"TVO8000637DE",
+"340066817102",
+"JJD00014005060241",
+"TVO8000640DE",
+"340067131289",
+"JJD00014005083998",
+"TVO8000643DE",
+"340067445476",
+"JJD00014005107755",
+"TVO8000646DE",
+"340067759663"
+]
+},
+{
+"index": 59,
+"canonical": {
+"street": "Drostestraße",
+"houseNumber": "32",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.38777,
+"lng": 9.744938
+},
+"parcels": 8,
+"company": "Apotheke am Markt",
+"trackingNumbers": [
+"JJD00014005131512",
+"TVO8000649DE",
+"340068073850",
+"JJD00014005155269",
+"TVO8000652DE",
+"340068388037",
+"JJD00014005179026",
+"TVO8000655DE"
+]
+},
+{
+"index": 60,
+"canonical": {
+"street": "Katalonienweg",
+"houseNumber": "16",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399148,
+"lng": 9.745314
+},
+"parcels": 12,
+"company": "Fahrradhaus Lenz",
+"trackingNumbers": [
+"340068702224",
+"JJD00014005202783",
+"TVO8000658DE",
+"340069016411",
+"JJD00014005226540",
+"TVO8000661DE",
+"340069330598",
+"JJD00014005250297",
+"TVO8000664DE",
+"340069644785",
+"JJD00014005274054",
+"TVO8000667DE"
+]
+},
+{
+"index": 61,
+"canonical": {
+"street": "Sylter Weg",
+"houseNumber": "8",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397494,
+"lng": 9.746183
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"340069958972",
+"JJD00014005297811",
+"TVO8000670DE",
+"340070273159",
+"JJD00014005321568",
+"TVO8000673DE",
+"340070587346",
+"JJD00014005345325",
+"TVO8000676DE"
+]
+},
+{
+"index": 62,
+"canonical": {
+"street": "Voltmerstraße",
+"houseNumber": "60",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.402522,
+"lng": 9.714979
+},
+"parcels": 6,
+"company": "",
+"trackingNumbers": [
+"340070901533",
+"JJD00014005369082",
+"TVO8000679DE",
+"340071215720",
+"JJD00014005392839",
+"TVO8000682DE"
+]
+},
+{
+"index": 63,
+"canonical": {
+"street": "Fraunhoferstraße",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.393572,
+"lng": 9.753833
+},
+"parcels": 7,
+"company": "Bäckerei Sonnenkorn",
+"trackingNumbers": [
+"340071529907",
+"JJD00014005416596",
+"TVO8000685DE",
+"340071844094",
+"JJD00014005440353",
+"TVO8000688DE",
+"340072158281"
+]
+},
+{
+"index": 64,
+"canonical": {
+"street": "Jakobistraße",
+"houseNumber": "31",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.390225,
+"lng": 9.744377
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"JJD00014005464110",
+"TVO8000691DE",
+"340072472468",
+"JJD00014005487867",
+"TVO8000694DE",
+"340072786655",
+"JJD00014005511624",
+"TVO8000697DE",
+"340073100842"
+]
+},
+{
+"index": 65,
+"canonical": {
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "88",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397673,
+"lng": 9.742416
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"JJD00014005535381",
+"TVO8000700DE",
+"340073415029",
+"JJD00014005559138",
+"TVO8000703DE",
+"340073729216",
+"JJD00014005582895",
+"TVO8000706DE"
+]
+},
+{
+"index": 66,
+"canonical": {
+"street": "Otto-Rheinhold-Weg",
+"houseNumber": "7D",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.403154,
+"lng": 9.729151
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"340074043403",
+"JJD00014005606652",
+"TVO8000709DE",
+"340074357590",
+"JJD00014005630409",
+"TVO8000712DE",
+"340074671777",
+"JJD00014005654166",
+"TVO8000715DE",
+"340074985964"
+]
+},
+{
+"index": 67,
+"canonical": {
+"street": "Kleiststraße",
+"houseNumber": "16",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.392317,
+"lng": 9.736552
+},
+"parcels": 12,
+"company": "IT-Service Nord GmbH",
+"trackingNumbers": [
+"JJD00014005677923",
+"TVO8000718DE",
+"340075300151",
+"JJD00014005701680",
+"TVO8000721DE",
+"340075614338",
+"JJD00014005725437",
+"TVO8000724DE",
+"340075928525",
+"JJD00014005749194",
+"TVO8000727DE",
+"340076242712"
+]
+},
+{
+"index": 68,
+"canonical": {
+"street": "Niebüller Weg",
+"houseNumber": "12",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.400461,
+"lng": 9.729358
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"JJD00014005772951",
+"TVO8000730DE",
+"340076556899",
+"JJD00014005796708",
+"TVO8000733DE",
+"340076871086",
+"JJD00014005820465"
+]
+},
+{
+"index": 69,
+"canonical": {
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "10",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394559,
+"lng": 9.723869
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"TVO8000736DE",
+"340077185273",
+"JJD00014005844222",
+"TVO8000739DE",
+"340077499460",
+"JJD00014005867979",
+"TVO8000742DE",
+"340077813647",
+"JJD00014005891736",
+"TVO8000745DE"
+]
+},
+{
+"index": 70,
+"canonical": {
+"street": "Göbelstraße",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.390158,
+"lng": 9.749371
+},
+"parcels": 11,
+"company": "",
+"trackingNumbers": [
+"340078127834",
+"JJD00014005915493",
+"TVO8000748DE",
+"340078442021",
+"JJD00014005939250",
+"TVO8000751DE",
+"340078756208",
+"JJD00014005963007",
+"TVO8000754DE",
+"340079070395",
+"JJD00014005986764"
+]
+},
+{
+"index": 71,
+"canonical": {
+"street": "Tonderner Straße",
+"houseNumber": "12",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401716,
+"lng": 9.732567
+},
+"parcels": 10,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"TVO8000757DE",
+"340079384582",
+"JJD00014006010521",
+"TVO8000760DE",
+"340079698769",
+"JJD00014006034278",
+"TVO8000763DE",
+"340080012956",
+"JJD00014006058035",
+"TVO8000766DE"
+]
+},
+{
+"index": 72,
+"canonical": {
+"street": "Voltastraße",
+"houseNumber": "10",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.391484,
+"lng": 9.732181
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"340080327143",
+"JJD00014006081792",
+"TVO8000769DE",
+"340080641330",
+"JJD00014006105549",
+"TVO8000772DE",
+"340080955517",
+"JJD00014006129306"
+]
+},
+{
+"index": 73,
+"canonical": {
+"street": "Großer Kolonnenweg",
+"houseNumber": "10",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.404292,
+"lng": 9.736806
+},
+"parcels": 10,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"TVO8000775DE",
+"340081269704",
+"JJD00014006153063",
+"TVO8000778DE",
+"340081583891",
+"JJD00014006176820",
+"TVO8000781DE",
+"340081898078",
+"JJD00014006200577",
+"TVO8000784DE"
+]
+},
+{
+"index": 74,
+"canonical": {
+"street": "Gradestraße",
+"houseNumber": "18",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.405486,
+"lng": 9.741931
+},
+"parcels": 6,
+"company": "Fahrradhaus Lenz",
+"trackingNumbers": [
+"340082212265",
+"JJD00014006224334",
+"TVO8000787DE",
+"340082526452",
+"JJD00014006248091",
+"TVO8000790DE"
+]
+},
+{
+"index": 75,
+"canonical": {
+"street": "Beiersdorfstraße",
+"houseNumber": "2",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.406898,
+"lng": 9.730014
+},
+"parcels": 11,
+"company": "Fahrradhaus Lenz",
+"trackingNumbers": [
+"340082840639",
+"JJD00014006271848",
+"TVO8000793DE",
+"340083154826",
+"JJD00014006295605",
+"TVO8000796DE",
+"340083469013",
+"JJD00014006319362",
+"TVO8000799DE",
+"340083783200",
+"JJD00014006343119"
+]
+},
+{
+"index": 76,
+"canonical": {
+"street": "Hüttenstraße",
+"houseNumber": "25a",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395771,
+"lng": 9.72134
+},
+"parcels": 6,
+"company": "",
+"trackingNumbers": [
+"TVO8000802DE",
+"340084097387",
+"JJD00014006366876",
+"TVO8000805DE",
+"340084411574",
+"JJD00014006390633"
+]
+},
+{
+"index": 77,
+"canonical": {
+"street": "Borkumer Straße",
+"houseNumber": "47",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397774,
+"lng": 9.748313
+},
+"parcels": 5,
+"company": "",
+"trackingNumbers": [
+"TVO8000808DE",
+"340084725761",
+"JJD00014006414390",
+"TVO8000811DE",
+"340085039948"
+]
+},
+{
+"index": 78,
+"canonical": {
+"street": "Lister Kirchweg",
+"houseNumber": "22",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.394858,
+"lng": 9.743974
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"JJD00014006438147",
+"TVO8000814DE",
+"340085354135",
+"JJD00014006461904",
+"TVO8000817DE",
+"340085668322",
+"JJD00014006485661"
+]
+},
+{
+"index": 79,
+"canonical": {
+"street": "Wöhlerstraße",
+"houseNumber": "17",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.395683,
+"lng": 9.747689
+},
+"parcels": 5,
+"company": "",
+"trackingNumbers": [
+"TVO8000820DE",
+"340085982509",
+"JJD00014006509418",
+"TVO8000823DE",
+"340086296696"
+]
+},
+{
+"index": 80,
+"canonical": {
+"street": "Jahnplatz",
+"houseNumber": "1",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394275,
+"lng": 9.730783
+},
+"parcels": 6,
+"company": "",
+"trackingNumbers": [
+"JJD00014006533175",
+"TVO8000826DE",
+"340086610883",
+"JJD00014006556932",
+"TVO8000829DE",
+"340086925070"
+]
+},
+{
+"index": 81,
+"canonical": {
+"street": "Drostestraße",
+"houseNumber": "18",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.386853,
+"lng": 9.747112
+},
+"parcels": 8,
+"company": "",
+"trackingNumbers": [
+"JJD00014006580689",
+"TVO8000832DE",
+"340087239257",
+"JJD00014006604446",
+"TVO8000835DE",
+"340087553444",
+"JJD00014006628203",
+"TVO8000838DE"
+]
+},
+{
+"index": 82,
+"canonical": {
+"street": "Apenrader Straße",
+"houseNumber": "40",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401549,
+"lng": 9.729832
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"340087867631",
+"JJD00014006651960",
+"TVO8000841DE",
+"340088181818",
+"JJD00014006675717",
+"TVO8000844DE",
+"340088496005",
+"JJD00014006699474",
+"TVO8000847DE",
+"340088810192"
+]
+},
+{
+"index": 83,
+"canonical": {
+"street": "Schulenburger Landstraße",
+"houseNumber": "33",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.39853,
+"lng": 9.714331
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"JJD00014006723231",
+"TVO8000850DE",
+"340089124379",
+"JJD00014006746988",
+"TVO8000853DE",
+"340089438566",
+"JJD00014006770745",
+"TVO8000856DE",
+"340089752753"
+]
+},
+{
+"index": 84,
+"canonical": {
+"street": "Niedersachsenring",
+"houseNumber": "7",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.399623,
+"lng": 9.734879
+},
+"parcels": 8,
+"company": "Bäckerei Sonnenkorn",
+"trackingNumbers": [
+"JJD00014006794502",
+"TVO8000859DE",
+"340090066940",
+"JJD00014006818259",
+"TVO8000862DE",
+"340090381127",
+"JJD00014006842016",
+"TVO8000865DE"
+]
+},
+{
+"index": 85,
+"canonical": {
+"street": "Liebigstraße",
+"houseNumber": "7",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.392296,
+"lng": 9.755339
+},
+"parcels": 12,
+"company": "",
+"trackingNumbers": [
+"340090695314",
+"JJD00014006865773",
+"TVO8000868DE",
+"340091009501",
+"JJD00014006889530",
+"TVO8000871DE",
+"340091323688",
+"JJD00014006913287",
+"TVO8000874DE",
+"340091637875",
+"JJD00014006937044",
+"TVO8000877DE"
+]
+},
+{
+"index": 86,
+"canonical": {
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "60",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393596,
+"lng": 9.724468
+},
+"parcels": 10,
+"company": "",
+"trackingNumbers": [
+"340091952062",
+"JJD00014006960801",
+"TVO8000880DE",
+"340092266249",
+"JJD00014006984558",
+"TVO8000883DE",
+"340092580436",
+"JJD00014007008315",
+"TVO8000886DE",
+"340092894623"
+]
+},
+{
+"index": 87,
+"canonical": {
+"street": "Karl-Imhoff-Weg",
+"houseNumber": "17",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.40391,
+"lng": 9.728209
+},
+"parcels": 8,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"JJD00014007032072",
+"TVO8000889DE",
+"340093208810",
+"JJD00014007055829",
+"TVO8000892DE",
+"340093522997",
+"JJD00014007079586",
+"TVO8000895DE"
+]
+},
+{
+"index": 88,
+"canonical": {
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "42",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393893,
+"lng": 9.723963
+},
+"parcels": 7,
+"company": "IT-Service Nord GmbH",
+"trackingNumbers": [
+"340093837184",
+"JJD00014007103343",
+"TVO8000898DE",
+"340094151371",
+"JJD00014007127100",
+"TVO8000901DE",
+"340094465558"
+]
+},
+{
+"index": 89,
+"canonical": {
+"street": "Scheelenkamp",
+"houseNumber": "11",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.3958,
+"lng": 9.725411
+},
+"parcels": 7,
+"company": "Steuerbüro Arslan",
+"trackingNumbers": [
+"JJD00014007150857",
+"TVO8000904DE",
+"340094779745",
+"JJD00014007174614",
+"TVO8000907DE",
+"340095093932",
+"JJD00014007198371"
+]
+},
+{
+"index": 90,
+"canonical": {
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "86",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397523,
+"lng": 9.742522
+},
+"parcels": 6,
+"company": "Fahrradhaus Lenz",
+"trackingNumbers": [
+"TVO8000910DE",
+"340095408119",
+"JJD00014007222128",
+"TVO8000913DE",
+"340095722306",
+"JJD00014007245885"
+]
+},
+{
+"index": 91,
+"canonical": {
+"street": "Drostestraße",
+"houseNumber": "1",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.38586,
+"lng": 9.749127
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"TVO8000916DE",
+"340096036493",
+"JJD00014007269642",
+"TVO8000919DE",
+"340096350680",
+"JJD00014007293399",
+"TVO8000922DE"
+]
+},
+{
+"index": 92,
+"canonical": {
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "72",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393433,
+"lng": 9.724774
+},
+"parcels": 20,
+"company": "",
+"trackingNumbers": [
+"340096664867",
+"JJD00014007317156",
+"TVO8000925DE",
+"340096979054",
+"JJD00014007340913",
+"TVO8000928DE",
+"340097293241",
+"JJD00014007364670",
+"TVO8000931DE",
+"340097607428",
+"JJD00014007388427",
+"TVO8000934DE",
+"340097921615",
+"JJD00014007412184",
+"TVO8000937DE",
+"340098235802",
+"JJD00014007435941",
+"TVO8000940DE",
+"340098549989",
+"JJD00014007459698"
+]
+},
+{
+"index": 93,
+"canonical": {
+"street": "Spichernstraße",
+"houseNumber": "23",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.38675,
+"lng": 9.738444
+},
+"parcels": 11,
+"company": "",
+"trackingNumbers": [
+"TVO8000943DE",
+"340098864176",
+"JJD00014007483455",
+"TVO8000946DE",
+"340099178363",
+"JJD00014007507212",
+"TVO8000949DE",
+"340099492550",
+"JJD00014007530969",
+"TVO8000952DE",
+"340099806737"
+]
+},
+{
+"index": 94,
+"canonical": {
+"street": "Cambridgeweg",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399525,
+"lng": 9.74734
+},
+"parcels": 9,
+"company": "",
+"trackingNumbers": [
+"JJD00014007554726",
+"TVO8000955DE",
+"340100120924",
+"JJD00014007578483",
+"TVO8000958DE",
+"340100435111",
+"JJD00014007602240",
+"TVO8000961DE",
+"340100749298"
+]
+},
+{
+"index": 95,
+"canonical": {
+"street": "Richthofenstraße",
+"houseNumber": "8",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.403718,
+"lng": 9.73801
+},
+"parcels": 7,
+"company": "Optik Hellwig",
+"trackingNumbers": [
+"JJD00014007625997",
+"TVO8000964DE",
+"340101063485",
+"JJD00014007649754",
+"TVO8000967DE",
+"340101377672",
+"JJD00014007673511"
+]
+},
+{
+"index": 96,
+"canonical": {
+"street": "Husumer Weg",
+"houseNumber": "6",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.400553,
+"lng": 9.728231
+},
+"parcels": 7,
+"company": "",
+"trackingNumbers": [
+"TVO8000970DE",
+"340101691859",
+"JJD00014007697268",
+"TVO8000973DE",
+"340102006046",
+"JJD00014007721025",
+"TVO8000976DE"
+]
+},
+{
+"index": 97,
+"canonical": {
+"street": "Edenstraße",
+"houseNumber": "2",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.385655,
+"lng": 9.745647
+},
+"parcels": 5,
+"company": "",
+"trackingNumbers": [
+"340102320233",
+"JJD00014007744782",
+"TVO8000979DE",
+"340102634420",
+"JJD00014007768539"
+]
+},
+{
+"index": 98,
+"canonical": {
+"street": "Franckestraße",
+"houseNumber": "10",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.390839,
+"lng": 9.7326
+},
+"parcels": 9,
+"company": "Kanzlei Weber & Partner",
+"trackingNumbers": [
+"TVO8000982DE",
+"340102948607",
+"JJD00014007792296",
+"TVO8000985DE",
+"340103262794",
+"JJD00014007816053",
+"TVO8000988DE",
+"340103576981",
+"JJD00014007839810"
+]
+},
+{
+"index": 99,
+"canonical": {
+"street": "Edenstraße",
+"houseNumber": "46",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.389381,
+"lng": 9.749028
+},
+"parcels": 10,
+"company": "Optik Hellwig",
+"trackingNumbers": [
+"TVO8000991DE",
+"340103891168",
+"JJD00014007863567",
+"TVO8000994DE",
+"340104205355",
+"JJD00014007887324",
+"TVO8000997DE",
+"340104519542",
+"JJD00014007911081",
+"TVO8001000DE"
+]
+}
+]
+}
