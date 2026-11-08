@@ -11,8 +11,8 @@ export const importChina: Article = {
   id: "import-china",
   category: "import",
   status: "published",
-  published: "2026-11-08",
-  updated: "2026-11-08",
+  published: "2026-11-09",
+  updated: "2026-11-09",
   reviewed: "2026-11-08",
   cover: {
     src: "/insights/container-terminal",
