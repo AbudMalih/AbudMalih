@@ -100,6 +100,8 @@ export function mapPgError(e: unknown): unknown {
       const constraint = (e as { constraint?: string }).constraint ?? "";
       if (constraint === "tours_driver_day_open_uidx" || /tours_driver_day_open_uidx/.test(msg)) return new ApiError(409, "driver_busy", "This driver already has an open tour on that day");
       if (constraint === "tours_vehicle_day_open_uidx" || /tours_vehicle_day_open_uidx/.test(msg)) return new ApiError(409, "vehicle_busy", "This vehicle is already used by an open tour on that day");
+      // Raised by our own functions (no constraint): their message says what conflicts.
+      if (!constraint && !/duplicate key/.test(msg)) return new ApiError(409, "conflict", msg);
       return new ApiError(409, "duplicate", "A record with these values already exists");
     }
     case "23514":

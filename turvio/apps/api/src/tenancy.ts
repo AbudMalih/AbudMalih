@@ -53,26 +53,26 @@ export class PgTenancyRepository implements TenancyRepository {
   async getMembership(userId: string, organizationId: string): Promise<Membership | null> {
     if (!UUID.test(organizationId)) return null;
     return this.db.asUser({ sub: userId }, async (tx) => {
-      const { rows } = await tx.query<{ role: Membership["role"]; active: boolean; depot_ids: string[] | null }>(
-        `select m.role, m.active, (select array_agg(md.depot_id) from public.membership_depots md where md.membership_id = m.id) as depot_ids
+      const { rows } = await tx.query<{ role: Membership["role"]; active: boolean; all_locations: boolean; depot_ids: string[] | null }>(
+        `select m.role, m.active, m.all_locations, (select array_agg(md.depot_id) from public.membership_depots md where md.membership_id = m.id) as depot_ids
            from public.memberships m where m.user_id = $1 and m.organization_id = $2 and m.active`,
         [userId, organizationId],
       );
       const r = rows[0];
-      return r ? { organizationId, userId, role: r.role, active: r.active, depotIds: r.depot_ids } : null;
+      return r ? { organizationId, userId, role: r.role, active: r.active, depotIds: r.depot_ids, allLocations: r.all_locations } : null;
     });
   }
 
   async listMemberships(userId: string) {
     return this.db.asUser({ sub: userId }, async (tx) => {
-      const { rows } = await tx.query<{ organization_id: string; name: string; role: Membership["role"]; depot_ids: string[] | null; status: string }>(
-        `select m.organization_id, o.name, m.role, o.status,
+      const { rows } = await tx.query<{ organization_id: string; name: string; role: Membership["role"]; depot_ids: string[] | null; all_locations: boolean; status: string }>(
+        `select m.organization_id, o.name, m.role, o.status, m.all_locations,
                 (select array_agg(md.depot_id) from public.membership_depots md where md.membership_id = m.id) as depot_ids
            from public.memberships m join public.organizations o on o.id = m.organization_id
           where m.user_id = $1 and m.active order by o.name`,
         [userId],
       );
-      return rows.map((r) => ({ organizationId: r.organization_id, organizationName: r.name, userId, role: r.role, active: true, depotIds: r.depot_ids }));
+      return rows.map((r) => ({ organizationId: r.organization_id, organizationName: r.name, userId, role: r.role, active: true, depotIds: r.depot_ids, allLocations: r.all_locations }));
     });
   }
 

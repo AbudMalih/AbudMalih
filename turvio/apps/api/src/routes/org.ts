@@ -1,4 +1,4 @@
-import { OrgRole, canAssignRole } from "@turvio/shared";
+import { OrgRole, can, canAssignRole } from "@turvio/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
@@ -178,6 +178,7 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
   app.get("/v1/orgs/:orgId/members", { preHandler: guards.requireTenant("org.members.manage") }, async (req) => {
     const { orgId } = OrgParams.parse(req.params);
     return db.asUser(guards.claims(req), async (tx) => {
+      const allLoc = new Map((await tx.query<{ id: string; all_locations: boolean }>(`select id, all_locations from memberships where organization_id = $1`, [orgId])).rows.map((r) => [r.id, r.all_locations]));
       const members = (await tx.query(`select * from org_members($1)`, [orgId])).rows.map((r) => ({
         membershipId: r.membership_id,
         userId: r.user_id,
@@ -185,14 +186,15 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
         role: r.role,
         active: r.active,
         depotIds: r.depot_ids,
+        allLocations: r.role === "owner" || r.role === "admin" || !!allLoc.get(r.membership_id),
         driverId: r.driver_id,
       }));
       const invitations = (
         await tx.query(
-          `select id, email, role, depot_ids, driver_id, created_at, expires_at from invitations where organization_id = $1 and accepted_at is null and revoked_at is null order by created_at desc`,
+          `select id, email, role, depot_ids, all_locations, driver_id, created_at, expires_at from invitations where organization_id = $1 and accepted_at is null and revoked_at is null order by created_at desc`,
           [orgId],
         )
-      ).rows.map((r) => ({ id: r.id, email: r.email, role: r.role, depotIds: r.depot_ids, driverId: r.driver_id, createdAt: r.created_at, expiresAt: r.expires_at }));
+      ).rows.map((r) => ({ id: r.id, email: r.email, role: r.role, depotIds: r.depot_ids, allLocations: r.all_locations, driverId: r.driver_id, createdAt: r.created_at, expiresAt: r.expires_at }));
       return { members, invitations };
     });
   });
@@ -204,6 +206,8 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
         email: z.string().trim().toLowerCase().email().max(254),
         role: OrgRole,
         depotIds: z.array(Uuid).max(50).nullable().default(null),
+        /** Dispatcher for every location – only a Company Admin/Owner may grant it. */
+        allLocations: z.boolean().default(false),
         driverId: Uuid.nullable().default(null),
       }),
       req.body,
@@ -213,13 +217,21 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
     const actor = req.membership!.role;
     if (b.role !== "driver" && !canAssignRole(actor, b.role)) return problem(reply, 403, "forbidden", "You cannot invite users with this role");
     if (b.role === "driver" && !b.driverId) return problem(reply, 400, "validation_failed", "Choose the driver profile this login belongs to");
+    if (b.role === "dispatcher") {
+      if (b.allLocations && !can(actor, "org.members.manage")) return problem(reply, 403, "forbidden", "Only a Company Admin can grant access to all locations");
+      if (!b.allLocations && !b.depotIds?.length) return problem(reply, 422, "location_required", "Choose at least one location for this dispatcher");
+    }
     const t = newOpaqueToken();
     const inv = await db.asUser(guards.claims(req), async (tx) => {
+      // The profile must be in a location the inviter may access and must not have a login yet
+      // (also enforced by the database: app.invitations_guard).
+      if (b.role === "driver" && b.driverId && !(await tx.query<{ ok: boolean }>(`select app.can_link_driver($1, $2) as ok`, [orgId, b.driverId])).rows[0]!.ok)
+        throw new ApiError(409, "driver_profile_unavailable", "This driver profile is not in your locations or already has a login");
       const org = (await tx.query<{ name: string }>(`select name from organizations where id = $1`, [orgId])).rows[0]!;
       const row = (
         await tx.query(
-          `insert into invitations (organization_id, email, role, depot_ids, driver_id, token_hash) values ($1,$2,$3,$4,$5,$6) returning id, email, role, expires_at`,
-          [orgId, b.email, b.role, b.role === "dispatcher" ? b.depotIds : null, b.driverId, t.hash],
+          `insert into invitations (organization_id, email, role, depot_ids, all_locations, driver_id, token_hash) values ($1,$2,$3,$4,$5,$6,$7) returning id, email, role, expires_at`,
+          [orgId, b.email, b.role, b.role === "dispatcher" && !b.allLocations ? b.depotIds : null, b.role === "dispatcher" && b.allLocations, b.role === "driver" ? b.driverId : null, t.hash],
         )
       ).rows[0];
       return { ...row, orgName: org.name };
@@ -244,15 +256,27 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
 
   app.patch("/v1/orgs/:orgId/members/:id", { preHandler: guards.requireTenant("org.members.manage") }, async (req, reply) => {
     const { orgId, id } = IdParams.parse(req.params);
-    const b = parse(z.object({ role: OrgRole.optional(), active: z.boolean().optional(), depotIds: z.array(Uuid).max(50).nullable().optional() }), req.body, reply);
+    const b = parse(
+      z.object({ role: OrgRole.optional(), active: z.boolean().optional(), depotIds: z.array(Uuid).max(50).nullable().optional(), allLocations: z.boolean().optional() }),
+      req.body,
+      reply,
+    );
     if (!b) return;
     if (b.role && !canAssignRole(req.membership!.role, b.role)) return problem(reply, 403, "forbidden", "You cannot assign this role");
     await db.asUser(guards.claims(req), async (tx) => {
       const cur = (await tx.query<{ user_id: string; role: string }>(`select user_id, role from memberships where id = $2 and organization_id = $1`, [orgId, id])).rows[0];
       if (!cur) throw new ApiError(404, "not_found", "Member not found");
       if (cur.user_id === req.user!.userId && (b.active === false || (b.role && b.role !== cur.role))) throw new ApiError(422, "invalid_operation", "You cannot change your own role or deactivate yourself");
-      const upd = await tx.query(`update memberships set role = coalesce($3, role), active = coalesce($4, active) where id = $2 and organization_id = $1`, [orgId, id, b.role ?? null, b.active ?? null]);
+      const upd = await tx.query(`update memberships set role = coalesce($3, role), active = coalesce($4, active), all_locations = coalesce($5, all_locations) where id = $2 and organization_id = $1`, [
+        orgId,
+        id,
+        b.role ?? null,
+        b.active ?? null,
+        b.allLocations ?? null,
+      ]);
       if (!upd.rowCount) throw new ApiError(403, "forbidden", "You cannot change this member");
+      // Locations are replaced as given; an empty list means NO location access (fail-closed),
+      // company-wide access only via allLocations.
       if (b.depotIds !== undefined) {
         await tx.query(`delete from membership_depots where membership_id = $1`, [id]);
         for (const d of b.depotIds ?? []) await tx.query(`insert into membership_depots (organization_id, membership_id, depot_id) values ($1,$2,$3)`, [orgId, id, d]);

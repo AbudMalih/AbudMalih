@@ -5,17 +5,17 @@ import type { DispatchDataset } from "./dataset";
 /**
  * Depot-level access inside one tenant. Mirrors the database rule
  * app.can_access_depot(): owners/admins see every depot of their company;
- * dispatchers see all depots unless their membership is limited to specific
- * depots. Drivers have no dispatch access. Tenant isolation itself is
- * enforced before this (membership must belong to the dataset's tenant).
+ * dispatchers see only their assigned depots – none assigned = none (fail-closed) –
+ * unless a Company Admin granted all locations. Drivers have no dispatch access.
+ * Tenant isolation itself is enforced before this (membership must belong to the dataset's tenant).
  */
 export function accessibleDepotIds(membership: Membership | null | undefined, data: Pick<DispatchDataset, "organizationId" | "depots">): string[] {
   if (!membership || !membership.active || membership.organizationId !== data.organizationId) return [];
   if (!can(membership.role, "tours.view_all")) return [];
   const all = data.depots.map((d) => d.id);
   if (membership.role === "owner" || membership.role === "admin") return all;
-  if (!membership.depotIds || membership.depotIds.length === 0) return all;
-  return all.filter((id) => membership.depotIds!.includes(id));
+  if (membership.allLocations) return all;
+  return all.filter((id) => (membership.depotIds ?? []).includes(id));
 }
 
 /** Return only the rows the membership may see (server-side filtering). */

@@ -53,7 +53,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     role: chosen.role,
     organizationId: chosen.organizationId,
     organizationName: chosen.organizationName ?? "",
-    companyWide: chosen.role !== "dispatcher" || !chosen.depotIds?.length,
+    // Fail-closed: a dispatcher is company-wide only with an explicit all-locations grant.
+    companyWide: chosen.role === "owner" || chosen.role === "admin" || !!chosen.allLocations,
     workspaces: dispatchOrgs.map((m) => ({ id: m.organizationId, name: m.organizationName ?? m.organizationId, role: m.role })),
     environment: process.env.NEXT_PUBLIC_TURVIO_ENV ?? null,
   };

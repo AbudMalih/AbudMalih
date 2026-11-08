@@ -20,7 +20,8 @@ export const SYNTHETIC_ORGANIZATIONS: Organization[] = [
 
 export const SYNTHETIC_MEMBERSHIPS: Membership[] = [
   { organizationId: SYNTHETIC_ORG_ID, userId: "usr_owner_jarbou", role: "owner", active: true },
-  { organizationId: SYNTHETIC_ORG_ID, userId: "usr_dispatch_jarbou", role: "dispatcher", active: true },
+  // Synthetic dispatcher for all JARBOU locations (explicit grant – location access is fail-closed).
+  { organizationId: SYNTHETIC_ORG_ID, userId: "usr_dispatch_jarbou", role: "dispatcher", active: true, allLocations: true },
   { organizationId: SYNTHETIC_ORG_ID, userId: "usr_drv_01", role: "driver", active: true },
   { organizationId: SYNTHETIC_OTHER_ORG_ID, userId: "usr_owner_muster", role: "owner", active: true },
 ];

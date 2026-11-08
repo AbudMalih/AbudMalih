@@ -79,13 +79,21 @@ export function buildApp(deps: AppDeps): FastifyInstance {
 
   app.register(cors, { origin: deps.corsOrigins ?? false, credentials: true });
 
-  // Coarse abuse protection per client IP (login and geocoding have their own, stricter limits).
+  // Abuse protection (login and geocoding have their own, stricter limits):
+  // - requests without a token: per client IP, as before;
+  // - requests with a token: a looser per-IP ceiling (a depot's drivers share one NAT address),
+  //   then per signed-in user once the token is verified (see authenticate) – one user cannot
+  //   exhaust a shared address, and rotating addresses does not lift a user's limit.
   const perMinute = deps.rateLimitPerMinute ?? 600;
+  const rateLimited = (reply: FastifyReply) => reply.status(429).header("retry-after", "10").send({ error: { code: "rate_limited", message: "Too many requests – slow down" } });
+  const userLimiter = perMinute > 0 ? new RateLimiter(perMinute / 60, perMinute / 4) : null;
   if (perMinute > 0) {
-    const limiter = new RateLimiter(perMinute / 60, perMinute / 4);
+    const anonymous = new RateLimiter(perMinute / 60, perMinute / 4);
+    const withToken = new RateLimiter((perMinute * 10) / 60, (perMinute * 10) / 4);
     app.addHook("onRequest", async (req, reply) => {
       if (req.url === "/health" || req.url.endsWith("/events")) return;
-      if (!limiter.take(req.ip)) return reply.status(429).header("retry-after", "10").send({ error: { code: "rate_limited", message: "Too many requests – slow down" } });
+      const hasToken = req.headers.authorization?.startsWith("Bearer ") ?? false;
+      if (!(hasToken ? withToken : anonymous).take(req.ip)) return rateLimited(reply);
     });
   }
 
@@ -104,6 +112,10 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     } catch (e) {
       if (e instanceof AuthError) return problem(reply, 401, "unauthenticated", "Missing or invalid access token");
       throw e;
+    }
+    if (userLimiter && !req.url.endsWith("/events") && !userLimiter.take(`user:${req.user.userId}`)) {
+      req.user = undefined;
+      return rateLimited(reply);
     }
   }
 
@@ -171,7 +183,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
       name,
       aal: req.user!.aal ?? "aal1",
       platformAdmin,
-      memberships: memberships.map((m) => ({ organizationId: m.organizationId, organizationName: m.organizationName ?? null, role: m.role, depotIds: m.depotIds ?? null })),
+      memberships: memberships.map((m) => ({ organizationId: m.organizationId, organizationName: m.organizationName ?? null, role: m.role, depotIds: m.depotIds ?? null, allLocations: m.role === "owner" || m.role === "admin" || !!m.allLocations })),
     };
   });
 

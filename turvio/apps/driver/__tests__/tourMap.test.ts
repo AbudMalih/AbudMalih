@@ -1,9 +1,8 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import type { Depot, Stop } from "@turvio/shared";
 import { fallbackPath, initialMapPoints, tourMapEnds } from "../src/components/TourMap.shared";
+import her01 from "../../../packages/shared/src/__tests__/fixtures/her01-2026-11-08.json";
 
-const HER01 = JSON.parse(readFileSync(join(__dirname, "../../../packages/shared/src/__tests__/fixtures/her01-2026-11-08.json"), "utf8")) as {
+const HER01 = her01 as unknown as {
   depot: { lat: number; lng: number };
   start: { lat: number; lng: number };
   stops: { lat: number; lng: number }[];

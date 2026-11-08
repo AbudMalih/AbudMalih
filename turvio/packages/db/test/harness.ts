@@ -89,6 +89,8 @@ export async function seed(db: PGlite) {
       ('${i.orgJarbou}', '${i.ownerA}', 'owner'), ('${i.orgJarbou}', '${i.dispatcherA}', 'dispatcher'),
       ('${i.orgJarbou}', '${i.driverA1}', 'driver'), ('${i.orgJarbou}', '${i.driverA2}', 'driver'),
       ('${i.orgOther}', '${i.ownerB}', 'owner'), ('${i.orgOther}', '${i.driverB}', 'driver');
+    -- The synthetic dispatcher works for all JARBOU locations – granted explicitly (fail-closed scope).
+    update public.memberships set all_locations = true where organization_id = '${i.orgJarbou}' and user_id = '${i.dispatcherA}';
     insert into public.depots (id, organization_id, name, street, postal_code, city, lat, lng) values
       ('${i.depotA}', '${i.orgJarbou}', 'Depot Erfurt Nord', 'Am Synthetikpark', '99087', 'Erfurt', 51.0095, 11.0405),
       ('${i.depotB}', '${i.orgOther}', 'Depot Leipzig', 'Musterweg', '04109', 'Leipzig', 51.34, 12.37);

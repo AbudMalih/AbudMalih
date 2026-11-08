@@ -120,13 +120,20 @@ describe("cross-company assignment", () => {
 
 describe("invitations", () => {
   it("lets admins invite, dispatchers invite only drivers, and the service accept", async () => {
+    // A driver profile without a login yet (the only kind an invitation may link).
+    const fresh = "00000000-0000-4000-8000-0000000100a8";
+    await db.query(`insert into drivers (id, organization_id, depot_id, display_name) values ($1, $2, $3, 'Neu Fahrer')`, [fresh, ids.orgJarbou, ids.depotA]);
     await asUser(db, ids.dispatcherA, async () => {
       await expect(
         db.query(`insert into invitations (organization_id, email, role, token_hash) values ($1, 'x@example.test', 'admin', 'h1')`, [ids.orgJarbou]),
       ).rejects.toThrow(/row-level security/);
+      // A profile that already belongs to a driver cannot be handed to someone else.
+      await expect(
+        db.query(`insert into invitations (organization_id, email, role, token_hash, driver_id) values ($1, 'thief@example.test', 'driver', 'h0', $2)`, [ids.orgJarbou, ids.drvRowA2]),
+      ).rejects.toThrow(/already has a login/);
       await db.query(`insert into invitations (organization_id, email, role, token_hash, driver_id) values ($1, 'driver.new@example.test', 'driver', 'h2', $2)`, [
         ids.orgJarbou,
-        ids.drvRowA2,
+        fresh,
       ]);
     });
     await asUser(db, ids.ownerB, async () => {
@@ -137,12 +144,14 @@ describe("invitations", () => {
     await db.query(`insert into auth.users (id, email) values ($1, 'Driver.New@example.test')`, [user]);
     await db.query(`select app.accept_invitation('h2', $1)`, [user]);
     expect(await count(`select * from memberships where user_id = $1 and role = 'driver'`, [user])).toBe(1);
-    expect((await db.query<{ user_id: string }>(`select user_id from drivers where id = $1`, [ids.drvRowA2])).rows[0]!.user_id).toBe(user);
+    expect((await db.query<{ user_id: string }>(`select user_id from drivers where id = $1`, [fresh])).rows[0]!.user_id).toBe(user);
+    // Driver A2 keeps their own profile.
+    expect((await db.query<{ user_id: string }>(`select user_id from drivers where id = $1`, [ids.drvRowA2])).rows[0]!.user_id).toBe(ids.driverA2);
     await expect(db.query(`select app.accept_invitation('h2', $1)`, [user])).rejects.toThrow(/invalid or expired/);
   });
 
   it("refuses acceptance by a different email and blocks end users from calling it", async () => {
-    await db.query(`insert into invitations (organization_id, email, role, token_hash) values ($1, 'a@example.test', 'dispatcher', 'h3')`, [ids.orgJarbou]);
+    await db.query(`insert into invitations (organization_id, email, role, token_hash, depot_ids) values ($1, 'a@example.test', 'dispatcher', 'h3', $2)`, [ids.orgJarbou, [ids.depotA]]);
     await expect(db.query(`select app.accept_invitation('h3', $1)`, [ids.outsider])).rejects.toThrow(/different email/);
     await asUser(db, ids.outsider, async () => {
       await expect(db.query(`select app.accept_invitation('h3', $1)`, [ids.outsider])).rejects.toThrow(/permission denied/);

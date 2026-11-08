@@ -81,3 +81,10 @@ export function parseStopLines(text: string, defaults: { city?: string; countryC
 }
 
 export const windowLabel = (w?: { start: number; end: number }) => (w ? `${formatClock(w.start)}–${formatClock(w.end)}` : "–");
+
+/** Team list: what a member may see. Fail-closed – a dispatcher without locations sees nothing. */
+export function memberScopeLabel(m: { role: string; depotIds: string[] | null; allLocations?: boolean }, depotName: (id: string) => string): string {
+  if (m.role === "driver") return "TURVIO Driver";
+  if (m.role === "owner" || m.role === "admin" || m.allLocations) return "All locations";
+  return m.depotIds?.length ? m.depotIds.map(depotName).join(", ") : "No locations – no access";
+}

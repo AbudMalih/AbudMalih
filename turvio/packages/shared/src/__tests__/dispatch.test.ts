@@ -93,7 +93,10 @@ describe("depot scoping", () => {
   const m = (role: "owner" | "admin" | "dispatcher" | "driver", depotIds?: string[] | null, organizationId = "org_jarbou") => ({ organizationId, userId: "u", role, active: true, depotIds });
   it("gives owners/admins every depot and limits scoped dispatchers", () => {
     expect(accessibleDepotIds(m("admin", ["dep_bremen"]), data)).toHaveLength(4);
-    expect(accessibleDepotIds(m("dispatcher"), data)).toHaveLength(4);
+    // Fail-closed: no assigned location = none; all locations only when granted explicitly.
+    expect(accessibleDepotIds(m("dispatcher"), data)).toEqual([]);
+    expect(accessibleDepotIds(m("dispatcher", []), data)).toEqual([]);
+    expect(accessibleDepotIds({ ...m("dispatcher"), allLocations: true }, data)).toHaveLength(4);
     expect(accessibleDepotIds(m("dispatcher", ["dep_bremen"]), data)).toEqual(["dep_bremen"]);
   });
   it("denies drivers, inactive members and other tenants", () => {

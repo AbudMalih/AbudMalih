@@ -31,8 +31,10 @@ export const Membership = z.object({
   userId: z.string().min(1),
   role: OrgRole,
   active: z.boolean().default(true),
-  /** Optional depot restriction for dispatchers (null/empty = all depots). */
+  /** Locations of a dispatcher. Fail-closed: none = no location access (not "all"). */
   depotIds: z.array(z.string().min(1)).nullable().optional(),
+  /** Company-wide location access for a non-admin, granted explicitly by a Company Admin. */
+  allLocations: z.boolean().optional(),
 });
 export type Membership = z.infer<typeof Membership>;
 

@@ -261,7 +261,7 @@ export interface Me {
   platformAdmin: boolean;
   /** aal2 = signed in with password and authenticator code. */
   aal?: "aal1" | "aal2";
-  memberships: { organizationId: string; organizationName: string | null; role: "owner" | "admin" | "dispatcher" | "driver"; depotIds: string[] | null }[];
+  memberships: { organizationId: string; organizationName: string | null; role: "owner" | "admin" | "dispatcher" | "driver"; depotIds: string[] | null; allLocations?: boolean }[];
 }
 
 /** Fetch with the request's access token from a server component. */

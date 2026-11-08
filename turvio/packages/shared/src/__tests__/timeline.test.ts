@@ -1,12 +1,11 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { summarizeTours, tourTimeline } from "../dispatch/ops";
 import { estimateDrive } from "../geo";
 import type { Depot, Driver, GeoPoint, Stop, Tour } from "../schemas";
+import her01 from "./fixtures/her01-2026-11-08.json";
 
 /** HER-01 on staging after optimization (2026-11-08): see the fixture's _source. */
-const HER01 = JSON.parse(readFileSync(join(import.meta.dirname, "fixtures/her01-2026-11-08.json"), "utf8")) as {
+const HER01 = her01 as unknown as {
   depot: GeoPoint;
   start: GeoPoint;
   plannedStartMinute: number;

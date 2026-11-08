@@ -38,6 +38,8 @@ beforeEach(async () => {
     [unassignedA2, ids.orgJarbou, depotA2],
   );
   // The dispatcher of JARBOU is limited to the original depot (A).
+  // This suite's dispatcher works for depot A only (not the harness's company-wide grant).
+  await db.query(`update memberships set all_locations = false where organization_id = $1 and user_id = $2`, [ids.orgJarbou, ids.dispatcherA]);
   await db.query(`insert into membership_depots (organization_id, membership_id, depot_id) values ($1, $2, $3)`, [
     ids.orgJarbou,
     await membershipId(ids.dispatcherA),
@@ -71,11 +73,40 @@ describe("depot-scoped dispatch access", () => {
     });
   });
 
-  it("removing the restriction restores company-wide dispatcher access", async () => {
+  it("removing a dispatcher's last location removes access – it never widens to the whole company", async () => {
+    await db.query(`delete from membership_depots`);
+    await asUser(db, ids.dispatcherA, async () => {
+      expect(await count("select * from tours")).toBe(0);
+      expect(await count("select * from stops")).toBe(0);
+      expect(await count("select * from drivers")).toBe(0);
+      expect(await count("select * from vehicles")).toBe(0);
+      expect(await count("select * from depots")).toBe(0);
+    });
+  });
+
+  it("deleting the dispatcher's only depot (assignment cascades away) also removes access", async () => {
+    await db.query(`delete from membership_depots where depot_id <> $1`, [ids.depotA]);
+    await db.query(`delete from tours where depot_id = $1`, [ids.depotA]);
+    await db.query(`delete from drivers where depot_id = $1`, [ids.depotA]);
+    await db.query(`delete from vehicles where depot_id = $1`, [ids.depotA]);
+    await db.query(`delete from depots where id = $1`, [ids.depotA]);
+    await asUser(db, ids.dispatcherA, async () => {
+      expect(await count("select * from tours")).toBe(0); // Bremen's BRE-01 stays invisible
+      expect(await count("select * from stops")).toBe(0);
+    });
+  });
+
+  it("company-wide access only with all_locations, which only an admin can grant", async () => {
+    await asUser(db, ids.dispatcherA, async () => {
+      const own = await db.query(`update memberships set all_locations = true where user_id = $1`, [ids.dispatcherA]);
+      expect(own.affectedRows ?? 0).toBe(0);
+    });
+    await asUser(db, ids.ownerA, async () => {
+      await db.query(`update memberships set all_locations = true where user_id = $1 and organization_id = $2`, [ids.dispatcherA, ids.orgJarbou]);
+    });
     await db.query(`delete from membership_depots`);
     await asUser(db, ids.dispatcherA, async () => {
       expect(await count("select * from tours")).toBe(3);
-      expect(await count("select * from stops where tour_id is null")).toBe(1);
     });
   });
 

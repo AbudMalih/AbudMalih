@@ -6,6 +6,7 @@ import { Ellipsis, Loader2, Mail, Plus, Truck, UserPlus, Users, Warehouse } from
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useDispatch } from "../lib/store";
+import { memberScopeLabel } from "../lib/helpers";
 
 type Tab = "drivers" | "vehicles" | "depots" | "team";
 const inputCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
@@ -221,14 +222,17 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "dispatcher" | "owner">("dispatcher");
   const [scope, setScope] = useState<string[]>([]);
+  const [allLocations, setAllLocations] = useState(false);
   useEffect(() => {
     if (open) {
       setEmail("");
       setRole("dispatcher");
       setScope([]);
+      setAllLocations(false);
     }
   }, [open]);
-  const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  // A dispatcher needs at least one location (or all locations): no location = no access.
+  const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && (!!driver || role !== "dispatcher" || allLocations || scope.length > 0);
   return (
     <FormDialog
       open={open}
@@ -237,7 +241,7 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
       submitLabel="Send invitation"
       valid={valid}
       onSubmit={async () => {
-        await api("POST", `/v1/orgs/${session.organizationId}/invitations`, driver ? { email, role: "driver", driverId: driver.id } : { email, role, depotIds: role === "dispatcher" && scope.length ? scope : null });
+        await api("POST", `/v1/orgs/${session.organizationId}/invitations`, driver ? { email, role: "driver", driverId: driver.id } : role === "dispatcher" ? { email, role, allLocations, depotIds: allLocations ? null : scope } : { email, role });
         toast.success(`Invitation sent to ${email}`, { description: "The link is valid for 7 days." });
         await onSaved();
       }}
@@ -256,15 +260,20 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
           </F>
           {role === "dispatcher" && (
             <fieldset className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2">
-              <legend className="mb-1">Depots (none = all depots)</legend>
+              <legend className="mb-1">Locations this dispatcher may see</legend>
+              <label className="inline-flex items-center gap-1.5 font-normal">
+                <input type="checkbox" className="accent-[#2563EB]" checked={allLocations} onChange={(e) => setAllLocations(e.target.checked)} />
+                All locations (company-wide)
+              </label>
               <div className="flex flex-wrap gap-2">
-                {depots.map((d) => (
+                {!allLocations && depots.map((d) => (
                   <label key={d.id} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 font-normal">
                     <input type="checkbox" className="accent-[#2563EB]" checked={scope.includes(d.id)} onChange={(e) => setScope(e.target.checked ? [...scope, d.id] : scope.filter((x) => x !== d.id))} />
                     {d.name}
                   </label>
                 ))}
               </div>
+              {!allLocations && !scope.length && <p className="text-xs font-normal text-muted">Choose at least one location – a dispatcher without a location sees nothing.</p>}
             </fieldset>
           )}
         </>
@@ -275,7 +284,7 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
 }
 
 interface TeamData {
-  members: { membershipId: string; email: string; role: string; active: boolean; depotIds: string[] | null; driverId: string | null }[];
+  members: { membershipId: string; email: string; role: string; active: boolean; depotIds: string[] | null; allLocations?: boolean; driverId: string | null }[];
   invitations: { id: string; email: string; role: string; expiresAt: string }[];
 }
 
@@ -521,7 +530,7 @@ export function FleetView() {
                         <Avatar name={m.email} size="sm" />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-medium text-ink">{m.email}</div>
-                          <div className="text-xs text-muted">{m.role === "dispatcher" && m.depotIds?.length ? m.depotIds.map(depotName).join(", ") : m.role === "driver" ? "TURVIO Driver" : "All depots"}</div>
+                          <div className="text-xs text-muted">{memberScopeLabel(m, depotName)}</div>
                         </div>
                         <Badge tone={m.role === "owner" ? "brand" : "neutral"}>{m.role}</Badge>
                         {!m.active && <Badge>Inactive</Badge>}
@@ -567,3 +576,4 @@ export function FleetView() {
     </div>
   );
 }
+

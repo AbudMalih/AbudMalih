@@ -140,8 +140,11 @@ export class RateLimiter {
     b.at = t;
     const ok = b.tokens >= 1;
     if (ok) b.tokens -= 1;
+    // Re-insert so the map stays ordered by last use; evict the least recently used key
+    // (never clear all – flooding with new keys must not reset everyone else's bucket).
+    this.buckets.delete(key);
     this.buckets.set(key, b);
-    if (this.buckets.size > 10_000) this.buckets.clear();
+    if (this.buckets.size > 10_000) this.buckets.delete(this.buckets.keys().next().value!);
     return ok;
   }
 }

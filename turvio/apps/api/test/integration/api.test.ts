@@ -94,7 +94,7 @@ describe.runIf(available)("TURVIO API on PostgreSQL", () => {
       const acc = await env.app.inject({ method: "POST", url: "/v1/invitations/accept", payload: { token, password: "Kassel-Dispatch-1", displayName: "Kai Kassel" } });
       expect(acc.statusCode).toBe(200);
       const me = await env.app.inject({ method: "GET", url: "/v1/me", headers: { authorization: `Bearer ${acc.json().accessToken}` } });
-      expect(me.json().memberships).toEqual([{ organizationId: jarbou(), organizationName: "JARBOU Logistik GmbH", role: "dispatcher", depotIds: [kassel] }]);
+      expect(me.json().memberships).toEqual([{ organizationId: jarbou(), organizationName: "JARBOU Logistik GmbH", role: "dispatcher", depotIds: [kassel], allLocations: false }]);
       const ds = await env.app.inject({ method: "GET", url: `/v1/orgs/${jarbou()}/dispatch`, headers: { authorization: `Bearer ${acc.json().accessToken}` } });
       expect(ds.json().depots.map((d: { name: string }) => d.name)).toEqual(["Kassel"]);
       expect((await env.app.inject({ method: "POST", url: "/v1/invitations/accept", payload: { token, password: "Kassel-Dispatch-1" } })).statusCode).toBe(410);
