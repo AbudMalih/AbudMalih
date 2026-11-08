@@ -63,6 +63,8 @@ export type Article = {
     src: string;
     /** AI-generated or otherwise illustrative image: labelled "Symbolbild" */
     illustrative: boolean;
+    /** pixel height of the 1600px-wide file (for social previews); 1195 if omitted */
+    height?: number;
   };
   /** ids of related articles (optional; same category is used otherwise) */
   related?: string[];
