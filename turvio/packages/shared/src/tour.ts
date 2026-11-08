@@ -164,11 +164,10 @@ export function addStop(
   input: NewStopInputType,
 ): { stops: Stop[]; stop: Stop; merged: boolean } {
   const parsed = NewStopInput.parse(input);
-  const parcels = parsed.trackingNumbers.map((trackingNumber) => ({
-    id: makeId("pcl"),
-    trackingNumber,
-    recipientName: parsed.recipientName,
-  }));
+  // Imports carry each parcel's own recipient/company; manual entry only tracking numbers.
+  const parcels = parsed.parcels
+    ? parsed.parcels.map((p) => ({ id: makeId("pcl"), trackingNumber: p.trackingNumber, recipientName: p.recipientName, ...(p.company ? { company: p.company } : {}) }))
+    : parsed.trackingNumbers.map((trackingNumber) => ({ id: makeId("pcl"), trackingNumber, recipientName: parsed.recipientName }));
 
   const key = addressKey(parsed.address);
   const existing = stops.find(

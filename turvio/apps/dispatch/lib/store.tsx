@@ -83,7 +83,8 @@ interface DispatchState {
   /** apply=false: preview only. confirmActive: the dispatcher confirmed re-sequencing a tour on the road. */
   optimizeTour: (tour: Tour, opts?: { apply?: boolean; confirmActive?: boolean }) => Promise<OptimizeOutcome>;
   optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; matrixSource: string }>;
-  addStops: (target: { tourId?: string; depotId?: string }, stops: NewStopInput[]) => Promise<string[]>;
+  /** `rejectPlannedTracking`: refuse (409) if a parcel is already planned/delivered in the company (imports). */
+  addStops: (target: { tourId?: string; depotId?: string }, stops: NewStopInput[], opts?: { rejectPlannedTracking?: boolean }) => Promise<string[]>;
   assignStops: (stopIds: string[], tourId: string | null) => Promise<void>;
   setPriority: (stopId: string, value: boolean) => Promise<void>;
   deleteStop: (stopId: string) => Promise<void>;
@@ -220,7 +221,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
         }),
       ),
     optimizePlan: (tourIds, includeUnassigned) => run(() => api("POST", `/v1/orgs/${org}/plans/optimize`, { tourIds, includeUnassigned })),
-    addStops: (target, stops) => run(async () => (await api<{ ids: string[] }>("POST", `/v1/orgs/${org}/stops`, { ...target, stops })).ids),
+    addStops: (target, stops, opts) => run(async () => (await api<{ ids: string[] }>("POST", `/v1/orgs/${org}/stops`, { ...target, stops, ...(opts?.rejectPlannedTracking ? { rejectPlannedTracking: true } : {}) })).ids),
     assignStops: (stopIds, tourId) => run(() => api<void>("POST", `/v1/orgs/${org}/stops/assign`, { stopIds, tourId })),
     setPriority: (stopId, v) => run(() => api<void>("PATCH", `/v1/orgs/${org}/stops/${stopId}`, { priority: v })),
     deleteStop: (stopId) => run(() => api<void>("DELETE", `/v1/orgs/${org}/stops/${stopId}`)),

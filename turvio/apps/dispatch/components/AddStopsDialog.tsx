@@ -4,10 +4,10 @@ import { NewStopInput, parseMinuteOfDay } from "@turvio/shared";
 import { Button, Dialog, cn, toast } from "@turvio/web-ui/ds";
 import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { errorMessage } from "../lib/api";
+import { ApiCallError, errorMessage } from "../lib/api";
 import { parseStopLines } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
-import { FileImport, type FileImportState } from "./FileImport";
+import { FileImport, ImportErrorBoundary, type FileImportState } from "./FileImport";
 
 const inputCls =
   "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none aria-[invalid=true]:border-danger";
@@ -28,14 +28,12 @@ const EMPTY = { type: "delivery", recipient: "", street: "", no: "", postal: "",
  * directly (or pasted) until an address-search provider is connected.
  */
 export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaultCity }: { open: boolean; onOpenChange: (o: boolean) => void; target: { tourId?: string; depotId?: string }; targetLabel: string; defaultCity?: string }) {
-  const { addStops, scoped } = useDispatch();
+  const { addStops, scoped, session } = useDispatch();
   const [mode, setMode] = useState<"single" | "paste" | "file">("single");
   const [fileState, setFileState] = useState<FileImportState>({ stops: [], blocked: true, label: "Import" });
-  // Tracking numbers already on a stop this day – a file that repeats them is flagged, not silently doubled.
-  const existingTracking = useMemo(
-    () => new Set([...scoped.stops, ...scoped.unassigned].flatMap((s) => (s.parcels ?? []).map((p) => p.trackingNumber))),
-    [scoped],
-  );
+  // Bumped after a refused save: the import checks its tracking numbers against TURVIO again.
+  const [recheck, setRecheck] = useState(0);
+  const [importKey, setImportKey] = useState(0);
   const depotLocation = useMemo(() => {
     const depotId = target.depotId ?? scoped.tours.find((t) => t.id === target.tourId)?.depotId;
     return scoped.depots.find((d) => d.id === depotId)?.location;
@@ -71,15 +69,20 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
     if (!stops.length) return;
     setBusy(true);
     try {
-      // The API takes at most 500 stops per request.
+      // The API takes at most 500 stops per request. File imports are checked for parcels that are
+      // already planned (company-wide); the server refuses the whole request if any are.
       const ids: string[] = [];
-      for (let i = 0; i < stops.length; i += 500) ids.push(...(await addStops(target, stops.slice(i, i + 500))));
+      for (let i = 0; i < stops.length; i += 500) ids.push(...(await addStops(target, stops.slice(i, i + 500), { rejectPlannedTracking: mode === "file" })));
       toast.success(`${ids.length} stop${ids.length > 1 ? "s" : ""} added to ${targetLabel}`, { description: target.tourId ? "Optimize the tour to place them in the route." : "They are waiting in the unassigned list." });
       setF({ ...EMPTY, city: defaultCity ?? "" });
       setPaste("");
       onOpenChange(false);
     } catch (e) {
-      toast.error("Stops could not be saved", { description: errorMessage(e) });
+      if (mode === "file" && e instanceof ApiCallError && (e.code === "tracking_already_planned" || e.code === "tracking_duplicated_in_request")) {
+        // Someone imported some of these parcels meanwhile: show them in the import, keep the dialog open.
+        setRecheck((n) => n + 1);
+        toast.error("Nothing was saved", { description: `${e.message}. They are listed in the import – leave them out or cancel.` });
+      } else toast.error("Stops could not be saved", { description: errorMessage(e) });
     } finally {
       setBusy(false);
     }
@@ -96,6 +99,11 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
       className="max-w-2xl"
       footer={
         <>
+          {mode === "file" && fileState.reason && (
+            <span className="me-auto self-center text-xs text-muted" role="status">
+              {fileState.reason}
+            </span>
+          )}
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>
             Cancel
           </Button>
@@ -114,7 +122,14 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
         ))}
       </div>
       {mode === "file" ? (
-        <FileImport near={depotLocation} existingTracking={existingTracking} onChange={setFileState} />
+        <ImportErrorBoundary
+          onReset={() => {
+            setImportKey((k) => k + 1);
+            setFileState({ stops: [], blocked: true, label: "Import" });
+          }}
+        >
+          <FileImport key={importKey} near={depotLocation} organizationId={session.organizationId} recheck={recheck} onChange={setFileState} />
+        </ImportErrorBoundary>
       ) : mode === "single" ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
           <F label="Type" className="col-span-2 sm:col-span-2">

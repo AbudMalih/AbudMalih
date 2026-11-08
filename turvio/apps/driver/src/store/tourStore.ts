@@ -157,6 +157,26 @@ function replaceTourStops(all: Stop[], tourId: string, tourStops: Stop[]): Stop[
 }
 
 const EMPTY_SERVER = { organizationId: "", organizationName: "", depots: [], drivers: [], vehicles: [], tours: [], stops: [] };
+/** Server payload for a stop created on the phone (offline queue; idempotent by stop id). */
+export function createStopPayload(stop: Stop): NewStopInput & { id: string } {
+  return {
+    id: stop.id,
+    type: stop.type === "pickup" ? "pickup" : "delivery",
+    recipientName: stop.recipientName,
+    address: stop.address,
+    location: stop.location,
+    locationSource: stop.location ? (stop.locationSource ?? "manual_pin") : null,
+    timeWindow: stop.timeWindow,
+    serviceSeconds: stop.serviceSeconds,
+    priority: stop.priority,
+    notes: stop.notes,
+    recipientPhone: stop.recipientPhone,
+    trackingNumbers: stop.parcels.map((p) => p.trackingNumber),
+    // Each parcel's own recipient/company (imports). Older servers ignore this field.
+    parcels: stop.parcels.map((p) => ({ trackingNumber: p.trackingNumber, ...(p.recipientName ? { recipientName: p.recipientName } : {}), ...(p.company ? { company: p.company } : {}) })),
+  };
+}
+
 const DEFAULT_PREFS: Prefs = { navApp: null, optimizeFromDevice: false, colorScheme: "system" };
 
 export const useTourStore = create<TourState>()(
@@ -236,22 +256,7 @@ export const useTourStore = create<TourState>()(
             orgId: tour.organizationId,
             at: now(),
             tourId,
-            stops: [
-              {
-                id: stop.id,
-                type: stop.type === "pickup" ? "pickup" : "delivery",
-                recipientName: stop.recipientName,
-                address: stop.address,
-                location: stop.location,
-                locationSource: stop.location ? (stop.locationSource ?? "manual_pin") : null,
-                timeWindow: stop.timeWindow,
-                serviceSeconds: stop.serviceSeconds,
-                priority: stop.priority,
-                notes: stop.notes,
-                recipientPhone: stop.recipientPhone,
-                trackingNumbers: stop.parcels.map((p) => p.trackingNumber),
-              },
-            ],
+            stops: [createStopPayload(stop)],
           });
           return { stop, merged: result.merged };
         },
