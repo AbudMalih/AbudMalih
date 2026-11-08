@@ -69,5 +69,5 @@ begin
   return t;
 end;
 $$;
-revoke execute on function public.set_tour_end(uuid, text, double precision, double precision, text) from public;
+revoke execute on function public.set_tour_end(uuid, text, double precision, double precision, text) from public, anon;
 grant execute on function public.set_tour_end(uuid, text, double precision, double precision, text) to authenticated;
