@@ -10,6 +10,7 @@ import {
 } from "@/content/i18n";
 import { pageMetadata } from "@/lib/seo";
 import s from "@/components/legal/Legal.module.css";
+import { insightsLocales } from "@/content/insights";
 
 type P = { params: Promise<{ lang: string }> };
 
@@ -89,6 +90,26 @@ export default async function Page({ params }: P) {
           <br />
           {L.vatId}
         </p>
+
+        {/* § 18 Abs. 2 MStV: shown only while the Wissen section has published
+            articles (journalistic-editorial content). */}
+        {insightsLocales().length > 0 && (
+          <>
+            <h2>
+              Verantwortlich für journalistisch-redaktionelle Inhalte gemäß § 18
+              Abs. 2 MStV
+            </h2>
+            <p>
+              {L.managingDirector}
+              <br />
+              {L.street}
+              <br />
+              {L.postalCode} {L.city}
+              <br />
+              {L.country}
+            </p>
+          </>
+        )}
       </div>
     </PageShell>
   );
