@@ -10,8 +10,20 @@ const MODE: Record<Quote["mode"], string> = {
   air: "Luftfracht",
   advice: "Beratung gewünscht",
 };
-const CONTAINER: Record<Quote["container"], string> = { c20: "20' Standard", c40: "40' Standard", c40hc: "40' High Cube", unsure: "–" };
-const INCOTERM: Record<Quote["incoterm"], string> = { exw: "EXW", fob: "FOB", cif: "CIF", dap: "DAP", ddp: "DDP", unknown: "Noch offen" };
+const CONTAINER: Record<Quote["container"], string> = {
+  c20: "20' Standard",
+  c40: "40' Standard",
+  c40hc: "40' High Cube",
+  unsure: "–",
+};
+const INCOTERM: Record<Quote["incoterm"], string> = {
+  exw: "EXW",
+  fob: "FOB",
+  cif: "CIF",
+  dap: "DAP",
+  ddp: "DDP",
+  unknown: "Noch offen",
+};
 const SERVICE: Record<Quote["services"][number], string> = {
   customs: "Zollabwicklung",
   insurance: "Transportversicherung",
@@ -19,7 +31,10 @@ const SERVICE: Record<Quote["services"][number], string> = {
   delivery: "Zustellung bis Empfänger",
 };
 
-export async function deliverQuote(q: Quote, meta: { locale: string }): Promise<DeliveryResult> {
+export async function deliverQuote(
+  q: Quote,
+  meta: { locale: string },
+): Promise<DeliveryResult> {
   const row = (k: string, v: string) => `${(k + ":").padEnd(20)}${v || "–"}`;
   const text = [
     "Neue Frachtanfrage China → Deutschland über luna-trading.de",
@@ -53,6 +68,14 @@ export async function deliverQuote(q: Quote, meta: { locale: string }): Promise<
     "–",
     "Antworten Sie direkt auf diese E-Mail, um der anfragenden Person zu schreiben.",
   ].join("\n");
-  const subject = `[Frachtanfrage] ${MODE[q.mode]} · ${q.origin} → ${q.destination} · ${q.company || q.name}`.slice(0, 200);
-  return sendToInbox({ subject, text, replyTo: { name: q.name, address: q.email } });
+  const subject =
+    `[Frachtanfrage] ${MODE[q.mode]} · ${q.origin} → ${q.destination} · ${q.company || q.name}`.slice(
+      0,
+      200,
+    );
+  return sendToInbox({
+    subject,
+    text,
+    replyTo: { name: q.name, address: q.email },
+  });
 }

@@ -7,10 +7,10 @@ import contactPage from "./contact/en";
 /** English: concise and international. */
 const en: Dictionary = {
   meta: {
-    title: "Luna Trading GmbH · Trade without borders",
+    title: "Import from China, Brands & E-Commerce · Luna Trading Cologne",
     titleTemplate: "%s · Luna Trading",
     description:
-      "Luna Trading GmbH, Cologne. Global sourcing, import and export, product and brand development, e-commerce and European distribution.",
+      "Luna Trading GmbH, Cologne: sourcing and import from Asia, product and brand development, marketplace e-commerce and distribution across Germany and Europe.",
     ogDescription:
       "Global sourcing. European distribution. Brands and e-commerce.",
   },
@@ -34,7 +34,7 @@ const en: Dictionary = {
     brands: "Brands",
     company: "Company",
     contact: "Contact",
-    cta: "Let’s talk",
+    cta: "Contact",
   },
   legal: { impressum: "Legal notice", datenschutz: "Privacy policy" },
   company: { place: "Cologne, Germany", city: "Cologne" },

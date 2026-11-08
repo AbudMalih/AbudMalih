@@ -39,8 +39,10 @@ export default function CompanyPage() {
         lead={t.hero.lead}
         actions={
           <>
-            <RedButton href={href("/contact")}>{t.cta.button}</RedButton>
-            <GhostButton href={href("/what-we-do")}>{t.cta.more}</GhostButton>
+            <RedButton href={href("/what-we-do")}>{t.cta.more}</RedButton>
+            <GhostButton href={href("/import")}>
+              {dict.hero.ctaImport}
+            </GhostButton>
           </>
         }
         aside={<Globe label={t.hero.base} />}
@@ -408,7 +410,6 @@ export default function CompanyPage() {
         text={t.cta.lead}
         button={t.cta.button}
         href={href("/contact")}
-        more={{ label: t.cta.more, href: href("/what-we-do") }}
         visual={
           <Photo
             src="desk"

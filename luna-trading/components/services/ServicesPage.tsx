@@ -66,8 +66,10 @@ export default function ServicesPage() {
         lead={t.hero.lead}
         actions={
           <>
-            <RedButton href={href("/contact")}>{t.cta.button}</RedButton>
-            <GhostButton href="#modell">{t.hero.scroll}</GhostButton>
+            <RedButton href="#modell">{t.hero.scroll}</RedButton>
+            <GhostButton href={href("/import")}>
+              {dict.hero.ctaImport}
+            </GhostButton>
           </>
         }
         aside={

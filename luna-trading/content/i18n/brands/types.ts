@@ -47,6 +47,8 @@ export type BrandsCopy = {
     body: string;
     link: string;
   };
+  /** hero link to the "how brands are built" section */
+  explore: string;
   cta: {
     tag: string;
     h1: string;

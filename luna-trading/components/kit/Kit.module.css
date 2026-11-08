@@ -1520,3 +1520,8 @@ a.card:hover,
 .flagChipLight small {
   color: #6b6c71;
 }
+
+/* Showcase: inactive panels stay in the HTML but are not displayed */
+.panel[hidden] {
+  display: none;
+}

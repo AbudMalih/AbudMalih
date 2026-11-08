@@ -7,10 +7,10 @@ import contactPage from "./contact/de";
 /** Deutsch: Primärsprache. Kurz, präzise, international. */
 const de: Dictionary = {
   meta: {
-    title: "Luna Trading GmbH · Handel ohne Grenzen",
+    title: "Import aus China, Marken & E-Commerce · Luna Trading Köln",
     titleTemplate: "%s · Luna Trading",
     description:
-      "Luna Trading GmbH, Köln. Globale Beschaffung, Import und Export, Produkt- und Markenentwicklung, E-Commerce und Distribution in Europa.",
+      "Luna Trading GmbH, Köln: Beschaffung und Import aus Asien, Produkt- und Markenentwicklung, E-Commerce auf Marktplätzen und Distribution in Europa.",
     ogDescription:
       "Globale Beschaffung. Europäische Distribution. Marken und E-Commerce.",
   },

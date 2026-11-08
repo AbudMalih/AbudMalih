@@ -1,16 +1,29 @@
 import type { Metadata } from "next";
 import { getDictionary, isLocale } from "@/content/i18n";
-import { organizationJsonLd, pageMetadata } from "@/lib/seo";
+import {
+  jsonLdGraph,
+  organizationJsonLd,
+  websiteJsonLd,
+  pageMetadata,
+} from "@/lib/seo";
 import Hero from "@/components/sections/Hero";
 import HomeSections from "@/components/sections/HomeSections";
 import Atmosphere from "@/components/chrome/Atmosphere";
 import Loader from "@/components/chrome/Loader";
 import GlobeLayer from "@/components/stage/GlobeLayer";
 
-export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
-  return pageMetadata({ locale: lang, path: "/", description: getDictionary(lang).meta.description });
+  return pageMetadata({
+    locale: lang,
+    path: "/",
+    description: getDictionary(lang).meta.description,
+  });
 }
 
 /**
@@ -22,7 +35,12 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 export default function HomePage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLdGraph([organizationJsonLd(), websiteJsonLd()]),
+        }}
+      />
       <Atmosphere />
       <GlobeLayer />
       <Loader />

@@ -34,7 +34,10 @@ type StageState = {
 };
 
 export const stage: StageState = {
-  p: Object.fromEntries(CHAPTERS.map((c) => [c.id, 0])) as Record<ChapterId, number>,
+  p: Object.fromEntries(CHAPTERS.map((c) => [c.id, 0])) as Record<
+    ChapterId,
+    number
+  >,
   version: 0,
   vw: 1440,
   vh: 900,
@@ -61,7 +64,8 @@ export function setProgress(id: ChapterId, p: number) {
 export const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 /** Local progress of `p` inside the window [a, b], clamped. */
-export const range = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
+export const range = (p: number, a: number, b: number) =>
+  clamp((p - a) / (b - a));
 export const smooth = (t: number) => t * t * (3 - 2 * t);
 export const easeInOut = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -118,7 +122,8 @@ export function measureTier(): Promise<void> {
       const median = frames[frames.length >> 1];
       // ~60 fps keeps the start tier; sustained slow frames step down
       if (median > 34) stage.tier = "low";
-      else if (median > 22) stage.tier = stage.tier === "high" ? "medium" : "low";
+      else if (median > 22)
+        stage.tier = stage.tier === "high" ? "medium" : "low";
       resolve();
     };
     requestAnimationFrame(step);
@@ -141,7 +146,8 @@ function viewportUnits() {
     if (!vProbe) {
       vProbe = document.createElement("div");
       vProbe.setAttribute("aria-hidden", "true");
-      vProbe.style.cssText = "position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none";
+      vProbe.style.cssText =
+        "position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none";
       document.body.appendChild(vProbe);
     }
     vProbe.style.height = "100svh";

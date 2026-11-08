@@ -5,8 +5,20 @@
  */
 export const MODES = ["sea_fcl", "sea_lcl", "rail", "air", "advice"] as const;
 export const CONTAINERS = ["c20", "c40", "c40hc", "unsure"] as const;
-export const INCOTERMS = ["exw", "fob", "cif", "dap", "ddp", "unknown"] as const;
-export const SERVICES = ["customs", "insurance", "warehouse", "delivery"] as const;
+export const INCOTERMS = [
+  "exw",
+  "fob",
+  "cif",
+  "dap",
+  "ddp",
+  "unknown",
+] as const;
+export const SERVICES = [
+  "customs",
+  "insurance",
+  "warehouse",
+  "delivery",
+] as const;
 export type Mode = (typeof MODES)[number];
 export type Container = (typeof CONTAINERS)[number];
 export type Incoterm = (typeof INCOTERMS)[number];
@@ -37,13 +49,25 @@ export type QuoteErrors = Partial<Record<keyof Quote, QuoteError>>;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE = /^[0-9+()\s./-]{5,40}$/;
 const NUM = /^\d{1,7}([.,]\d{1,3})?$/;
-const oneLine = (v: string) => v.replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ").replace(/\s{2,}/g, " ").trim();
-const multiLine = (v: string) => v.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f]+/g, "").trim();
-const pick = <T extends string>(list: readonly T[], v: unknown, d: T): T => (list.includes(v as T) ? (v as T) : d);
+const oneLine = (v: string) =>
+  v
+    .replace(/[\u0000-\u001f\u007f\u2028\u2029]+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+const multiLine = (v: string) =>
+  v
+    .replace(/\r\n?/g, "\n")
+    .replace(/[\u0000-\u0008\u000b-\u001f\u007f]+/g, "")
+    .trim();
+const pick = <T extends string>(list: readonly T[], v: unknown, d: T): T =>
+  list.includes(v as T) ? (v as T) : d;
 
 export function normaliseQuote(raw: Record<string, unknown>): Quote {
-  const s = (v: unknown) => (typeof v === "string" ? v : typeof v === "number" ? String(v) : "");
-  const services = Array.isArray(raw.services) ? (raw.services.filter((x) => SERVICES.includes(x as Service)) as Service[]) : [];
+  const s = (v: unknown) =>
+    typeof v === "string" ? v : typeof v === "number" ? String(v) : "";
+  const services = Array.isArray(raw.services)
+    ? (raw.services.filter((x) => SERVICES.includes(x as Service)) as Service[])
+    : [];
   return {
     mode: pick(MODES, raw.mode, "advice"),
     container: pick(CONTAINERS, raw.container, "unsure"),
@@ -80,7 +104,8 @@ export function validateQuote(q: Quote): QuoteErrors {
   if (!q.email) e.email = "required";
   else if (q.email.length > 254 || !EMAIL.test(q.email)) e.email = "email";
   if (q.phone && !PHONE.test(q.phone)) e.phone = "phone";
-  for (const k of ["packages", "weight", "volume"] as const) if (q[k] && !NUM.test(q[k])) e[k] = "number";
+  for (const k of ["packages", "weight", "volume"] as const)
+    if (q[k] && !NUM.test(q[k])) e[k] = "number";
   if (q.note.length > 3000) e.note = "long";
   return e;
 }

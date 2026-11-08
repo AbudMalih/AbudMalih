@@ -30,7 +30,6 @@ export default function Showcase({
 }) {
   const [i, setI] = useState(0);
   const uid = useId();
-  const it = items[i];
   // deep links (#ecommerce …) open the matching tab
   useEffect(() => {
     const pick = () => {
@@ -68,7 +67,7 @@ export default function Showcase({
             role="tab"
             type="button"
             aria-selected={n === i}
-            aria-controls={`${uid}-panel`}
+            aria-controls={`${uid}-panel-${n}`}
             tabIndex={n === i ? 0 : -1}
             className={s.tab}
             onClick={() => setI(n)}
@@ -78,37 +77,41 @@ export default function Showcase({
           </button>
         ))}
       </div>
-      <div
-        id={`${uid}-panel`}
-        role="tabpanel"
-        aria-labelledby={`${uid}-tab-${i}`}
-        className={s.panel}
-        key={it.key}
-      >
-        <div className={s.panelText}>
-          <span className={s.panelNum} aria-hidden="true">
-            {String(i + 1).padStart(2, "0")}
-          </span>
-          <p className={`t-label ${s.tagDark}`}>{it.title}</p>
-          <h3 className={s.panelTitle}>{it.statement}</h3>
-          <p className={s.bodyDark}>{it.body}</p>
-          <ul className={s.chips}>
-            {it.chips.map((c) => (
-              <li key={c} className={s.chipDark}>
-                {c}
-              </li>
-            ))}
-          </ul>
-          {it.extra}
-        </div>
+      {/* every panel is in the HTML (crawlable, linkable); only the selected one is shown */}
+      {items.map((x, n) => (
         <div
-          className={s.panelMedia}
-          style={{ backgroundPosition: it.pos }}
-          aria-hidden="true"
+          key={x.key}
+          id={`${uid}-panel-${n}`}
+          role="tabpanel"
+          aria-labelledby={`${uid}-tab-${n}`}
+          className={s.panel}
+          hidden={n !== i}
         >
-          <div className={s.panelArt}>{it.art}</div>
+          <div className={s.panelText}>
+            <span className={s.panelNum} aria-hidden="true">
+              {String(n + 1).padStart(2, "0")}
+            </span>
+            <p className={`t-label ${s.tagDark}`}>{x.title}</p>
+            <h3 className={s.panelTitle}>{x.statement}</h3>
+            <p className={s.bodyDark}>{x.body}</p>
+            <ul className={s.chips}>
+              {x.chips.map((c) => (
+                <li key={c} className={s.chipDark}>
+                  {c}
+                </li>
+              ))}
+            </ul>
+            {x.extra}
+          </div>
+          <div
+            className={s.panelMedia}
+            style={{ backgroundPosition: x.pos }}
+            aria-hidden="true"
+          >
+            <div className={s.panelArt}>{x.art}</div>
+          </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 }

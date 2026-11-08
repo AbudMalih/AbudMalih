@@ -3,9 +3,9 @@ import type { ServicesCopy } from "./types";
 /** Leistungen. Deutsch ist die Primärsprache: kurz, konkret, belastbar. */
 const de: ServicesCopy = {
   meta: {
-    title: "Leistungen",
+    title: "Beschaffung, Import, Marken & Distribution",
     description:
-      "Beschaffung, Import und Export, Produkt- und Markenentwicklung, E-Commerce und Distribution: wie Luna Trading den Weg von der Quelle zum Markt verbindet.",
+      "Beschaffung in Asien, Import nach Deutschland, Produktentwicklung, Markenaufbau, E-Commerce und Distribution: sechs Leistungen, eine Kette aus Köln.",
   },
   hero: {
     eyebrow: "Was wir tun",
@@ -171,7 +171,7 @@ const de: ServicesCopy = {
     h1: "Sprechen wir",
     h2: "über Ihr nächstes Projekt.",
     lead: "Beschaffung, Produkt, Marke oder Vertrieb: Erzählen Sie uns, woran Sie arbeiten.",
-    button: "Kontakt aufnehmen",
+    button: "Angebot anfragen",
     company: "Das Unternehmen",
   },
 };

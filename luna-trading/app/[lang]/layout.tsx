@@ -11,7 +11,13 @@ import ScrollSetup from "@/lib/motion/scroll";
 import Navigation from "@/components/chrome/Navigation";
 import Footer from "@/components/chrome/Footer";
 import { I18nProvider } from "@/content/i18n/I18nProvider";
-import { LOCALES, LOCALE_META, getDictionary, isLocale, type Locale } from "@/content/i18n";
+import {
+  LOCALES,
+  LOCALE_META,
+  getDictionary,
+  isLocale,
+  type Locale,
+} from "@/content/i18n";
 import { INDEXING_ENABLED, OG_IMAGE, SITE_ORIGIN } from "@/lib/seo";
 
 const ICON_V = "lt1";
@@ -20,7 +26,11 @@ export function generateStaticParams() {
   return LOCALES.map((lang) => ({ lang }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const d = getDictionary(lang);
@@ -29,9 +39,19 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   return {
     metadataBase: new URL(SITE_ORIGIN),
     description: d.meta.description,
-    openGraph: { type: "website", siteName: "Luna Trading GmbH", locale: LOCALE_META[lang].og, images: [OG_IMAGE] },
+    openGraph: {
+      type: "website",
+      siteName: "Luna Trading GmbH",
+      locale: LOCALE_META[lang].og,
+      images: [OG_IMAGE],
+    },
     twitter: { card: "summary_large_image", images: [OG_IMAGE.url] },
-    title: { default: d.meta.title, template: d.meta.titleTemplate },
+    // Every real page sets its own title (pageMetadata); only the 404, which
+    // cannot carry metadata of its own, falls back to this default.
+    title: {
+      default: d.meta.titleTemplate.replace("%s", d.pages.notFound.eyebrow),
+      template: d.meta.titleTemplate,
+    },
     // not indexable until the launch switch is on (see lib/seo.ts)
     ...(INDEXING_ENABLED ? {} : { robots: { index: false, follow: false } }),
     // LT micro-mark. Versioned URLs bust the aggressively cached Phase 1 "+".
@@ -54,14 +74,25 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function LocaleLayout({ children, params }: { children: React.ReactNode; params: Promise<{ lang: string }> }) {
+export default async function LocaleLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ lang: string }>;
+}) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const locale = lang as Locale;
   const dict = getDictionary(locale);
   const meta = LOCALE_META[locale];
   return (
-    <html lang={meta.htmlLang} dir={meta.dir} data-locale={locale} suppressHydrationWarning>
+    <html
+      lang={meta.htmlLang}
+      dir={meta.dir}
+      data-locale={locale}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: ENV_SCRIPT }} />
       </head>

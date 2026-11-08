@@ -43,7 +43,9 @@ export function heroEnv(): HeroEnv {
   const [ua, ca] = KEYS[i];
   const [ub, cb] = KEYS[i + 1];
   const t = smooth(range(u, ua, ub));
-  const rgb = [16, 8, 0].map((sh) => Math.round(lerp((ca >> sh) & 255, (cb >> sh) & 255, t))) as [number, number, number];
+  const rgb = [16, 8, 0].map((sh) =>
+    Math.round(lerp((ca >> sh) & 255, (cb >> sh) & 255, t)),
+  ) as [number, number, number];
   return {
     rgb,
     // a dark ground from the first frame: light type and header throughout

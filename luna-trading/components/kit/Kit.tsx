@@ -99,8 +99,7 @@ export function PageHero(props: {
             {props.eyebrow}
           </p>
           <h1 id={props.id} className={s.title} data-reveal style={d(80)}>
-            <span>{props.a}</span>
-            <span className={s.titleRed}>{props.b}</span>
+            <span>{props.a}</span> <span className={s.titleRed}>{props.b}</span>
           </h1>
           <p className={`t-lead ${s.lead}`} data-reveal style={d(200)}>
             {props.lead}

@@ -39,7 +39,7 @@ export default function ContactPage() {
         lead={t.hero.lead}
         actions={
           <>
-            <RedButton href="#anfrage">{t.inquiry.title}</RedButton>
+            <RedButton href="#anfrage">{dict.services.cta.button}</RedButton>
             <GhostButton href={`mailto:${CONTACT_EMAIL}`}>
               {CONTACT_EMAIL}
             </GhostButton>

@@ -1,4 +1,12 @@
-import { stage, range, lerp, smooth, easeInOut, easeIn, easeOut } from "@/lib/stage/store";
+import {
+  stage,
+  range,
+  lerp,
+  smooth,
+  easeInOut,
+  easeIn,
+  easeOut,
+} from "@/lib/stage/store";
 import { COMPANY } from "@/content/site";
 import type { GlobeFrame } from "./createGlobe";
 import { heroEnv } from "@/lib/stage/heroEnv";
@@ -54,8 +62,19 @@ function globeStateLtr(): GlobeDerived {
   let lat = lerp(lerp(14, 28, turnA), 45, turnB);
   // desktop opens on the whole planet (radius ≈ a third of the screen height),
   // with clear space beside the headline; it comes closer as the story starts
-  let dist = lerp(lerp(6.4, 4.6, smooth(range(h, 0, 0.5))), 2.75, easeInOut(range(h, 0.7, 1))) * distScale;
-  let ox = m ? 0 : lerp(lerp(0.23, 0.18, smooth(range(h, 0, 0.4))), 0.0, easeInOut(range(h, 0.62, 1)));
+  let dist =
+    lerp(
+      lerp(6.4, 4.6, smooth(range(h, 0, 0.5))),
+      2.75,
+      easeInOut(range(h, 0.7, 1)),
+    ) * distScale;
+  let ox = m
+    ? 0
+    : lerp(
+        lerp(0.23, 0.18, smooth(range(h, 0, 0.4))),
+        0.0,
+        easeInOut(range(h, 0.62, 1)),
+      );
   let oy = lerp(m ? 0.34 : 0.03, m ? 0.1 : 0.04, easeOut(range(h, 0.0, 0.42)));
   if (m) {
     // phones open on a monumental, cropped planet (see phoneOpening); the

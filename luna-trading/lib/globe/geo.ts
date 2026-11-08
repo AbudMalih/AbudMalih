@@ -9,10 +9,19 @@ const DEG = Math.PI / 180;
  * lon/lat → unit-sphere position, matching THREE.SphereGeometry's UV layout
  * with an equirectangular texture (u = 0 at −180°).
  */
-export function lonLatToVec3(lon: number, lat: number, r = 1, out = new THREE.Vector3()) {
+export function lonLatToVec3(
+  lon: number,
+  lat: number,
+  r = 1,
+  out = new THREE.Vector3(),
+) {
   const phi = ((lon + 180) / 360) * Math.PI * 2;
   const theta = ((90 - lat) / 180) * Math.PI;
-  return out.set(-Math.cos(phi) * Math.sin(theta) * r, Math.cos(theta) * r, Math.sin(phi) * Math.sin(theta) * r);
+  return out.set(
+    -Math.cos(phi) * Math.sin(theta) * r,
+    Math.cos(theta) * r,
+    Math.sin(phi) * Math.sin(theta) * r,
+  );
 }
 
 export function vec3ToLonLat(v: THREE.Vector3) {
@@ -23,8 +32,6 @@ export function vec3ToLonLat(v: THREE.Vector3) {
   const lon = (phi / (Math.PI * 2)) * 360 - 180;
   return { lon, lat };
 }
-
-
 
 /** Densify waypoints along great circles. Returns positions + per-point lon/lat. */
 export function buildRoute(radius: number, stepDeg = 0.6) {
@@ -50,7 +57,8 @@ export function buildRoute(radius: number, stepDeg = 0.6) {
 
   // cumulative arc length → uniform-speed progress
   const cum = [0];
-  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1]));
+  for (let i = 1; i < pts.length; i++)
+    cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1]));
   const total = cum[cum.length - 1];
   return { pts, ll, cum: cum.map((c) => c / total) };
 }

@@ -117,9 +117,6 @@ export default function QuotePage() {
             <h2 id="qt-needs" className={k.h2} data-reveal>
               {t.needs.title}
             </h2>
-            <div className={k.actions} data-reveal>
-              <RedButton href="#anfrage">{t.hero.primary}</RedButton>
-            </div>
           </div>
           <ul className={k.rows} data-reveal>
             {t.needs.items.map((x, i) => (

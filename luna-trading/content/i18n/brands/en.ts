@@ -2,9 +2,9 @@ import type { BrandsCopy } from "./types";
 
 const en: BrandsCopy = {
   meta: {
-    title: "Brands",
+    title: "Owned Brands & Brand Development",
     description:
-      "The owned brands of Luna Trading GmbH: brands with their own identity, built on sourcing, product development and e-commerce. Including LUVISCENT®.",
+      "The owned brands of Luna Trading: products with their own identity, built on sourcing, product development and e-commerce. Including LUVISCENT®.",
   },
   hero: {
     eyebrow: "Our brands",
@@ -78,12 +78,13 @@ const en: BrandsCopy = {
     body: "Sourcing, development, e-commerce and distribution: the same chain every owned brand is built on.",
     link: "The system behind it",
   },
+  explore: "How brands are built",
   cta: {
     tag: "Contact",
     h1: "Good products",
     h2: "deserve a market.",
     lead: "Manufacturers, suppliers or companies in trade: let’s talk about what you are planning.",
-    button: "Get in touch",
+    button: "Request a quote",
     company: "The company",
   },
 };

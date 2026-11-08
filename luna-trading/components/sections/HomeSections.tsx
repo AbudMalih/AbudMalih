@@ -260,7 +260,7 @@ export default function HomeSections() {
                 >
                   <span style={{ color: "#8d8e93" }}>
                     {dict.brands.a1} {dict.brands.a2}
-                  </span>
+                  </span>{" "}
                   <br />
                   {dict.brands.b1}{" "}
                   <span className={s.titleRed}>{dict.brands.b2}.</span>

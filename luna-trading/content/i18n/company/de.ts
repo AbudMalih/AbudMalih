@@ -2,9 +2,9 @@ import type { CompanyCopy } from "./types";
 
 const de: CompanyCopy = {
   meta: {
-    title: "Unternehmen",
+    title: "Handel, Import & E-Commerce aus Köln",
     description:
-      "Die Luna Trading GmbH in Köln verbindet internationalen Handel mit Produktentwicklung, Markenaufbau, E-Commerce und Distribution.",
+      "Die Luna Trading GmbH in Köln verbindet internationalen Handel und Import mit Produktentwicklung, Markenaufbau, E-Commerce und Distribution in Europa.",
   },
   hero: {
     eyebrow: "Unternehmen",
@@ -158,7 +158,7 @@ const de: CompanyCopy = {
     h1: "Sprechen wir",
     h2: "über das Nächste.",
     lead: "Ob Hersteller, Lieferant oder Handelspartner: Wir sprechen über Produkte, Märkte und neue Möglichkeiten.",
-    button: "Kontakt aufnehmen",
+    button: "Angebot anfragen",
     more: "Unsere Leistungen",
   },
 };

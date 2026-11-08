@@ -23,7 +23,9 @@ import { CONTACT_EMAIL } from "@/content/site";
  */
 export const RECIPIENT = CONTACT_EMAIL;
 
-export type DeliveryResult = { ok: true } | { ok: false; reason: "not_configured" | "failed" };
+export type DeliveryResult =
+  | { ok: true }
+  | { ok: false; reason: "not_configured" | "failed" };
 
 /** German labels: the inbox works in the company language. */
 const TYPE_LABEL: Record<InquiryType, string> = {
@@ -48,7 +50,11 @@ export function isConfigured() {
 }
 
 /** Send one plain-text message to the fixed company inbox (Reply-To: the visitor). */
-export async function sendToInbox(mail: { subject: string; text: string; replyTo: { name: string; address: string } }): Promise<DeliveryResult> {
+export async function sendToInbox(mail: {
+  subject: string;
+  text: string;
+  replyTo: { name: string; address: string };
+}): Promise<DeliveryResult> {
   const c = config();
   if (!c) return { ok: false, reason: "not_configured" };
   const implicitTls = c.port === 465;
@@ -75,21 +81,32 @@ export async function sendToInbox(mail: { subject: string; text: string; replyTo
       disableUrlAccess: true,
     });
     // success only when the server accepted the fixed recipient
-    const accepted = (info.accepted ?? []).map(String).map((a) => a.toLowerCase());
-    if (accepted.includes(RECIPIENT.toLowerCase()) && !(info.rejected ?? []).length) return { ok: true };
+    const accepted = (info.accepted ?? [])
+      .map(String)
+      .map((a) => a.toLowerCase());
+    if (
+      accepted.includes(RECIPIENT.toLowerCase()) &&
+      !(info.rejected ?? []).length
+    )
+      return { ok: true };
     console.error("[contact] SMTP did not accept the recipient");
     return { ok: false, reason: "failed" };
   } catch (err) {
     // log only a classification, never credentials, message content or addresses
     const e = err as { code?: string; responseCode?: number };
-    console.error(`[contact] SMTP delivery failed (${e.code ?? "error"}${e.responseCode ? ` ${e.responseCode}` : ""})`);
+    console.error(
+      `[contact] SMTP delivery failed (${e.code ?? "error"}${e.responseCode ? ` ${e.responseCode}` : ""})`,
+    );
     return { ok: false, reason: "failed" };
   } finally {
     transport.close();
   }
 }
 
-export async function deliver(inquiry: Inquiry, meta: { locale: string }): Promise<DeliveryResult> {
+export async function deliver(
+  inquiry: Inquiry,
+  meta: { locale: string },
+): Promise<DeliveryResult> {
   const type = TYPE_LABEL[inquiry.type];
   const subject = `[Luna Trading Website] ${type} — ${inquiry.company || inquiry.name}`;
   const text = [
@@ -108,5 +125,9 @@ export async function deliver(inquiry: Inquiry, meta: { locale: string }): Promi
     "Antworten Sie direkt auf diese E-Mail, um der anfragenden Person zu schreiben.",
   ].join("\n");
 
-  return sendToInbox({ subject, text, replyTo: { name: inquiry.name, address: inquiry.email } });
+  return sendToInbox({
+    subject,
+    text,
+    replyTo: { name: inquiry.name, address: inquiry.email },
+  });
 }

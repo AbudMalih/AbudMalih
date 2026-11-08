@@ -13,7 +13,12 @@ type LunaProps = {
   variant?: "reverse" | "master";
   priority?: boolean;
   lazy?: boolean;
+  /** rendered width hint for picking the right file (srcset); default fits header and footer */
+  sizes?: string;
 };
+
+/** Pre-sized copies of the same artwork (scripts: sharp resize); the original stays the master. */
+const LOGO_WIDTHS = [320, 640, 1280];
 
 export function LunaLogo({
   height = 22,
@@ -21,14 +26,17 @@ export function LunaLogo({
   variant = "reverse",
   priority,
   lazy,
+  sizes = "160px",
 }: LunaProps) {
+  const base =
+    variant === "reverse"
+      ? "/brand/luna-trading-logo-reverse"
+      : "/brand/luna-trading-logo-trim";
   return (
     <img
-      src={
-        variant === "reverse"
-          ? "/brand/luna-trading-logo-reverse.webp"
-          : "/brand/luna-trading-logo-trim.webp"
-      }
+      src={`${base}-640.webp`}
+      srcSet={LOGO_WIDTHS.map((w) => `${base}-${w}.webp ${w}w`).join(", ")}
+      sizes={sizes}
       alt="Luna Trading"
       width={1856}
       height={492}

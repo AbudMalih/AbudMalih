@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import ContactPage from "@/components/contact/ContactPage";
 import { getDictionary, isLocale } from "@/content/i18n";
-import { pageMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, jsonLdGraph, pageMetadata } from "@/lib/seo";
 
 type P = { params: Promise<{ lang: string }> };
 
@@ -9,9 +9,30 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
   const t = getDictionary(lang).contactPage.meta;
-  return pageMetadata({ locale: lang, path: "/contact", title: t.title, description: t.description });
+  return pageMetadata({
+    locale: lang,
+    path: "/contact",
+    title: t.title,
+    description: t.description,
+  });
 }
 
-export default function Page() {
-  return <ContactPage />;
+export default async function Page({ params }: P) {
+  const { lang } = await params;
+  const ld = isLocale(lang)
+    ? jsonLdGraph([
+        breadcrumbJsonLd(lang, "/contact", getDictionary(lang).nav.contact),
+      ])
+    : null;
+  return (
+    <>
+      {ld && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: ld }}
+        />
+      )}
+      <ContactPage />
+    </>
+  );
 }

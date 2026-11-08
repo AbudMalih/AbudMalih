@@ -2,9 +2,9 @@ import type { BrandsCopy } from "./types";
 
 const de: BrandsCopy = {
   meta: {
-    title: "Marken",
+    title: "Eigenmarken & Markenentwicklung aus Köln",
     description:
-      "Die Eigenmarken der Luna Trading GmbH: Marken mit eigener Identität, aufgebaut auf Beschaffung, Produktentwicklung und E-Commerce. Darunter LUVISCENT®.",
+      "Die Eigenmarken von Luna Trading: Produkte mit eigener Identität, aufgebaut auf Beschaffung, Produktentwicklung und E-Commerce. Darunter LUVISCENT®.",
   },
   hero: {
     eyebrow: "Unsere Marken",
@@ -78,12 +78,13 @@ const de: BrandsCopy = {
     body: "Beschaffung, Entwicklung, E-Commerce und Distribution: dieselbe Kette, auf der jede Eigenmarke aufbaut.",
     link: "Das System dahinter",
   },
+  explore: "Wie Marken entstehen",
   cta: {
     tag: "Kontakt",
     h1: "Gute Produkte",
     h2: "verdienen einen Markt.",
     lead: "Hersteller, Lieferanten oder Unternehmen im Handel: Sprechen wir über Ihr Vorhaben.",
-    button: "Kontakt aufnehmen",
+    button: "Angebot anfragen",
     company: "Das Unternehmen",
   },
 };
