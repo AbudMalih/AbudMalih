@@ -14,6 +14,8 @@ export type InsightsCopy = {
   published: string;
   updated: string;
   reviewed: string;
+  sources: string;
+  sourcesNote: string;
   keyPoints: string;
   toc: string;
   related: string;
@@ -57,13 +59,15 @@ export const INSIGHTS_COPY: Record<Locale, InsightsCopy> = {
     published: "Veröffentlicht",
     updated: "Aktualisiert",
     reviewed: "Rechtsstand geprüft",
+    sources: "Quellen",
+    sourcesNote: "Offizielle Quellen, zuletzt abgerufen am Prüfdatum.",
     keyPoints: "Kurz erklärt",
     toc: "Inhalt",
     related: "Weiterlesen",
     illustrative: "Symbolbild",
     by: "Luna Trading",
     legalNote: (d) =>
-      `Stand: ${d}. Dieser Beitrag gibt einen allgemeinen Überblick und ersetzt keine Rechtsberatung im Einzelfall.`,
+      `Stand: ${d}. Dieser Beitrag gibt einen allgemeinen Überblick und ersetzt keine Rechts-, Steuer- oder Zollberatung im Einzelfall.`,
     draft: "Entwurf · nur lokal sichtbar",
     backToList: "Alle Beiträge",
     crumbs: "Pfad",
@@ -111,13 +115,15 @@ export const INSIGHTS_COPY: Record<Locale, InsightsCopy> = {
     published: "Published",
     updated: "Updated",
     reviewed: "Legal status reviewed",
+    sources: "Sources",
+    sourcesNote: "Official sources, last accessed on the review date.",
     keyPoints: "In brief",
     toc: "Contents",
     related: "Read next",
     illustrative: "Illustrative image",
     by: "Luna Trading",
     legalNote: (d) =>
-      `As of ${d}. This article is a general overview and does not replace legal advice in an individual case.`,
+      `As of ${d}. This article is a general overview and does not replace legal, tax or customs advice in an individual case.`,
     draft: "Draft · local preview only",
     backToList: "All articles",
     crumbs: "Breadcrumb",
@@ -165,6 +171,8 @@ export const INSIGHTS_COPY: Record<Locale, InsightsCopy> = {
     published: "تاريخ النشر",
     updated: "آخر تحديث",
     reviewed: "تمت مراجعة الوضع القانوني",
+    sources: "المصادر",
+    sourcesNote: "مصادر رسمية، تمت مراجعتها بتاريخ المراجعة.",
     keyPoints: "باختصار",
     toc: "المحتويات",
     related: "اقرأ أيضًا",

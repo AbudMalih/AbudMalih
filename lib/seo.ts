@@ -257,6 +257,8 @@ export function articleJsonLd(o: {
   published: string;
   updated: string;
   section: string;
+  /** official references cited by the article */
+  sources?: { title: string; publisher: string; url: string }[];
 }) {
   const url = pageUrl(o.locale, o.path);
   return {
@@ -272,6 +274,16 @@ export function articleJsonLd(o: {
     articleSection: o.section,
     mainEntityOfPage: url,
     url,
+    ...(o.sources?.length
+      ? {
+          citation: o.sources.map((c) => ({
+            "@type": "CreativeWork",
+            name: c.title,
+            url: c.url,
+            publisher: { "@type": "Organization", name: c.publisher },
+          })),
+        }
+      : {}),
   };
 }
 

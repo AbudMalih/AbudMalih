@@ -86,6 +86,7 @@ export default async function Page({ params }: P) {
       published: a.published,
       updated: a.updated,
       section: t.categories[a.category],
+      sources: x.sources,
     }),
     breadcrumbTrailJsonLd(lang, [
       { name: t.name, path: "/insights" },

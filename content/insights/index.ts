@@ -4,12 +4,13 @@ import { plainText } from "@/lib/richtext";
 import { incoterms } from "./articles/incoterms";
 import { gpsr } from "./articles/gpsr";
 import { privateLabel } from "./articles/private-label";
+import { importChina } from "./articles/import-china";
 
 export type { Article, ArticleText, Block, CategoryId } from "./types";
 export { INSIGHTS_COPY } from "./copy";
 
 /** Every article file, in any status. Add new articles here. */
-const ALL: Article[] = [incoterms, gpsr, privateLabel];
+const ALL: Article[] = [importChina, incoterms, gpsr, privateLabel];
 
 export const CATEGORIES: CategoryId[] = [
   "import",
@@ -31,7 +32,7 @@ const visible = (a: Article) => a.status === "published" || SHOW_DRAFTS;
 export function articlesFor(locale: Locale): Article[] {
   return ALL.filter((a) => visible(a) && a.text[locale]).sort(
     (x, y) =>
-      y.published.localeCompare(x.published) || x.id.localeCompare(y.id),
+      y.published.localeCompare(x.published) || ALL.indexOf(x) - ALL.indexOf(y),
   );
 }
 
