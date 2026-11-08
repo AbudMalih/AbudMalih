@@ -19,14 +19,14 @@ import type { RoutingProvider } from "../../src/routing";
  * local auth schema and synthetic seed data, plus the real API in-process.
  * Requires the local server from scripts/db.sh (or TEST_PG_* overrides).
  */
-const ROOT = join(import.meta.dirname, "../../../..");
+export const ROOT = join(import.meta.dirname, "../../../..");
 const PORT = process.env.TEST_PG_PORT ?? "54329";
 const HOST = process.env.TEST_PG_HOST ?? "/tmp";
 const SERVICE_PASSWORD = process.env.TURVIO_DB_PASSWORD ?? "turvio-dev-only";
 export const JWT_SECRET = "integration-test-secret-integration-test-secret";
 export const PASSWORD = SEED_PASSWORD_DEFAULT;
 
-const adminUrl = (db: string) => `postgres://postgres@localhost/${db}?host=${encodeURIComponent(HOST)}&port=${PORT}`;
+export const adminUrl = (db: string) => `postgres://postgres@localhost/${db}?host=${encodeURIComponent(HOST)}&port=${PORT}`;
 
 export async function postgresAvailable(): Promise<boolean> {
   const c = new pg.Client({ connectionString: adminUrl("postgres") });
