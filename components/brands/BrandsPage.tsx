@@ -80,7 +80,7 @@ export default function BrandsPage() {
               data-reveal
               style={{ ["--d" as string]: "80ms" }}
             >
-              <span>{t.hero.h1a}</span>
+              <span>{t.hero.h1a}</span>{" "}
               <span className={s.dim}>
                 {t.hero.h1b.replace(/\.$/, "")}
                 <span className={s.period}>.</span>
@@ -98,14 +98,14 @@ export default function BrandsPage() {
               data-reveal
               style={{ ["--d" as string]: "220ms" }}
             >
-              <Link
-                href={href("/contact")}
+              <a
+                href="#brands-system"
                 className={svc.ctaButton}
                 data-cursor="invert"
               >
-                <span className={svc.ctaLabel}>{t.cta.button}</span>
+                <span className={svc.ctaLabel}>{t.explore}</span>
                 <span className={svc.ctaPlus} aria-hidden="true" />
-              </Link>
+              </a>
               {hero && (
                 <a
                   href={`#${hero.id}`}
@@ -190,8 +190,7 @@ export default function BrandsPage() {
             className={`${svc.h2} ${s.principleTitle}`}
             data-reveal
           >
-            {t.principle.title1}
-            <br />
+            {t.principle.title1} <br />
             <span className={s.dim}>{t.principle.title2}</span>
           </h2>
 
@@ -254,8 +253,7 @@ export default function BrandsPage() {
               {t.system.tag}
             </p>
             <h2 id="brands-system" className={svc.h2} data-reveal>
-              {t.system.title1}
-              <br />
+              {t.system.title1} <br />
               <span className={s.dim}>{t.system.title2}</span>
             </h2>
           </div>
@@ -297,7 +295,7 @@ export default function BrandsPage() {
                 <span className={svc.rise} data-reveal>
                   {t.cta.h1}
                 </span>
-              </span>
+              </span>{" "}
               <span className="mask">
                 <span
                   className={`${svc.rise} ${svc.dimLine}`}

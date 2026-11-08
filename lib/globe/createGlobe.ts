@@ -139,12 +139,18 @@ export type GlobeHandle = {
   setSize: (w: number, h: number, dpr: number) => void;
   render: (f: GlobeFrame) => void;
   /** project lon/lat → css px; `front` = facing the camera */
-  project: (lon: number, lat: number) => { x: number; y: number; front: boolean };
+  project: (
+    lon: number,
+    lat: number,
+  ) => { x: number; y: number; front: boolean };
   routeHead: () => { lon: number; lat: number };
   dispose: () => void;
 };
 
-export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean }): GlobeHandle {
+export function createGlobe(
+  canvas: HTMLCanvasElement,
+  opts: { hiRes: boolean },
+): GlobeHandle {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
@@ -175,8 +181,17 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
     uEnv: { value: 0 },
   };
 
-  const sphereGeo = new THREE.SphereGeometry(1, opts.hiRes ? 160 : 96, opts.hiRes ? 120 : 72);
-  const globeMat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms, transparent: true });
+  const sphereGeo = new THREE.SphereGeometry(
+    1,
+    opts.hiRes ? 160 : 96,
+    opts.hiRes ? 120 : 72,
+  );
+  const globeMat = new THREE.ShaderMaterial({
+    vertexShader: vert,
+    fragmentShader: frag,
+    uniforms,
+    transparent: true,
+  });
   const globe = new THREE.Mesh(sphereGeo, globeMat);
   spin.add(globe);
 
@@ -184,7 +199,12 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
   const haloMat = new THREE.ShaderMaterial({
     vertexShader: haloVert,
     fragmentShader: haloFrag,
-    uniforms: { uCam: uniforms.uCam, uLight: uniforms.uLight, uReveal: uniforms.uReveal, uEnv: uniforms.uEnv },
+    uniforms: {
+      uCam: uniforms.uCam,
+      uLight: uniforms.uLight,
+      uReveal: uniforms.uReveal,
+      uEnv: uniforms.uEnv,
+    },
     side: THREE.BackSide,
     blending: THREE.NormalBlending,
     transparent: true,
@@ -196,10 +216,28 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
 
   // --- Ports: small lights at real trade hubs (Cologne in Luna red) ------
   const PORTS: [number, number, number][] = [
-    [121.5, 31.2, 0], [114.1, 22.5, 0], [121.6, 29.9, 0], [120.4, 36.1, 0], [113.3, 23.1, 0], [118.1, 24.5, 0],
-    [117.7, 39.0, 0], [129.0, 35.1, 0], [103.8, 1.3, 0], [55.0, 25.0, 0], [32.5, 30.0, 0], [23.6, 37.9, 0],
-    [4.4, 51.9, 0], [9.9, 53.5, 0], [4.4, 51.2, 0], [8.6, 53.5, 0], [6.8, 51.4, 0], [6.96, 50.94, 1],
-    [-74.0, 40.7, 0], [-118.3, 33.7, 0], [72.9, 19.0, 0], [139.8, 35.6, 0],
+    [121.5, 31.2, 0],
+    [114.1, 22.5, 0],
+    [121.6, 29.9, 0],
+    [120.4, 36.1, 0],
+    [113.3, 23.1, 0],
+    [118.1, 24.5, 0],
+    [117.7, 39.0, 0],
+    [129.0, 35.1, 0],
+    [103.8, 1.3, 0],
+    [55.0, 25.0, 0],
+    [32.5, 30.0, 0],
+    [23.6, 37.9, 0],
+    [4.4, 51.9, 0],
+    [9.9, 53.5, 0],
+    [4.4, 51.2, 0],
+    [8.6, 53.5, 0],
+    [6.8, 51.4, 0],
+    [6.96, 50.94, 1],
+    [-74.0, 40.7, 0],
+    [-118.3, 33.7, 0],
+    [72.9, 19.0, 0],
+    [139.8, 35.6, 0],
   ];
   const portGeo = new THREE.BufferGeometry();
   const portPos = new Float32Array(PORTS.length * 3);
@@ -214,7 +252,12 @@ export function createGlobe(canvas: HTMLCanvasElement, opts: { hiRes: boolean })
   portGeo.setAttribute("position", new THREE.BufferAttribute(portPos, 3));
   portGeo.setAttribute("aKind", new THREE.BufferAttribute(portKind, 1));
   portGeo.setAttribute("aPhase", new THREE.BufferAttribute(portPhase, 1));
-  const portUniforms = { uTime: { value: 0 }, uReveal: uniforms.uReveal, uCam: uniforms.uCam, uScale: { value: 1 } };
+  const portUniforms = {
+    uTime: { value: 0 },
+    uReveal: uniforms.uReveal,
+    uCam: uniforms.uCam,
+    uScale: { value: 1 },
+  };
   const portMat = new THREE.ShaderMaterial({
     uniforms: portUniforms,
     transparent: true,
@@ -257,7 +300,11 @@ void main() {
   const route = buildRoute(1.0035);
   const routeGeo = new LineGeometry();
   routeGeo.setPositions(route.pts.flatMap((p) => [p.x, p.y, p.z]));
-  const routeMat = new LineMaterial({ color: 0xc90216, linewidth: 2, worldUnits: false });
+  const routeMat = new LineMaterial({
+    color: 0xc90216,
+    linewidth: 2,
+    worldUnits: false,
+  });
   const routeLine = new Line2(routeGeo, routeMat);
   routeLine.computeLineDistances();
   routeLine.frustumCulled = false;
@@ -268,7 +315,9 @@ void main() {
 
   // --- Texture -------------------------------------------------------------
   const ready = new Promise<void>((resolve) => {
-    const src = opts.hiRes ? "/textures/earth-land-4096.webp" : "/textures/earth-land-2048.webp";
+    const src = opts.hiRes
+      ? "/textures/earth-land-4096.webp"
+      : "/textures/earth-land-2048.webp";
     new THREE.TextureLoader().load(
       src,
       (tex) => {
@@ -282,7 +331,7 @@ void main() {
         resolve();
       },
       undefined,
-      () => resolve()
+      () => resolve(),
     );
   });
 
@@ -328,7 +377,8 @@ void main() {
     headIndex = i;
     const span = route.cum[i + 1] - route.cum[i] || 1;
     headFrac = Math.max(0, Math.min(1, (r - route.cum[i]) / span));
-    (routeGeo as unknown as THREE.InstancedBufferGeometry).instanceCount = r <= 0 ? 0 : Math.min(segCount, i + 1);
+    (routeGeo as unknown as THREE.InstancedBufferGeometry).instanceCount =
+      r <= 0 ? 0 : Math.min(segCount, i + 1);
     routeLine.visible = r > 0;
 
     portUniforms.uTime.value = performance.now() / 1000;
@@ -348,7 +398,10 @@ void main() {
   function routeHead() {
     const a = route.ll[headIndex];
     const b = route.ll[Math.min(headIndex + 1, route.ll.length - 1)];
-    return { lon: a.lon + (b.lon - a.lon) * headFrac, lat: a.lat + (b.lat - a.lat) * headFrac };
+    return {
+      lon: a.lon + (b.lon - a.lon) * headFrac,
+      lat: a.lat + (b.lat - a.lat) * headFrac,
+    };
   }
 
   function dispose() {

@@ -18,7 +18,11 @@ export class FrameSequence {
   loaded = 0;
   onProgress?: (ratio: number) => void;
 
-  constructor(private manifest: SequenceManifest, private tier: SequenceTier, private concurrency = 6) {
+  constructor(
+    private manifest: SequenceManifest,
+    private tier: SequenceTier,
+    private concurrency = 6,
+  ) {
     this.frames = new Array(manifest.frames[tier]).fill(null);
   }
 
@@ -28,18 +32,24 @@ export class FrameSequence {
 
   async start() {
     const formats = this.manifest.formats ?? ["avif", "webp"];
-    this.format = formats.includes("avif") && (await supportsAvif()) ? "avif" : "webp";
+    this.format =
+      formats.includes("avif") && (await supportsAvif()) ? "avif" : "webp";
     const n = this.count;
     const seen = new Set<number>();
     for (const step of [16, 8, 4, 2, 1]) {
-      for (let i = 0; i < n; i += step) if (!seen.has(i)) (seen.add(i), this.queue.push(i));
+      for (let i = 0; i < n; i += step)
+        if (!seen.has(i)) (seen.add(i), this.queue.push(i));
     }
     if (!seen.has(n - 1)) this.queue.push(n - 1);
     this.pump();
   }
 
   private pump() {
-    while (!this.aborted && this.inflight < this.concurrency && this.queue.length) {
+    while (
+      !this.aborted &&
+      this.inflight < this.concurrency &&
+      this.queue.length
+    ) {
       const i = this.queue.shift()!;
       this.inflight++;
       this.load(i).finally(() => {
@@ -53,10 +63,18 @@ export class FrameSequence {
     try {
       let res = await fetch(this.manifest.src(i + 1, this.tier, this.format));
       // AVIF missing for this frame → fall back to the WebP rendition
-      if (!res.ok && this.format === "avif" && (this.manifest.formats ?? ["avif", "webp"]).includes("webp")) res = await fetch(this.manifest.src(i + 1, this.tier, "webp"));
+      if (
+        !res.ok &&
+        this.format === "avif" &&
+        (this.manifest.formats ?? ["avif", "webp"]).includes("webp")
+      )
+        res = await fetch(this.manifest.src(i + 1, this.tier, "webp"));
       if (!res.ok || this.aborted) return;
       const blob = await res.blob();
-      const img = "createImageBitmap" in window ? await createImageBitmap(blob) : await blobToImage(blob);
+      const img =
+        "createImageBitmap" in window
+          ? await createImageBitmap(blob)
+          : await blobToImage(blob);
       if (this.aborted) {
         if ("close" in img) img.close();
         return;
@@ -81,14 +99,19 @@ export class FrameSequence {
 
   /** Draw progress p ∈ [0,1] into ctx with cover-fit. Returns false if nothing is loaded yet. */
   draw(ctx: CanvasRenderingContext2D, p: number, focus = { x: 0.5, y: 0.5 }) {
-    const i = this.nearest(Math.round(Math.min(1, Math.max(0, p)) * (this.count - 1)));
+    const i = this.nearest(
+      Math.round(Math.min(1, Math.max(0, p)) * (this.count - 1)),
+    );
     if (i < 0) return false;
     if (i === this.lastDrawn) return true;
     const img = this.frames[i]!;
-    const cw = ctx.canvas.width, ch = ctx.canvas.height;
-    const iw = img.width, ih = img.height;
+    const cw = ctx.canvas.width,
+      ch = ctx.canvas.height;
+    const iw = img.width,
+      ih = img.height;
     const s = Math.max(cw / iw, ch / ih);
-    const dw = iw * s, dh = ih * s;
+    const dw = iw * s,
+      dh = ih * s;
     ctx.drawImage(img, (cw - dw) * focus.x, (ch - dh) * focus.y, dw, dh);
     this.lastDrawn = i;
     return true;

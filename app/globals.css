@@ -363,7 +363,6 @@ html.cine body {
   background: transparent;
 }
 
-
 html:not(.cine) .stage-layer {
   display: none;
 }

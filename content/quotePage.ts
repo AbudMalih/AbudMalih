@@ -86,13 +86,13 @@ const de: QuoteCopy = {
     description:
       "Angebot für Seefracht, Schienenfracht oder Luftfracht von China nach Deutschland anfragen: Abholung, Fracht, Zollabwicklung und Zustellung aus einer Hand.",
   },
-  nav: "Angebot anfragen",
+  nav: "Import anfragen",
   hero: {
     eyebrow: "Fracht · China → Deutschland",
     h1a: "Frachtangebot.",
     h1b: "China nach Deutschland.",
     lead: "Seefracht, Schiene oder Luft: Beschreiben Sie Ihre Sendung, und wir erstellen ein Angebot für Abholung, Fracht, Zollabwicklung und Zustellung.",
-    primary: "Angebot anfragen",
+    primary: "Sendung beschreiben",
     secondary: "So läuft es ab",
   },
   facts: [
@@ -225,13 +225,13 @@ const en: QuoteCopy = {
     description:
       "Request a quote for sea, rail or air freight from China to Germany: pickup, freight, customs clearance and delivery from one source.",
   },
-  nav: "Get a quote",
+  nav: "Request an import",
   hero: {
     eyebrow: "Freight · China → Germany",
     h1a: "Freight quote.",
     h1b: "China to Germany.",
     lead: "Sea, rail or air: describe your shipment and we will prepare a quote for pickup, freight, customs clearance and delivery.",
-    primary: "Request a quote",
+    primary: "Describe your shipment",
     secondary: "How it works",
   },
   facts: [
@@ -363,13 +363,13 @@ const ar: QuoteCopy = {
     description:
       "اطلب عرض سعر للشحن البحري أو بالقطار أو الجوي من الصين إلى ألمانيا: الاستلام والشحن والتخليص الجمركي والتسليم من مصدر واحد.",
   },
-  nav: "اطلب عرض سعر",
+  nav: "اطلب استيرادًا",
   hero: {
     eyebrow: "الشحن · الصين ← ألمانيا",
     h1a: "عرض سعر الشحن.",
     h1b: "من الصين إلى ألمانيا.",
     lead: "بحرًا أو بالقطار أو جوًا: صِف شحنتك وسنُعدّ لك عرضًا يشمل الاستلام والشحن والتخليص الجمركي والتسليم.",
-    primary: "اطلب عرض سعر",
+    primary: "صِف شحنتك",
     secondary: "كيف نعمل",
   },
   facts: [

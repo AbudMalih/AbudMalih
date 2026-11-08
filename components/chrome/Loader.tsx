@@ -189,7 +189,7 @@ export default function Loader() {
         </span>
       </div>
       <div ref={plate} className={styles.plate}>
-        <LunaLogo height="100%" />
+        <LunaLogo height="100%" sizes="(min-width: 768px) 320px, 240px" />
       </div>
     </div>
   );

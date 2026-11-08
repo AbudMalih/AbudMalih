@@ -3,9 +3,9 @@ import type { ServicesCopy } from "./types";
 /** Services. Concise, specific, credible. */
 const en: ServicesCopy = {
   meta: {
-    title: "Services",
+    title: "Sourcing, Import, Brands & Distribution",
     description:
-      "Sourcing, import and export, product development, brand development, e-commerce and distribution: how Luna Trading connects the journey from source to market.",
+      "Sourcing in Asia, import to Germany, product development, brand building, e-commerce and distribution: six services in one continuous chain from Cologne.",
   },
   hero: {
     eyebrow: "What we do",
@@ -171,7 +171,7 @@ const en: ServicesCopy = {
     h1: "Let’s build",
     h2: "what’s next.",
     lead: "Sourcing, product, brand or distribution: tell us what you are working on.",
-    button: "Let’s talk",
+    button: "Request a quote",
     company: "The company",
   },
 };

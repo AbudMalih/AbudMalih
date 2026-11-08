@@ -33,7 +33,12 @@ const BG = 0x060607;
 
 const COL = { dim: 0x2b2c30, mid: 0x5d5e63, hi: 0xd2d3d6, red: 0xc90216 };
 
-export type WorldAnchor = { id: string; x: number; y: number; visible: boolean };
+export type WorldAnchor = {
+  id: string;
+  x: number;
+  y: number;
+  visible: boolean;
+};
 export type WorldHandle = {
   setSize: (w: number, h: number, dpr: number) => void;
   render: (t: number) => void;
@@ -48,11 +53,18 @@ export type WorldHandle = {
 const FACADE_Z = -650;
 const CARTON_POS = new THREE.Vector3(0, 0.86, -736);
 const ROAD_PTS: V3[] = [
-  [0, 0, 160], [0, 0, 60], [0, 0, 0], [0, 0, -70], [3, 0, -150], [22, 0, -250],
-  [38, 0, -350], [34, 0, -450], [16, 0, -540], [2, 0, -605], [0, 0, -640],
+  [0, 0, 160],
+  [0, 0, 60],
+  [0, 0, 0],
+  [0, 0, -70],
+  [3, 0, -150],
+  [22, 0, -250],
+  [38, 0, -350],
+  [34, 0, -450],
+  [16, 0, -540],
+  [2, 0, -605],
+  [0, 0, -640],
 ];
-
-
 
 type Key = { t: number; s: "w" | "k"; p: V3; l: V3; fov: number };
 const KEYS: Key[] = [
@@ -91,10 +103,19 @@ const FOG: [number, number, number][] = [
 const sm = (x: number) => x * x * (3 - 2 * x);
 const cl = (x: number) => Math.min(1, Math.max(0, x));
 const rg = (x: number, a: number, b: number) => cl((x - a) / (b - a));
-const io = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const io = (x: number) =>
+  x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
-export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
+export function createWorld(
+  canvas: HTMLCanvasElement,
+  tier: Tier,
+): WorldHandle {
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: true,
+    alpha: false,
+    powerPreference: "high-performance",
+  });
   renderer.setClearColor(BG, 1);
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(BG, 40, 500);
@@ -105,7 +126,13 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     mid: new THREE.LineBasicMaterial({ color: COL.mid, fog: true }),
     hi: new THREE.LineBasicMaterial({ color: COL.hi, fog: true }),
     redThin: new THREE.LineBasicMaterial({ color: COL.red, fog: true }),
-    occ: new THREE.MeshBasicMaterial({ color: BG, fog: true, polygonOffset: true, polygonOffsetFactor: 1.5, polygonOffsetUnits: 2 }),
+    occ: new THREE.MeshBasicMaterial({
+      color: BG,
+      fog: true,
+      polygonOffset: true,
+      polygonOffsetFactor: 1.5,
+      polygonOffsetUnits: 2,
+    }),
   };
   const disposables: { dispose: () => void }[] = Object.values(mats);
   const add = (L: Lines, m: THREE.Material, parent: THREE.Object3D = scene) => {
@@ -129,10 +156,15 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
   /* ------------------------------------------------------------------------- */
   /* Road + route                                                               */
   /* ------------------------------------------------------------------------- */
-  const road = new THREE.CatmullRomCurve3(ROAD_PTS.map((p) => new THREE.Vector3(...p)), false, "centripetal");
+  const road = new THREE.CatmullRomCurve3(
+    ROAD_PTS.map((p) => new THREE.Vector3(...p)),
+    false,
+    "centripetal",
+  );
   const roadLen = road.getLength();
   const sAtZ = (z: number) => {
-    let a = 0, b = 1;
+    let a = 0,
+      b = 1;
     for (let i = 0; i < 40; i++) {
       const m = (a + b) / 2;
       if (road.getPointAt(m).z > z) a = m;
@@ -145,13 +177,21 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
   const S_STOP = sAtZ(-617);
 
   const routePts: THREE.Vector3[] = [];
-  for (let s = 0; s <= roadLen; s += 1.2) routePts.push(road.getPointAt(s / roadLen));
-  for (let z = -641; z >= -727; z -= 1.2) routePts.push(new THREE.Vector3(0, 0, z));
+  for (let s = 0; s <= roadLen; s += 1.2)
+    routePts.push(road.getPointAt(s / roadLen));
+  for (let z = -641; z >= -727; z -= 1.2)
+    routePts.push(new THREE.Vector3(0, 0, z));
   const routeCum = [0];
-  for (let i = 1; i < routePts.length; i++) routeCum.push(routeCum[i - 1] + routePts[i].distanceTo(routePts[i - 1]));
+  for (let i = 1; i < routePts.length; i++)
+    routeCum.push(routeCum[i - 1] + routePts[i].distanceTo(routePts[i - 1]));
   const routeGeo = new LineGeometry();
   routeGeo.setPositions(routePts.flatMap((p) => [p.x, 0.03, p.z]));
-  const routeMat = new LineMaterial({ color: COL.red, linewidth: 2, worldUnits: false, fog: true } as never);
+  const routeMat = new LineMaterial({
+    color: COL.red,
+    linewidth: 2,
+    worldUnits: false,
+    fog: true,
+  } as never);
   const route = new Line2(routeGeo, routeMat);
   route.frustumCulled = false;
   scene.add(route);
@@ -164,11 +204,15 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     const tmp = new THREE.Vector3();
     const tan = new THREE.Vector3();
     const s0 = sAtZ(-62);
-    let prevL: V3 | null = null, prevR: V3 | null = null, prevL2: V3 | null = null, prevR2: V3 | null = null;
+    let prevL: V3 | null = null,
+      prevR: V3 | null = null,
+      prevL2: V3 | null = null,
+      prevR2: V3 | null = null;
     for (let s = s0; s <= roadLen; s += 3) {
       road.getPointAt(s / roadLen, tmp);
       road.getTangentAt(s / roadLen, tan);
-      const nx = -tan.z, nz = tan.x;
+      const nx = -tan.z,
+        nz = tan.x;
       const pl: V3 = [tmp.x + nx * 3.9, 0, tmp.z + nz * 3.9];
       const pr: V3 = [tmp.x - nx * 3.9, 0, tmp.z - nz * 3.9];
       const pl2: V3 = [tmp.x + nx * 5.6, 0, tmp.z + nz * 5.6];
@@ -177,25 +221,33 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
         L.seg(prevL, pl).seg(prevR, pr);
         D.seg(prevL2, pl2).seg(prevR2, pr2);
       }
-      prevL = pl; prevR = pr; prevL2 = pl2; prevR2 = pr2;
+      prevL = pl;
+      prevR = pr;
+      prevL2 = pl2;
+      prevR2 = pr2;
     }
     // guard rail on outer side (posts + rail)
     for (let s = s0 + 40; s <= roadLen - 30; s += 6) {
       road.getPointAt(s / roadLen, tmp);
       road.getTangentAt(s / roadLen, tan);
-      const nx = -tan.z, nz = tan.x;
+      const nx = -tan.z,
+        nz = tan.x;
       const p: V3 = [tmp.x - nx * 6.4, 0, tmp.z - nz * 6.4];
       D.seg(p, [p[0], 0.75, p[2]]);
       road.getPointAt(Math.min(1, (s + 6) / roadLen), tmp);
       road.getTangentAt(Math.min(1, (s + 6) / roadLen), tan);
-      D.seg([p[0], 0.72, p[2]], [tmp.x + tan.z * 6.4, 0.72, tmp.z - tan.x * 6.4]);
+      D.seg(
+        [p[0], 0.72, p[2]],
+        [tmp.x + tan.z * 6.4, 0.72, tmp.z - tan.x * 6.4],
+      );
     }
     // lamp posts
     let side = 1;
     for (let s = s0 + 20; s < roadLen - 25; s += lowTier ? 70 : 46) {
       road.getPointAt(s / roadLen, tmp);
       road.getTangentAt(s / roadLen, tan);
-      const nx = -tan.z * side, nz = tan.x * side;
+      const nx = -tan.z * side,
+        nz = tan.x * side;
       lampPost(D, [tmp.x + nx * 7.4, 0, tmp.z + nz * 7.4], [-nx, -nz]);
       side *= -1;
     }
@@ -207,12 +259,17 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
       const G = new Lines();
       gantrySign(G, 0, 0);
       const yaw = Math.atan2(-tan.x, -tan.z);
-      const m = new THREE.Matrix4().makeRotationY(yaw).setPosition(tmp.x, 0, tmp.z);
+      const m = new THREE.Matrix4()
+        .makeRotationY(yaw)
+        .setPosition(tmp.x, 0, tmp.z);
       L.merge(G, m);
     }
     // terminal lane markings
     for (let z = 140; z > -60; z -= 9) {
-      D.seg([-3.4, 0, z], [-3.4, 0, z - 4.5]).seg([3.4, 0, z], [3.4, 0, z - 4.5]);
+      D.seg([-3.4, 0, z], [-3.4, 0, z - 4.5]).seg(
+        [3.4, 0, z],
+        [3.4, 0, z - 4.5],
+      );
     }
     // terminal gate canopy
     L.box(-15, 6.8, -76, 15, 7.6, -66);
@@ -233,7 +290,8 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
       for (let zz = -44; zz <= 70; zz += 12.6) {
         if (Math.abs(zz) < 7 && Math.abs(cx) < 6) continue;
         const tiers = 1 + Math.floor(r() * 4);
-        for (let k = 0; k < tiers; k++) container(L, O, cx, k * 2.59, zz, Math.abs(zz) < 30 ? 1 : 0);
+        for (let k = 0; k < tiers; k++)
+          container(L, O, cx, k * 2.59, zz, Math.abs(zz) < 30 ? 1 : 0);
       }
     }
     // outer blocks
@@ -246,12 +304,16 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
         for (let zz = -60; zz <= 110; zz += 12.6) {
           if (r() < 0.12) continue;
           const tiers = 1 + Math.floor(r() * 4);
-          for (let k = 0; k < tiers; k++) container(L, O, bx + row * 2.8, k * 2.59, zz, 0);
+          for (let k = 0; k < tiers; k++)
+            container(L, O, bx + row * 2.8, k * 2.59, zz, 0);
         }
       }
       const G = new Lines();
       gantryCrane(G, 0, 8.6, 18.5);
-      L.merge(G, new THREE.Matrix4().makeTranslation(bx + 5.6, 0, -20 + (b % 3) * 38));
+      L.merge(
+        G,
+        new THREE.Matrix4().makeTranslation(bx + 5.6, 0, -20 + (b % 3) * 38),
+      );
     }
     add(L, mats.dim);
     addOcc(O);
@@ -278,10 +340,20 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
   const rotors: THREE.Group[] = [];
   if (!lowTier) {
     const T = new Lines();
-    const spots: [number, number][] = [[260, -380], [330, -470], [-240, -520], [300, -600], [-320, -330], [420, -540]];
+    const spots: [number, number][] = [
+      [260, -380],
+      [330, -470],
+      [-240, -520],
+      [300, -600],
+      [-320, -330],
+      [420, -540],
+    ];
     for (const [x, z] of spots) {
       const h = 95;
-      T.seg([x - 1.8, 0, z], [x - 0.9, h, z]).seg([x + 1.8, 0, z], [x + 0.9, h, z]);
+      T.seg([x - 1.8, 0, z], [x - 0.9, h, z]).seg(
+        [x + 1.8, 0, z],
+        [x + 0.9, h, z],
+      );
       T.box(x - 1.2, h - 0.8, z - 1.5, x + 1.2, h + 1.6, z + 4.5);
       const g = new THREE.Group();
       g.position.set(x, h + 0.4, z - 1.6);
@@ -306,24 +378,38 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     const L = new Lines();
     const D = new Lines();
     const O = new Occluders();
-    const X = 92, H = 14, Z1 = FACADE_Z - 130, z = FACADE_Z;
+    const X = 92,
+      H = 14,
+      Z1 = FACADE_Z - 130,
+      z = FACADE_Z;
     L.box(-X, 0, Z1, X, H, z);
     // parapet
-    L.seg([-X, H + 0.9, z], [X, H + 0.9, z]).seg([-X, H, z], [-X, H + 0.9, z]).seg([X, H, z], [X, H + 0.9, z]);
+    L.seg([-X, H + 0.9, z], [X, H + 0.9, z])
+      .seg([-X, H, z], [-X, H + 0.9, z])
+      .seg([X, H, z], [X, H + 0.9, z]);
     // facade cladding + column rhythm
     for (let y = 1.2; y < H; y += 1.15) {
-      D.seg([-X, y, z + 0.02], [-4.6, y, z + 0.02]).seg([4.6, y, z + 0.02], [X, y, z + 0.02]);
+      D.seg([-X, y, z + 0.02], [-4.6, y, z + 0.02]).seg(
+        [4.6, y, z + 0.02],
+        [X, y, z + 0.02],
+      );
     }
-    for (let y = 7.6; y < H; y += 1.15) D.seg([-4.6, y, z + 0.02], [4.6, y, z + 0.02]);
-    for (let x = -X; x <= X; x += 7.5) L.seg([x, 0, z + 0.03], [x, H, z + 0.03]);
+    for (let y = 7.6; y < H; y += 1.15)
+      D.seg([-4.6, y, z + 0.02], [4.6, y, z + 0.02]);
+    for (let x = -X; x <= X; x += 7.5)
+      L.seg([x, 0, z + 0.03], [x, H, z + 0.03]);
     // dock doors
     for (let i = 0; i < 7; i++) {
       for (const s of [-1, 1]) {
         const cx = s * (13 + i * 5.4);
         L.rectXY(cx - 1.5, 1.2, cx + 1.5, 4.2, z + 0.05);
         D.rectXY(cx - 1.85, 0.95, cx + 1.85, 4.55, z + 0.35);
-        D.seg([cx - 1.85, 4.55, z + 0.35], [cx - 1.85, 4.55, z + 0.05]).seg([cx + 1.85, 4.55, z + 0.35], [cx + 1.85, 4.55, z + 0.05]);
-        for (let y = 1.6; y < 4.2; y += 0.42) D.seg([cx - 1.5, y, z + 0.06], [cx + 1.5, y, z + 0.06]);
+        D.seg([cx - 1.85, 4.55, z + 0.35], [cx - 1.85, 4.55, z + 0.05]).seg(
+          [cx + 1.85, 4.55, z + 0.35],
+          [cx + 1.85, 4.55, z + 0.05],
+        );
+        for (let y = 1.6; y < 4.2; y += 0.42)
+          D.seg([cx - 1.5, y, z + 0.06], [cx + 1.5, y, z + 0.06]);
         D.box(cx - 1.4, 0.0, z + 0.05, cx + 1.4, 1.2, z + 0.5);
       }
     }
@@ -331,14 +417,22 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     L.rectXY(-4.6, 0, 4.6, 7.6, z + 0.05);
     L.box(-6.5, 8.4, z, 6.5, 8.8, z + 3.2);
     // front wall occluders (leave the door opening)
-    O.add(-X, 0, z - 0.4, -4.6, H, z).add(4.6, 0, z - 0.4, X, H, z).add(-4.6, 7.6, z - 0.4, 4.6, H, z);
+    O.add(-X, 0, z - 0.4, -4.6, H, z)
+      .add(4.6, 0, z - 0.4, X, H, z)
+      .add(-4.6, 7.6, z - 0.4, 4.6, H, z);
     // roof + side walls + back (thin) — hide the interior from outside
-    O.add(-X, H - 0.3, Z1, X, H, z).add(-X, 0, Z1, -X + 0.3, H, z).add(X - 0.3, 0, Z1, X, H, z).add(-X, 0, Z1, X, H, Z1 + 0.3);
+    O.add(-X, H - 0.3, Z1, X, H, z)
+      .add(-X, 0, Z1, -X + 0.3, H, z)
+      .add(X - 0.3, 0, Z1, X, H, z)
+      .add(-X, 0, Z1, X, H, Z1 + 0.3);
     // yard markings in front
     for (let i = 0; i < 7; i++) {
       for (const s of [-1, 1]) {
         const cx = s * (13 + i * 5.4);
-        D.seg([cx - 1.7, 0.01, z + 1], [cx - 1.7, 0.01, z + 24]).seg([cx + 1.7, 0.01, z + 1], [cx + 1.7, 0.01, z + 24]);
+        D.seg([cx - 1.7, 0.01, z + 1], [cx - 1.7, 0.01, z + 24]).seg(
+          [cx + 1.7, 0.01, z + 1],
+          [cx + 1.7, 0.01, z + 24],
+        );
       }
     }
     add(L, mats.mid);
@@ -381,20 +475,26 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
       }
     }
     // floor markings
-    for (const x of [-4.2, 4.2]) D.seg([x, 0.01, FACADE_Z - 1], [x, 0.01, -775]);
+    for (const x of [-4.2, 4.2])
+      D.seg([x, 0.01, FACADE_Z - 1], [x, 0.01, -775]);
     for (let z = -662; z >= -722; z -= 2.9) {
-      D.seg([-4.2, 0.01, z], [-3.6, 0.01, z]).seg([3.6, 0.01, z], [4.2, 0.01, z]);
+      D.seg([-4.2, 0.01, z], [-3.6, 0.01, z]).seg(
+        [3.6, 0.01, z],
+        [4.2, 0.01, z],
+      );
     }
     // ceiling luminaires
     for (let z = -656; z > -776; z -= 6) {
-      for (const x of [0, -9, 9, -20, 20, -31, 31]) L.seg([x, 12.4, z], [x, 12.4, z - 3.2]);
+      for (const x of [0, -9, 9, -20, 20, -31, 31])
+        L.seg([x, 12.4, z], [x, 12.4, z - 3.2]);
     }
     // roof trusses
     for (let z = FACADE_Z - 7.5; z > -780; z -= 15) {
       D.seg([-92, 13.6, z], [92, 13.6, z]).seg([-92, 12.9, z], [92, 12.9, z]);
     }
     // columns
-    for (let z = FACADE_Z - 15; z > -780; z -= 15) for (const x of [-34, -17, 17, 34]) D.seg([x, 0, z], [x, 13.6, z]);
+    for (let z = FACADE_Z - 15; z > -780; z -= 15)
+      for (const x of [-34, -17, 17, 34]) D.seg([x, 0, z], [x, 13.6, z]);
     // conveyor + neighbouring cartons
     conveyor(L, D, -748, -726);
     const CB = new Lines();
@@ -402,7 +502,14 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
       const c = new Lines();
       buildCarton(c);
       CB.merge(c, new THREE.Matrix4().makeTranslation(0, 0.86, zc));
-      O.add(-CARTON.w / 2, 0.86, zc - CARTON.d / 2, CARTON.w / 2, 0.86 + CARTON.h, zc + CARTON.d / 2);
+      O.add(
+        -CARTON.w / 2,
+        0.86,
+        zc - CARTON.d / 2,
+        CARTON.w / 2,
+        0.86 + CARTON.h,
+        zc + CARTON.d / 2,
+      );
     }
     add(L, mats.mid);
     add(D, mats.dim);
@@ -458,7 +565,14 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     const L = new Lines();
     buildCarton(L);
     const O = new Occluders();
-    O.add(-CARTON.w / 2, 0, -CARTON.d / 2, CARTON.w / 2, CARTON.h, CARTON.d / 2);
+    O.add(
+      -CARTON.w / 2,
+      0,
+      -CARTON.d / 2,
+      CARTON.w / 2,
+      CARTON.h,
+      CARTON.d / 2,
+    );
     add(L, mats.hi, cartonG);
     addOcc(O, cartonG);
     cartonG.position.copy(CARTON_POS);
@@ -468,14 +582,18 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
   /* ------------------------------------------------------------------------- */
   /* Per-frame evaluation                                                        */
   /* ------------------------------------------------------------------------- */
-  let W = 1, H = 1;
+  let W = 1,
+    H = 1;
   const tP = new THREE.Vector3();
   const tT = new THREE.Vector3();
   const v = new THREE.Vector3();
 
   function truckS(t: number) {
     if (t < 0.225) return S_WAIT;
-    if (t < 0.31) return S_WAIT + (S_CRANE - S_WAIT) * (1 - Math.pow(1 - rg(t, 0.225, 0.31), 3));
+    if (t < 0.31)
+      return (
+        S_WAIT + (S_CRANE - S_WAIT) * (1 - Math.pow(1 - rg(t, 0.225, 0.31), 3))
+      );
     if (t < 0.4) return S_CRANE;
     return S_CRANE + (S_STOP - S_CRANE) * io(rg(t, 0.4, 0.605));
   }
@@ -507,10 +625,16 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     }
     // spreader: attached until release, then hoists back up
     let sy = y + top;
-    if (t >= 0.38) sy = 1.36 + top + (12.5 - 1.36 - top) * io(rg(t, 0.385, 0.47));
+    if (t >= 0.38)
+      sy = 1.36 + top + (12.5 - 1.36 - top) * io(rg(t, 0.385, 0.47));
     if (t < 0.12) sy = top + 6.5 * (1 - io(rg(t, 0.03, 0.12)));
     spreaderG.position.set(0, sy, 0);
-    const corners: [number, number][] = [[-1.2, -1.2], [1.2, -1.2], [-1.2, 1.2], [1.2, 1.2]];
+    const corners: [number, number][] = [
+      [-1.2, -1.2],
+      [1.2, -1.2],
+      [-1.2, 1.2],
+      [1.2, 1.2],
+    ];
     corners.forEach(([x, z], i) => {
       ropeArr.set([x, 20.7, z, x * 0.5, sy + 0.9, z * 2.5], i * 6);
     });
@@ -529,9 +653,18 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
   }
   const P = [0, 1, 2, 3].map(() => new THREE.Vector3());
   const Lk = [0, 1, 2, 3].map(() => new THREE.Vector3());
-  function catmull(out: THREE.Vector3, a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3, d: THREE.Vector3, u: number) {
-    const u2 = u * u, u3 = u2 * u;
-    out.set(0, 0, 0)
+  function catmull(
+    out: THREE.Vector3,
+    a: THREE.Vector3,
+    b: THREE.Vector3,
+    c: THREE.Vector3,
+    d: THREE.Vector3,
+    u: number,
+  ) {
+    const u2 = u * u,
+      u3 = u2 * u;
+    out
+      .set(0, 0, 0)
       .addScaledVector(a, -0.5 * u3 + u2 - 0.5 * u)
       .addScaledVector(b, 1.5 * u3 - 2.5 * u2 + 1)
       .addScaledVector(c, -1.5 * u3 + 2 * u2 + 0.5 * u)
@@ -542,7 +675,10 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
   function placeCamera(t: number) {
     let i = 0;
     while (i < KEYS.length - 2 && KEYS[i + 1].t <= t) i++;
-    const k0 = KEYS[Math.max(0, i - 1)], k1 = KEYS[i], k2 = KEYS[i + 1], k3 = KEYS[Math.min(KEYS.length - 1, i + 2)];
+    const k0 = KEYS[Math.max(0, i - 1)],
+      k1 = KEYS[i],
+      k2 = KEYS[i + 1],
+      k3 = KEYS[Math.min(KEYS.length - 1, i + 2)];
     [k0, k1, k2, k3].forEach((k, j) => keyWorld(k, P[j], Lk[j]));
     let u = cl((t - k1.t) / (k2.t - k1.t));
     u = u + (sm(u) - u) * 0.35;
@@ -555,7 +691,8 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     const aspect = W / H;
     if (aspect < 1.5) {
       const f = Math.pow(1.6 / aspect, 0.55);
-      fov = (2 * Math.atan(Math.tan((fov * Math.PI) / 360) * f) * 180) / Math.PI;
+      fov =
+        (2 * Math.atan(Math.tan((fov * Math.PI) / 360) * f) * 180) / Math.PI;
     }
     camera.fov = Math.min(fov, 78);
     camera.updateProjectionMatrix();
@@ -565,7 +702,8 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
   function placeFog(t: number) {
     let i = 0;
     while (i < FOG.length - 2 && FOG[i + 1][0] <= t) i++;
-    const a = FOG[i], b = FOG[i + 1];
+    const a = FOG[i],
+      b = FOG[i + 1];
     const u = sm(cl((t - a[0]) / (b[0] - a[0])));
     const fog = scene.fog as THREE.Fog;
     fog.near = a[1] + (b[1] - a[1]) * u;
@@ -608,7 +746,8 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     const reveal = t >= 0.6 ? 1e9 : Math.max(S_CRANE + 120, s + 95);
     let n = 0;
     while (n < routeCum.length - 1 && routeCum[n] < reveal) n++;
-    (routeGeo as unknown as THREE.InstancedBufferGeometry).instanceCount = Math.max(1, n);
+    (routeGeo as unknown as THREE.InstancedBufferGeometry).instanceCount =
+      Math.max(1, n);
     renderer.render(scene, camera);
   }
 
@@ -633,19 +772,32 @@ export function createWorld(canvas: HTMLCanvasElement, tier: Tier): WorldHandle 
     return ANCHOR_DEFS.map((a) => {
       anchorVec.set(...a.p);
       const pp = projectPoint(anchorVec);
-      return { id: a.id, x: pp.x, y: pp.y, visible: pp.inFront && pp.x > -50 && pp.x < W + 50 };
+      return {
+        id: a.id,
+        x: pp.x,
+        y: pp.y,
+        visible: pp.inFront && pp.x > -50 && pp.x < W + 50,
+      };
     });
   }
 
   const cc = new THREE.Vector3();
   function cartonRect() {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    let x0 = Infinity,
+      y0 = Infinity,
+      x1 = -Infinity,
+      y1 = -Infinity;
     const { w, h, d } = CARTON;
-    for (const sx of [-1, 1]) for (const sy of [0, 1]) for (const sz of [-1, 1]) {
-      cc.set((sx * w) / 2, sy * h, (sz * d) / 2).add(CARTON_POS);
-      const p = projectPoint(cc);
-      x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y);
-    }
+    for (const sx of [-1, 1])
+      for (const sy of [0, 1])
+        for (const sz of [-1, 1]) {
+          cc.set((sx * w) / 2, sy * h, (sz * d) / 2).add(CARTON_POS);
+          const p = projectPoint(cc);
+          x0 = Math.min(x0, p.x);
+          x1 = Math.max(x1, p.x);
+          y0 = Math.min(y0, p.y);
+          y1 = Math.max(y1, p.y);
+        }
     return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
   }
 

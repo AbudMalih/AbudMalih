@@ -13,5 +13,8 @@ if(!rm&&gl&&!forceStatic){d.classList.add('cine');if(/^\\/(de|en|ar)?\\/?$/.test
 }catch(e){}})();`;
 
 export function isCine() {
-  return typeof document !== "undefined" && document.documentElement.classList.contains("cine");
+  return (
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("cine")
+  );
 }

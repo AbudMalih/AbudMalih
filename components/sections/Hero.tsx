@@ -114,15 +114,15 @@ function HeroContent() {
             className={styles.btnRed}
             data-cursor="invert"
           >
-            {dict.nav.cta}
+            {dict.services.cta.button}
             <span className={styles.badge} aria-hidden="true" />
           </Link>
           <Link
-            href={href("/import")}
+            href={href("/what-we-do")}
             className={styles.btnGhost}
             data-cursor="link"
           >
-            {dict.hero.ctaImport}
+            {dict.nav.whatWeDo}
           </Link>
         </div>
       </div>

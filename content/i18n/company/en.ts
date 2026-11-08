@@ -2,9 +2,9 @@ import type { CompanyCopy } from "./types";
 
 const en: CompanyCopy = {
   meta: {
-    title: "Company",
+    title: "Trade, Import & E-Commerce from Cologne",
     description:
-      "Luna Trading GmbH in Cologne connects international trade with product development, brand building, e-commerce and distribution.",
+      "Luna Trading GmbH in Cologne connects international trade and import with product development, brand building, e-commerce and distribution in Europe.",
   },
   hero: {
     eyebrow: "Company",
@@ -158,7 +158,7 @@ const en: CompanyCopy = {
     h1: "Let’s do",
     h2: "business.",
     lead: "Whether you are a manufacturer, supplier or trading partner: let’s talk about products, markets and new opportunities.",
-    button: "Get in touch",
+    button: "Request a quote",
     more: "Our services",
   },
 };

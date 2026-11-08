@@ -16,4 +16,5 @@ export const SITE_HOST = "luna-trading.de";
  */
 export const INDEXING_ENABLED = process.env.SITE_INDEXING === "on";
 
-export const absolute = (path: string) => `${SITE_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
+export const absolute = (path: string) =>
+  `${SITE_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;

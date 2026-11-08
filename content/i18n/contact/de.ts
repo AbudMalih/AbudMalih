@@ -2,9 +2,9 @@ import type { ContactCopy } from "./types";
 
 const de: ContactCopy = {
   meta: {
-    title: "Kontakt",
+    title: "Kontakt für Import- und Markenprojekte",
     description:
-      "Kontakt zur Luna Trading GmbH in Köln. Schreiben Sie an info@luna-trading.de oder senden Sie uns eine kurze Anfrage.",
+      "Kontakt zur Luna Trading GmbH in Köln: Anfrage zu Beschaffung, Import, Eigenmarke oder E-Commerce per Formular oder direkt an info@luna-trading.de.",
   },
   hero: {
     eyebrow: "Kontakt",

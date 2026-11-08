@@ -19,11 +19,15 @@ export function lockScroll(locked: boolean) {
 }
 
 /** Scroll to an element or offset (smoothly unless immediate). */
-export function scrollToTarget(target: string | number | HTMLElement, immediate = false) {
+export function scrollToTarget(
+  target: string | number | HTMLElement,
+  immediate = false,
+) {
   const behavior: ScrollBehavior = immediate ? "auto" : "smooth";
   if (typeof target === "number") window.scrollTo({ top: target, behavior });
   else {
-    const el = typeof target === "string" ? document.querySelector(target) : target;
+    const el =
+      typeof target === "string" ? document.querySelector(target) : target;
     el?.scrollIntoView({ behavior });
   }
 }

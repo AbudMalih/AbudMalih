@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import { LEGAL_ENTITY as L } from "@/content/legal";
-import { getDictionary, isLocale, localePath, type Locale } from "@/content/i18n";
+import {
+  getDictionary,
+  isLocale,
+  localePath,
+  type Locale,
+} from "@/content/i18n";
 import { pageMetadata } from "@/lib/seo";
 import s from "@/components/legal/Legal.module.css";
 
@@ -17,7 +22,13 @@ const DESCRIPTION: Record<Locale, string> = {
 export async function generateMetadata({ params }: P): Promise<Metadata> {
   const { lang } = await params;
   if (!isLocale(lang)) return {};
-  return pageMetadata({ locale: lang, path: "/impressum", title: getDictionary(lang).legal.impressum, description: DESCRIPTION[lang], index: false });
+  return pageMetadata({
+    locale: lang,
+    path: "/impressum",
+    title: getDictionary(lang).legal.impressum,
+    description: DESCRIPTION[lang],
+    index: false,
+  });
 }
 
 /**
@@ -33,7 +44,13 @@ export default async function Page({ params }: P) {
   const locale = (await params).lang as Locale;
   const d = getDictionary(locale);
   return (
-    <PageShell locale={locale} index="§" eyebrow={d.pages.legalEyebrow} title={d.legal.impressum} lead={d.pages.legalNote.impressum || undefined}>
+    <PageShell
+      locale={locale}
+      index="§"
+      eyebrow={d.pages.legalEyebrow}
+      title={d.legal.impressum}
+      lead={d.pages.legalNote.impressum || undefined}
+    >
       <div className={s.doc} lang="de" dir="ltr">
         <h2>Angaben gemäß § 5 DDG</h2>
         <address>
@@ -51,7 +68,10 @@ export default async function Page({ params }: P) {
         <p>
           E-Mail: <a href={`mailto:${L.email}`}>{L.email}</a>
           <br />
-          Kontaktformular: <Link href={localePath("de", "/contact")}>luna-trading.de{localePath("de", "/contact")}</Link>
+          Kontaktformular:{" "}
+          <Link href={localePath("de", "/contact")}>
+            luna-trading.de{localePath("de", "/contact")}
+          </Link>
         </p>
 
         <h2>Registereintrag</h2>

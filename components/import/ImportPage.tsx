@@ -48,8 +48,7 @@ export default function ImportPage() {
               data-reveal
               style={{ ["--d" as string]: "80ms" }}
             >
-              <span>{t.h1a}</span>
-              <span className={s.titleRed}>{t.h1b}</span>
+              <span>{t.h1a}</span> <span className={s.titleRed}>{t.h1b}</span>
             </h1>
             <div
               className={s.flags}
