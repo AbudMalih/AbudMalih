@@ -10,7 +10,7 @@ end $$;
 create schema auth;
 create table auth.users (
   id uuid primary key default gen_random_uuid(),
-  email text unique,
+  email varchar(255) unique, -- as on hosted Supabase (auth.users.email is varchar(255))
   created_at timestamptz not null default now()
 );
 create function auth.uid() returns uuid language sql stable as $$

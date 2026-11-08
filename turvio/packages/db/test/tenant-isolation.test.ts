@@ -339,6 +339,22 @@ describe("subscription limits", () => {
     });
   });
 
+  it("Team list (org_members) works with hosted Supabase's varchar(255) emails; admins only, own company only", async () => {
+    // The stub must keep the hosted type – a text column hid the "structure of query does not match" error.
+    const t = await db.query<{ data_type: string; len: number }>(`select data_type, character_maximum_length as len from information_schema.columns where table_schema = 'auth' and table_name = 'users' and column_name = 'email'`);
+    expect(t.rows[0]).toEqual({ data_type: "character varying", len: 255 });
+    await asUser(db, ids.ownerA, async () => {
+      const r = await db.query<{ email: string; role: string }>(`select email, role from public.org_members($1)`, [ids.orgJarbou]);
+      expect(r.rows.map((x) => x.email)).toEqual(expect.arrayContaining(["owner@jarbou.example", "dispatch@jarbou.example", "driver1@jarbou.example"]));
+      expect(r.rows.some((x) => x.email.endsWith("@other.example"))).toBe(false);
+    });
+    for (const u of [ids.dispatcherA, ids.driverA1, ids.ownerB, ids.outsider]) {
+      await asUser(db, u, async () => {
+        await expect(db.query(`select * from public.org_members($1)`, [ids.orgJarbou])).rejects.toThrow(/only owners and admins/);
+      });
+    }
+  });
+
   it("team plan limits depots", async () => {
     const addDepot = () =>
       db.query(`insert into depots (organization_id, name, street, postal_code, city, lat, lng) values ($1, 'D', 'S', '04109', 'Leipzig', 51.3, 12.3)`, [
