@@ -61,34 +61,37 @@ function BodyBlock({ b }: { b: Block }) {
         </aside>
       );
     case "table":
+      /* explicit roles keep table semantics when phones stack the rows */
       return (
         <div
           className={s.tableWrap}
           tabIndex={0}
           role="region"
-          aria-label={b.caption}
+          aria-label={b.caption ?? b.head.join(", ")}
         >
-          <table className={s.table}>
+          <table className={s.table} role="table" data-cols={b.head.length}>
             {b.caption && <caption>{b.caption}</caption>}
-            <thead>
-              <tr>
+            <thead role="rowgroup">
+              <tr role="row">
                 {b.head.map((h) => (
-                  <th key={h} scope="col">
+                  <th key={h} scope="col" role="columnheader">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {b.rows.map((r) => (
-                <tr key={r.join("|")}>
+                <tr key={r.join("|")} role="row">
                   {r.map((c, i) =>
                     i === 0 ? (
-                      <th key={i} scope="row">
+                      <th key={i} scope="row" role="rowheader">
                         {c}
                       </th>
                     ) : (
-                      <td key={i}>{c}</td>
+                      <td key={i} role="cell" data-label={b.head[i]}>
+                        {c}
+                      </td>
                     ),
                   )}
                 </tr>
@@ -292,6 +295,28 @@ export default function ArticlePage({
             {a.body.map((b, i) => (
               <BodyBlock key={i} b={b} />
             ))}
+            {a.sources && a.sources.length > 0 && (
+              <section className={s.sources} aria-labelledby="art-sources">
+                <h2 id="art-sources" className={s.sourcesTitle}>
+                  {t.sources}
+                </h2>
+                <p className={s.sourcesNote}>{t.sourcesNote}</p>
+                <ol className={s.sourcesList}>
+                  {a.sources.map((src) => (
+                    <li key={src.url}>
+                      <a
+                        href={src.url}
+                        rel="noopener noreferrer"
+                        data-cursor="link"
+                      >
+                        {src.title}
+                      </a>
+                      <span className={s.sourcesBy}>{src.publisher}</span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
             {dates.reviewed && (
               <p className={s.legal}>{t.legalNote(dates.reviewed)}</p>
             )}

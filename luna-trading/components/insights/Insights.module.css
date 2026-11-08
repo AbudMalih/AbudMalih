@@ -582,3 +582,102 @@
     transition: none;
   }
 }
+
+/* Quellen: official references at the end of an article */
+.sources {
+  margin: 2.6em 0 0;
+  padding-top: 1.4em;
+  border-top: 1px solid rgba(20, 21, 24, 0.12);
+}
+.sourcesTitle {
+  margin: 0 0 0.3em;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #141518;
+}
+.sourcesNote {
+  margin: 0 0 0.9em;
+  font-size: 0.9rem;
+  color: #4a4b50;
+}
+.sourcesList {
+  margin: 0;
+  padding-inline-start: 1.4em;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.sourcesList li {
+  margin: 0.55em 0;
+  padding-inline-start: 0.2em;
+}
+.sourcesList a {
+  color: #141518;
+  text-decoration: underline;
+  text-decoration-color: rgba(20, 21, 24, 0.35);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+.sourcesList a:hover,
+.sourcesList a:focus-visible {
+  text-decoration-color: currentColor;
+}
+.sourcesBy {
+  display: block;
+  color: #5c5d62;
+  font-size: 0.85rem;
+}
+
+/* Phones: table rows become stacked cards; column names label the values */
+@media (max-width: 767px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .table,
+  .table tbody,
+  .table tr,
+  .table th,
+  .table td {
+    display: block;
+    width: auto;
+  }
+  .table caption {
+    display: block;
+    padding-bottom: 12px;
+  }
+  .table tbody tr {
+    padding: 14px 18px;
+    border-top: 1px solid rgba(20, 21, 24, 0.08);
+  }
+  .table tbody th,
+  .table td {
+    padding: 0;
+    border-top: 0;
+    white-space: normal;
+  }
+  .table tbody th + td,
+  .table td + td {
+    margin-top: 6px;
+  }
+  .table[data-cols="3"] td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #5c5d62;
+  }
+  :global(html[lang="ar"]) .table[data-cols="3"] td::before {
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+.sourcesList {
+  list-style: decimal;
+}

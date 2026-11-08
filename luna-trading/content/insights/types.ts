@@ -31,6 +31,16 @@ export type ArticleText = {
   keyPoints: string[];
   coverAlt: string;
   body: Block[];
+  /** official references, shown as "Quellen" and cited in structured data */
+  sources?: Source[];
+};
+
+/** An authoritative reference (authority, law or official publication). */
+export type Source = {
+  title: string;
+  /** issuing body, e.g. "Generalzolldirektion" or "EUR-Lex" */
+  publisher: string;
+  url: string;
 };
 
 export type Article = {
@@ -46,7 +56,7 @@ export type Article = {
   /** ISO dates (YYYY-MM-DD): real dates only */
   published: string;
   updated: string;
-  /** compliance topics: the date the legal information was last reviewed */
+  /** date the legal or regulatory information was last reviewed (shown on the article) */
   reviewed?: string;
   cover: {
     /** /public path without size suffix; files <src>-960.webp and <src>-1600.webp */
