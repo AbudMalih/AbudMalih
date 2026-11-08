@@ -58,7 +58,7 @@ const en: ServicesCopy = {
       stop: "Import",
       title: "Import & export",
       statement: "Trade between markets.",
-      body: "We are the commercial layer between manufacturing and market: we manage purchasing and import, take responsibility for trade documentation and coordinate transport with specialised logistics partners into the European market.",
+      body: "We are the commercial layer between manufacturing and market: we manage [purchasing and import](/import), take responsibility for trade documentation and coordinate transport with specialised logistics partners into the European market.",
       focus: [
         "International purchasing",
         "Import coordination",
@@ -83,7 +83,7 @@ const en: ServicesCopy = {
       stop: "Brand",
       title: "Brand development",
       statement: "We build brands around products.",
-      body: "A good product needs a point of view. We develop positioning and presentation, coordinate design and packaging, and prepare the brand commercially for its market.",
+      body: "A good product needs a point of view. We develop [positioning and presentation](/brands), coordinate design and packaging, and prepare the brand commercially for its market.",
       focus: [
         "Brand positioning",
         "Visual identity coordination",

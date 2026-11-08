@@ -65,6 +65,7 @@ export default function BrandsPage() {
         className={`${svc.section} ${s.nh}`}
         style={ground(LUNA.hero, LUNA.hero)}
         data-tone="light"
+        data-hero
         aria-labelledby="brands-title"
       >
         <div className={`frame ${s.nhGrid}`}>

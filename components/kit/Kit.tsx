@@ -1,5 +1,6 @@
 "use client";
 
+import RichText from "@/components/ui/RichText";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import s from "./Kit.module.css";
@@ -89,8 +90,24 @@ export function PageHero(props: {
     <section
       className={`${s.hero} ${props.short ? s.heroShort : ""}`}
       data-tone="dark"
+      data-hero
       aria-labelledby={props.id}
     >
+      {/* the hero photo is a CSS background: announce it in the HTML so phones
+          and desktops fetch the right size before the stylesheet is parsed */}
+      <link
+        rel="preload"
+        as="image"
+        href="/sky/port-1600.webp"
+        media="(max-width: 1024px)"
+        fetchPriority="high"
+      />
+      <link
+        rel="preload"
+        as="image"
+        href="/sky/port-2560.webp"
+        media="(min-width: 1025px)"
+      />
       <div className={s.heroPhoto} aria-hidden="true" />
       <div className={`frame ${s.heroGrid}`}>
         <div>
@@ -102,7 +119,7 @@ export function PageHero(props: {
             <span>{props.a}</span> <span className={s.titleRed}>{props.b}</span>
           </h1>
           <p className={`t-lead ${s.lead}`} data-reveal style={d(200)}>
-            {props.lead}
+            <RichText text={props.lead} />
           </p>
           <div className={s.actions} data-reveal style={d(280)}>
             {props.actions}

@@ -1,5 +1,6 @@
 "use client";
 
+import RichText from "@/components/ui/RichText";
 import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { PLATFORMS } from "@/content/platforms";
@@ -158,7 +159,7 @@ export default function ServicesPage() {
                 label: t.chapters[id].stop,
                 title: t.chapters[id].title.replace(/\u00AD/g, ""),
                 statement: t.chapters[id].statement,
-                body: t.chapters[id].body,
+                body: <RichText text={t.chapters[id].body} />,
                 chips:
                   id === "distribution"
                     ? [...t.chapters[id].focus, ...t.distribution.destinations]

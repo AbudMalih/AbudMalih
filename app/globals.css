@@ -426,3 +426,17 @@ input:not([type="radio"]):not([type="checkbox"]),
 textarea {
   cursor: text;
 }
+
+/* contextual links inside body copy (components/ui/RichText.tsx) */
+.rich-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  transition: text-decoration-color 0.2s ease;
+}
+.rich-link:hover,
+.rich-link:focus-visible {
+  text-decoration-color: currentColor;
+}

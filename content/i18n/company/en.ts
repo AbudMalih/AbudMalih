@@ -20,7 +20,7 @@ const en: CompanyCopy = {
     city: "Cologne",
     country: "Germany",
     statement: "A trading company that connects products with markets.",
-    body: "Luna Trading is not tied to one product category. The company brings sourcing, product development, brand building and sales together in one shared commercial structure.",
+    body: "Luna Trading is not tied to one product category. The company brings [sourcing, product development, brand building and sales](/what-we-do) together in one shared commercial structure.",
     areasTag: "Orientation",
     areas: [
       "International trade",

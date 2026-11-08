@@ -105,7 +105,7 @@ const de: ImportCopy = {
     },
     {
       title: "Hersteller & Muster",
-      text: "Geeignete Hersteller finden, Angebote vergleichen, Muster prüfen.",
+      text: "[Geeignete Hersteller finden](/what-we-do#sourcing), Angebote vergleichen, Muster prüfen.",
     },
     {
       title: "Qualität vor Versand",
@@ -141,13 +141,13 @@ const de: ImportCopy = {
     },
     {
       title: "Vom Container zum Kunden",
-      text: "Import, Lager und Online-Verkauf aus einer Hand, ohne Übergabelücken.",
+      text: "Import, Lager und Online-Verkauf [aus einer Hand](/company), ohne Übergabelücken.",
     },
   ],
   channelsTag: "Vertrieb",
   channelsTitle: "Vom Container auf den Marktplatz.",
   channelsText:
-    "Nach der Ankunft bereiten wir Produkte für den Verkauf vor: Listing, Bilder, Texte und Logistik für die wichtigsten Kanäle.",
+    "Nach der Ankunft bereiten wir Produkte für den Verkauf vor: [Listing, Bilder, Texte](/what-we-do#ecommerce) und [Logistik](/what-we-do#distribution) für die wichtigsten Kanäle.",
   channelsNote:
     "Vertriebskanäle, für die wir Produkte vorbereiten. Keine Partnerschaften.",
   carriers:
@@ -218,7 +218,7 @@ const en: ImportCopy = {
     },
     {
       title: "Manufacturers & samples",
-      text: "Find suitable manufacturers, compare offers, check samples.",
+      text: "[Find suitable manufacturers](/what-we-do#sourcing), compare offers, check samples.",
     },
     {
       title: "Quality before shipment",
@@ -254,13 +254,13 @@ const en: ImportCopy = {
     },
     {
       title: "From container to customer",
-      text: "Import, warehousing and online sales from one source, without hand-over gaps.",
+      text: "Import, warehousing and online sales [from one source](/company), without hand-over gaps.",
     },
   ],
   channelsTag: "Sales",
   channelsTitle: "From the container to the marketplace.",
   channelsText:
-    "After arrival we prepare products for sale: listings, images, copy and logistics for the major channels.",
+    "After arrival we prepare products for sale: [listings, images, copy](/what-we-do#ecommerce) and [logistics](/what-we-do#distribution) for the major channels.",
   channelsNote: "Sales channels we prepare products for. Not partnerships.",
   carriers:
     "Booked with international shipping lines, rail operators and air carriers.",
@@ -329,7 +329,7 @@ const ar: ImportCopy = {
     },
     {
       title: "المصنّعون والعيّنات",
-      text: "إيجاد المصنّعين المناسبين ومقارنة العروض وفحص العيّنات.",
+      text: "[إيجاد المصنّعين المناسبين](/what-we-do#sourcing) ومقارنة العروض وفحص العيّنات.",
     },
     {
       title: "الجودة قبل الشحن",
@@ -365,13 +365,13 @@ const ar: ImportCopy = {
     },
     {
       title: "من الحاوية إلى العميل",
-      text: "الاستيراد والتخزين والبيع الإلكتروني من مصدر واحد دون فجوات.",
+      text: "الاستيراد والتخزين والبيع الإلكتروني [من مصدر واحد](/company) دون فجوات.",
     },
   ],
   channelsTag: "البيع",
   channelsTitle: "من الحاوية إلى المنصة.",
   channelsText:
-    "بعد الوصول نجهّز المنتجات للبيع: الإدراج والصور والنصوص والخدمات اللوجستية لأهم القنوات.",
+    "بعد الوصول نجهّز المنتجات للبيع: [الإدراج والصور والنصوص](/what-we-do#ecommerce) و[الخدمات اللوجستية](/what-we-do#distribution) لأهم القنوات.",
   channelsNote: "قنوات بيع نجهّز المنتجات لها. ليست شراكات.",
   carriers:
     "الحجز لدى شركات الشحن البحري الدولية ومشغّلي السكك الحديدية وشركات الشحن الجوي.",

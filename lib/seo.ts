@@ -9,6 +9,7 @@ import {
 
 import { absolute, SITE_ORIGIN } from "./origin";
 import { LEGAL_ENTITY } from "@/content/legal";
+import { plainText } from "./richtext";
 export { SITE_ORIGIN, SITE_HOST, INDEXING_ENABLED, absolute } from "./origin";
 
 /** The corporate share image (one image, language-neutral). */
@@ -153,7 +154,7 @@ export function serviceJsonLd(
   return {
     "@type": "Service",
     name,
-    description,
+    description: plainText(description),
     url: pageUrl(locale, path) + (fragment ? `#${fragment}` : ""),
     provider: { "@id": ORG_ID },
     inLanguage: LOCALE_META[locale].htmlLang,

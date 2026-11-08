@@ -20,7 +20,7 @@ const de: CompanyCopy = {
     city: "Köln",
     country: "Deutschland",
     statement: "Ein Handelsunternehmen, das Produkte und Märkte verbindet.",
-    body: "Luna Trading ist nicht auf eine Warengruppe festgelegt. Das Unternehmen verbindet Beschaffung, Produktentwicklung, Markenaufbau und Vertrieb in einer gemeinsamen kaufmännischen Struktur.",
+    body: "Luna Trading ist nicht auf eine Warengruppe festgelegt. Das Unternehmen verbindet [Beschaffung, Produktentwicklung, Markenaufbau und Vertrieb](/what-we-do) in einer gemeinsamen kaufmännischen Struktur.",
     areasTag: "Ausrichtung",
     areas: [
       "Internationaler Handel",
