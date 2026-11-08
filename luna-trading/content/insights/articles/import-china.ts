@@ -236,7 +236,7 @@ export const importChina: Article = {
         {
           t: "note",
           title: "Seit 1. Juli 2026: keine Zollfreiheit mehr bis 150 Euro",
-          text: "Die frühere Befreiung von Einfuhrabgaben für Sendungen mit einem Gesamtwert bis 150 Euro wurde mit Wirkung zum 1. Juli 2026 gestrichen. Ein pauschaler Zoll von 3 Euro je Warenkategorie gilt nur für bestimmte Fernabsatzsendungen bis 150 Euro, etwa über den Import-One-Stop-Shop. Gewerbliche Einfuhren für Ihr Unternehmen werden nach dem regulären Zollsatz verzollt.",
+          text: "Die frühere Befreiung von Einfuhrabgaben für Sendungen mit einem Gesamtwert bis 150 Euro ist mit Wirkung zum 1. Juli 2026 entfallen (Verordnung (EU) 2026/382). Übergangsweise gilt vom 1. Juli 2026 bis zum 1. Juli 2028 stattdessen ein pauschaler Zoll von 3 Euro je Ware in Sendungen mit einem Sachwert von höchstens 150 Euro, aber nur unter einer von zwei Voraussetzungen: Die Einfuhr ist über den Import-One-Stop-Shop (IOSS) von der Einfuhrumsatzsteuer befreit, oder die Waren sind in einer Postsendung im zollrechtlichen Sinn enthalten. Für Letzteres kommt es nach Auskunft des Zolls darauf an, dass es sich um Fernverkäufe handelt. Der deutsche Zoll erhebt die 3 Euro je Warenkategorie, also je Position der Zollanmeldung. Seit dem 1. November 2026 kommt bei Fernabsatzsendungen eine Bearbeitungsgebühr der Union von 2 Euro je Warenkategorie hinzu. Gewerbliche Einfuhren für Ihr Unternehmen fallen nicht unter diese Pauschale und werden nach dem regulären Zollsatz verzollt.",
         },
         { t: "h3", text: "Die Einfuhrumsatzsteuer" },
         {
@@ -279,12 +279,30 @@ export const importChina: Article = {
         { t: "h3", text: "Allgemeine Produktsicherheit (GPSR)" },
         {
           t: "p",
-          text: "Seit dem 13. Dezember 2024 gilt die Verordnung (EU) 2023/988 über die allgemeine Produktsicherheit für Verbraucherprodukte. Importeure müssen unter anderem ihren Namen, ihren eingetragenen Handelsnamen oder ihre eingetragene Marke sowie ihre Post- und E-Mail-Adresse angeben, und zwar auf dem Produkt oder, wenn das nicht möglich ist, auf der Verpackung oder in einer Begleitunterlage. Dazu kommen eine Gebrauchsanleitung und Sicherheitsinformationen in einer für Verbraucher leicht verständlichen Sprache, die der jeweilige Mitgliedstaat festlegt, sowie die Pflicht, eine Kopie der technischen Unterlagen zehn Jahre lang für die Marktüberwachung bereitzuhalten.",
+          text: "Seit dem 13. Dezember 2024 gilt die Verordnung (EU) 2023/988 über die allgemeine Produktsicherheit (GPSR). Sie erfasst Produkte, die für Verbraucher bestimmt sind oder voraussichtlich von Verbrauchern benutzt werden, und wirkt als Auffangregelung: Legt das EU-Recht für ein Produkt spezifische Sicherheitsanforderungen fest, gilt die GPSR nur für die Aspekte und Risiken, die dort nicht geregelt sind.",
+        },
+        {
+          t: "p",
+          text: "Für Verbraucherprodukte ohne spezifische EU-Harmonisierungsvorschriften müssen Importeure nach Artikel 11 GPSR unter anderem:",
+        },
+        {
+          t: "ul",
+          items: [
+            "vor dem Inverkehrbringen sicherstellen, dass das Produkt sicher ist und der Hersteller technische Unterlagen erstellt sowie das Produkt und seine Kontaktdaten gekennzeichnet hat,",
+            "ihren Namen, ihren eingetragenen Handelsnamen oder ihre eingetragene Marke sowie ihre Post- und E-Mail-Adresse angeben, und zwar auf dem Produkt oder, wenn das nicht möglich ist, auf der Verpackung oder in einer Begleitunterlage,",
+            "klare Anweisungen und Sicherheitsinformationen in einer für Verbraucher leicht verständlichen Sprache beifügen, die der jeweilige Mitgliedstaat festlegt,",
+            "eine Kopie der technischen Unterlagen zehn Jahre lang für die Marktüberwachung bereithalten,",
+            "bei einem gefährlichen Produkt unverzüglich Korrekturmaßnahmen sicherstellen und die Behörden über das Safety Business Gateway informieren.",
+          ],
+        },
+        {
+          t: "p",
+          text: "Für alle Verbraucherprodukte, auch solche mit CE-Kennzeichnung, gilt außerdem: Wer sie online anbietet, muss im Angebot unter anderem den Hersteller, gegebenenfalls die verantwortliche Person in der EU, Angaben zur Identifizierung des Produkts mit einer Abbildung sowie Warnhinweise nennen.",
         },
         { t: "h3", text: "CE-Kennzeichnung" },
         {
           t: "p",
-          text: "Die CE-Kennzeichnung ist keine allgemeine Pflicht, sondern gilt nur für Produkte, die unter bestimmte EU-Harmonisierungsvorschriften fallen, zum Beispiel Spielzeug, viele Elektrogeräte oder Funkanlagen. Für diese Produkte müssen Importeure vor dem Inverkehrbringen sicherstellen, dass der Hersteller die Konformitätsbewertung durchgeführt und die technischen Unterlagen erstellt hat, dass das Produkt die CE-Kennzeichnung trägt und die nötigen Unterlagen beiliegen. Eine Abschrift der Konformitätserklärung müssen Sie für die Marktüberwachung bereithalten.",
+          text: "Die CE-Kennzeichnung ist keine allgemeine Pflicht, sondern gilt nur für Produkte, die unter bestimmte EU-Harmonisierungsvorschriften fallen, zum Beispiel Spielzeug, viele Elektrogeräte oder Funkanlagen. Für diese Produkte ergeben sich die Importeurpflichten aus der jeweiligen Vorschrift statt aus Artikel 11 GPSR. Sie folgen einem einheitlichen EU-Muster: Importeure müssen vor dem Inverkehrbringen sicherstellen, dass der Hersteller die Konformitätsbewertung durchgeführt und die technischen Unterlagen erstellt hat, dass das Produkt die CE-Kennzeichnung trägt und die nötigen Unterlagen beiliegen. Auch hier geben Importeure ihren Namen und ihre Kontaktanschrift auf dem Produkt an, ersatzweise auf Verpackung oder Begleitunterlagen, und halten eine Abschrift der Konformitätserklärung für die Marktüberwachung bereit.",
         },
         { t: "h3", text: "Verpackungen" },
         {
@@ -296,8 +314,8 @@ export const importChina: Article = {
           t: "ul",
           items: [
             "Elektro- und Elektronikgeräte: Wer Geräte aus einem Drittland erstmals in Deutschland anbietet, gilt nach dem ElektroG als Hersteller und muss sich vor dem Inverkehrbringen bei der stiftung ear registrieren. Für Batterien gelten eigene Registrierungspflichten, ebenfalls bei der stiftung ear.",
-            "CO₂-Grenzausgleich (CBAM): Für Waren aus den Bereichen Zement, Eisen und Stahl, Aluminium, Düngemittel, Strom und Wasserstoff gilt seit 1. Januar 2026 die endgültige Phase. Wer mehr als 50 Tonnen solcher Waren im Jahr einführt, braucht den Status als zugelassener CBAM-Anmelder. Die erste CBAM-Erklärung mit Abgabe der Zertifikate ist bis 30. September 2027 fällig.",
-            "Entwaldungsfreie Lieferketten (EUDR): Für Rinder, Kakao, Kaffee, Ölpalme, Kautschuk, Soja und Holz sowie bestimmte daraus hergestellte Erzeugnisse gilt eine Sorgfaltspflicht. Große und mittlere Unternehmen müssen sie ab dem 30. Dezember 2026 erfüllen, Kleinst- und Kleinunternehmen ab dem 30. Juni 2027.",
+            "CO₂-Grenzausgleich (CBAM): Für Waren aus den Bereichen Zement, Eisen und Stahl, Aluminium, Düngemittel, Strom und Wasserstoff gilt seit 1. Januar 2026 die endgültige Phase. Von den Pflichten befreit ist, wer im Kalenderjahr insgesamt höchstens 50 Tonnen Eigenmasse solcher Waren einführt, gerechnet über alle betroffenen Warennummern. Diese Ausnahme gilt nicht für Strom und Wasserstoff. Wer die Schwelle überschreitet, unterliegt den Pflichten für alle in diesem Jahr eingeführten CBAM-Waren und darf sie nur als zugelassener CBAM-Anmelder einführen. Die erste CBAM-Erklärung mit Abgabe der Zertifikate für 2026 ist bis zum 30. September 2027 fällig.",
+            "Entwaldungsfreie Lieferketten (EUDR): Für Rinder, Kakao, Kaffee, Ölpalme, Kautschuk, Soja und Holz sowie bestimmte daraus hergestellte Erzeugnisse, die in Anhang I der Verordnung (EU) 2023/1115 aufgeführt sind, gelten ab dem 30. Dezember 2026 Sorgfaltspflichten. Die Sorgfaltserklärung gibt das Unternehmen ab, das ein Erzeugnis erstmals in der EU in Verkehr bringt. Kleinst- und Kleinunternehmen, die am 31. Dezember 2024 als solche niedergelassen waren, müssen die Pflichten erst ab dem 30. Juni 2027 erfüllen, ausgenommen Holzerzeugnisse, die bereits unter die EU-Holzhandelsverordnung fielen.",
             "Weitere Vorschriften: Je nach Produkt kommen etwa Beschränkungen für Chemikalien oder besondere Anforderungen an Lebensmittelkontaktmaterialien hinzu.",
           ],
         },
@@ -481,6 +499,12 @@ export const importChina: Article = {
           url: "https://www.zoll.de/DE/Fachthemen/Zoelle/Wegfall-der-150-Euro-Zollfreigrenze/wegfall-der-150-euro-zollfreigrenze_node.html",
         },
         {
+          title:
+            "Verordnung (EU) 2026/382 zur Abschaffung der schwellenbasierten Zollbefreiung",
+          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
+          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32026R0382",
+        },
+        {
           title: "Einfuhrumsatzsteuer: Bemessungsgrundlage",
           publisher: "Zoll online, Generalzolldirektion",
           url: "https://www.zoll.de/DE/Fachthemen/Steuern/Einfuhrumsatzsteuer/Bemessungsgrundlage/bemessungsgrundlage_node.html",
@@ -577,6 +601,12 @@ export const importChina: Article = {
           url: "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en",
         },
         {
+          title:
+            "Verordnung (EU) 2023/956 (CBAM), konsolidierte Fassung, Artikel 2a und Anhang VII",
+          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
+          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:02023R0956-20251020",
+        },
+        {
           title: "CBAM: communication and FAQs",
           publisher: "Europäische Kommission, GD Steuern und Zollunion",
           url: "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-communication-and-faqs_en",
@@ -585,6 +615,11 @@ export const importChina: Article = {
           title: "Regulation on Deforestation-free Products",
           publisher: "Europäische Kommission, GD Umwelt",
           url: "https://environment.ec.europa.eu/topics/forests/deforestation/regulation-deforestation-free-products_en",
+        },
+        {
+          title: "Verordnung (EU) 2025/2650 zur Änderung der EUDR",
+          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
+          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32025R2650",
         },
         {
           title:
