@@ -168,3 +168,136 @@ export function jsonLdGraph(nodes: object[]) {
     "@graph": nodes,
   }).replace(/</g, "\\u003c");
 }
+
+/* ------------------------------------------------------- knowledge section */
+
+/** Canonical + hreflang limited to the given languages (x-default → German, else the first). */
+export function alternatesAmong(
+  locale: Locale,
+  paths: Partial<Record<Locale, string>>,
+): Metadata["alternates"] {
+  const languages: Record<string, string> = {};
+  for (const l of LOCALES)
+    if (paths[l]) languages[LOCALE_META[l].htmlLang] = pageUrl(l, paths[l]!);
+  const def = paths.de ? "de" : (LOCALES.find((l) => paths[l]) as Locale);
+  languages["x-default"] = pageUrl(def, paths[def]!);
+  return { canonical: pageUrl(locale, paths[locale]!), languages };
+}
+
+/** Metadata for the knowledge listing or an article (og:type article when dates are given). */
+export function insightsMetadata(opts: {
+  locale: Locale;
+  paths: Partial<Record<Locale, string>>;
+  title: string;
+  description: string;
+  image?: { url: string; alt: string };
+  article?: { published: string; updated: string; section: string };
+}): Metadata {
+  const { locale, paths, title, description, image, article } = opts;
+  const d = getDictionary(locale);
+  const full = d.meta.titleTemplate.replace("%s", title);
+  const url = pageUrl(locale, paths[locale]!);
+  const images = image
+    ? [{ url: absolute(image.url), width: 1600, height: 1195, alt: image.alt }]
+    : [OG_IMAGE];
+  return {
+    title,
+    description,
+    alternates: alternatesAmong(locale, paths),
+    openGraph: {
+      type: article ? "article" : "website",
+      url,
+      siteName: "Luna Trading GmbH",
+      title: full,
+      description,
+      locale: LOCALE_META[locale].og,
+      images,
+      ...(article
+        ? {
+            publishedTime: article.published,
+            modifiedTime: article.updated,
+            authors: ["Luna Trading"],
+            section: article.section,
+          }
+        : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: full,
+      description,
+      images: [images[0].url],
+    },
+  };
+}
+
+/** Breadcrumb with any number of levels after Home: [{ name, path }]. */
+export function breadcrumbTrailJsonLd(
+  locale: Locale,
+  trail: { name: string; path: string }[],
+) {
+  const d = getDictionary(locale);
+  const all = [{ name: d.nav.home, path: "/" }, ...trail];
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: all.map((x, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: x.name,
+      item: pageUrl(locale, x.path),
+    })),
+  };
+}
+
+export function articleJsonLd(o: {
+  locale: Locale;
+  path: string;
+  headline: string;
+  description: string;
+  image: string;
+  published: string;
+  updated: string;
+  section: string;
+}) {
+  const url = pageUrl(o.locale, o.path);
+  return {
+    "@type": "Article",
+    headline: o.headline,
+    description: plainText(o.description),
+    image: [absolute(o.image)],
+    datePublished: o.published,
+    dateModified: o.updated,
+    author: { "@id": ORG_ID },
+    publisher: { "@id": ORG_ID },
+    inLanguage: LOCALE_META[o.locale].htmlLang,
+    articleSection: o.section,
+    mainEntityOfPage: url,
+    url,
+  };
+}
+
+export function collectionJsonLd(
+  locale: Locale,
+  path: string,
+  name: string,
+  description: string,
+  items: { name: string; path: string }[],
+) {
+  return {
+    "@type": "CollectionPage",
+    name,
+    description,
+    url: pageUrl(locale, path),
+    inLanguage: LOCALE_META[locale].htmlLang,
+    isPartOf: { "@id": SITE_ID },
+    publisher: { "@id": ORG_ID },
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: items.map((x, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: x.name,
+        url: pageUrl(locale, x.path),
+      })),
+    },
+  };
+}

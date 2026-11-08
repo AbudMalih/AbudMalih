@@ -33,6 +33,7 @@ const de: Dictionary = {
     import: "Import",
     brands: "Marken",
     company: "Unternehmen",
+    insights: "Wissen",
     contact: "Kontakt",
     cta: "Kontakt",
   },

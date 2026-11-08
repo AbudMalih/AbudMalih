@@ -33,7 +33,7 @@ function useCologneTime(locale: string) {
  * a way back to the top.
  */
 export default function Footer() {
-  const { dict, href, locale } = useI18n();
+  const { dict, href, locale, insights } = useI18n();
   const year = new Date().getFullYear();
   const time = useCologneTime(locale);
   const toTop = () =>
@@ -116,7 +116,9 @@ export default function Footer() {
           <nav aria-label={dict.a11y.footerNav} className={styles.col}>
             <h2 className={styles.h}>{dict.footer.navigate}</h2>
             <ul className={styles.list}>
-              {NAV.map((n) => (
+              {NAV.filter(
+                (n) => n.key !== "insights" || insights.includes(locale),
+              ).map((n) => (
                 <li key={n.href}>
                   <Link
                     href={href(n.href)}

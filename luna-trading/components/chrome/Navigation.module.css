@@ -603,3 +603,18 @@ html:global(.intro-pending) .cta:not(.ctaPanel) {
     width: 100%;
   }
 }
+
+/* "Wissen / Insights" in the desktop capsule only where there is room for it;
+   below 1440px it is reached through the menu and the footer */
+@media (max-width: 1439px) {
+  .wideOnly {
+    display: none;
+  }
+}
+/* with the sixth entry visible (1440–1599px), the capsule tightens slightly
+   so it keeps its gap to the language switch; wider screens are unchanged */
+@media (min-width: 1440px) and (max-width: 1599px) {
+  .links ul:has(.wideOnly) a {
+    padding-inline: 12px;
+  }
+}

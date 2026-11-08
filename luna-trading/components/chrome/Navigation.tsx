@@ -26,7 +26,11 @@ import styles from "./Navigation.module.css";
  *  - Dialog semantics, focus trap, Escape, scroll lock, focus return.
  */
 export default function Navigation() {
-  const { dict, href, locale } = useI18n();
+  const { dict, href, locale, insights } = useI18n();
+  // the knowledge section appears only where it has published articles
+  const nav = NAV.filter(
+    (n) => n.key !== "insights" || insights.includes(locale),
+  );
   const quote = QUOTE_COPY[locale].nav;
   const contactHref = href(
     NAV.find((n) => n.key === "contact")?.href ?? "/contact",
@@ -75,6 +79,8 @@ export default function Navigation() {
 
   useEffect(() => setOpen(false), [pathname]);
   const current = canonicalPath(stripLocale(pathname || "/"));
+  const isCurrent = (h: string) =>
+    current === h || (h === "/insights" && current.startsWith("/insights/"));
 
   return (
     <>
@@ -102,17 +108,24 @@ export default function Navigation() {
           <div className={styles.group}>
             <nav className={styles.links} aria-label={dict.a11y.primaryNav}>
               <ul>
-                {NAV.filter((n) => n.key !== "contact").map((n) => (
-                  <li key={n.href}>
-                    <Link
-                      href={href(n.href)}
-                      data-cursor="link"
-                      aria-current={current === n.href ? "page" : undefined}
+                {nav
+                  .filter((n) => n.key !== "contact")
+                  .map((n) => (
+                    <li
+                      key={n.href}
+                      className={
+                        n.key === "insights" ? styles.wideOnly : undefined
+                      }
                     >
-                      {dict.nav[n.key]}
-                    </Link>
-                  </li>
-                ))}
+                      <Link
+                        href={href(n.href)}
+                        data-cursor="link"
+                        aria-current={isCurrent(n.href) ? "page" : undefined}
+                      >
+                        {dict.nav[n.key]}
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             </nav>
             <div className={styles.lang}>
@@ -169,13 +182,13 @@ export default function Navigation() {
       >
         <div className={styles.panelInner}>
           <ol className={styles.big}>
-            {NAV.map((n, i) => (
+            {nav.map((n, i) => (
               <li key={n.href} style={{ ["--i" as string]: i }}>
                 <Link
                   href={href(n.href)}
                   onClick={close}
                   data-cursor="link"
-                  aria-current={current === n.href ? "page" : undefined}
+                  aria-current={isCurrent(n.href) ? "page" : undefined}
                 >
                   <span className={`t-label ${styles.num}`}>
                     {String(i).padStart(2, "0")}
