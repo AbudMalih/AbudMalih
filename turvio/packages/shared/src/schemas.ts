@@ -191,6 +191,22 @@ export const Vehicle = z.object({
 });
 export type Vehicle = z.infer<typeof Vehicle>;
 
+/**
+ * Where a tour ends: back at its depot (default), at a chosen address, or at its last stop
+ * (no return trip in optimization, distance or ETA).
+ */
+export const TourEndMode = z.enum(["depot", "address", "last_stop"]);
+export type TourEndMode = z.infer<typeof TourEndMode>;
+
+/** A tour's own start or end address (overrides the depot). */
+export const TourPlace = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  /** Address shown to people, e.g. "Hauptstraße 1, 30159 Hannover". */
+  label: z.string().trim().min(1).max(200).nullable().optional(),
+});
+export type TourPlace = z.infer<typeof TourPlace>;
+
 export const Tour = z.object({
   id: z.string().min(1),
   organizationId: z.string().min(1),
@@ -203,6 +219,10 @@ export const Tour = z.object({
   /** Start/end override; defaults to the depot location. */
   startLocation: GeoPoint.optional(),
   endLocation: GeoPoint.optional(),
+  startLabel: z.string().nullable().optional(),
+  endLabel: z.string().nullable().optional(),
+  /** Missing on older data: "address" when endLocation is set, else "depot" (see tourEndPoint). */
+  endMode: TourEndMode.optional(),
   plannedStartMinute: MinuteOfDay.default(8 * 60),
   startedAt: z.iso.datetime().optional(),
   finishedAt: z.iso.datetime().optional(),

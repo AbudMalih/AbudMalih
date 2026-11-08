@@ -237,6 +237,7 @@ export const driverDe: Record<DriverMessageKey, string> = {
   "optimize.end": "Ende",
   "optimize.endDepot": "Zurück zum Depot",
   "optimize.endNone": "Letzter Stopp",
+  "optimize.endAddress": "Tour-Endadresse",
   "optimize.locks": "Fixierte Stopps beibehalten ({n})",
   "optimize.run": "Optimieren",
   "optimize.running": "Optimiere…",

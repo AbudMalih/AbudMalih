@@ -1,13 +1,21 @@
-import { NewStopInput, OptimizeRequest, StopStatus, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
+import { NewStopInput, OptimizeRequest, StopStatus, TourPlace, haversineMeters, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
 import { ApiError, type Tx } from "../db";
-import { STOP_SELECT, orgTimeZone, toStop, toTour, toUnassigned, type StopRow, type TourRow } from "../data/dispatch";
+import { STOP_SELECT, orgTimeZone, toStop, toTour, toUnassigned, tourEndOf, tourStartOf, type StopRow, type TourRow } from "../data/dispatch";
 
 const Uuid = z.string().uuid();
 const IdParams = OrgParams.extend({ id: Uuid });
 const Minute = z.number().int().min(0).max(1439);
+
+/** Where the tour ends: its depot (default), a chosen address, or its last stop (no return trip). */
+const TourEnd = z.discriminatedUnion("mode", [
+  z.object({ mode: z.literal("depot") }),
+  z.object({ mode: z.literal("last_stop") }),
+  TourPlace.extend({ mode: z.literal("address") }),
+]);
+type TourEnd = z.infer<typeof TourEnd>;
 
 const CreateTour = z.object({
   depotId: Uuid,
@@ -16,6 +24,9 @@ const CreateTour = z.object({
   plannedStartMinute: Minute.default(480),
   driverId: Uuid.nullable().default(null),
   vehicleId: Uuid.nullable().default(null),
+  /** Own start address instead of the depot (null/absent = depot). */
+  start: TourPlace.nullable().optional(),
+  end: TourEnd.optional(),
 });
 
 const UpdateTour = z.object({
@@ -24,7 +35,31 @@ const UpdateTour = z.object({
   plannedStartMinute: Minute.optional(),
   driverId: Uuid.nullable().optional(),
   vehicleId: Uuid.nullable().optional(),
+  /** null = back to the depot; absent = unchanged. */
+  start: TourPlace.nullable().optional(),
+  end: TourEnd.optional(),
 });
+
+/** Farther than this from the tour's depot is almost always a typo or swapped latitude/longitude. */
+const MAX_PLACE_KM = 1000;
+
+type Place = { lat: number; lng: number };
+
+/** Rejects start/end points that cannot be meant (0,0 or far away from the depot). */
+async function assertPlaces(tx: Tx, orgId: string, depotId: string, places: { what: "start" | "end"; p: Place | null | undefined }[]) {
+  const given = places.filter((x): x is { what: "start" | "end"; p: Place } => !!x.p);
+  if (!given.length) return;
+  const depot = (await tx.query<Place>(`select lat, lng from depots where id = $1 and organization_id = $2`, [depotId, orgId])).rows[0];
+  if (!depot) throw new ApiError(404, "not_found", "Depot not found");
+  for (const { what, p } of given) {
+    if (p.lat === 0 && p.lng === 0) throw new ApiError(422, "invalid_location", `The ${what} address has no real position (0, 0)`);
+    if (haversineMeters(depot, p) > MAX_PLACE_KM * 1000)
+      throw new ApiError(422, "invalid_location", `The ${what} address is more than ${MAX_PLACE_KM} km from the depot – check the address (latitude and longitude swapped?)`);
+  }
+}
+
+const endColumns = (e: TourEnd) =>
+  e.mode === "address" ? { mode: "address", lat: e.lat, lng: e.lng, label: e.label ?? null } : { mode: e.mode, lat: null, lng: null, label: null };
 
 const CreateStops = z
   .object({
@@ -179,7 +214,7 @@ async function vehicleFor(tx: Tx, tour: TourRow, nowMinute: number): Promise<Veh
         )
       ).rows[0]
     : undefined;
-  const tourStart = tour.start_lat != null && tour.start_lng != null ? { lat: tour.start_lat, lng: tour.start_lng } : null;
+  const tourStart = tour.start_lat != null && tour.start_lng != null ? tourStartOf(tour, depot) : null;
   return {
     tour,
     depot,
@@ -208,6 +243,8 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     if (!b) return;
     const row = await db.asUser(claims(req), async (tx) => {
       await assertAvailable(tx, null, b.date, b.driverId, b.vehicleId);
+      await assertPlaces(tx, orgId, b.depotId, [{ what: "start", p: b.start }, { what: "end", p: b.end?.mode === "address" ? b.end : null }]);
+      const end = endColumns(b.end ?? { mode: "depot" });
       let name = b.name;
       if (!name) {
         const depot = (await tx.query<{ name: string }>(`select name from depots where id = $1 and organization_id = $2`, [b.depotId, orgId])).rows[0];
@@ -218,8 +255,10 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       }
       return (
         await tx.query<TourRow>(
-          `insert into tours (organization_id, depot_id, name, tour_date, planned_start_minute, driver_id, vehicle_id) values ($1,$2,$3,$4,$5,$6,$7) returning *`,
-          [orgId, b.depotId, name, b.date, b.plannedStartMinute, b.driverId, b.vehicleId],
+          `insert into tours (organization_id, depot_id, name, tour_date, planned_start_minute, driver_id, vehicle_id,
+                              start_lat, start_lng, start_label, end_mode, end_lat, end_lng, end_label)
+           values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) returning *`,
+          [orgId, b.depotId, name, b.date, b.plannedStartMinute, b.driverId, b.vehicleId, b.start?.lat ?? null, b.start?.lng ?? null, b.start?.label ?? null, end.mode, end.lat, end.lng, end.label],
         )
       ).rows[0]!;
     });
@@ -239,14 +278,27 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       const cur = await loadTour(tx, orgId, id);
       if (cur.status === "completed") throw new ApiError(422, "invalid_operation", "Completed tours cannot be changed");
       await assertAvailable(tx, id, cur.tour_date, b.driverId, b.vehicleId);
+      await assertPlaces(tx, orgId, cur.depot_id, [{ what: "start", p: b.start }, { what: "end", p: b.end?.mode === "address" ? b.end : null }]);
+      const end = b.end ? endColumns(b.end) : null;
       const { rows } = await tx.query<TourRow>(
         `update tours set
            name = coalesce($4, name),
            planned_start_minute = coalesce($5, planned_start_minute),
            driver_id = case when $6 then $7::uuid else driver_id end,
-           vehicle_id = case when $8 then $9::uuid else vehicle_id end
+           vehicle_id = case when $8 then $9::uuid else vehicle_id end,
+           start_lat = case when $10 then $11::float8 else start_lat end,
+           start_lng = case when $10 then $12::float8 else start_lng end,
+           start_label = case when $10 then $13::text else start_label end,
+           end_mode = coalesce($14::text, end_mode),
+           end_lat = case when $14::text is not null then $15::float8 else end_lat end,
+           end_lng = case when $14::text is not null then $16::float8 else end_lng end,
+           end_label = case when $14::text is not null then $17::text else end_label end
          where id = $1 and organization_id = $2 and version = $3 returning *`,
-        [id, orgId, b.expectedVersion, b.name ?? null, b.plannedStartMinute ?? null, b.driverId !== undefined, b.driverId ?? null, b.vehicleId !== undefined, b.vehicleId ?? null],
+        [
+          id, orgId, b.expectedVersion, b.name ?? null, b.plannedStartMinute ?? null, b.driverId !== undefined, b.driverId ?? null, b.vehicleId !== undefined, b.vehicleId ?? null,
+          b.start !== undefined, b.start?.lat ?? null, b.start?.lng ?? null, b.start?.label ?? null,
+          end?.mode ?? null, end?.lat ?? null, end?.lng ?? null, end?.label ?? null,
+        ],
       );
       if (!rows[0]) throw new ApiError(409, "version_conflict", "The tour was changed by someone else. Reload and try again.");
       return rows[0];
@@ -475,8 +527,8 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     const locked = opts.respectLocks ? input.stops.filter((s) => s.locked) : [];
     const located = input.stops.filter((s) => s.lat != null && s.lng != null && !locked.includes(s));
     if (located.length === 0) return problem(reply, 422, "nothing_to_optimize", "This tour has no open, unlocked stops with a map position");
-    const tourEnd = input.v.tour.end_lat != null && input.v.tour.end_lng != null ? { lat: input.v.tour.end_lat, lng: input.v.tour.end_lng } : input.v.depot;
-    const end = opts.end === "none" ? undefined : opts.end === "depot" ? input.v.depot : (opts.end ?? tourEnd);
+    // Explicit choice in the request, else what the tour is planned with (undefined = last stop).
+    const end = opts.end === "none" ? undefined : opts.end === "depot" ? input.v.depot : opts.end ? opts.end : tourEndOf(input.v.tour, input.v.depot);
     const request = OptimizeRequest.parse({
       vehicles: [
         {
@@ -536,6 +588,11 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         if (v && v.version !== opts.expectedVersion) throw new ApiError(409, "version_conflict", "The tour was changed by someone else. Reload and try again.");
       }
       await tx.query(`select set_tour_sequence($1, $2::uuid[], $3::jsonb)`, [id, ordered, JSON.stringify(meta)]);
+      // An explicit end choice is kept for the tour, so its road route and live ETA end there too.
+      if (opts.end) {
+        const e = opts.end === "none" ? { mode: "last_stop", lat: null, lng: null } : opts.end === "depot" ? { mode: "depot", lat: null, lng: null } : { mode: "address", ...opts.end };
+        await tx.query(`select set_tour_end($1, $2, $3, $4)`, [id, e.mode, e.lat, e.lng]);
+      }
       return tourWithStops(tx, orgId, id);
     });
     return { ...saved, preview: false, result: meta };
@@ -576,7 +633,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       vehicles: input.tours.map((v) => ({
         id: v.tour.id,
         start: v.start,
-        end: v.depot,
+        end: tourEndOf(v.tour, v.depot),
         shiftStart: v.shiftStart,
         maxShiftMinutes: v.maxShift,
         capacity: v.capacity ?? undefined,

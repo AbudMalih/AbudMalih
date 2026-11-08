@@ -1,5 +1,6 @@
 "use client";
 
+import type { TourEndsPatch } from "../components/TourEndsDialog";
 import {
   dispatchKpis,
   filterByDepot,
@@ -75,7 +76,7 @@ interface DispatchState {
   selectStop: (id: string | null, tourId?: string | null) => void;
   // Persistent operations (API). All reload the view on success.
   createTour: (input: { depotId: string; plannedStartMinute: number; driverId: string | null; vehicleId: string | null; name?: string }) => Promise<Tour>;
-  updateTour: (tour: Tour, patch: { name?: string; plannedStartMinute?: number; driverId?: string | null; vehicleId?: string | null }) => Promise<Tour>;
+  updateTour: (tour: Tour, patch: { name?: string; plannedStartMinute?: number; driverId?: string | null; vehicleId?: string | null } & TourEndsPatch) => Promise<Tour>;
   deleteTour: (tour: Tour) => Promise<void>;
   publishTour: (tour: Tour) => Promise<void>;
   unpublishTour: (tour: Tour) => Promise<void>;

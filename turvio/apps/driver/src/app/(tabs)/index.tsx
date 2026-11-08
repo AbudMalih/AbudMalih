@@ -1,4 +1,4 @@
-import { isOpen, routeMetrics, tourProgress } from "@turvio/shared";
+import { isOpen, routeMetrics, tourEndPoint, tourProgress, tourStartPoint } from "@turvio/shared";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Image, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
@@ -32,7 +32,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const progress = useMemo(() => tourProgress(stops), [stops]);
-  const metrics = useMemo(() => (depot ? routeMetrics(tour?.startLocation ?? depot.location, stops, tour?.endLocation ?? depot.location) : null), [depot, stops, tour]);
+  const metrics = useMemo(() => (depot ? routeMetrics(tourStartPoint(tour ?? {}, depot.location), stops, tourEndPoint(tour ?? {}, depot.location)) : null), [depot, stops, tour]);
   const next = stops.find((s) => isOpen(s.status));
   const name = (user?.name ?? driver?.displayName ?? "").split(" ")[0] ?? "";
   const unlocated = stops.filter((s) => isOpen(s.status) && !s.location).length;

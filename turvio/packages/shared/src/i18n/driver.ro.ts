@@ -238,6 +238,7 @@ export const driverRo: Record<DriverMessageKey, string> = {
   "optimize.end": "Final",
   "optimize.endDepot": "Înapoi la depozit",
   "optimize.endNone": "Ultima oprire",
+  "optimize.endAddress": "Adresa de final a turei",
   "optimize.locks": "Păstrează opririle blocate ({n})",
   "optimize.run": "Optimizează",
   "optimize.running": "Se optimizează…",

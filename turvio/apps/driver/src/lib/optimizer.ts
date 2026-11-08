@@ -1,10 +1,13 @@
 import { buildServerUrl, serverUrlOverride } from "./serverUrl";
-import { isOpen, orderStopsLocally, resequence, sortBySequence, type Depot, type GeoPoint, type Stop, type Tour } from "@turvio/shared";
+import { isOpen, orderStopsLocally, resequence, sortBySequence, tourEndPoint, tourStartPoint, type Depot, type GeoPoint, type Stop, type Tour } from "@turvio/shared";
 
 export interface OptimizeOptions {
   /** Start from this point (device position) instead of the depot / last completed stop. */
   start?: GeoPoint;
-  /** "depot" (default) = return to the depot, "none" = end at the last stop. */
+  /**
+   * Leave out = as planned for the tour (depot, its end address or its last stop);
+   * "depot" = back to the depot, "none" = end at the last stop.
+   */
   end?: "depot" | "none";
   /** Locked stops keep their position (default true). */
   respectLocks?: boolean;
@@ -49,8 +52,8 @@ export function optimizeLocally(tour: Tour, depot: Depot, stops: Stop[], opts: O
   const locked = opts.respectLocks === false ? [] : open.filter((s) => s.locked);
   const free = open.filter((s) => !locked.includes(s));
   const lastClosed = closed.filter((s) => s.location).at(-1)?.location;
-  const from = opts.start ?? lastClosed ?? tour.startLocation ?? depot.location;
-  const end = opts.end === "none" ? undefined : (tour.endLocation ?? depot.location);
+  const from = opts.start ?? lastClosed ?? tourStartPoint(tour, depot.location);
+  const end = opts.end === "none" ? undefined : opts.end === "depot" ? depot.location : tourEndPoint(tour, depot.location);
   const local = orderStopsLocally(free, from, end);
   const queue = [...local.stops];
   const merged = open.map((s) => (locked.includes(s) ? s : queue.shift()!));

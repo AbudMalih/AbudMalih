@@ -42,6 +42,10 @@ DEPOT = GeoPoint(lat=52.4117, lng=9.8296)
 # (TURVIO_CITY_ADDRESSES, columns area;street;house_number;postcode;city;lat;lng) and a depot in
 # a commercial area of that city (illustrative positions, not company sites).
 CITY = os.environ.get("BENCH_CITY")
+# BENCH_END=open: tours end at their last stop (no return trip); every method is planned and scored
+# that way. The previous solver ("legacy_*") gets the same request it got in production: no end
+# point – which it planned as a round trip (the defect fixed on 2026-11-08).
+OPEN_END = os.environ.get("BENCH_END", "depot") == "open"
 CITY_DEPOTS = {
     "Hannover": GeoPoint(lat=52.4117, lng=9.8296),  # Lahe
     "Kassel": GeoPoint(lat=51.2873, lng=9.4720),  # Waldau industrial area
@@ -132,7 +136,7 @@ class Eval:
 
 
 def evaluate(order: list[int], stops: list[BStop], m: Matrix, unassigned: int = 0) -> Eval:
-    """order: indices into stops. Node 0 = depot (start and end)."""
+    """order: indices into stops. Node 0 = depot (start, and end unless OPEN_END)."""
     dur, dist = m.durations_s, m.distances_m
     t = SHIFT_START * 60
     prev = 0
@@ -153,9 +157,10 @@ def evaluate(order: list[int], stops: list[BStop], m: Matrix, unassigned: int = 
                 late_min += (t - s.tw[1] * 60) / 60
         t += s.service_s
         prev = node
-    drive += dur[prev][0]
-    d += dist[prev][0]
-    t += dur[prev][0]
+    if not OPEN_END:
+        drive += dur[prev][0]
+        d += dist[prev][0]
+        t += dur[prev][0]
 
     def reentries(key) -> int:
         seen, cur, count = set(), None, 0
@@ -209,7 +214,8 @@ def local_search(order: list[int], m: Matrix, max_seconds: float = 30.0) -> list
     route = [0] + [i + 1 for i in order] + [0]
 
     def cost(r):
-        return sum(dur[r[k]][r[k + 1]] for k in range(len(r) - 1))
+        # Open end: the closing edge back to the depot is free.
+        return sum(dur[r[k]][r[k + 1]] for k in range(len(r) - (2 if OPEN_END else 1)))
 
     best = cost(route)
     deadline = time.monotonic() + max_seconds
@@ -257,7 +263,7 @@ def vroom_solver(stops: list[BStop], m: Matrix, max_shift: int) -> tuple[list[in
     p = vroom.Input()
     p.set_durations_matrix(profile="car", matrix_input=m.durations_s)
     start = SHIFT_START * 60
-    p.add_vehicle([vroom.Vehicle(1, start=0, end=0, time_window=vroom.TimeWindow(start, start + max_shift * 60))])
+    p.add_vehicle([vroom.Vehicle(1, start=0, **({} if OPEN_END else {"end": 0}), time_window=vroom.TimeWindow(start, start + max_shift * 60))])
     jobs = []
     for i, s in enumerate(stops):
         kw = {"time_windows": [vroom.TimeWindow(s.tw[0] * 60, s.tw[1] * 60)]} if s.tw else {}
@@ -281,7 +287,7 @@ def sorted_by_address(stops: list[BStop]) -> list[int]:
 def turvio_solver(stops: list[BStop], m: Matrix, seconds: int, max_shift: int, solve_fn, overtime: int | None = None) -> tuple[list[int], int, float]:
     req = OptimizeRequest(
         overtime_penalty_per_minute=overtime,
-        vehicles=[Vehicle(id="v", start=DEPOT, end=DEPOT, shift_start=SHIFT_START, max_shift_minutes=max_shift)],
+        vehicles=[Vehicle(id="v", start=DEPOT, end=None if OPEN_END else DEPOT, shift_start=SHIFT_START, max_shift_minutes=max_shift)],
         stops=[
             Stop(
                 id=s.id,
@@ -424,7 +430,7 @@ def main() -> None:
 def save(rows_out: list[Row], out_dir: str, label: str) -> None:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    prefix = (CITY or "hannover").lower()
+    prefix = (CITY or "hannover").lower() + ("-open-end" if OPEN_END else "")
     (out / f"{prefix}-{label}.json").write_text(
         json.dumps([{"size": r.size, "method": r.method, "seconds": r.seconds, **r.ev.__dict__, **r.extra} for r in rows_out], indent=1)
     )

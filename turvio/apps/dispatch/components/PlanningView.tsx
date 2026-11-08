@@ -2,7 +2,7 @@
 
 import { formatClock, parseMinuteOfDay, type Driver, type TourSummary, type Vehicle } from "@turvio/shared";
 import { Avatar, Badge, Button, Card, CardHeader, Checkbox, Dialog, EmptyState, Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger, Tooltip, cn, toast } from "@turvio/web-ui/ds";
-import { ArrowUpFromLine, CalendarX2, ChevronDown, Loader2, PackagePlus, Plus, Send, Sparkles, Star, Truck, UserRound, Wand2 } from "lucide-react";
+import { ArrowUpFromLine, CalendarX2, ChevronDown, Loader2, MapPinned, PackagePlus, Plus, Send, Sparkles, Star, Truck, UserRound, Wand2 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { errorMessage } from "../lib/api";
 import { driverBusy, tourColor, vehicleBusy } from "../lib/helpers";
@@ -11,6 +11,7 @@ import { useDispatch } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { TourStatusBadge } from "./StatusBadge";
+import { TourEndsDialog, tourEndsSummary } from "./TourEndsDialog";
 import { TourDetailSheet } from "./TourDetail";
 
 const selectCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
@@ -64,6 +65,7 @@ function TourCard({ s }: { s: TourSummary }) {
   const { scoped, updateTour, selectTour, optimizeTour, publishTour } = useDispatch();
   const [busy, setBusy] = useState<null | "optimize" | "assign">(null);
   const [publishing, setPublishing] = useState(false);
+  const [endsOpen, setEndsOpen] = useState(false);
   const drivers = scoped.drivers.filter((d) => d.depotId === s.depot.id && d.active);
   const vehicles = scoped.vehicles.filter((v) => v.depotId === s.depot.id);
   const locked = s.tour.status === "completed";
@@ -110,6 +112,16 @@ function TourCard({ s }: { s: TourSummary }) {
           <div className="text-xs text-muted">
             {s.depot.name} · start {formatClock(s.tour.plannedStartMinute)}
           </div>
+          <button
+            onClick={() => setEndsOpen(true)}
+            disabled={locked}
+            className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-xs text-ink-2 hover:text-brand-700 disabled:opacity-60"
+            title="Where the tour starts and ends"
+          >
+            <MapPinned className="size-3.5 shrink-0" />
+            <span className="truncate">{tourEndsSummary(s.tour, s.depot)}</span>
+          </button>
+          {endsOpen && <TourEndsDialog tour={s.tour} depot={s.depot} open={endsOpen} onOpenChange={setEndsOpen} />}
         </div>
         <div className="flex flex-col items-end gap-1">
           <TourStatusBadge status={s.status} />

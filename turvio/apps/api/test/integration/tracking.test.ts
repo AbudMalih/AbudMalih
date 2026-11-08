@@ -125,6 +125,17 @@ describe.runIf(available)("live tracking API", () => {
     expect((await env.as(U.driverHannover2, "GET", `/v1/orgs/${org()}/tours/${tourId}/eta`)).statusCode).toBe(403);
   });
 
+  it("live ETA of a tour that ends at its last stop has no trip back", async () => {
+    const v = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/tours/${tourId}`)).json().tour.version;
+    expect((await env.as(U.dispatcherHannover, "PATCH", `/v1/orgs/${org()}/tours/${tourId}`, { expectedVersion: v, end: { mode: "last_stop" } })).statusCode).toBe(200);
+    const eta = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/tours/${tourId}/eta`)).json();
+    expect(eta).toMatchObject({ source: "osrm", remainingMeters: 3 * 2000, remainingDriveSeconds: 3 * 300 });
+    // Finish = last stop's ETA + its service time; no 5-minute drive back.
+    expect(eta.finishMinute - eta.stops.at(-1).etaMinute).toBeLessThan(5);
+    const v2 = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/tours/${tourId}`)).json().tour.version;
+    await env.as(U.dispatcherHannover, "PATCH", `/v1/orgs/${org()}/tours/${tourId}`, { expectedVersion: v2, end: { mode: "depot" } });
+  });
+
   it("re-optimizing a running tour starts from the fresh GPS position", async () => {
     const r = await env.as(U.driverHannover1, "POST", `/v1/orgs/${org()}/tours/${tourId}/optimize`, {});
     expect(r.statusCode).toBe(200);

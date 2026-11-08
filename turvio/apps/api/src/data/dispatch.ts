@@ -77,6 +77,10 @@ export interface TourRow {
   start_lng: number | null;
   end_lat: number | null;
   end_lng: number | null;
+  /** Added in 20261114000100_tour_start_end (absent on databases without it). */
+  end_mode?: "depot" | "address" | "last_stop";
+  start_label?: string | null;
+  end_label?: string | null;
   started_at: Date | null;
   finished_at: Date | null;
   version: number;
@@ -97,6 +101,9 @@ export const toTour = (r: TourRow): Tour => ({
   plannedStartMinute: r.planned_start_minute,
   startLocation: r.start_lat != null && r.start_lng != null ? { lat: r.start_lat, lng: r.start_lng } : undefined,
   endLocation: r.end_lat != null && r.end_lng != null ? { lat: r.end_lat, lng: r.end_lng } : undefined,
+  startLabel: r.start_label ?? null,
+  endLabel: r.end_label ?? null,
+  endMode: r.end_mode ?? (r.end_lat != null && r.end_lng != null ? "address" : "depot"),
   startedAt: iso(r.started_at),
   finishedAt: iso(r.finished_at),
   version: r.version,
@@ -215,4 +222,16 @@ export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | 
     stops: stops.rows.filter((s) => s.tour_id).map(toStop),
     unassigned: stops.rows.filter((s) => !s.tour_id).map(toUnassigned),
   };
+}
+
+type Point = { lat: number; lng: number };
+/** The tour's own start address, else the depot. */
+export function tourStartOf(t: Pick<TourRow, "start_lat" | "start_lng">, depot: Point): Point {
+  return t.start_lat != null && t.start_lng != null ? { lat: t.start_lat, lng: t.start_lng } : depot;
+}
+/** Where the tour ends; undefined = at its last stop (no return trip). */
+export function tourEndOf(t: Pick<TourRow, "end_lat" | "end_lng" | "end_mode">, depot: Point): Point | undefined {
+  if (t.end_mode === "last_stop") return undefined;
+  if (t.end_mode !== "depot" && t.end_lat != null && t.end_lng != null) return { lat: t.end_lat, lng: t.end_lng };
+  return depot;
 }

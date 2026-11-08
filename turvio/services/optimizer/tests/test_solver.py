@@ -87,8 +87,12 @@ def test_express_deadline_is_met_before_cheaper_order():
     # "f" (far west) must be served within the first 15 minutes of the shift.
     stops[5].update(priority=True, timeWindow={"start": 480, "end": 495})
     res = solve(req(stops))
-    assert visit_ids(res)[0] == "f"
+    arrivals = {v.stop_id: v.arrival_minute for v in res.routes[0].visits}
+    assert arrivals["f"] <= 495
     assert res.violations == []
+    # With a return to the depot the cheapest on-time order starts at "f" itself.
+    depot_end = solve(req(stops, vehicles=[{"id": "v1", "start": DEPOT, "end": DEPOT, "shiftStart": 480, "maxShiftMinutes": 480}]))
+    assert visit_ids(depot_end)[0] == "f" and depot_end.violations == []
 
 
 def test_express_without_tight_deadline_does_not_distort_the_route():
@@ -149,6 +153,63 @@ def test_separate_end_depot():
     vehicles = [{"id": "v1", "start": DEPOT, "end": {"lat": 50.9608, "lng": 11.0262}, "shiftStart": 480, "maxShiftMinutes": 480}]
     res = solve(req(vehicles=vehicles))
     assert len(res.routes[0].visits) == len(ERFURT)
+
+
+def _line_problem(stop_x, end=None, warm_start=None, monkeypatch=None):
+    """Depot at x=0, stops on a straight road at the given x (1 unit = 1 km = 60 s)."""
+    xs = [0, 0] + list(stop_x)  # [start, end placeholder, stops…]
+    dur = [[abs(a - b) * 60 for b in xs] for a in xs]
+    dist = [[abs(a - b) * 1000 for b in xs] for a in xs]
+    if end is not None:  # an explicit end at x=end
+        xs[1] = end
+        dur = [[abs(a - b) * 60 for b in xs] for a in xs]
+        dist = [[abs(a - b) * 1000 for b in xs] for a in xs]
+    if warm_start is not None:
+        import turvio_optimizer.solver as S
+
+        monkeypatch.setattr(S, "WARM_START", warm_start)
+    vehicle = {"id": "v", "start": {"lat": 0, "lng": 0}, "shiftStart": 480, "maxShiftMinutes": 480}
+    if end is not None:
+        vehicle["end"] = {"lat": 0, "lng": 0.01}
+    stops = [{"id": f"s{x}", "location": {"lat": 0, "lng": 0}, "serviceSeconds": 0} for x in stop_x]
+    return solve(req(stops=stops, vehicles=[vehicle]), Matrix(dist, dur, "osrm"))
+
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize("warm_start", ["vroom", "none"])
+def test_open_end_finishes_at_the_last_stop(monkeypatch, warm_start):
+    # Stops at x=-1 and x=+3. Round trip: either order is 8 km. Open end: -1 first, then +3 = 5 km
+    # (+3 first would be 7 km). Before the fix the open end was planned (and reported) as a round trip.
+    res = _line_problem([-1, 3], warm_start=warm_start, monkeypatch=monkeypatch)
+    r = res.routes[0]
+    assert visit_ids(res) == ["s-1", "s3"]
+    assert r.distance_meters == 5000
+    assert r.drive_seconds == 300
+    assert r.end_minute == 480 + 5  # ends when the last stop is done, not after driving back
+
+
+def test_open_end_does_not_change_a_round_trip():
+    # Same stops, explicit end back at the depot: 8 km, the return leg is counted.
+    res = _line_problem([-1, 3], end=0)
+    assert res.routes[0].distance_meters == 8000
+
+
+def test_open_end_on_a_one_way_street_line():
+    # All stops ahead of the start: open end drives out once (4 km), a round trip twice (8 km).
+    open_res = _line_problem([1, 2, 3, 4])
+    assert visit_ids(open_res) == ["s1", "s2", "s3", "s4"] and open_res.routes[0].distance_meters == 4000
+    assert _line_problem([1, 2, 3, 4], end=0).routes[0].distance_meters == 8000
+
+
+def test_open_end_does_not_mutate_the_callers_matrix():
+    xs = [0, 0, 5]
+    dur = [[abs(a - b) * 60 for b in xs] for a in xs]
+    m = Matrix([row[:] for row in dur], dur, "osrm")
+    solve(req(stops=[{"id": "x", "location": {"lat": 0, "lng": 0}, "serviceSeconds": 0}],
+              vehicles=[{"id": "v", "start": {"lat": 0, "lng": 0}, "shiftStart": 480, "maxShiftMinutes": 480}]), m)
+    assert m.durations_s[2][1] == 300
 
 
 def test_uses_given_matrix():

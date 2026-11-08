@@ -1,5 +1,5 @@
 import { DriverSettings, defaultFailureReasons, nowInZone, roadMetrics, sortBySequence } from "@turvio/shared";
-import { STOP_SELECT, orgTimeZone, toStop, type StopRow, type TourRow } from "../data/dispatch";
+import { STOP_SELECT, orgTimeZone, toStop, tourEndOf, tourStartOf, type StopRow, type TourRow } from "../data/dispatch";
 import { RoutingOutOfCoverage, RoutingUnavailable, type RoutingProvider } from "../routing";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -229,12 +229,14 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
       const tz = await orgTimeZone(tx, orgId);
       return { tour, depot, stops, now: nowInZone(tz).minute };
     });
-    const start = data.tour.start_lat != null && data.tour.start_lng != null ? { lat: data.tour.start_lat, lng: data.tour.start_lng } : data.depot;
-    const end = data.tour.end_lat != null && data.tour.end_lng != null ? { lat: data.tour.end_lat, lng: data.tour.end_lng } : data.depot;
+    const start = tourStartOf(data.tour, data.depot);
+    // undefined = the tour ends at its last stop: no return leg in the route, distance or ETAs.
+    const end = tourEndOf(data.tour, data.depot);
     const located = sortBySequence(data.stops).filter((s) => s.type !== "break" && s.location);
-    const waypointStopIds: (string | null)[] = [null, ...located.map((s) => s.id), null];
-    const points = [start, ...located.map((s) => s.location!), end];
+    const waypointStopIds: (string | null)[] = [null, ...located.map((s) => s.id), ...(end ? [null] : [])];
+    const points = [start, ...located.map((s) => s.location!), ...(end ? [end] : [])];
     const unlocated = data.stops.filter((s) => !s.location).map((s) => s.id);
+    if (points.length < 2) return { source: "none", note: "No located stops to route", waypointStopIds, unlocatedStopIds: unlocated };
     if (!extra.routing) return { source: "none", note: "No routing service configured – figures are straight-line estimates", waypointStopIds, unlocatedStopIds: unlocated };
     try {
       const r = await extra.routing.route(points);

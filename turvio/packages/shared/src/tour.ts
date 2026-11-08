@@ -10,6 +10,20 @@ import {
 
 export { canTransition } from "./stopStatus";
 
+type TourEnds = { startLocation?: GeoPoint; endLocation?: GeoPoint; endMode?: "depot" | "address" | "last_stop" };
+
+/** Where the tour starts when there is no live position: its own start address, else the depot. */
+export function tourStartPoint(tour: TourEnds, depot: GeoPoint): GeoPoint {
+  return tour.startLocation ?? depot;
+}
+
+/** Where the tour ends; undefined = at its last stop (no return trip). */
+export function tourEndPoint(tour: TourEnds, depot: GeoPoint): GeoPoint | undefined {
+  if (tour.endMode === "last_stop") return undefined;
+  if (tour.endMode === "depot") return depot;
+  return tour.endLocation ?? depot;
+}
+
 export function setStopStatus(
   stop: Stop,
   to: StopStatus,

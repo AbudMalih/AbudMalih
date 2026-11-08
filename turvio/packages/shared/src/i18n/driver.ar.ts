@@ -238,6 +238,7 @@ export const driverAr: Record<DriverMessageKey, string> = {
   "optimize.end": "الانتهاء عند",
   "optimize.endDepot": "العودة إلى المستودع",
   "optimize.endNone": "آخر محطة",
+  "optimize.endAddress": "عنوان نهاية الجولة",
   "optimize.locks": "إبقاء المحطات المثبتة ({n})",
   "optimize.run": "تحسين",
   "optimize.running": "جارٍ التحسين…",

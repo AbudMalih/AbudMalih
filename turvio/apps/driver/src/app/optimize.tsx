@@ -1,4 +1,4 @@
-import { isOpen, routeMetrics } from "@turvio/shared";
+import { isOpen, routeMetrics, tourEndPoint, tourStartPoint } from "@turvio/shared";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
@@ -20,7 +20,10 @@ export default function OptimizeScreen() {
   const optimizing = useTourStore((s) => s.optimizing);
   const prefs = useTourStore((s) => s.prefs);
   const setPrefs = useTourStore((s) => s.setPrefs);
-  const [end, setEnd] = useState<"depot" | "none">("depot");
+  // Starts at what the tour is planned with; only a different choice is sent (and then kept for
+  // the tour, so its road route and ETA end where the driver ends).
+  const planned: "depot" | "none" | "address" = tour?.endMode === "last_stop" ? "none" : tour?.endMode === "address" || (!tour?.endMode && tour?.endLocation) ? "address" : "depot";
+  const [end, setEnd] = useState<"depot" | "none" | "address">(planned);
   const [respectLocks, setRespectLocks] = useState(true);
   const [result, setResult] = useState<OptimizationOutcome | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -28,7 +31,7 @@ export default function OptimizeScreen() {
   if (!tour || !depot) return null;
   const open = stops.filter((s) => isOpen(s.status));
   const locked = open.filter((s) => s.locked).length;
-  const estimate = routeMetrics(tour.startLocation ?? depot.location, stops, end === "none" ? undefined : (tour.endLocation ?? depot.location));
+  const estimate = routeMetrics(tourStartPoint(tour, depot.location), stops, end === "none" ? undefined : end === "depot" ? depot.location : tourEndPoint(tour, depot.location));
   // Road figures only from road routing (OSRM): the road route of the tour, or the optimizer's
   // own road totals. Otherwise the straight-line estimate, labelled as such – never mixed.
   const roadFig =
@@ -52,7 +55,7 @@ export default function OptimizeScreen() {
       else setNotice(t("optimize.locationDenied"));
     }
     try {
-      const r = await optimize(tour.id, { start, end, respectLocks });
+      const r = await optimize(tour.id, { start, end: end === planned || end === "address" ? undefined : end, respectLocks });
       setResult(r);
       feedback.success();
     } catch (e) {
@@ -87,7 +90,15 @@ export default function OptimizeScreen() {
           ]}
         />
         <SectionTitle>{t("optimize.end")}</SectionTitle>
-        <Segmented value={end} onChange={setEnd} options={[{ value: "depot", label: t("optimize.endDepot") }, { value: "none", label: t("optimize.endNone") }]} />
+        <Segmented
+          value={end}
+          onChange={setEnd}
+          options={[
+            ...(planned === "address" ? [{ value: "address" as const, label: tour.endLabel ?? t("optimize.endAddress") }] : []),
+            { value: "depot" as const, label: t("optimize.endDepot") },
+            { value: "none" as const, label: t("optimize.endNone") },
+          ]}
+        />
         {locked > 0 && (
           <Segmented
             value={respectLocks ? "keep" : "free"}

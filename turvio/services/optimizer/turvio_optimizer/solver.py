@@ -2,7 +2,8 @@
 
 Model
 -----
-* One start node and one end node per vehicle (depot, current position or "open end").
+* One start node and one end node per vehicle (depot, current position or "open end": a vehicle
+  without `end` finishes at its last stop – arcs into its end node cost nothing).
 * Objective: road driving time in seconds (OSRM matrix) – the thing a driver feels.
   Everything else is a constraint or a penalty that only comes into play when needed.
 * "Time" dimension in absolute seconds since midnight: transit = travel + service time at the
@@ -156,6 +157,16 @@ def solve(req: OptimizeRequest, matrix: Matrix | None = None) -> OptimizeRespons
                     e.points.append({"kind": "stop", "stopId": stops[idx - stop_offset].id, "snapMeters": round(snap)})
             raise
     dur, dist = matrix.durations_s, matrix.distances_m
+    # Open end ("end at the last stop"): the end node is a placeholder at the start position, and
+    # reaching it is free, so the route really ends at its last stop – no hidden trip back that
+    # would distort the stop order, the distance and the end time. Copies: the caller's matrix
+    # stays untouched.
+    open_ends = [2 * i + 1 for i, v in enumerate(vehicles) if v.end is None]
+    if open_ends:
+        dur, dist = [row[:] for row in dur], [row[:] for row in dist]
+        for e in open_ends:
+            for row in (*dur, *dist):
+                row[e] = 0
 
     starts = [2 * i for i in range(n_vehicles)]
     ends = [2 * i + 1 for i in range(n_vehicles)]

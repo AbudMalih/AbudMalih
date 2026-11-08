@@ -1,7 +1,7 @@
 import { isOpen, nowInZone, sortBySequence } from "@turvio/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { STOP_SELECT, orgTimeZone, toStop, type StopRow } from "../data/dispatch";
+import { STOP_SELECT, orgTimeZone, toStop, tourEndOf, type StopRow, type TourRow } from "../data/dispatch";
 import { ApiError } from "../db";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
 import { RoutingUnavailable } from "../routing";
@@ -195,7 +195,7 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
   app.get("/v1/orgs/:orgId/tours/:id/eta", { preHandler: guards.requireTenant("tracking.view_live") }, async (req, reply) => {
     const { orgId, id } = IdParams.parse(req.params);
     const data = await db.asUser(claims(req), async (tx) => {
-      const tour = (await tx.query<{ id: string; status: string; depot_id: string; end_lat: number | null; end_lng: number | null }>(`select id, status, depot_id, end_lat, end_lng from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
+      const tour = (await tx.query<Pick<TourRow, "id" | "status" | "depot_id" | "end_lat" | "end_lng" | "end_mode">>(`select * from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
       if (!tour) return null;
       const pos = (
         await tx.query<{ lat: number; lng: number; recorded_at: Date; age: number }>(
@@ -215,10 +215,12 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
     const routing = deps.routing;
     if (!routing) return { source: "none", reason: "no_routing" };
     const open = sortBySequence(data.stops).filter((s) => isOpen(s.status) && s.type !== "break" && s.location);
-    const end = data.tour.end_lat != null && data.tour.end_lng != null ? { lat: data.tour.end_lat, lng: data.tour.end_lng } : data.depot;
+    // undefined = the tour ends at its last stop (no trip back in the remaining distance/finish time).
+    const end = tourEndOf(data.tour, data.depot);
+    const points = [{ lat: data.pos.lat, lng: data.pos.lng }, ...open.map((s) => s.location!), ...(end ? [end] : [])];
     let legs: { meters: number; seconds: number }[];
     try {
-      legs = (await routing.route([{ lat: data.pos.lat, lng: data.pos.lng }, ...open.map((s) => s.location!), end])).legs;
+      legs = points.length < 2 ? [] : (await routing.route(points)).legs;
     } catch (e) {
       if (e instanceof RoutingUnavailable) return { source: "none", reason: "routing_unavailable", note: e.message };
       throw e;

@@ -236,6 +236,7 @@ export const driverEn = {
   "optimize.end": "End at",
   "optimize.endDepot": "Back to depot",
   "optimize.endNone": "Last stop",
+  "optimize.endAddress": "Tour end address",
   "optimize.locks": "Keep locked stops in place ({n})",
   "optimize.run": "Optimize",
   "optimize.running": "Optimizing…",

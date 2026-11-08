@@ -1,7 +1,7 @@
 import { estimateDrive } from "../geo";
 import type { Depot, Driver, GeoPoint, Stop, Tour } from "../schemas";
 import { isNotDelivered, isOpen, isSuccess } from "../stopStatus";
-import { routeMetrics, sortBySequence } from "../tour";
+import { routeMetrics, sortBySequence, tourEndPoint, tourStartPoint } from "../tour";
 import type { DispatchDataset, UnassignedStop } from "./dataset";
 
 /**
@@ -71,7 +71,7 @@ export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Dr
   const projections = new Map<string, StopProjection>();
 
   // Same figures as the driver app (shared routeMetrics): total and remaining.
-  const metrics = routeMetrics(tour.startLocation ?? depot.location, ordered, tour.endLocation ?? depot.location);
+  const metrics = routeMetrics(tourStartPoint(tour, depot.location), ordered, tourEndPoint(tour, depot.location));
   const distanceMeters = metrics.totalMeters;
 
   // Project pending stops from the last completed stop (or the depot).
