@@ -21,7 +21,7 @@ const config: ExpoConfig = {
   slug: "turvio-driver",
   owner: "lunapact-technologies",
   scheme: variant === "production" ? "turvio" : `turvio-${variant}`,
-  version: "0.1.0",
+  version: "0.2.0",
   runtimeVersion: { policy: "appVersion" },
   orientation: "portrait",
   icon: "./assets/icon.png",
@@ -37,6 +37,8 @@ const config: ExpoConfig = {
   },
   android: {
     package: appId,
+    // Increase with every APK handed out, so phones install it as an update (same signing key keeps the app's data).
+    versionCode: 2,
     adaptiveIcon: {
       backgroundColor: "#FFFFFF",
       foregroundImage: "./assets/android-icon-foreground.png",
