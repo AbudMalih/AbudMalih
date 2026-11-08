@@ -1,5 +1,6 @@
 "use client";
 
+import RichText from "@/components/ui/RichText";
 import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { usePageMotion } from "@/components/services/usePageMotion";
@@ -90,7 +91,7 @@ export default function CompanyPage() {
           <div className={s.card} data-reveal style={d(100)}>
             <p className={s.big}>{t.profile.statement}</p>
             <p className={s.text} style={{ marginTop: 16 }}>
-              {t.profile.body}
+              <RichText text={t.profile.body} />
             </p>
             <ul className={s.chips}>
               {t.profile.areas.map((a) => (

@@ -1,5 +1,6 @@
 "use client";
 
+import RichText from "@/components/ui/RichText";
 import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
 import { CONTACT_EMAIL, COMPANY } from "@/content/site";
@@ -100,7 +101,7 @@ export default function ContactPage() {
                 {QUOTE_COPY[locale].hero.eyebrow}
               </p>
               <p className={k.textDark} style={{ maxWidth: "40em" }}>
-                {QUOTE_COPY[locale].hero.lead}
+                <RichText text={QUOTE_COPY[locale].hero.lead} />
               </p>
             </div>
             <RedButton href={href("/quote")}>

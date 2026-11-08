@@ -139,12 +139,17 @@
 }
 
 .occluder {
+  /* placed with transform (same geometry as left/top + negative margin), so
+     moving it to the globe's framing is not a layout shift */
   position: absolute;
-  left: var(--gx, 70vw);
-  top: var(--gy, 100vh);
+  left: 0;
+  top: 0;
   width: calc(var(--gr, 40vh) * 1.995);
   height: calc(var(--gr, 40vh) * 1.995);
-  margin: calc(var(--gr, 40vh) * -0.9975) 0 0 calc(var(--gr, 40vh) * -0.9975);
+  transform: translate(
+    calc(var(--gx, 70vw) - var(--gr, 40vh) * 0.9975),
+    calc(var(--gy, 100vh) - var(--gr, 40vh) * 0.9975)
+  );
   border-radius: 50%;
   background: radial-gradient(circle at 38% 30%, #3a3b3f, #1b1c1f 62%, #121315);
 }

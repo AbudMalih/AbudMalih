@@ -58,7 +58,7 @@ const de: ServicesCopy = {
       stop: "Import",
       title: "Import & Export",
       statement: "Der Handel zwischen den Märkten.",
-      body: "Wir sind die kaufmännische Ebene zwischen Herstellung und Markt: Wir steuern Einkauf und Import, verantworten die Handelsdokumentation und koordinieren den Transport mit spezialisierten Logistikpartnern bis in den europäischen Markt.",
+      body: "Wir sind die kaufmännische Ebene zwischen Herstellung und Markt: Wir steuern [Einkauf und Import](/import), verantworten die Handelsdokumentation und koordinieren den Transport mit spezialisierten Logistikpartnern bis in den europäischen Markt.",
       focus: [
         "Internationaler Einkauf",
         "Importkoordination",
@@ -83,7 +83,7 @@ const de: ServicesCopy = {
       stop: "Marke",
       title: "Marken\u00ADentwicklung",
       statement: "Wir bauen Marken um Produkte.",
-      body: "Ein gutes Produkt braucht eine Haltung. Wir entwickeln Positionierung und Auftritt, koordinieren Gestaltung und Verpackung und bereiten die Marke kaufmännisch auf ihren Markt vor.",
+      body: "Ein gutes Produkt braucht eine Haltung. Wir entwickeln [Positionierung und Auftritt](/brands), koordinieren Gestaltung und Verpackung und bereiten die Marke kaufmännisch auf ihren Markt vor.",
       focus: [
         "Markenpositionierung",
         "Koordination der visuellen Identität",

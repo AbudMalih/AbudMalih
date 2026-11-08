@@ -1,5 +1,6 @@
 "use client";
 
+import RichText from "@/components/ui/RichText";
 import Link from "next/link";
 import { useRef } from "react";
 import { useI18n } from "@/content/i18n/I18nProvider";
@@ -34,7 +35,25 @@ export default function ImportPage() {
   return (
     <article ref={root} className={`${svc.page} ${s.page}`}>
       {/* ------------------------------------------------------------ HERO */}
-      <section className={s.hero} data-tone="dark" aria-labelledby="imp-title">
+      <section
+        className={s.hero}
+        data-tone="dark"
+        data-hero
+        aria-labelledby="imp-title"
+      >
+        <link
+          rel="preload"
+          as="image"
+          href="/sky/port-1600.webp"
+          media="(max-width: 1024px)"
+          fetchPriority="high"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="/sky/port-2560.webp"
+          media="(min-width: 1025px)"
+        />
         <div className={s.heroPhoto} aria-hidden="true" />
         <div className={`frame ${s.heroGrid}`}>
           <div className={s.heroCopy}>
@@ -198,7 +217,9 @@ export default function ImportPage() {
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <h3 className={s.stepTitle}>{st.title}</h3>
-                <p className={s.stepText}>{st.text}</p>
+                <p className={s.stepText}>
+                  <RichText text={st.text} />
+                </p>
               </li>
             ))}
           </ol>
@@ -224,7 +245,9 @@ export default function ImportPage() {
               >
                 <span className={s.check} aria-hidden="true" />
                 <h3 className={s.valueTitle}>{v.title}</h3>
-                <p className={s.valueText}>{v.text}</p>
+                <p className={s.valueText}>
+                  <RichText text={v.text} />
+                </p>
               </div>
             ))}
           </div>
@@ -246,7 +269,7 @@ export default function ImportPage() {
               {t.channelsTitle}
             </h2>
             <p className={`t-lead ${s.channelsText}`} data-reveal>
-              {t.channelsText}
+              <RichText text={t.channelsText} />
             </p>
           </div>
           <div data-reveal>

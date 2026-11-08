@@ -113,6 +113,31 @@
   opacity: 0;
   transform: translateY(18px);
 }
+/* Heroes (above the fold): the same fade-up, but driven by CSS from the
+   first paint instead of waiting for JavaScript to mark them in view. The
+   visible text no longer waits for hydration, which is what held back
+   Largest Contentful Paint on phones. Off with reduced motion / static. */
+:global(html.cine) .page [data-hero] [data-reveal]:not([data-in]),
+:global(html.cine) .page [data-hero] [data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :global(html.cine) .page [data-hero] [data-reveal] {
+    animation: heroReveal 0.9s var(--ease-out) both;
+    animation-delay: var(--d, 0ms);
+  }
+}
+@keyframes heroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .rise {
   display: block;
 }

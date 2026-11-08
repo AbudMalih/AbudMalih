@@ -8,7 +8,7 @@ export type ShowcaseItem = {
   label: string;
   title: string;
   statement: string;
-  body: string;
+  body: ReactNode;
   chips: string[];
   art: ReactNode;
   /** background-position of the port photograph for this item */
