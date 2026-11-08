@@ -31,32 +31,17 @@ The migration changes no rows; backups are insurance. Staging has no Supabase ba
 
 ### A. Offline encrypted dump (operator, on the Mac)
 
-Uses the database password from the Supabase dashboard (Connect → Session pooler). Never paste it into
-chat, files or Git; `read -s` keeps it out of the shell history.
+Scripts (tested end to end, including wrong passphrase, tampered file and failed dump):
+`deploy/staging/backup/turvio-staging-backup.sh` and `deploy/staging/backup/turvio-staging-backup-verify.sh`.
 
-```bash
-read -rs PGPASSWORD && export PGPASSWORD
-```
-
-```bash
-docker run --rm -e PGPASSWORD -v "$HOME/turvio-backups:/out" postgres:17 \
-  pg_dump "host=<session-pooler-host> port=5432 dbname=postgres user=postgres.xwryomkbrkwjytwofgcu sslmode=require" \
-  --format=custom --no-owner --no-privileges --schema=public --schema=app --schema=geo \
-  --file=/out/turvio-staging-pre-20261117000100.dump
-```
-
-```bash
-gpg --symmetric --cipher-algo AES256 "$HOME/turvio-backups/turvio-staging-pre-20261117000100.dump" && rm "$HOME/turvio-backups/turvio-staging-pre-20261117000100.dump"
-```
-
-```bash
-unset PGPASSWORD
-```
-
-Store the `.gpg` file outside Git and outside shared cloud folders. It contains personal data (driver
-names, addresses, GPS). Integrity check without restoring: `gpg -d … | pg_restore --list | head`. Optional
-full check: restore into a local `postgres:17` container and compare `fingerprint.sql` with the baseline.
-Supabase-managed `auth` is not dumped (not touched by this migration).
+- Target fixed to turvio-staging (session pooler user `postgres.xwryomkbrkwjytwofgcu`); aborts unless the
+  server is PostgreSQL 17 with latest migration `20261116000100`.
+- Database password and backup passphrase are typed at hidden prompts; never stored or logged.
+- `pg_dump | gpg` (AES-256, SHA-512 key derivation): the dump never exists unencrypted on disk; a failed
+  dump leaves no file. Output `~/turvio-backups/turvio-staging-<UTC time>.dump.gpg` (read-only) + `.sha256`.
+- Verify: checksum, encryption, archive readable (table of contents), full restore of tables and rows into a
+  throwaway PostgreSQL 17 container (memory only, no network, deleted afterwards; decrypted stream piped
+  directly), then a per-table fingerprint (counts + hashes, no personal data) to compare with staging.
 
 ### B. In-database snapshot (Claude, with approval, just before the migration)
 
