@@ -95,12 +95,11 @@ export default async function Page({ params }: P) {
             articles (journalistic-editorial content). */}
         {insightsLocales().length > 0 && (
           <>
-            <h2>
-              Verantwortlich für journalistisch-redaktionelle Inhalte gemäß § 18
-              Abs. 2 MStV
-            </h2>
+            <h2>Verantwortlich i.S.d. § 18 Abs. 2 MStV:</h2>
             <p>
               {L.managingDirector}
+              <br />
+              c/o {L.name}
               <br />
               {L.street}
               <br />
