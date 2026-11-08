@@ -9,16 +9,24 @@ type Ctx = {
   dict: Dictionary;
   dir: "ltr" | "rtl";
   href: (path: string) => string;
+  /** languages that have a published knowledge section */
+  insights: Locale[];
+  /** article id → slug per language (for the language switch on articles) */
+  insightSlugs: Record<string, Partial<Record<Locale, string>>>;
 };
 const I18nCtx = createContext<Ctx | null>(null);
 
 export function I18nProvider({
   locale,
   dict,
+  insights = [],
+  insightSlugs = {},
   children,
 }: {
   locale: Locale;
   dict: Dictionary;
+  insights?: Locale[];
+  insightSlugs?: Record<string, Partial<Record<Locale, string>>>;
   children: ReactNode;
 }) {
   return (
@@ -28,6 +36,8 @@ export function I18nProvider({
         dict,
         dir: LOCALE_META[locale].dir,
         href: (p) => localePath(locale, p),
+        insights,
+        insightSlugs,
       }}
     >
       {children}

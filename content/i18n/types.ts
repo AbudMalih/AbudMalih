@@ -45,6 +45,8 @@ export type Dictionary = {
     import: string;
     brands: string;
     company: string;
+    /** knowledge section (shown only when the language has published articles) */
+    insights: string;
     contact: string;
     cta: string;
   };

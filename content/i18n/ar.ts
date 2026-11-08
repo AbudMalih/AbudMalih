@@ -32,6 +32,7 @@ const ar: Dictionary = {
     import: "الاستيراد",
     brands: "علاماتنا",
     company: "الشركة",
+    insights: "المعرفة",
     contact: "تواصل معنا",
     cta: "تواصل معنا",
   },

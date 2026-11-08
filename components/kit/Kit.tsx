@@ -82,7 +82,7 @@ export function PageHero(props: {
   a: string;
   b: string;
   lead: string;
-  actions: ReactNode;
+  actions?: ReactNode;
   aside?: ReactNode;
   short?: boolean;
 }) {
@@ -121,9 +121,11 @@ export function PageHero(props: {
           <p className={`t-lead ${s.lead}`} data-reveal style={d(200)}>
             <RichText text={props.lead} />
           </p>
-          <div className={s.actions} data-reveal style={d(280)}>
-            {props.actions}
-          </div>
+          {props.actions && (
+            <div className={s.actions} data-reveal style={d(280)}>
+              {props.actions}
+            </div>
+          )}
         </div>
         {props.aside && (
           <div data-reveal style={d(200)}>

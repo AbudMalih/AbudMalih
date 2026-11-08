@@ -11,6 +11,7 @@ import ScrollSetup from "@/lib/motion/scroll";
 import Navigation from "@/components/chrome/Navigation";
 import Footer from "@/components/chrome/Footer";
 import { I18nProvider } from "@/content/i18n/I18nProvider";
+import { insightsLocales, insightSlugMap } from "@/content/insights";
 import {
   LOCALES,
   LOCALE_META,
@@ -97,7 +98,12 @@ export default async function LocaleLayout({
         <script dangerouslySetInnerHTML={{ __html: ENV_SCRIPT }} />
       </head>
       <body>
-        <I18nProvider locale={locale} dict={dict}>
+        <I18nProvider
+          locale={locale}
+          dict={dict}
+          insights={insightsLocales()}
+          insightSlugs={insightSlugMap()}
+        >
           <a href="#main" className="skip-link">
             {dict.a11y.skip}
           </a>
