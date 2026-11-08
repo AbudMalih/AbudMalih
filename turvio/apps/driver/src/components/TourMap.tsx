@@ -6,7 +6,7 @@ import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE, Polyline, type MapP
 import { useT } from "../lib/i18n";
 import { Ionicons } from "./ui";
 import { useTheme, type Palette } from "../theme";
-import { markerTone, type TourMapProps } from "./TourMap.shared";
+import { fallbackPath, initialMapPoints, markerTone, type TourMapProps } from "./TourMap.shared";
 export type { TourMapProps };
 
 type Located = Stop & { location: GeoPoint };
@@ -55,13 +55,14 @@ function MapUnavailable({ style, text }: { style?: TourMapProps["style"]; text?:
   );
 }
 
-function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingPin, onMapPress, onStopPress, style, roadGeometry }: TourMapProps) {
+function NativeTourMap({ depot, tour, stops, currentStopId, showUserLocation, pendingPin, onMapPress, onStopPress, style, roadGeometry }: TourMapProps) {
   const { c } = useTheme();
   const mapRef = useRef<MapView>(null);
   const located = useMemo(() => stops.filter((x): x is Located => x.location !== null), [stops]);
   const indexOf = useMemo(() => new Map(stops.map((x, i) => [x.id, i])), [stops]);
   const initial = useMemo(
-    () => boundingRegion([...(depot ? [depot.location] : []), ...located.map((x) => x.location), ...(pendingPin ? [pendingPin] : [])]),
+    // The tour's own start/end, not a far-away depot it never visits (HER-01: depot Suhl, tour in Hannover).
+    () => boundingRegion(initialMapPoints({ depot, tour, stops, pendingPin })),
     // Only on first render / tour change: later updates must not jump the camera.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [depot?.id, located.length === 0],
@@ -88,10 +89,8 @@ function NativeTourMap({ depot, stops, currentStopId, showUserLocation, pendingP
   );
   const path = useMemo(() => {
     if (roadGeometry && roadGeometry.length > 1) return roadGeometry.map(([lat, lng]) => ({ latitude: lat, longitude: lng }));
-    const open = located.filter((x) => isOpen(x.status));
-    const lastDone = located.filter((x) => !isOpen(x.status)).at(-1)?.location ?? depot?.location;
-    return [...(lastDone ? [lastDone] : []), ...open.map((x) => x.location)].map((p) => ({ latitude: p.lat, longitude: p.lng }));
-  }, [roadGeometry, located, depot]);
+    return fallbackPath({ depot, tour, stops }).map((p) => ({ latitude: p.lat, longitude: p.lng }));
+  }, [roadGeometry, depot, tour, stops]);
 
   return (
     <View style={[StyleSheet.absoluteFill, style]}>

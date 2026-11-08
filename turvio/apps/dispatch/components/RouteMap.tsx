@@ -6,6 +6,7 @@ import { Button, Skeleton, Tooltip, cn } from "@turvio/web-ui/ds";
 import { CircleAlert, Layers, LocateFixed, Maximize2, Minus, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
+import { tourMapPoints } from "../lib/helpers";
 import { ageLabel, freshnessOf, FRESHNESS_LABEL, type LiveVehicle } from "../lib/live";
 
 type MapState = "loading" | "ready" | "error";
@@ -110,8 +111,8 @@ export function RouteMap(props: RouteMapProps) {
     const pts: [number, number][] = [];
     const list = tourId ? p.summaries.filter((s) => s.tour.id === tourId) : p.summaries;
     for (const s of list) {
-      pts.push([s.depot.location.lat, s.depot.location.lng]);
-      for (const st of s.stops) if (st.location) pts.push([st.location.lat, st.location.lng]);
+      // The tour's own start/end (else its depot) and its stops – not a far-away depot it never visits.
+      for (const p of tourMapPoints(s.tour, s.depot, s.stops).path) pts.push([p.lat, p.lng]);
     }
     if (!tourId) {
       for (const d of p.depots) pts.push([d.location.lat, d.location.lng]);
@@ -157,7 +158,26 @@ export function RouteMap(props: RouteMapProps) {
       const selected = s.tour.id === selectedTourId;
       const dim = selectedTourId !== null && !selected;
       const located = s.stops.filter((x) => x.location);
-      const path: [number, number][] = [[s.depot.location.lat, s.depot.location.lng], ...located.map((x) => [x.location!.lat, x.location!.lng] as [number, number])];
+      const ends = tourMapPoints(s.tour, s.depot, located);
+      const path: [number, number][] = ends.path.map((p) => [p.lat, p.lng] as [number, number]);
+      // An own start/end address gets its own small marker (the depot marker stays where it is).
+      for (const [p, letter, what] of [
+        [ends.customStart, "S", "Start"],
+        [ends.customEnd, "E", "End"],
+      ] as const) {
+        if (!p || (dim && !selected)) continue;
+        Lf.marker([p.lat, p.lng], {
+          icon: Lf.divIcon({
+            className: "turvio-marker",
+            html: `<div style="width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid ${color};color:#0F172A;font:700 11px/16px system-ui;text-align:center">${letter}</div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11],
+          }),
+          keyboard: false,
+        })
+          .bindTooltip(`<strong>${esc(s.tour.name)}</strong> · ${what}${what === "Start" && s.tour.startLabel ? `: ${esc(s.tour.startLabel)}` : what === "End" && s.tour.endLabel ? `: ${esc(s.tour.endLabel)}` : ""}`, { direction: "top", offset: [0, -10] })
+          .addTo(group);
+      }
       const doneCount = located.filter((x) => !isOpen(x.status)).length;
       // Completed part in grey, remaining part in the tour colour.
       if (doneCount > 0 && showCompleted) {

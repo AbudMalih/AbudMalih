@@ -4,19 +4,20 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, G, Line, Polyline, Rect, Text as SvgText } from "react-native-svg";
 import { useT } from "../lib/i18n";
 import { type as ty, useTheme } from "../theme";
-import { markerTone, type TourMapProps } from "./TourMap.shared";
+import { fallbackPath, initialMapPoints, markerTone, type TourMapProps } from "./TourMap.shared";
 
 /**
  * react-native-maps has no web implementation and the web build is used only
  * for automated tests: a schematic projection of the stops (straight lines, no
  * map tiles), clearly labelled as such.
  */
-export function TourMap({ depot, stops, currentStopId, pendingPin, onMapPress, onStopPress, roadGeometry }: TourMapProps) {
+export function TourMap({ depot, tour, stops, currentStopId, pendingPin, onMapPress, onStopPress, roadGeometry }: TourMapProps) {
   const t = useT();
   const { c } = useTheme();
   const [size, setSize] = useState({ w: 360, h: 480 });
   const located = stops.filter((s): s is Stop & { location: GeoPoint } => s.location !== null);
-  const pts = [...(depot ? [depot.location] : []), ...located.map((s) => s.location), ...(pendingPin ? [pendingPin] : [])];
+  // Frame the tour's own start/end and its stops (a far-away depot it never visits stays outside).
+  const pts = initialMapPoints({ depot, tour, stops, pendingPin });
   if (pts.length === 0) pts.push({ lat: 52.37, lng: 9.73 });
   const minLat = Math.min(...pts.map((p) => p.lat)), maxLat = Math.max(...pts.map((p) => p.lat));
   const minLng = Math.min(...pts.map((p) => p.lng)), maxLng = Math.max(...pts.map((p) => p.lng));
@@ -26,9 +27,7 @@ export function TourMap({ depot, stops, currentStopId, pendingPin, onMapPress, o
   const scale = Math.min((size.w - 2 * pad) / spanX, (size.h - 2 * pad - 40) / spanY);
   const proj = (p: GeoPoint) => ({ x: pad + (p.lng - minLng) * kx * scale + ((size.w - 2 * pad) - spanX * scale) / 2, y: pad + (maxLat - p.lat) * scale });
   const unproj = (x: number, y: number): GeoPoint => ({ lat: maxLat - (y - pad) / scale, lng: minLng + (x - pad - ((size.w - 2 * pad) - spanX * scale) / 2) / (kx * scale) });
-  const open = located.filter((s) => isOpen(s.status));
-  const lastDone = located.filter((s) => !isOpen(s.status)).at(-1)?.location ?? depot?.location;
-  const path = (roadGeometry && roadGeometry.length > 1 ? roadGeometry.map(([lat, lng]) => ({ lat, lng })) : [...(lastDone ? [lastDone] : []), ...open.map((s) => s.location)]).map(proj);
+  const path = (roadGeometry && roadGeometry.length > 1 ? roadGeometry.map(([lat, lng]) => ({ lat, lng })) : fallbackPath({ depot, tour, stops })).map(proj);
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: c.surface2 }]} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })} testID="tour-map">
       <Pressable style={StyleSheet.absoluteFill} onPress={(e) => onMapPress?.(unproj(e.nativeEvent.locationX, e.nativeEvent.locationY))} disabled={!onMapPress}>

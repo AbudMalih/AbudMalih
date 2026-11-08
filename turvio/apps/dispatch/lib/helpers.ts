@@ -1,4 +1,4 @@
-import { formatClock, parseMinuteOfDay, type DispatchDataset, type NewStopInput, type Tour } from "@turvio/shared";
+import { formatClock, parseMinuteOfDay, tourEndPoint, tourStartPoint, type DispatchDataset, type GeoPoint, type NewStopInput, type Stop, type Tour } from "@turvio/shared";
 
 /** Open tours (not completed) that already use this driver / vehicle. */
 export function driverBusy(data: Pick<DispatchDataset, "tours">, driverId: string, exceptTourId?: string): Tour | undefined {
@@ -6,6 +6,22 @@ export function driverBusy(data: Pick<DispatchDataset, "tours">, driverId: strin
 }
 export function vehicleBusy(data: Pick<DispatchDataset, "tours">, vehicleId: string, exceptTourId?: string): Tour | undefined {
   return data.tours.find((t) => t.vehicleId === vehicleId && t.status !== "completed" && t.id !== exceptTourId);
+}
+
+/**
+ * Points a tour is drawn through when no road geometry is available: its own start (else the
+ * depot), its located stops in order, and – only for an own end address – that end. A return to the
+ * depot is not drawn (it was not before; the road route shows the full trip). `customStart`/`customEnd`
+ * are set when they differ from the depot, so the map can mark them.
+ */
+export function tourMapPoints(tour: Tour, depot: { location: GeoPoint }, stops: Pick<Stop, "location">[]) {
+  const start = tourStartPoint(tour, depot.location);
+  const end = tourEndPoint(tour, depot.location);
+  const same = (a: GeoPoint, b: GeoPoint) => a.lat === b.lat && a.lng === b.lng;
+  const customStart = same(start, depot.location) ? null : start;
+  const customEnd = end && !same(end, depot.location) ? end : null;
+  const located = stops.filter((s): s is { location: GeoPoint } => !!s.location).map((s) => s.location);
+  return { path: [start, ...located, ...(customEnd ? [customEnd] : [])], customStart, customEnd, endsAtLastStop: !end };
 }
 
 /** Distinct, accessible route colours (blue first = brand). */

@@ -40,7 +40,7 @@ export default function MapScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TourMap depot={depot} stops={stops} roadGeometry={road?.geometry ?? null} currentStopId={focus?.id} showUserLocation={showMe} onStopPress={(s) => setSelected(s.id)} />
+      <TourMap depot={depot} tour={tour} stops={stops} roadGeometry={road?.geometry ?? null} currentStopId={focus?.id} showUserLocation={showMe} onStopPress={(s) => setSelected(s.id)} />
       <View style={{ position: "absolute", top: insets.top + space.sm, right: space.lg, gap: space.sm }}>
         <IconButton icon={showMe ? "locate" : "locate-outline"} label={t("map.myLocation")} active={showMe} onPress={() => void toggleMe()} testID="map-locate" />
       </View>

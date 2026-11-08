@@ -25,7 +25,7 @@ export interface StopProjection {
 export interface TourTimeline {
   tourId: string;
   projections: Map<string, StopProjection>;
-  /** Projected return to the depot (minutes since midnight). */
+  /** Projected end of the tour: back at its end point, or at its last stop (minutes since midnight). */
   projectedEndMinute: number;
   /** Latest allowed end (start + driver's max shift). */
   shiftEndMinute: number;
@@ -70,11 +70,15 @@ export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Dr
   const shiftEndMinute = tour.plannedStartMinute + (driver?.maxShiftMinutes ?? 480);
   const projections = new Map<string, StopProjection>();
 
+  // Where the tour starts and ends: its own start address / end option, else the depot.
+  // `end` undefined = the tour ends at its last stop (no drive back).
+  const start = tourStartPoint(tour, depot.location);
+  const end = tourEndPoint(tour, depot.location);
   // Same figures as the driver app (shared routeMetrics): total and remaining.
-  const metrics = routeMetrics(tourStartPoint(tour, depot.location), ordered, tourEndPoint(tour, depot.location));
+  const metrics = routeMetrics(start, ordered, end);
   const distanceMeters = metrics.totalMeters;
 
-  // Project pending stops from the last completed stop (or the depot).
+  // Project pending stops from the last completed stop (or the tour's start).
   const done = ordered.filter((s) => !isOpen(s.status));
   const pending = ordered.filter((s) => isOpen(s.status));
   for (const s of done) {
@@ -83,7 +87,7 @@ export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Dr
   }
   const lastDone = done.at(-1);
   let t = tour.status === "planned" ? tour.plannedStartMinute : Math.max(asOfMinute, minuteOf(lastDone?.completedAt) ?? startMinute);
-  let pos: GeoPoint = lastDone?.location ?? depot.location;
+  let pos: GeoPoint = lastDone?.location ?? start;
   for (const s of pending) {
     if (!s.location) continue;
     let arrive = t + estimateDrive(pos, s.location).seconds / 60;
@@ -94,7 +98,7 @@ export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Dr
     t = arrive + s.serviceSeconds / 60;
     pos = s.location;
   }
-  const projectedEndMinute = tour.status === "completed" ? (minuteOf(tour.finishedAt) ?? t) : t + estimateDrive(pos, depot.location).seconds / 60;
+  const projectedEndMinute = tour.status === "completed" ? (minuteOf(tour.finishedAt) ?? t) : t + (end ? estimateDrive(pos, end).seconds / 60 : 0);
 
   const delayReasons: string[] = [];
   if (tour.status !== "completed") {

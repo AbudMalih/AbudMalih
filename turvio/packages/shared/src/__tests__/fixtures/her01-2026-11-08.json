@@ -1,0 +1,620 @@
+{
+"_source": "Staging tour HER-01 (2026-11-08) after optimization: optimized stop order, coordinates of public OpenStreetMap addresses (ODbL) from the synthetic bulk-import test; no recipients. Depot Hermes Suhl; custom start 52.37650, 9.74160; end at the last stop; planned start 07:30; 8 h shift. Optimizer (OSRM): 31.5 km, 83 min driving, end 12:13.",
+"depot": {
+"lat": 50.5890625,
+"lng": 10.7141875
+},
+"start": {
+"lat": 52.3765,
+"lng": 9.7416
+},
+"plannedStartMinute": 450,
+"maxShiftMinutes": 480,
+"optimizer": {
+"distanceMeters": 31513,
+"driveSeconds": 4984,
+"endMinute": 733.07
+},
+"stops": [
+{
+"lat": 52.379067,
+"lng": 9.744242,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.378617,
+"lng": 9.744246,
+"serviceSeconds": 120,
+"parcels": 11
+},
+{
+"lat": 52.378888,
+"lng": 9.741604,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.379222,
+"lng": 9.740112,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.3812,
+"lng": 9.738575,
+"serviceSeconds": 120,
+"parcels": 3
+},
+{
+"lat": 52.385655,
+"lng": 9.745647,
+"serviceSeconds": 120,
+"parcels": 5
+},
+{
+"lat": 52.385923,
+"lng": 9.746516,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.385744,
+"lng": 9.747121,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.386853,
+"lng": 9.747112,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.38586,
+"lng": 9.749127,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.386195,
+"lng": 9.749807,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.38777,
+"lng": 9.744938,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.387582,
+"lng": 9.739991,
+"serviceSeconds": 120,
+"parcels": 12
+},
+{
+"lat": 52.38675,
+"lng": 9.738444,
+"serviceSeconds": 120,
+"parcels": 11
+},
+{
+"lat": 52.390225,
+"lng": 9.744377,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.388787,
+"lng": 9.749256,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.389381,
+"lng": 9.749028,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.389922,
+"lng": 9.749091,
+"serviceSeconds": 120,
+"parcels": 12
+},
+{
+"lat": 52.390158,
+"lng": 9.749371,
+"serviceSeconds": 120,
+"parcels": 11
+},
+{
+"lat": 52.390097,
+"lng": 9.748869,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.392817,
+"lng": 9.747521,
+"serviceSeconds": 120,
+"parcels": 11
+},
+{
+"lat": 52.39326,
+"lng": 9.746525,
+"serviceSeconds": 120,
+"parcels": 11
+},
+{
+"lat": 52.394858,
+"lng": 9.743974,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.393806,
+"lng": 9.753986,
+"serviceSeconds": 120,
+"parcels": 13
+},
+{
+"lat": 52.393005,
+"lng": 9.753356,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.392296,
+"lng": 9.755339,
+"serviceSeconds": 120,
+"parcels": 12
+},
+{
+"lat": 52.393572,
+"lng": 9.753833,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.39521,
+"lng": 9.751381,
+"serviceSeconds": 120,
+"parcels": 13
+},
+{
+"lat": 52.395683,
+"lng": 9.747689,
+"serviceSeconds": 120,
+"parcels": 5
+},
+{
+"lat": 52.397548,
+"lng": 9.748587,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.397774,
+"lng": 9.748313,
+"serviceSeconds": 120,
+"parcels": 5
+},
+{
+"lat": 52.397376,
+"lng": 9.74687,
+"serviceSeconds": 120,
+"parcels": 120
+},
+{
+"lat": 52.397494,
+"lng": 9.746183,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.397421,
+"lng": 9.745053,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.397025,
+"lng": 9.743569,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.397262,
+"lng": 9.744051,
+"serviceSeconds": 120,
+"parcels": 18
+},
+{
+"lat": 52.397523,
+"lng": 9.742522,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.397673,
+"lng": 9.742416,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.398687,
+"lng": 9.739421,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.398823,
+"lng": 9.737126,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.399623,
+"lng": 9.734879,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.399479,
+"lng": 9.731623,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.398343,
+"lng": 9.731454,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.397963,
+"lng": 9.725756,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.399078,
+"lng": 9.721211,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.39929,
+"lng": 9.720645,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.39853,
+"lng": 9.714331,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.407951,
+"lng": 9.712804,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.410162,
+"lng": 9.703818,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.402522,
+"lng": 9.714979,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.395828,
+"lng": 9.720151,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.395771,
+"lng": 9.72134,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.394559,
+"lng": 9.723869,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.393643,
+"lng": 9.724386,
+"serviceSeconds": 120,
+"parcels": 12
+},
+{
+"lat": 52.393596,
+"lng": 9.724468,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.393433,
+"lng": 9.724774,
+"serviceSeconds": 120,
+"parcels": 20
+},
+{
+"lat": 52.393893,
+"lng": 9.723963,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.394472,
+"lng": 9.723867,
+"serviceSeconds": 120,
+"parcels": 5
+},
+{
+"lat": 52.394772,
+"lng": 9.724703,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.3958,
+"lng": 9.725411,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.395379,
+"lng": 9.72632,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.394275,
+"lng": 9.730783,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.392317,
+"lng": 9.736552,
+"serviceSeconds": 120,
+"parcels": 12
+},
+{
+"lat": 52.389673,
+"lng": 9.734253,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.390743,
+"lng": 9.732392,
+"serviceSeconds": 120,
+"parcels": 5
+},
+{
+"lat": 52.390839,
+"lng": 9.7326,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.391484,
+"lng": 9.732181,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.392996,
+"lng": 9.728418,
+"serviceSeconds": 120,
+"parcels": 15
+},
+{
+"lat": 52.393417,
+"lng": 9.729458,
+"serviceSeconds": 120,
+"parcels": 13
+},
+{
+"lat": 52.395389,
+"lng": 9.727842,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.398294,
+"lng": 9.728052,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.400553,
+"lng": 9.728231,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.401549,
+"lng": 9.729832,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.401509,
+"lng": 9.730755,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.401517,
+"lng": 9.731157,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.400548,
+"lng": 9.730789,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.400461,
+"lng": 9.729358,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.401716,
+"lng": 9.732567,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.401974,
+"lng": 9.732353,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.402282,
+"lng": 9.733791,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.402119,
+"lng": 9.733673,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.4009,
+"lng": 9.73514,
+"serviceSeconds": 120,
+"parcels": 12
+},
+{
+"lat": 52.406898,
+"lng": 9.730014,
+"serviceSeconds": 120,
+"parcels": 11
+},
+{
+"lat": 52.40391,
+"lng": 9.728209,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.403154,
+"lng": 9.729151,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.404292,
+"lng": 9.736806,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.403718,
+"lng": 9.73801,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.405906,
+"lng": 9.738797,
+"serviceSeconds": 120,
+"parcels": 7
+},
+{
+"lat": 52.401382,
+"lng": 9.740104,
+"serviceSeconds": 120,
+"parcels": 8
+},
+{
+"lat": 52.400863,
+"lng": 9.740227,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.400886,
+"lng": 9.739865,
+"serviceSeconds": 120,
+"parcels": 6
+},
+{
+"lat": 52.400819,
+"lng": 9.739264,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.399831,
+"lng": 9.745905,
+"serviceSeconds": 120,
+"parcels": 14
+},
+{
+"lat": 52.399148,
+"lng": 9.745314,
+"serviceSeconds": 120,
+"parcels": 12
+},
+{
+"lat": 52.399113,
+"lng": 9.746272,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.399924,
+"lng": 9.746771,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.399525,
+"lng": 9.74734,
+"serviceSeconds": 120,
+"parcels": 9
+},
+{
+"lat": 52.399529,
+"lng": 9.747997,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.403615,
+"lng": 9.745464,
+"serviceSeconds": 120,
+"parcels": 10
+},
+{
+"lat": 52.405486,
+"lng": 9.741931,
+"serviceSeconds": 120,
+"parcels": 6
+}
+]
+}

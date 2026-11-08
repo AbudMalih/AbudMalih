@@ -1,9 +1,11 @@
-import { isOpen, isSuccess, type Depot, type GeoPoint, type Stop } from "@turvio/shared";
+import { isOpen, isSuccess, tourEndPoint, tourStartPoint, type Depot, type GeoPoint, type Stop, type Tour } from "@turvio/shared";
 import type { ViewStyle } from "react-native";
 import type { Palette } from "../theme";
 
 export interface TourMapProps {
   depot: Depot | undefined;
+  /** The tour's own start/end (custom start address, end address or "at the last stop"); default: the depot. */
+  tour?: Pick<Tour, "startLocation" | "endLocation" | "endMode">;
   stops: Stop[];
   currentStopId?: string | null;
   /** Show the device's own position (only after the driver allowed location). */
@@ -24,3 +26,31 @@ export function markerTone(stop: Stop, current: boolean, c: Palette) {
   return "#1E3A8A";
 }
 
+
+const same = (a: GeoPoint, b: GeoPoint) => a.lat === b.lat && a.lng === b.lng;
+
+/**
+ * Where the tour starts and ends on the map: its own start (else the depot) and – for an own end
+ * address only – that end. `undefined` end = the tour ends at its last stop or back at its start.
+ */
+export function tourMapEnds(depot: Depot | undefined, tour?: TourMapProps["tour"]): { start?: GeoPoint; end?: GeoPoint } {
+  if (!depot) return { start: tour?.startLocation, end: tour?.endMode === "address" ? tour.endLocation : undefined };
+  const start = tour ? tourStartPoint(tour, depot.location) : depot.location;
+  const end = tour ? tourEndPoint(tour, depot.location) : undefined;
+  return { start, end: end && !same(end, depot.location) && !same(end, start) ? end : undefined };
+}
+
+/** Points the map must show at first: start, own end address, stops and a pin being placed. */
+export function initialMapPoints(props: Pick<TourMapProps, "depot" | "tour" | "stops" | "pendingPin">): GeoPoint[] {
+  const { start, end } = tourMapEnds(props.depot, props.tour);
+  return [...(start ? [start] : []), ...(end ? [end] : []), ...props.stops.filter((s) => s.location).map((s) => s.location!), ...(props.pendingPin ? [props.pendingPin] : [])];
+}
+
+/** Straight-line fallback (no road geometry): from the last completed stop – or the tour's start – through the open stops. */
+export function fallbackPath(props: Pick<TourMapProps, "depot" | "tour" | "stops">): GeoPoint[] {
+  const located = props.stops.filter((s): s is Stop & { location: GeoPoint } => s.location !== null);
+  const { start, end } = tourMapEnds(props.depot, props.tour);
+  const from = located.filter((s) => !isOpen(s.status)).at(-1)?.location ?? start;
+  const open = located.filter((s) => isOpen(s.status)).map((s) => s.location);
+  return [...(from ? [from] : []), ...open, ...(end && open.length ? [end] : [])];
+}
