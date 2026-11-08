@@ -1,5 +1,29 @@
 # Staging: 16 GB server + Germany routing graph (runbook, prepared 2026-11-07)
 
+> **Status 2026-11-08:** server is a CPX42 (8 vCPU, 16 GB); release `845ecb7` is deployed; the
+> archive is at `/home/turviodeploy/turvio-osrm-germany-2026-11-07.tar.gz`. Use **section 0**
+> below (it supersedes sections 2–7 for the import). Rehearsed locally with the repository's own
+> scripts (`deploy/staging/test/osrm-import-rehearsal.sh`): checksum, refusal of a wrong graph,
+> import in ~1 min, 6/6 city checks, revert to Hannover, roll forward.
+
+## 0. Import procedure (one step at a time, as `turviodeploy`)
+The installed `/opt/turvio/bin/deploy` predates `--osrm-import`; the deployed release contains the
+current script and its OSRM image contains import/switch/revert/check. Use the release's script:
+`R=/opt/turvio/releases/$(cat /opt/turvio/state/current)/turvio/deploy/staging`.
+
+| Step | Changes | Command |
+|---|---|---|
+| 1. Preflight | nothing | release, script support, checksum, disk, RAM, OSRM settings, current graph (`bash $R/deploy.sh --server-check`) |
+| 2. Settings | `.env` (backup first) | `OSRM_MMAP=false`, `OSRM_MEM_LIMIT=6g` (Germany needs 4.8 GB RAM; 512 MB would fail the check and auto-revert) |
+| 3. Import | OSRM volume, OSRM container | `bash $R/deploy.sh --osrm-import <archive> <sha256>` – verifies SHA-256, unpacks (~7.5 GB), checks META/OSRM version, switches, restarts only OSRM, runs the city check and switches back to Hannover by itself if a city fails |
+| 4. Verify | nothing | `--osrm-check` (6 × OK), `--status`, `--server-check` (OSRM ≈ 4.8 GB), API health, `deploy/staging/smoke-cities.mjs` inside the API container (5 × OK) |
+| Rollback | OSRM volume, `.env` | `bash $R/deploy.sh --osrm-revert` (Hannover graph is kept as "previous"), restore `.env` backup |
+
+During step 3 only optimization and live ETA pause (~1 min, "road routing is not available");
+GPS positions are still accepted. Known issue in the deployed image (fixed in the repository,
+next deploy): a *refused* archive leaves its unpacked directory behind until the next switch.
+
+
 Every step marked **APPROVAL** changes staging or costs money and is done only after the owner
 has approved that individual step. Everything else is read-only or local to the owner's Mac.
 
