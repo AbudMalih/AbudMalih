@@ -190,7 +190,8 @@ export function insightsMetadata(opts: {
   paths: Partial<Record<Locale, string>>;
   title: string;
   description: string;
-  image?: { url: string; alt: string };
+  /** a 1600px-wide image; height in pixels of that file */
+  image?: { url: string; alt: string; height: number };
   article?: { published: string; updated: string; section: string };
 }): Metadata {
   const { locale, paths, title, description, image, article } = opts;
@@ -198,7 +199,14 @@ export function insightsMetadata(opts: {
   const full = d.meta.titleTemplate.replace("%s", title);
   const url = pageUrl(locale, paths[locale]!);
   const images = image
-    ? [{ url: absolute(image.url), width: 1600, height: 1195, alt: image.alt }]
+    ? [
+        {
+          url: absolute(image.url),
+          width: 1600,
+          height: image.height,
+          alt: image.alt,
+        },
+      ]
     : [OG_IMAGE];
   return {
     title,

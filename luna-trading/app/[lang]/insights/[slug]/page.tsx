@@ -48,7 +48,11 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
     paths: pathsOf(a),
     title: x.seoTitle ?? x.title,
     description: x.description,
-    image: { url: `${a.cover.src}-1600.webp`, alt: x.coverAlt },
+    image: {
+      url: `${a.cover.src}-1600.webp`,
+      alt: x.coverAlt,
+      height: a.cover.height ?? 1195,
+    },
     article: {
       published: a.published,
       updated: a.updated,

@@ -14,7 +14,11 @@ export const importChina: Article = {
   published: "2026-11-08",
   updated: "2026-11-08",
   reviewed: "2026-11-08",
-  cover: { src: "/insights/container-terminal", illustrative: true },
+  cover: {
+    src: "/insights/container-terminal",
+    illustrative: true,
+    height: 893,
+  },
   related: ["incoterms", "gpsr", "private-label"],
   text: {
     de: {
