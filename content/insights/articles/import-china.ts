@@ -1,16 +1,16 @@
 import type { Article } from "../types";
 
 /**
- * DRAFT (Phase 3B, article 1). German only. Every legal or regulatory
- * statement was checked against the official sources listed in `sources`
+ * PUBLISHED (Phase 3B, article 1); goes live only with a deployment.
+ * German only. Every legal or regulatory statement was checked against the official sources listed in `sources`
  * on the review date (8 November 2026). Costs are named as components only:
  * no prices are stated. Transport times are the same indicative ranges as on
- * the Import page. Not to be published before final approval.
+ * the Import page.
  */
 export const importChina: Article = {
   id: "import-china",
   category: "import",
-  status: "draft",
+  status: "published",
   published: "2026-11-08",
   updated: "2026-11-08",
   reviewed: "2026-11-08",
