@@ -36,7 +36,7 @@ Updated 2026-11-06 (Phase 5). Native Android build exists; nothing is device-tes
 | Edit stop after adding | Documented | **Done** | Address, recipient, pin; old position dropped on address change. |
 | Multi-stop optimization | Documented | **Done** | Server OR-Tools for saved routes (time windows, priorities, shift, capacity, multiple parcels); offline heuristic fallback, labelled. |
 | Optimize remaining stops / from current position | Documented | **Done** | Completed stops stay; optional device position as start. |
-| Start/end location, round trip | Documented | **Partial** | Start: depot/last stop or device position; end: depot or last stop. Arbitrary addresses as start/end: planned. |
+| Start/end location, round trip | Documented | **Done** | Per tour: start at the depot or an own address (live GPS / last stop while driving); end at the depot, an own address or the last stop (no return leg in plan, road route or ETA). Dispatch "Start and end" dialog; driver Optimize screen. |
 | Time windows | Documented | **Done** | |
 | Service time per stop | Documented | **Partial** | Used by the optimizer; not editable in the app yet. |
 | Priority stops | Documented (Dispatch "ASAP") | **Done** | |

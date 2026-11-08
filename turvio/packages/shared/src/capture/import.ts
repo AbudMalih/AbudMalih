@@ -224,13 +224,35 @@ function emptyRow(line: number): ImportRow {
   return { line, street: "", postalCode: "", city: "", countryCode: "DE", location: null, trackingNumbers: [], type: "delivery", priority: false, errors: [], warnings: [] };
 }
 
-/** Rows of a table (CSV/XLSX). Uses the header when recognised, otherwise treats column 1 as a full address. */
-export function rowsFromTable(table: string[][]): { rows: ImportRow[]; columns: (ImportField | null)[]; headerDetected: boolean } {
+/** Every importable field, in the order a column-mapping UI offers them. */
+export const IMPORT_FIELDS: readonly ImportField[] = ["recipientName", "address", "street", "houseNumber", "postalCode", "city", "countryCode", "tracking", "lat", "lng", "type", "priority", "notes", "phone", "twStart", "twEnd"];
+
+/** A column mapping is usable when it yields an address: a full-address column, or street + postcode/city. */
+export function mappingProblems(columns: (ImportField | null)[]): string[] {
+  const used = columns.filter((c): c is ImportField => !!c);
+  const problems: string[] = [];
+  const dup = used.filter((c, i) => used.indexOf(c) !== i);
+  if (dup.length) problems.push(`mapped_twice:${[...new Set(dup)].join(",")}`);
+  if (!used.includes("address") && !(used.includes("street") && (used.includes("postalCode") || used.includes("city")))) problems.push("no_address_columns");
+  if (used.includes("lat") !== used.includes("lng")) problems.push("lat_lng_incomplete");
+  return problems;
+}
+
+/**
+ * Rows of a table (CSV/XLSX). Uses the header when recognised, otherwise treats column 1 as a full
+ * address – unless `opts.columns` gives the mapping explicitly (column-mapping UI; `opts.header`
+ * says whether the first row is a header to skip).
+ */
+export function rowsFromTable(
+  table: string[][],
+  opts: { columns?: (ImportField | null)[]; header?: boolean } = {},
+): { rows: ImportRow[]; columns: (ImportField | null)[]; headerDetected: boolean } {
   if (table.length === 0) return { rows: [], columns: [], headerDetected: false };
   const detected = detectColumns(table[0]!);
-  const columns: (ImportField | null)[] = detected ?? table[0]!.map((_, i) => (i === 0 ? "address" : null));
-  const body = detected ? table.slice(1) : table;
-  const offset = detected ? 2 : 1;
+  const columns: (ImportField | null)[] = opts.columns ?? detected ?? table[0]!.map((_, i) => (i === 0 ? "address" : null));
+  const hasHeader = opts.header ?? !!detected;
+  const body = hasHeader ? table.slice(1) : table;
+  const offset = hasHeader ? 2 : 1;
   const rows = body.map((cells, i) => {
     const get = (f: ImportField) => {
       const idx = columns.indexOf(f);

@@ -1,0 +1,1453 @@
+{
+"_source": "Real public addresses from OpenStreetMap (© OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright), extract 2026-11-06. No recipients or personal data. Used by real-optimizer integration tests.",
+"hannover": {
+"area": "Hannover-Nord/List/Vahrenwald 30161 30163 30165",
+"addresses": [
+{
+"street": "Borkumer Straße",
+"houseNumber": "31",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397376,
+"lng": 9.74687
+},
+{
+"street": "Nordring",
+"houseNumber": "2A",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.403615,
+"lng": 9.745464
+},
+{
+"street": "Vahrenwalder Straße",
+"houseNumber": "140",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.398823,
+"lng": 9.737126
+},
+{
+"street": "Rotermundstraße",
+"houseNumber": "13B",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.4009,
+"lng": 9.73514
+},
+{
+"street": "Auf dem Dorn",
+"houseNumber": "19A",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394772,
+"lng": 9.724703
+},
+{
+"street": "In der Steinriede",
+"houseNumber": "11",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.386195,
+"lng": 9.749807
+},
+{
+"street": "Schleswiger Straße",
+"houseNumber": "8",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401517,
+"lng": 9.731157
+},
+{
+"street": "Halkettstraße",
+"houseNumber": "39",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.392996,
+"lng": 9.728418
+},
+{
+"street": "Helmholtzstraße",
+"houseNumber": "19",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395379,
+"lng": 9.72632
+},
+{
+"street": "Juister Weg",
+"houseNumber": "1",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397025,
+"lng": 9.743569
+},
+{
+"street": "Vahrenwalder Straße",
+"houseNumber": "49",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.389673,
+"lng": 9.734253
+},
+{
+"street": "Niedersachsenring",
+"houseNumber": "24",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.398687,
+"lng": 9.739421
+},
+{
+"street": "Wellingtonweg",
+"houseNumber": "1",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399924,
+"lng": 9.746771
+},
+{
+"street": "Fraunhoferstraße",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.393806,
+"lng": 9.753986
+},
+{
+"street": "Juister Weg",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397262,
+"lng": 9.744051
+},
+{
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "58",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393643,
+"lng": 9.724386
+},
+{
+"street": "Treitschkestraße",
+"houseNumber": "13",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395828,
+"lng": 9.720151
+},
+{
+"street": "Sonderburger Straße",
+"houseNumber": "25",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.402119,
+"lng": 9.733673
+},
+{
+"street": "Hamburger Allee",
+"houseNumber": "27",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.3812,
+"lng": 9.738575
+},
+{
+"street": "Bogenstraße",
+"houseNumber": "5",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.410162,
+"lng": 9.703818
+},
+{
+"street": "Schubertstraße",
+"houseNumber": "1",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.385744,
+"lng": 9.747121
+},
+{
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "14",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394472,
+"lng": 9.723867
+},
+{
+"street": "Parsevalstraße",
+"houseNumber": "11",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.400819,
+"lng": 9.739264
+},
+{
+"street": "Schulenburger Landstraße",
+"houseNumber": "134A",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.407951,
+"lng": 9.712804
+},
+{
+"street": "Rundestraße",
+"houseNumber": "10",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.379222,
+"lng": 9.740112
+},
+{
+"street": "Schubertstraße",
+"houseNumber": "6",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.385923,
+"lng": 9.746516
+},
+{
+"street": "Borsigweg",
+"houseNumber": "12",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.399479,
+"lng": 9.731623
+},
+{
+"street": "Norderneyer Weg",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397421,
+"lng": 9.745053
+},
+{
+"street": "Borkumer Straße",
+"houseNumber": "44",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397548,
+"lng": 9.748587
+},
+{
+"street": "Benzweg",
+"houseNumber": "2",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.398294,
+"lng": 9.728052
+},
+{
+"street": "Melanchthonstraße",
+"houseNumber": "19",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.397963,
+"lng": 9.725756
+},
+{
+"street": "Guts-Muths-Straße",
+"houseNumber": "9",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395389,
+"lng": 9.727842
+},
+{
+"street": "Tonderner Straße",
+"houseNumber": "17",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401974,
+"lng": 9.732353
+},
+{
+"street": "Katalonienweg",
+"houseNumber": "13",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399113,
+"lng": 9.746272
+},
+{
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "13",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.390097,
+"lng": 9.748869
+},
+{
+"street": "Sonderburger Straße",
+"houseNumber": "29",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.402282,
+"lng": 9.733791
+},
+{
+"street": "Schleswiger Straße",
+"houseNumber": "5",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401509,
+"lng": 9.730755
+},
+{
+"street": "Fenskestraße",
+"houseNumber": "33",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.399078,
+"lng": 9.721211
+},
+{
+"street": "Linsingenstraße",
+"houseNumber": "21A",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.400886,
+"lng": 9.739865
+},
+{
+"street": "Philipsbornstraße",
+"houseNumber": "54",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393417,
+"lng": 9.729458
+},
+{
+"street": "Großer Kolonnenweg",
+"houseNumber": "18C",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.405906,
+"lng": 9.738797
+},
+{
+"street": "Raschplatz",
+"houseNumber": "7a",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.379067,
+"lng": 9.744242
+},
+{
+"street": "Melanchthonstraße",
+"houseNumber": "46",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.398343,
+"lng": 9.731454
+},
+{
+"street": "Cambridgeweg",
+"houseNumber": "8",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399529,
+"lng": 9.747997
+},
+{
+"street": "De-Haën-Platz",
+"houseNumber": "3",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.393005,
+"lng": 9.753356
+},
+{
+"street": "Raschplatz",
+"houseNumber": "6",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.378617,
+"lng": 9.744246
+},
+{
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "11",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.389922,
+"lng": 9.749091
+},
+{
+"street": "Lister Kirchweg",
+"houseNumber": "55",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.39521,
+"lng": 9.751381
+},
+{
+"street": "Salamancaweg",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399831,
+"lng": 9.745905
+},
+{
+"street": "Rundestraße",
+"houseNumber": "11",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.378888,
+"lng": 9.741604
+},
+{
+"street": "Linsingenstraße",
+"houseNumber": "21",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.400863,
+"lng": 9.740227
+},
+{
+"street": "Niebüller Weg",
+"houseNumber": "3",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.400548,
+"lng": 9.730789
+},
+{
+"street": "Jakobistraße",
+"houseNumber": "3",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.388787,
+"lng": 9.749256
+},
+{
+"street": "Waldstraße",
+"houseNumber": "22",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.392817,
+"lng": 9.747521
+},
+{
+"street": "Bömelburgstraße",
+"houseNumber": "39b",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.39929,
+"lng": 9.720645
+},
+{
+"street": "Linsingenstraße",
+"houseNumber": "27",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.401382,
+"lng": 9.740104
+},
+{
+"street": "Spichernstraße",
+"houseNumber": "22",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.387582,
+"lng": 9.739991
+},
+{
+"street": "Franckestraße",
+"houseNumber": "9",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.390743,
+"lng": 9.732392
+},
+{
+"street": "Wöhlerstraße",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.39326,
+"lng": 9.746525
+},
+{
+"street": "Drostestraße",
+"houseNumber": "32",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.38777,
+"lng": 9.744938
+},
+{
+"street": "Katalonienweg",
+"houseNumber": "16",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399148,
+"lng": 9.745314
+},
+{
+"street": "Sylter Weg",
+"houseNumber": "8",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397494,
+"lng": 9.746183
+},
+{
+"street": "Voltmerstraße",
+"houseNumber": "60",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.402522,
+"lng": 9.714979
+},
+{
+"street": "Fraunhoferstraße",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.393572,
+"lng": 9.753833
+},
+{
+"street": "Jakobistraße",
+"houseNumber": "31",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.390225,
+"lng": 9.744377
+},
+{
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "88",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397673,
+"lng": 9.742416
+},
+{
+"street": "Otto-Rheinhold-Weg",
+"houseNumber": "7D",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.403154,
+"lng": 9.729151
+},
+{
+"street": "Kleiststraße",
+"houseNumber": "16",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.392317,
+"lng": 9.736552
+},
+{
+"street": "Niebüller Weg",
+"houseNumber": "12",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.400461,
+"lng": 9.729358
+},
+{
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "10",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394559,
+"lng": 9.723869
+},
+{
+"street": "Göbelstraße",
+"houseNumber": "2",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.390158,
+"lng": 9.749371
+},
+{
+"street": "Tonderner Straße",
+"houseNumber": "12",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401716,
+"lng": 9.732567
+},
+{
+"street": "Voltastraße",
+"houseNumber": "10",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.391484,
+"lng": 9.732181
+},
+{
+"street": "Großer Kolonnenweg",
+"houseNumber": "10",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.404292,
+"lng": 9.736806
+},
+{
+"street": "Gradestraße",
+"houseNumber": "18",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.405486,
+"lng": 9.741931
+},
+{
+"street": "Beiersdorfstraße",
+"houseNumber": "2",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.406898,
+"lng": 9.730014
+},
+{
+"street": "Hüttenstraße",
+"houseNumber": "25a",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.395771,
+"lng": 9.72134
+},
+{
+"street": "Borkumer Straße",
+"houseNumber": "47",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397774,
+"lng": 9.748313
+},
+{
+"street": "Lister Kirchweg",
+"houseNumber": "22",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.394858,
+"lng": 9.743974
+},
+{
+"street": "Wöhlerstraße",
+"houseNumber": "17",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.395683,
+"lng": 9.747689
+},
+{
+"street": "Jahnplatz",
+"houseNumber": "1",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.394275,
+"lng": 9.730783
+},
+{
+"street": "Drostestraße",
+"houseNumber": "18",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.386853,
+"lng": 9.747112
+},
+{
+"street": "Apenrader Straße",
+"houseNumber": "40",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.401549,
+"lng": 9.729832
+},
+{
+"street": "Schulenburger Landstraße",
+"houseNumber": "33",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.39853,
+"lng": 9.714331
+},
+{
+"street": "Niedersachsenring",
+"houseNumber": "7",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.399623,
+"lng": 9.734879
+},
+{
+"street": "Liebigstraße",
+"houseNumber": "7",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.392296,
+"lng": 9.755339
+},
+{
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "60",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393596,
+"lng": 9.724468
+},
+{
+"street": "Karl-Imhoff-Weg",
+"houseNumber": "17",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.40391,
+"lng": 9.728209
+},
+{
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "42",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393893,
+"lng": 9.723963
+},
+{
+"street": "Scheelenkamp",
+"houseNumber": "11",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.3958,
+"lng": 9.725411
+},
+{
+"street": "Ferdinand-Wallbrecht-Straße",
+"houseNumber": "86",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.397523,
+"lng": 9.742522
+},
+{
+"street": "Drostestraße",
+"houseNumber": "1",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.38586,
+"lng": 9.749127
+},
+{
+"street": "Elfriede-Döler-Weg",
+"houseNumber": "72",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.393433,
+"lng": 9.724774
+},
+{
+"street": "Spichernstraße",
+"houseNumber": "23",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.38675,
+"lng": 9.738444
+},
+{
+"street": "Cambridgeweg",
+"houseNumber": "4",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.399525,
+"lng": 9.74734
+},
+{
+"street": "Richthofenstraße",
+"houseNumber": "8",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.403718,
+"lng": 9.73801
+},
+{
+"street": "Husumer Weg",
+"houseNumber": "6",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.400553,
+"lng": 9.728231
+},
+{
+"street": "Edenstraße",
+"houseNumber": "2",
+"postalCode": "30161",
+"city": "Hannover",
+"lat": 52.385655,
+"lng": 9.745647
+},
+{
+"street": "Franckestraße",
+"houseNumber": "10",
+"postalCode": "30165",
+"city": "Hannover",
+"lat": 52.390839,
+"lng": 9.7326
+},
+{
+"street": "Edenstraße",
+"houseNumber": "46",
+"postalCode": "30163",
+"city": "Hannover",
+"lat": 52.389381,
+"lng": 9.749028
+}
+]
+},
+"suhl": {
+"area": "Suhl 98527 98528 98529",
+"addresses": [
+{
+"street": "Friedrich-König-Straße",
+"houseNumber": "6",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.609215,
+"lng": 10.686895
+},
+{
+"street": "Meininger Straße",
+"houseNumber": "105",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.599723,
+"lng": 10.654718
+},
+{
+"street": "Meininger Straße",
+"houseNumber": "120",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.599787,
+"lng": 10.657795
+},
+{
+"street": "Georg-Friedrich-Händel-Straße",
+"houseNumber": "9",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.612173,
+"lng": 10.67351
+},
+{
+"street": "Hainbergstraße",
+"houseNumber": "19",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.605051,
+"lng": 10.707484
+},
+{
+"street": "An der Stirn",
+"houseNumber": "24",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.606864,
+"lng": 10.67222
+},
+{
+"street": "Neuer Friedberg",
+"houseNumber": "19",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.591708,
+"lng": 10.70528
+},
+{
+"street": "Hohe Feldstraße",
+"houseNumber": "1b",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.606797,
+"lng": 10.67533
+},
+{
+"street": "Breites Feld",
+"houseNumber": "25",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.630998,
+"lng": 10.743023
+},
+{
+"street": "Zellaer Straße",
+"houseNumber": "15",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.629049,
+"lng": 10.741026
+},
+{
+"street": "Goethestraße",
+"houseNumber": "6",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.608892,
+"lng": 10.704246
+},
+{
+"street": "Rüssenstraße",
+"houseNumber": "1",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.612272,
+"lng": 10.693541
+},
+{
+"street": "Franz-Liszt-Straße",
+"houseNumber": "24",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.610372,
+"lng": 10.66384
+},
+{
+"street": "Breites Feld",
+"houseNumber": "32",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.631362,
+"lng": 10.740875
+},
+{
+"street": "Eckstraße",
+"houseNumber": "9",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.635858,
+"lng": 10.736418
+},
+{
+"street": "Schneekopfstraße",
+"houseNumber": "27",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.635193,
+"lng": 10.713016
+},
+{
+"street": "Querstraße",
+"houseNumber": "7",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.637263,
+"lng": 10.734312
+},
+{
+"street": "Gothaer Straße",
+"houseNumber": "131",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.620826,
+"lng": 10.698854
+},
+{
+"street": "Ernst-König-Straße",
+"houseNumber": "14",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.599148,
+"lng": 10.657537
+},
+{
+"street": "Schleusinger Straße",
+"houseNumber": "20",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.605356,
+"lng": 10.689709
+},
+{
+"street": "Roschstraße",
+"houseNumber": "5",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.608787,
+"lng": 10.694161
+},
+{
+"street": "Heinrich-Schütz-Straße",
+"houseNumber": "2",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.608897,
+"lng": 10.664439
+},
+{
+"street": "An der Goldenen Lauter",
+"houseNumber": "41",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.63283,
+"lng": 10.750369
+},
+{
+"street": "Bahnhofstraße",
+"houseNumber": "12",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.607995,
+"lng": 10.687997
+},
+{
+"street": "Harzgasse",
+"houseNumber": "24",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.620347,
+"lng": 10.695561
+},
+{
+"street": "Bocksberg",
+"houseNumber": "7",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.626809,
+"lng": 10.718665
+},
+{
+"street": "Röderfeld",
+"houseNumber": "10",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.61138,
+"lng": 10.698439
+},
+{
+"street": "Harzgasse",
+"houseNumber": "39",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.620842,
+"lng": 10.694285
+},
+{
+"street": "Johann-Stockmar-Straße",
+"houseNumber": "4",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.631647,
+"lng": 10.743069
+},
+{
+"street": "Lindenstraße",
+"houseNumber": "6c",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.631937,
+"lng": 10.746882
+},
+{
+"street": "Hufelandstraße",
+"houseNumber": "11",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.602186,
+"lng": 10.704391
+},
+{
+"street": "Kefersteinstraße",
+"houseNumber": "20",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.616546,
+"lng": 10.695547
+},
+{
+"street": "Albrechtser Berg",
+"houseNumber": "1",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.610698,
+"lng": 10.681573
+},
+{
+"street": "Zum Zimmergrund",
+"houseNumber": "46",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.620732,
+"lng": 10.64299
+},
+{
+"street": "Prießnitzstraße",
+"houseNumber": "20a",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.606408,
+"lng": 10.709569
+},
+{
+"street": "Linsenhofer Straße",
+"houseNumber": "86",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.616054,
+"lng": 10.664156
+},
+{
+"street": "Windmühlenweg",
+"houseNumber": "3",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.605845,
+"lng": 10.690774
+},
+{
+"street": "Zum Zimmergrund",
+"houseNumber": "80",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.622679,
+"lng": 10.643937
+},
+{
+"street": "Karl-Marx-Straße",
+"houseNumber": "85",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.618088,
+"lng": 10.707301
+},
+{
+"street": "Fröhliche-Mann-Straße",
+"houseNumber": "7a",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.634282,
+"lng": 10.701884
+},
+{
+"street": "Richard-Strauss-Straße",
+"houseNumber": "15",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.611167,
+"lng": 10.66634
+},
+{
+"street": "Max-Reger-Straße",
+"houseNumber": "15",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.609867,
+"lng": 10.666895
+},
+{
+"street": "Suhler Straße",
+"houseNumber": "105",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.625114,
+"lng": 10.739299
+},
+{
+"street": "Leonhard-Frank-Straße",
+"houseNumber": "33",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.599983,
+"lng": 10.664194
+},
+{
+"street": "Zellaer Straße",
+"houseNumber": "53",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.632447,
+"lng": 10.738948
+},
+{
+"street": "Tschaikowskistraße",
+"houseNumber": "85",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.605144,
+"lng": 10.66263
+},
+{
+"street": "Heiligenland",
+"houseNumber": "1012",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.597622,
+"lng": 10.645673
+},
+{
+"street": "Neuer Friedberg",
+"houseNumber": "12",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.592746,
+"lng": 10.706632
+},
+{
+"street": "Schubertstraße",
+"houseNumber": "1",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.610183,
+"lng": 10.669143
+},
+{
+"street": "Schleusinger Straße",
+"houseNumber": "51",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.60203,
+"lng": 10.692457
+},
+{
+"street": "Beethovenstraße",
+"houseNumber": "21b",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.607596,
+"lng": 10.669126
+},
+{
+"street": "Wiesenstraße",
+"houseNumber": "4",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.637158,
+"lng": 10.731432
+},
+{
+"street": "Albrechtser Berg",
+"houseNumber": "10",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.611003,
+"lng": 10.680691
+},
+{
+"street": "Oberlandstraße",
+"houseNumber": "84",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.621041,
+"lng": 10.706579
+},
+{
+"street": "Am Domberg",
+"houseNumber": "21",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.614874,
+"lng": 10.694511
+},
+{
+"street": "Freiligrathstraße",
+"houseNumber": "15",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.605655,
+"lng": 10.705192
+},
+{
+"street": "Leonhard-Frank-Straße",
+"houseNumber": "94",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.600693,
+"lng": 10.665418
+},
+{
+"street": "Senfte",
+"houseNumber": "6",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.60629,
+"lng": 10.688813
+},
+{
+"street": "Rückertstraße",
+"houseNumber": "4",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.605304,
+"lng": 10.703207
+},
+{
+"street": "Albrechtser Berg",
+"houseNumber": "42 a",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.613815,
+"lng": 10.676894
+},
+{
+"street": "Friesenstraße",
+"houseNumber": "15",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.60893,
+"lng": 10.676121
+},
+{
+"street": "Silbergrund",
+"houseNumber": "7e",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.640563,
+"lng": 10.726037
+},
+{
+"street": "Wertherstraße",
+"houseNumber": "9",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.606243,
+"lng": 10.696567
+},
+{
+"street": "Fuhrmannstraße",
+"houseNumber": "14",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.629917,
+"lng": 10.74464
+},
+{
+"street": "Zellaer Straße",
+"houseNumber": "113",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.636141,
+"lng": 10.733633
+},
+{
+"street": "Franz-Mehring-Straße",
+"houseNumber": "7",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.613694,
+"lng": 10.703451
+},
+{
+"street": "Steinsfeld",
+"houseNumber": "38",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.633678,
+"lng": 10.702696
+},
+{
+"street": "Plessengrund",
+"houseNumber": "6",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.5992,
+"lng": 10.649786
+},
+{
+"street": "Oberlandstraße",
+"houseNumber": "22",
+"postalCode": "98528",
+"city": "Suhl",
+"lat": 50.618546,
+"lng": 10.699227
+},
+{
+"street": "Karl-Marx-Straße",
+"houseNumber": "17",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.617389,
+"lng": 10.706418
+},
+{
+"street": "Am Schelrod",
+"houseNumber": "2",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.613468,
+"lng": 10.699557
+},
+{
+"street": "Marggrafstraße",
+"houseNumber": "1",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.606025,
+"lng": 10.693937
+},
+{
+"street": "Goldbachstraße",
+"houseNumber": "66",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.616057,
+"lng": 10.651975
+},
+{
+"street": "Mozartstraße",
+"houseNumber": "12",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.607202,
+"lng": 10.670209
+},
+{
+"street": "Maxim-Gorki-Straße",
+"houseNumber": "13",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.610634,
+"lng": 10.705343
+},
+{
+"street": "Am Lautenberg",
+"houseNumber": "7",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.601405,
+"lng": 10.657235
+},
+{
+"street": "Carl-Fiedler-Straße",
+"houseNumber": "6",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.610169,
+"lng": 10.707531
+},
+{
+"street": "Puschkinstraße",
+"houseNumber": "16",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.604968,
+"lng": 10.684303
+},
+{
+"street": "Hoffnung",
+"houseNumber": "10",
+"postalCode": "98527",
+"city": "Suhl",
+"lat": 50.622616,
+"lng": 10.698451
+},
+{
+"street": "Johann-Sebastian-Bach-Straße",
+"houseNumber": "103",
+"postalCode": "98529",
+"city": "Suhl",
+"lat": 50.603336,
+"lng": 10.664224
+}
+]
+}
+}

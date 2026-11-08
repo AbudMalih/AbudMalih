@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { errorMessage } from "../lib/api";
 import { parseStopLines } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
+import { FileImport, type FileImportState } from "./FileImport";
 
 const inputCls =
   "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none aria-[invalid=true]:border-danger";
@@ -27,8 +28,18 @@ const EMPTY = { type: "delivery", recipient: "", street: "", no: "", postal: "",
  * directly (or pasted) until an address-search provider is connected.
  */
 export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaultCity }: { open: boolean; onOpenChange: (o: boolean) => void; target: { tourId?: string; depotId?: string }; targetLabel: string; defaultCity?: string }) {
-  const { addStops } = useDispatch();
-  const [mode, setMode] = useState<"single" | "paste">("single");
+  const { addStops, scoped } = useDispatch();
+  const [mode, setMode] = useState<"single" | "paste" | "file">("single");
+  const [fileState, setFileState] = useState<FileImportState>({ stops: [], blocked: true, label: "Import" });
+  // Tracking numbers already on a stop this day – a file that repeats them is flagged, not silently doubled.
+  const existingTracking = useMemo(
+    () => new Set([...scoped.stops, ...scoped.unassigned].flatMap((s) => (s.parcels ?? []).map((p) => p.trackingNumber))),
+    [scoped],
+  );
+  const depotLocation = useMemo(() => {
+    const depotId = target.depotId ?? scoped.tours.find((t) => t.id === target.tourId)?.depotId;
+    return scoped.depots.find((d) => d.id === depotId)?.location;
+  }, [scoped, target]);
   const [f, setF] = useState({ ...EMPTY, city: defaultCity ?? "" });
   const [paste, setPaste] = useState("");
   const [busy, setBusy] = useState(false);
@@ -56,11 +67,13 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
   const bad = parsed.filter((p) => p.error);
 
   const submit = async () => {
-    const stops = mode === "single" ? (single.success ? [single.data] : []) : good.map((g) => g.stop!);
+    const stops = mode === "single" ? (single.success ? [single.data] : []) : mode === "file" ? fileState.stops : good.map((g) => g.stop!);
     if (!stops.length) return;
     setBusy(true);
     try {
-      const ids = await addStops(target, stops);
+      // The API takes at most 500 stops per request.
+      const ids: string[] = [];
+      for (let i = 0; i < stops.length; i += 500) ids.push(...(await addStops(target, stops.slice(i, i + 500))));
       toast.success(`${ids.length} stop${ids.length > 1 ? "s" : ""} added to ${targetLabel}`, { description: target.tourId ? "Optimize the tour to place them in the route." : "They are waiting in the unassigned list." });
       setF({ ...EMPTY, city: defaultCity ?? "" });
       setPaste("");
@@ -72,14 +85,14 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
     }
   };
 
-  const canSubmit = mode === "single" ? single.success && !windowInvalid && !coordsMissing : good.length > 0 && bad.length === 0;
+  const canSubmit = mode === "single" ? single.success && !windowInvalid && !coordsMissing : mode === "file" ? !fileState.blocked : good.length > 0 && bad.length === 0;
 
   return (
     <Dialog
       open={open}
       onOpenChange={(o) => !busy && onOpenChange(o)}
       title={`Add stops · ${targetLabel}`}
-      description="Coordinates are required until an address search provider is connected."
+      description={mode === "file" ? "Map the columns, check the stops, find their locations, then import." : "Single stops and pasted lists need coordinates; the file import finds locations by address."}
       className="max-w-2xl"
       footer={
         <>
@@ -88,19 +101,21 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy || !canSubmit}>
             {busy && <Loader2 className="animate-spin" />}
-            {mode === "single" ? "Add stop" : `Add ${good.length} stop${good.length === 1 ? "" : "s"}`}
+            {mode === "single" ? "Add stop" : mode === "file" ? fileState.label : `Add ${good.length} stop${good.length === 1 ? "" : "s"}`}
           </Button>
         </>
       }
     >
       <div className="mb-4 inline-flex rounded-md border border-line bg-surface-2 p-0.5" role="tablist" aria-label="Entry mode">
-        {(["single", "paste"] as const).map((m) => (
+        {(["single", "paste", "file"] as const).map((m) => (
           <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn("h-8 rounded px-3 text-[13px] font-medium", mode === m ? "bg-surface text-ink shadow-xs" : "text-muted")}>
-            {m === "single" ? "Single stop" : "Paste list"}
+            {m === "single" ? "Single stop" : m === "paste" ? "Paste list" : "CSV / Excel file"}
           </button>
         ))}
       </div>
-      {mode === "single" ? (
+      {mode === "file" ? (
+        <FileImport near={depotLocation} existingTracking={existingTracking} onChange={setFileState} />
+      ) : mode === "single" ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
           <F label="Type" className="col-span-2 sm:col-span-2">
             <select className={inputCls} value={f.type} onChange={(e) => set("type", e.target.value)}>

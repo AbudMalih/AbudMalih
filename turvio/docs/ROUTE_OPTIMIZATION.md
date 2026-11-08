@@ -214,6 +214,58 @@ between 2.4 % longer and 5.6 % shorter, but it ignores deadlines and is late at 
 tour, so it is not a valid alternative. Optimizer process peak memory:
 154–156 MB for the whole run of 100-stop tours.
 
+### D. Real-road regression checks (2026-11-08)
+**Fixed defects (found by the 2026-11-08 audit and the new real-path test):**
+1. *"End at last stop" was planned as a round trip.* The open end was modelled as a node at the
+   start position with the real drive time back, so the order, distance and end time were those
+   of a round trip. Now arcs into an open end cost nothing (`solver.py`); regression tests
+   `test_open_end_*` fail on the old solver. Tours store the choice (`tours.end_mode`), so the road
+   route and live ETA have no return leg either.
+2. *Shown road route ≠ planned route.* `GET /tours/:id/route` and the live ETA used OSRM `route`
+   with the car default `continue_straight=true` (no turning at a stop), the optimizer the `table`
+   (any direction). On a 100-stop Hannover tour the shown route was +20 % km / +44 % time over
+   the plan. Now `continue_straight=false`; route and plan agree within 0.1 % (OSRM's U-turn
+   penalty).
+
+**API integration test on real data** (`apps/api/test/integration/real-optimizer.test.ts`: API →
+optimizer service → OSRM Germany graph; real OSM addresses, fixtures/osm-addresses.json; runs when
+both services are up, skipped otherwise):
+
+| Case | Import order | TURVIO | Independent baseline (NN + 2-opt/or-opt, same matrix) | Solve |
+|---|---:|---:|---:|---:|
+| Hannover 100 stops, back to depot | 193.2 km | 37.5 km, 95.3 min driving | 99.7 min (TURVIO −4.4 %) | 9.6 s |
+| Same, end at last stop | – | 32.7 km, 86.1 min | 91.6 min (−6.0 %) | ~10 s |
+| Suhl 80 stops, own start address, end at last stop (Kassel depot) | – | 65.6 km, 153.4 min | 157.2 min (−2.4 %) | ~10 s |
+| Stop in Paris | refused: 422 `routing_out_of_coverage` (no straight-line fallback) | | | |
+
+**Quality gate** (`services/optimizer/bench/run_quality_gate.sh`, checks in `bench/quality_gate.py`):
+4 cities × 80/100 stops × back to depot / end at last stop, 2 tours each, whole-city stops with
+express deadlines. Fails on any late/unplanned stop, > VROOM + 2 %, > 97 % of the previous solver,
+> 50 % of the import order, or a solve over budget + 1.5 s. Result 2026-11-08: **passed**.
+
+| City | End | Stops | Import km | TURVIO km | TURVIO drive min | vs VROOM | vs previous solver | TURVIO late / unplanned | Max solve s |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Hannover | depot | 80 | 832 | 175.7 | 336 | -0.5 % | -13.3 % | 0 / 0 | 9.6 |
+| Hannover | depot | 100 | 1127 | 186.4 | 373 | -0.9 % | -11.3 % | 0 / 0 | 9.9 |
+| Kassel | depot | 80 | 495 | 98.9 | 206 | -1.4 % | -16.9 % | 0 / 0 | 9.6 |
+| Kassel | depot | 100 | 585 | 117.7 | 251 | -0.3 % | -19.2 % | 0 / 0 | 10.0 |
+| Bremen | depot | 80 | 618 | 135.8 | 263 | -2.6 % | -15.1 % | 0 / 0 | 9.6 |
+| Bremen | depot | 100 | 772 | 139.9 | 288 | -3.1 % | -17.1 % | 0 / 0 | 9.9 |
+| Suhl | depot | 80 | 327 | 69.3 | 160 | -1.2 % | -15.8 % | 0 / 0 | 9.5 |
+| Suhl | depot | 100 | 412 | 75.5 | 178 | -1.9 % | -17.0 % | 0 / 0 | 9.7 |
+| Hannover | last stop | 80 | 823 | 163.5 | 314 | -2.0 % | -15.9 % | 0 / 0 | 9.6 |
+| Hannover | last stop | 100 | 1115 | 175.3 | 355 | -3.4 % | -13.5 % | 0 / 0 | 9.7 |
+| Kassel | last stop | 80 | 487 | 94.7 | 198 | -1.0 % | -18.6 % | 0 / 0 | 9.5 |
+| Kassel | last stop | 100 | 581 | 112.6 | 243 | -1.3 % | -21.1 % | 0 / 0 | 10.0 |
+| Bremen | last stop | 80 | 609 | 132.3 | 254 | -1.1 % | -15.6 % | 0 / 0 | 9.5 |
+| Bremen | last stop | 100 | 763 | 130.0 | 266 | -0.2 % | -20.9 % | 0 / 0 | 9.9 |
+| Suhl | last stop | 80 | 324 | 65.3 | 152 | +0.0 % | -18.3 % | 0 / 0 | 9.5 |
+| Suhl | last stop | 100 | 409 | 75.4 | 177 | -0.7 % | -16.7 % | 0 / 0 | 9.8 |
+
+"Previous solver" for "last stop" includes the open-end defect (it drove back to the depot in its
+plan). NN + 2-opt ignores deadlines: it is late at 2–6 stops per tour; TURVIO at none. Full tables:
+`docs/benchmarks/*-gate-2026-11-08.md`.
+
 ## 5. Limits (stated, not hidden)
 - **No traffic**: OSRM uses static road speeds. Rush-hour delays are not in the travel times.
 - **Coverage**: staging still serves Region Hannover only. The Germany graph (section 4C) is
@@ -239,5 +291,4 @@ tour, so it is not a valid alternative. Optimizer process peak memory:
    `OSRM_MMAP=true`). Import with `deploy.sh --osrm-import FILE SHA256` needs approval.
 2. **Traffic-aware travel times**: only via a paid data source (e.g. a commercial traffic API)
    or historical speed profiles. Not started.
-3. **Time budget for very large tours**: 10 s is the current limit; 150–200 stops benefit from
-   15–20 s (measured +0–6 % with 30 s). Proposed: 15 s above 150 stops (no cost).
+3. **Time budget for very large tours**: 15 s above 150 stops (in use since 2026-11-07).

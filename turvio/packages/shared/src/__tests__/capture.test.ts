@@ -2,6 +2,8 @@ import { strToU8, zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import {
   ScanSession,
+  detectColumns,
+  mappingProblems,
   fieldsNeedingReview,
   groupImportRows,
   normalizeTrackingNumber,
@@ -197,5 +199,43 @@ describe("imports", () => {
     ]);
     expect(rowsFromTable(table).rows[0]).toMatchObject({ street: "Lister Meile", houseNumber: "4", trackingNumbers: ["TVO1000000031"], errors: [] });
     expect(() => parseXlsx(new Uint8Array([0xd0, 0xcf, 0x11]))).toThrow(XlsxError);
+  });
+});
+
+describe("import column mapping (Dispatch file import)", () => {
+  // A carrier manifest with headers TURVIO does not know.
+  const table = [
+    ["Sdg-Nr", "Empf.", "Anschrift Zeile", "PLZ/Ort", "Zielort", "Hinweis"],
+    ["00340434161094000001", "Kiosk am Platz", "Lister Meile 44a", "30161", "Hannover", "Hintereingang"],
+    ["00340434161094000002", "Kiosk am Platz", "Lister Meile 44a", "30161", "Hannover", ""],
+    ["00340434161094000003", "Praxis Dr. Ay", "Podbielskistr. 7", "30163", "Hannover", ""],
+  ];
+  const mapping = ["tracking", "recipientName", "street", "postalCode", "city", "notes"] as const;
+
+  it("unknown headers are not guessed; an explicit mapping reads every row", () => {
+    expect(detectColumns(table[0]!)).toBeNull();
+    const { rows } = rowsFromTable(table, { columns: [...mapping], header: true });
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toMatchObject({ line: 2, street: "Lister Meile", houseNumber: "44a", postalCode: "30161", city: "Hannover", recipientName: "Kiosk am Platz", notes: "Hintereingang", errors: [] });
+    expect(rows[0]!.trackingNumbers).toEqual(["340434161094000001"]);
+  });
+
+  it("same address becomes one stop with all parcels", () => {
+    const groups = groupImportRows(rowsFromTable(table, { columns: [...mapping], header: true }).rows);
+    expect(groups).toHaveLength(2);
+    expect(groups[0]!.input.trackingNumbers).toEqual(["340434161094000001", "340434161094000002"]);
+  });
+
+  it("a file without a header row keeps its first line", () => {
+    const { rows } = rowsFromTable(table.slice(1), { columns: [...mapping], header: false });
+    expect(rows).toHaveLength(3);
+    expect(rows[0]!.line).toBe(1);
+  });
+
+  it("reports mappings that cannot produce an address", () => {
+    expect(mappingProblems([...mapping])).toEqual([]);
+    expect(mappingProblems(["tracking", "recipientName", null, null, "city", null])).toContain("no_address_columns");
+    expect(mappingProblems(["street", "street", "postalCode"])).toContain("mapped_twice:street");
+    expect(mappingProblems(["address", "lat", null])).toContain("lat_lng_incomplete");
   });
 });

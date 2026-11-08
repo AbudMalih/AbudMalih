@@ -52,7 +52,11 @@ export class OsrmRouting implements RoutingProvider {
     const hit = this.cache.get(coords);
     const ttl = this.opts.cacheTtlMs ?? 15 * 60_000;
     if (hit && Date.now() - hit.at < ttl) return hit.route;
-    const url = `${this.baseUrl.replace(/\/$/, "")}/route/v1/driving/${coords}?overview=simplified&geometries=geojson&steps=false&continue_straight=default`;
+    // continue_straight=false: the vehicle may turn around at a stop (OSRM adds its U-turn
+    // penalty). The car default (true) forbids that and loops around a block at every waypoint –
+    // measured +44 % drive time on a 100-stop Hannover tour – and would no longer match the
+    // optimizer's matrix, which plans every stop as reachable and leavable in any direction.
+    const url = `${this.baseUrl.replace(/\/$/, "")}/route/v1/driving/${coords}?overview=simplified&geometries=geojson&steps=false&continue_straight=false`;
     let data: { code?: string; message?: string; waypoints?: { distance?: number }[]; routes?: { distance: number; duration: number; legs: { distance: number; duration: number }[]; geometry: { coordinates: [number, number][] } }[] };
     try {
       const res = await (this.opts.fetchImpl ?? fetch)(url, { signal: AbortSignal.timeout(this.opts.timeoutMs ?? 8000) });

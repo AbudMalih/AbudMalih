@@ -21,7 +21,7 @@ describe("OSRM routing client (mocked OSRM)", () => {
     const a = await r.route(P);
     await r.route(P);
     expect(urls).toHaveLength(1);
-    expect(urls[0]).toBe("http://osrm.test/route/v1/driving/9.768600,52.418900;9.746200,52.382600;9.768600,52.418900?overview=simplified&geometries=geojson&steps=false&continue_straight=default");
+    expect(urls[0]).toBe("http://osrm.test/route/v1/driving/9.768600,52.418900;9.746200,52.382600;9.768600,52.418900?overview=simplified&geometries=geojson&steps=false&continue_straight=false");
     expect(a).toMatchObject({ source: "osrm", distanceMeters: 9100, legs: [{ meters: 4500, seconds: 400 }, { meters: 4600, seconds: 440 }] });
     expect(a.geometry[0]).toEqual([52.4189, 9.7686]);
   });
