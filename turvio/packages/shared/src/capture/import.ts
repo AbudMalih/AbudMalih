@@ -1,4 +1,4 @@
-import { NewStopInput, type GeoPoint, type NewStopInput as NewStopInputType, type StopType } from "../schemas";
+import { MAX_PARCELS_PER_STOP, NewStopInput, type GeoPoint, type NewParcelInput, type NewStopInput as NewStopInputType, type StopType } from "../schemas";
 import { addressKey } from "../tour";
 import { normalizeTrackingNumber } from "./barcode";
 
@@ -11,6 +11,7 @@ import { normalizeTrackingNumber } from "./barcode";
 
 export type ImportField =
   | "recipientName"
+  | "company"
   | "street"
   | "houseNumber"
   | "address"
@@ -28,7 +29,8 @@ export type ImportField =
   | "twEnd";
 
 const SYNONYMS: Record<ImportField, string[]> = {
-  recipientName: ["name", "recipient", "empfänger", "empfaenger", "kunde", "customer", "destinatar", "nume", "firma", "company"],
+  recipientName: ["name", "recipient", "empfänger", "empfaenger", "kunde", "customer", "destinatar", "nume", "recipientname", "empfängername"],
+  company: ["company", "firma", "firmenname", "unternehmen", "companyname", "organisation", "organization", "societate", "firm"],
   street: ["street", "straße", "strasse", "str", "stradă", "strada", "address1", "addressline1"],
   houseNumber: ["housenumber", "hausnummer", "hausnr", "nr", "no", "number", "număr", "numar"],
   address: ["address", "adresse", "anschrift", "adresă", "adresa", "fulladdress"],
@@ -154,6 +156,7 @@ export interface ImportRow {
   /** 1-based line/row number in the source, for messages. */
   line: number;
   recipientName?: string;
+  company?: string;
   street: string;
   houseNumber?: string;
   postalCode: string;
@@ -168,6 +171,8 @@ export interface ImportRow {
   timeWindow?: { start: number; end: number };
   /** Blocking problems – the row is skipped until fixed. */
   errors: string[];
+  /** For "postal_code_4_digits": the code with the leading zero Excel drops (01067 Dresden). Applied only after verification. */
+  postalCodeSuggestion?: string;
   /** Non-blocking hints, e.g. "needs_location". */
   warnings: string[];
 }
@@ -201,15 +206,17 @@ function splitTracking(v: string | undefined): string[] {
 export function validateImportRow(row: ImportRow): ImportRow {
   const errors: string[] = [];
   const warnings: string[] = [];
-  let postalCode = row.postalCode.trim();
+  const postalCode = row.postalCode.trim();
+  let postalCodeSuggestion: string | undefined;
   if (!row.street.trim()) errors.push("street_missing");
   if (!row.city.trim()) errors.push("city_missing");
   if (row.countryCode === "DE" && /^\d{4}$/.test(postalCode)) {
-    // Excel drops leading zeros of German postal codes (e.g. 01067 Dresden).
-    postalCode = `0${postalCode}`;
-    warnings.push("postal_code_padded");
-  }
-  if (row.countryCode === "DE" ? !/^\d{5}$/.test(postalCode) : !/^[0-9A-Za-z -]{3,10}$/.test(postalCode)) errors.push("postal_code_invalid");
+    // Excel drops leading zeros (01067 Dresden -> 1067), but "3016 Hannover" is a typo: never pad
+    // silently. The padded code is only a suggestion; it is applied after it was verified against
+    // the city (server postcode check) or by the user.
+    errors.push("postal_code_4_digits");
+    postalCodeSuggestion = `0${postalCode}`;
+  } else if (row.countryCode === "DE" ? !/^\d{5}$/.test(postalCode) : !/^[0-9A-Za-z -]{3,10}$/.test(postalCode)) errors.push("postal_code_invalid");
   if (row.location && (Math.abs(row.location.lat) > 90 || Math.abs(row.location.lng) > 180 || (row.location.lat === 0 && row.location.lng === 0))) {
     errors.push("coordinates_invalid");
   }
@@ -217,7 +224,7 @@ export function validateImportRow(row: ImportRow): ImportRow {
   if (row.timeWindow && row.timeWindow.end <= row.timeWindow.start) errors.push("time_window_invalid");
   if (row.trackingNumbers.length === 0) warnings.push("no_tracking_number");
   if (!row.houseNumber && !/^(packstation|postfiliale)/i.test(row.street)) warnings.push("house_number_missing");
-  return { ...row, postalCode, errors, warnings };
+  return { ...row, postalCode, postalCodeSuggestion, errors, warnings };
 }
 
 function emptyRow(line: number): ImportRow {
@@ -225,7 +232,7 @@ function emptyRow(line: number): ImportRow {
 }
 
 /** Every importable field, in the order a column-mapping UI offers them. */
-export const IMPORT_FIELDS: readonly ImportField[] = ["recipientName", "address", "street", "houseNumber", "postalCode", "city", "countryCode", "tracking", "lat", "lng", "type", "priority", "notes", "phone", "twStart", "twEnd"];
+export const IMPORT_FIELDS: readonly ImportField[] = ["recipientName", "company", "address", "street", "houseNumber", "postalCode", "city", "countryCode", "tracking", "lat", "lng", "type", "priority", "notes", "phone", "twStart", "twEnd"];
 
 /** A column mapping is usable when it yields an address: a full-address column, or street + postcode/city. */
 export function mappingProblems(columns: (ImportField | null)[]): string[] {
@@ -275,6 +282,7 @@ export function rowsFromTable(
     row.postalCode = get("postalCode") || row.postalCode;
     row.city = get("city") || row.city;
     row.recipientName = get("recipientName") || row.recipientName;
+    row.company = get("company") || undefined;
     const cc = get("countryCode");
     if (cc && /^[a-z]{2}$/i.test(cc)) row.countryCode = cc.toUpperCase();
     const lat = parseNumber(get("lat"));
@@ -327,31 +335,88 @@ export function rowsFromPastedText(text: string): ImportRow[] {
 export interface ImportGroup {
   key: string;
   rows: ImportRow[];
+  /** The stop to create: one per address and stop type, with every parcel in `parcels`. */
   input: NewStopInputType;
-  /** Tracking numbers that appeared more than once in the import. */
+  /** Tracking numbers listed more than once at THIS address (imported once – the same parcel). */
   duplicateTracking: string[];
+  /** Why this stop cannot be imported as it is (e.g. more parcels than one stop may carry). */
+  problems: string[];
 }
 
+/** One tracking number listed at two or more DIFFERENT addresses: a person must decide. */
+export interface ImportConflict {
+  trackingNumber: string;
+  options: { line: number; key: string; address: string; recipientName?: string; company?: string }[];
+  /** The chosen row (line) or "skip"; undefined = unresolved (blocks the import). */
+  resolution?: number | "skip";
+}
+
+export interface ImportPlan {
+  groups: ImportGroup[];
+  /** Same tracking number repeated at the same address: imported once, listed here. */
+  duplicates: { trackingNumber: string; lines: number[] }[];
+  conflicts: ImportConflict[];
+  /** Conflicts without a decision – the import must not start while > 0. */
+  unresolved: number;
+  /** Tracking numbers left out on purpose (conflict resolved with "skip"). */
+  skipped: string[];
+  /** Stops that cannot be imported as they are (see ImportGroup.problems). */
+  blockingGroups: number;
+}
+
+const formatAddress = (r: ImportRow) => `${r.street}${r.houseNumber ? ` ${r.houseNumber}` : ""}, ${r.postalCode} ${r.city}`.trim();
+
 /**
- * Group valid rows by address + stop type. All tracking numbers are kept;
- * a tracking number listed twice is reported, not silently dropped.
+ * Plan an import: valid rows -> one stop per address + stop type, every tracking number kept as
+ * its own parcel (own recipient and company). Never throws and never drops a parcel silently:
+ *  - the same tracking number twice at the same address = one parcel, listed in `duplicates`;
+ *  - the same tracking number at different addresses = a conflict; it is left out until
+ *    `resolutions` names the row to keep (or "skip"), and `unresolved` counts the open ones;
+ *  - a stop with more parcels than MAX_PARCELS_PER_STOP is reported in `problems`.
  */
-export function groupImportRows(rows: ImportRow[]): ImportGroup[] {
+export function planImport(rows: ImportRow[], resolutions: Record<string, number | "skip"> = {}): ImportPlan {
+  const valid = rows.filter((r) => !r.errors.length);
+  const keyOf = (r: ImportRow) =>
+    `${r.type}|${addressKey({ street: r.street, houseNumber: r.houseNumber || undefined, postalCode: r.postalCode, countryCode: r.countryCode })}`;
+
+  // Where does each tracking number occur?
+  const seen = new Map<string, { row: ImportRow; key: string }[]>();
+  for (const r of valid) for (const t of r.trackingNumbers) seen.set(t, [...(seen.get(t) ?? []), { row: r, key: keyOf(r) }]);
+  const conflicts: ImportConflict[] = [];
+  const duplicates: ImportPlan["duplicates"] = [];
+  const keep = new Map<string, number>(); // tracking -> the one row (line) that carries it
+  const skipped: string[] = [];
+  for (const [t, occ] of seen) {
+    const keys = new Set(occ.map((o) => o.key));
+    if (keys.size > 1) {
+      const res = resolutions[t];
+      conflicts.push({
+        trackingNumber: t,
+        options: occ.map((o) => ({ line: o.row.line, key: o.key, address: formatAddress(o.row), recipientName: o.row.recipientName, company: o.row.company })),
+        resolution: res === "skip" || occ.some((o) => o.row.line === res) ? res : undefined,
+      });
+      if (res === "skip") skipped.push(t);
+      else if (typeof res === "number" && occ.some((o) => o.row.line === res)) keep.set(t, res);
+      continue;
+    }
+    if (occ.length > 1) duplicates.push({ trackingNumber: t, lines: occ.map((o) => o.row.line) });
+    keep.set(t, occ[0]!.row.line);
+  }
+
   const groups = new Map<string, ImportGroup>();
-  const seen = new Set<string>();
-  for (const row of rows) {
-    if (row.errors.length) continue;
+  for (const row of valid) {
     const address = { street: row.street, houseNumber: row.houseNumber || undefined, postalCode: row.postalCode, city: row.city, countryCode: row.countryCode };
-    const key = `${row.type}|${addressKey(address)}`;
+    const key = keyOf(row);
     let g = groups.get(key);
     if (!g) {
       g = {
         key,
         rows: [],
         duplicateTracking: [],
+        problems: [],
         input: {
           type: row.type,
-          recipientName: row.recipientName,
+          recipientName: row.recipientName ?? row.company,
           address,
           location: row.location,
           locationSource: row.location ? "import" : null,
@@ -360,6 +425,7 @@ export function groupImportRows(rows: ImportRow[]): ImportGroup[] {
           notes: row.notes,
           recipientPhone: row.phone,
           trackingNumbers: [],
+          parcels: [],
         },
       };
       groups.set(key, g);
@@ -368,18 +434,38 @@ export function groupImportRows(rows: ImportRow[]): ImportGroup[] {
     g.input.priority = g.input.priority || row.priority;
     g.input.location ??= row.location;
     if (row.location && !g.input.locationSource) g.input.locationSource = "import";
+    g.input.recipientName ??= row.recipientName ?? row.company;
     if (row.notes && g.input.notes !== row.notes) g.input.notes = [g.input.notes, row.notes].filter(Boolean).join(" · ").slice(0, 1000);
     for (const t of row.trackingNumbers) {
-      if (seen.has(t)) g.duplicateTracking.push(t);
-      else {
-        seen.add(t);
-        g.input.trackingNumbers!.push(t);
+      if (keep.get(t) !== row.line) {
+        // Another row carries it: a repeat at this address (listed in `duplicates`) or a conflict.
+        if (seen.get(t)!.every((o) => o.key === key) && !g.duplicateTracking.includes(t)) g.duplicateTracking.push(t);
+        continue;
       }
+      const parcel: NewParcelInput = { trackingNumber: t, recipientName: row.recipientName, company: row.company };
+      g.input.parcels!.push(parcel);
+      g.input.trackingNumbers!.push(t);
     }
   }
-  // Final schema validation (throws only on programming errors – rows were validated).
-  for (const g of groups.values()) NewStopInput.parse(g.input);
-  return [...groups.values()];
+  for (const g of groups.values()) {
+    if ((g.input.parcels?.length ?? 0) > MAX_PARCELS_PER_STOP) g.problems.push(`too_many_parcels:${g.input.parcels!.length}`);
+    const check = NewStopInput.safeParse(g.input);
+    if (!check.success && !g.problems.length) g.problems.push(`invalid:${check.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
+  }
+  const list = [...groups.values()];
+  return {
+    groups: list,
+    duplicates,
+    conflicts,
+    unresolved: conflicts.filter((c) => c.resolution === undefined).length,
+    skipped,
+    blockingGroups: list.filter((g) => g.problems.length).length,
+  };
+}
+
+/** Groups of an import (see planImport). Unresolved address conflicts are left out – check planImport().unresolved. */
+export function groupImportRows(rows: ImportRow[]): ImportGroup[] {
+  return planImport(rows).groups;
 }
 
 export interface ImportSummary {
@@ -390,10 +476,14 @@ export interface ImportSummary {
   parcels: number;
   needsLocation: number;
   duplicates: number;
+  /** Tracking numbers listed at two different addresses (need a decision). */
+  conflicts: number;
 }
 
-export function summarizeImport(rows: ImportRow[], groups = groupImportRows(rows)): ImportSummary {
+export function summarizeImport(rows: ImportRow[], groups = groupImportRows(rows), plan?: ImportPlan): ImportSummary {
+  const conflicts = (plan ?? planImport(rows)).conflicts.length;
   return {
+    conflicts,
     rows: rows.length,
     valid: rows.filter((r) => !r.errors.length).length,
     invalid: rows.filter((r) => r.errors.length).length,

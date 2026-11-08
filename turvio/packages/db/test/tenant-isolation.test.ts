@@ -315,6 +315,30 @@ describe("subscription limits", () => {
     await expect(addDriver(ids.orgOther, "Late")).rejects.toThrow(/subscription inactive/);
   });
 
+  it("import duplicate check (find_planned_tracking): own organization only, case-insensitive, members only", async () => {
+    const q = `select tracking_number, blocking, visible from public.find_planned_tracking($1, $2::text[])`;
+    // Owner of JARBOU: finds its own parcel (any case), not the other company's.
+    await asUser(db, ids.ownerA, async () => {
+      const r = await db.query(q, [ids.orgJarbou, ["tvo4100000de", "TVO9900000DE", "NOPE"]]);
+      expect(r.rows).toEqual([{ tracking_number: "TVO4100000DE", blocking: true, visible: true }]);
+    });
+    // A driver of JARBOU may check (driver import), the parcel is reported, the tour stays hidden if not theirs.
+    await asUser(db, ids.driverA2, async () => {
+      const r = await db.query<{ tracking_number: string; blocking: boolean }>(`select tracking_number, blocking from public.find_planned_tracking($1, $2::text[])`, [ids.orgJarbou, ["TVO4100000DE"]]);
+      expect(r.rows).toEqual([{ tracking_number: "TVO4100000DE", blocking: true }]);
+    });
+    // The other company asking about JARBOU: refused. An outsider: refused.
+    for (const u of [ids.ownerB, ids.outsider]) {
+      await asUser(db, u, async () => {
+        await expect(db.query(q, [ids.orgJarbou, ["TVO4100000DE"]])).rejects.toThrow(/not a member/);
+      });
+    }
+    // Parcels have a company column under the same row-level security.
+    await asUser(db, ids.ownerB, async () => {
+      expect(await count(`select company from public.parcels where tracking_number = 'TVO4100000DE'`)).toBe(0);
+    });
+  });
+
   it("team plan limits depots", async () => {
     const addDepot = () =>
       db.query(`insert into depots (organization_id, name, street, postal_code, city, lat, lng) values ($1, 'D', 'S', '04109', 'Leipzig', 51.3, 12.3)`, [

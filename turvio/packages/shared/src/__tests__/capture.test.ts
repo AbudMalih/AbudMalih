@@ -4,6 +4,7 @@ import {
   ScanSession,
   detectColumns,
   mappingProblems,
+  planImport,
   fieldsNeedingReview,
   groupImportRows,
   normalizeTrackingNumber,
@@ -161,10 +162,10 @@ describe("imports", () => {
       ["street", "zip", "city", "lat", "lng", "from", "to"],
       ["Hauptstr 5", "1067", "Dresden", "51.05", "13.74", "10:00", "09:00"],
     ]);
-    expect(rows[0]!.postalCode).toBe("01067");
-    expect(rows[0]!.warnings).toContain("postal_code_padded");
-    expect(rows[0]!.errors).toContain("time_window_invalid");
-    const fixed = validateImportRow({ ...rows[0]!, timeWindow: { start: 540, end: 600 } });
+    // A 4-digit postcode is never padded silently: blocking, with the padded code as a suggestion.
+    expect(rows[0]!).toMatchObject({ postalCode: "1067", postalCodeSuggestion: "01067" });
+    expect(rows[0]!.errors).toEqual(expect.arrayContaining(["postal_code_4_digits", "time_window_invalid"]));
+    const fixed = validateImportRow({ ...rows[0]!, postalCode: rows[0]!.postalCodeSuggestion!, timeWindow: { start: 540, end: 600 } });
     expect(fixed.errors).toEqual([]);
   });
 
@@ -237,5 +238,67 @@ describe("import column mapping (Dispatch file import)", () => {
     expect(mappingProblems(["tracking", "recipientName", null, null, "city", null])).toContain("no_address_columns");
     expect(mappingProblems(["street", "street", "postalCode"])).toContain("mapped_twice:street");
     expect(mappingProblems(["address", "lat", null])).toContain("lat_lng_incomplete");
+  });
+});
+
+describe("import plan: large customers, umlauts, per-parcel recipients, conflicts", () => {
+  const row = (line: number, tracking: string, street: string, extra: Partial<Record<string, string>> = {}) =>
+    rowsFromTable([
+      ["tracking", "recipient", "company", "street", "housenumber", "zip", "city"],
+      [tracking, extra.recipient ?? `Person ${line}`, extra.company ?? "", street, extra.no ?? "1", extra.zip ?? "30165", "Hannover"],
+    ]).rows.map((r) => ({ ...r, line }))[0]!;
+
+  it("1,000 parcels at one address: one stop, no crash, every parcel with its own recipient and company", () => {
+    const rows = Array.from({ length: 1000 }, (_, i) => row(i + 2, `TVO${100000 + i}`, "Lister Meile", { recipient: `Empfänger ${i}`, company: i % 2 ? "Leinetal GmbH" : "" }));
+    const plan = planImport(rows);
+    expect(plan.groups).toHaveLength(1);
+    expect(plan.blockingGroups).toBe(0);
+    const parcels = plan.groups[0]!.input.parcels!;
+    expect(parcels).toHaveLength(1000);
+    expect(parcels[7]).toEqual({ trackingNumber: "TVO100007", recipientName: "Empfänger 7", company: "Leinetal GmbH" });
+    expect(parcels[8]!.company).toBeUndefined();
+  });
+
+  it("more than 1,000 parcels at one address is reported as a problem, never thrown", () => {
+    const rows = Array.from({ length: 1001 }, (_, i) => row(i + 2, `TVO${200000 + i}`, "Lister Meile"));
+    const plan = planImport(rows);
+    expect(plan.blockingGroups).toBe(1);
+    expect(plan.groups[0]!.problems[0]).toBe("too_many_parcels:1001");
+  });
+
+  it("German spelling variants are one address: Straße/Strasse/Str., ä/ae ö/oe ü/ue, case, '12 a', spaces, hyphens", () => {
+    const variants = [
+      ["Elfriede-Döler-Weg", "12a"], ["Elfriede-Doeler-Weg", "12 a"], ["elfriede döler weg", "12A"], ["ELFRIEDE-DOELER-WEG", " 12a "],
+    ];
+    const plan = planImport(variants.map(([s, no], i) => row(i + 2, `T${i}`, s!, { no })));
+    expect(plan.groups).toHaveLength(1);
+    const streets = ["Göbelstraße", "Goebelstrasse", "göbelstr.", "GOEBELSTR", "Göbel-Str."];
+    expect(planImport(streets.map((s, i) => row(i + 2, `G${i}`, s))).groups).toHaveLength(1);
+    // A different house number or postcode stays a different stop.
+    expect(planImport([row(2, "A", "Göbelstraße"), row(3, "B", "Göbelstraße", { no: "2" }), row(4, "C", "Göbelstraße", { zip: "30163" })]).groups).toHaveLength(3);
+  });
+
+  it("same tracking number twice at the same address: one parcel, listed as a duplicate", () => {
+    const plan = planImport([row(2, "TVODUP000001", "Göbelstraße"), row(3, "TVODUP000001", "Goebelstrasse"), row(4, "TVOX00000001", "Göbelstraße")]);
+    expect(plan.groups[0]!.input.parcels!.map((p) => p.trackingNumber)).toEqual(["TVODUP000001", "TVOX00000001"]);
+    expect(plan.duplicates).toEqual([{ trackingNumber: "TVODUP000001", lines: [2, 3] }]);
+    expect(plan.conflicts).toEqual([]);
+  });
+
+  it("same tracking number at two addresses: a conflict that blocks until resolved; nothing dropped silently", () => {
+    const rows = [row(2, "TVOC00000001", "Göbelstraße"), row(3, "TVOC00000001", "Nordring", { recipient: "Wrong" }), row(4, "TVOOK0000001", "Nordring")];
+    const open = planImport(rows);
+    expect(open.unresolved).toBe(1);
+    expect(open.conflicts[0]).toMatchObject({ trackingNumber: "TVOC00000001", options: [{ line: 2, address: "Göbelstraße 1, 30165 Hannover" }, { line: 3, address: "Nordring 1, 30165 Hannover", recipientName: "Wrong" }] });
+    expect(open.groups.flatMap((g) => g.input.parcels!.map((p) => p.trackingNumber))).toEqual(["TVOOK0000001"]); // C1 waits for a decision
+    const chosen = planImport(rows, { TVOC00000001: 2 });
+    expect(chosen.unresolved).toBe(0);
+    expect(chosen.groups.find((g) => g.input.address.street === "Göbelstraße")!.input.parcels!.map((p) => p.trackingNumber)).toEqual(["TVOC00000001"]);
+    const skipped = planImport(rows, { TVOC00000001: "skip" });
+    expect(skipped).toMatchObject({ unresolved: 0, skipped: ["TVOC00000001"] });
+  });
+
+  it("a 'Firma' column is the company, not the recipient", () => {
+    expect(detectColumns(["Sendungsnummer", "Empfänger", "Firma", "Straße", "PLZ", "Ort"])).toEqual(["tracking", "recipientName", "company", "street", "postalCode", "city"]);
   });
 });

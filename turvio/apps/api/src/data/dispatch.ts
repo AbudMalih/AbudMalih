@@ -140,7 +140,7 @@ export interface StopRow {
   locked?: boolean;
   location_source?: Stop["locationSource"];
   recipient_phone?: string | null;
-  parcels: { id: string; tracking_number: string; barcode: string | null; recipient_name: string | null; loaded_at?: string | null }[] | null;
+  parcels: { id: string; tracking_number: string; barcode: string | null; recipient_name: string | null; company?: string | null; loaded_at?: string | null }[] | null;
   proofs?: { id: string; kind: "photo" | "signature"; captured_at: string; recipient_name: string | null; notes: string | null; has_location: boolean }[] | null;
 }
 function stopBase(r: StopRow) {
@@ -160,6 +160,7 @@ function stopBase(r: StopRow) {
       trackingNumber: p.tracking_number,
       barcode: p.barcode ?? undefined,
       recipientName: p.recipient_name ?? undefined,
+      ...(p.company ? { company: p.company } : {}),
       ...(p.loaded_at ? { loadedAt: new Date(p.loaded_at).toISOString() } : {}),
     })),
     status: r.status,
@@ -183,7 +184,7 @@ export const toStop = (r: StopRow): Stop => ({ ...stopBase(r), tourId: r.tour_id
 export const toUnassigned = (r: StopRow): UnassignedStop => ({ ...stopBase(r), depotId: r.depot_id! });
 
 export const STOP_SELECT = `
-  select s.*, (select coalesce(json_agg(json_build_object('id', p.id, 'tracking_number', p.tracking_number, 'barcode', p.barcode, 'recipient_name', p.recipient_name, 'loaded_at', p.loaded_at) order by p.created_at), '[]'::json)
+  select s.*, (select coalesce(json_agg(json_build_object('id', p.id, 'tracking_number', p.tracking_number, 'barcode', p.barcode, 'recipient_name', p.recipient_name, 'company', p.company, 'loaded_at', p.loaded_at) order by p.created_at, p.import_position nulls last, p.id), '[]'::json)
                  from public.parcels p where p.stop_id = s.id) as parcels,
               (select coalesce(json_agg(json_build_object('id', f.id, 'kind', f.kind, 'captured_at', f.captured_at, 'recipient_name', f.recipient_name, 'notes', f.notes, 'has_location', f.lat is not null) order by f.captured_at), '[]'::json)
                  from public.proofs f where f.stop_id = s.id) as proofs

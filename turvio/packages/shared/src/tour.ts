@@ -109,16 +109,23 @@ export function formatAddress(stop: Pick<Stop, "address">): string {
 }
 
 /** Normalised key used to detect stops/parcels for the same delivery address. */
-export function addressKey(a: Stop["address"]): string {
+/**
+ * Matching key of an address: one delivery stop per key. Insensitive to case, spacing,
+ * punctuation and hyphens ("Elfriede-Döler-Weg" = "elfriede döler weg"), "Straße/Strasse/Str.",
+ * house-number spacing ("12 a" = "12a") and German umlauts written in ASCII
+ * ("Döler" = "Doeler", "Müller" = "Mueller"). The city is not part of the key (postcode is).
+ */
+export function addressKey(a: { street: string; houseNumber?: string; postalCode: string; countryCode?: string; city?: string }): string {
   const norm = (s: string | undefined) =>
     (s ?? "")
       .toLowerCase()
-      .normalize("NFKD")
-      .replace(/[̀-ͯ]/g, "")
       .replace(/ß/g, "ss")
+      .normalize("NFKD")
+      .replace(/[̀-ͯ]/g, "") // ä -> a, é -> e …
+      .replace(/([aou])e/g, "$1") // ASCII umlauts: ae/oe/ue -> a/o/u (same on both sides)
       .replace(/str(asse|\.|\b)/g, "str")
       .replace(/[^a-z0-9]/g, "");
-  return [norm(a.street), norm(a.houseNumber), norm(a.postalCode), a.countryCode].join("|");
+  return [norm(a.street), norm(a.houseNumber), norm(a.postalCode), a.countryCode ?? "DE"].join("|");
 }
 
 /** Case-insensitive search over tracking numbers, recipient and address. */

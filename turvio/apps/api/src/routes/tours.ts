@@ -1,4 +1,5 @@
 import { NewStopInput, OptimizeRequest, StopStatus, TourPlace, haversineMeters, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
+import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
@@ -66,6 +67,12 @@ const CreateStops = z
     tourId: Uuid.optional(),
     depotId: Uuid.optional(),
     stops: z.array(NewStopInput).min(1).max(500),
+    /**
+     * Imports: refuse (409 tracking_already_planned, nothing saved) when a tracking number is already
+     * planned or delivered anywhere in the company, or appears twice in this request. Off for the
+     * driver app's offline replays (they must stay idempotent and never get stuck).
+     */
+    rejectPlannedTracking: z.boolean().default(false),
   })
   .refine((b) => !!b.tourId !== !!b.depotId, { message: "Give either tourId or depotId (unassigned stops)" });
 
@@ -115,7 +122,49 @@ async function tourWithStops(tx: Tx, orgId: string, id: string) {
   return { tour: toTour(tour), stops };
 }
 
-async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; depotId?: string }, stops: z.infer<typeof NewStopInput>[]) {
+/** Parcels of a stop input: per-parcel recipient/company when given, else the stop's recipient. */
+const parcelsOf = (s: z.infer<typeof NewStopInput>) =>
+  s.parcels ?? s.trackingNumbers.map((trackingNumber) => ({ trackingNumber, recipientName: s.recipientName, company: undefined as string | undefined }));
+
+export interface PlannedTracking {
+  trackingNumber: string;
+  stopStatus: string;
+  blocking: boolean;
+  tourId: string | null;
+  tourName: string | null;
+  tourDate: string | null;
+}
+
+/** Tracking numbers already on a stop of the organization (company-wide; see find_planned_tracking). */
+async function plannedTracking(tx: Tx, orgId: string, tracking: string[]): Promise<PlannedTracking[]> {
+  if (!tracking.length) return [];
+  const { rows } = await tx.query<{ tracking_number: string; stop_status: string; blocking: boolean; tour_id: string | null; tour_name: string | null; tour_date: string | Date | null }>(
+    `select * from public.find_planned_tracking($1, $2::text[])`,
+    [orgId, tracking],
+  );
+  return rows.map((r) => ({
+    trackingNumber: r.tracking_number,
+    stopStatus: r.stop_status,
+    blocking: r.blocking,
+    tourId: r.tour_id,
+    tourName: r.tour_name,
+    tourDate: r.tour_date instanceof Date ? r.tour_date.toISOString().slice(0, 10) : r.tour_date,
+  }));
+}
+
+async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; depotId?: string; rejectPlannedTracking?: boolean }, stops: z.infer<typeof NewStopInput>[]) {
+  if (target.rejectPlannedTracking) {
+    // One import at a time per company, so two uploads of the same file cannot both pass the check.
+    await tx.query(`select pg_advisory_xact_lock(hashtextextended('turvio-import:' || $1::text, 0))`, [orgId]);
+    const all = stops.flatMap((s) => parcelsOf(s).map((p) => p.trackingNumber.toUpperCase()));
+    const twice = [...new Set(all.filter((t, i) => all.indexOf(t) !== i))];
+    if (twice.length) throw new ApiError(409, "tracking_duplicated_in_request", `${twice.length} tracking number(s) appear more than once in this import`, { trackingNumbers: twice.slice(0, 200) });
+    const planned = (await plannedTracking(tx, orgId, all)).filter((p) => p.blocking);
+    if (planned.length)
+      throw new ApiError(409, "tracking_already_planned", `${planned.length} parcel(s) are already planned or delivered – nothing was saved`, { parcels: planned.slice(0, 500), count: planned.length });
+  }
+  const parcelRows: { stopId: string; trackingNumber: string; recipientName: string | null; company: string | null; position: number; ifMissing: boolean }[] = [];
+  const newStops: { id: string; s: z.infer<typeof NewStopInput>; sequence: number }[] = [];
   let next = 0;
   if (target.tourId) {
     await loadTour(tx, orgId, target.tourId);
@@ -129,50 +178,73 @@ async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; dep
       if (existing) {
         if (existing.tour_id !== (target.tourId ?? null)) throw new ApiError(409, "conflict", "A different stop with this id already exists");
         // Same stop again: add parcels that are not there yet (parcels grouped onto an existing address).
-        for (const tn of s.trackingNumbers) {
-          await tx.query(
-            `insert into parcels (organization_id, stop_id, tracking_number, recipient_name)
-             select $1, $2, $3, $4 where not exists (select 1 from parcels where stop_id = $2 and upper(tracking_number) = upper($3))`,
-            [orgId, s.id, tn, s.recipientName ?? null],
-          );
-        }
+        parcelsOf(s).forEach((p, i) => parcelRows.push({ stopId: s.id!, trackingNumber: p.trackingNumber, recipientName: p.recipientName ?? null, company: p.company ?? null, position: i, ifMissing: true }));
         ids.push(s.id);
         continue;
       }
     }
-    const { rows } = await tx.query<{ id: string }>(
+    const id = s.id ?? randomUUID();
+    ids.push(id);
+    newStops.push({ id, s, sequence: target.tourId ? next++ : 0 });
+    parcelsOf(s).forEach((p, i) => parcelRows.push({ stopId: id, trackingNumber: p.trackingNumber, recipientName: p.recipientName ?? null, company: p.company ?? null, position: i, ifMissing: false }));
+  }
+  // All new stops in one statement (same columns and rules as one-by-one; triggers run per row).
+  if (newStops.length) {
+    const col = <T>(f: (x: (typeof newStops)[number]) => T) => newStops.map(f);
+    await tx.query(
       `insert into stops (id, organization_id, tour_id, depot_id, type, sequence, recipient_name, street, house_number, postal_code, city, country_code,
                           lat, lng, tw_start_minute, tw_end_minute, service_seconds, priority, notes, location_source, recipient_phone)
-       values (coalesce($19::uuid, gen_random_uuid()), $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$20,$21) returning id`,
+       select x.id, $1, $2, $3, x.type::public.stop_type, x.sequence, x.recipient_name, x.street, x.house_number, x.postal_code, x.city, x.country_code,
+              x.lat, x.lng, x.tw_start, x.tw_end, x.service_seconds, x.priority, x.notes, x.location_source, x.recipient_phone
+         from unnest($4::uuid[], $5::text[], $6::int[], $7::text[], $8::text[], $9::text[], $10::text[], $11::text[], $12::text[],
+                     $13::float8[], $14::float8[], $15::int[], $16::int[], $17::int[], $18::boolean[], $19::text[], $20::text[], $21::text[])
+           with ordinality as x(id, type, sequence, recipient_name, street, house_number, postal_code, city, country_code,
+                                lat, lng, tw_start, tw_end, service_seconds, priority, notes, location_source, recipient_phone, ord)
+        order by x.ord`,
       [
         orgId,
         target.tourId ?? null,
         target.depotId ?? null,
-        s.type,
-        target.tourId ? next++ : 0,
-        s.recipientName ?? null,
-        s.address.street,
-        s.address.houseNumber ?? null,
-        s.address.postalCode,
-        s.address.city,
-        s.address.countryCode,
-        s.location?.lat ?? null,
-        s.location?.lng ?? null,
-        s.timeWindow?.start ?? null,
-        s.timeWindow?.end ?? null,
-        s.serviceSeconds,
-        s.priority,
-        s.notes ?? null,
-        s.id ?? null,
-        s.location ? (s.locationSource ?? "manual_pin") : null,
-        s.recipientPhone ?? null,
+        col((x) => x.id),
+        col((x) => x.s.type),
+        col((x) => x.sequence),
+        col((x) => x.s.recipientName ?? null),
+        col((x) => x.s.address.street),
+        col((x) => x.s.address.houseNumber ?? null),
+        col((x) => x.s.address.postalCode),
+        col((x) => x.s.address.city),
+        col((x) => x.s.address.countryCode),
+        col((x) => x.s.location?.lat ?? null),
+        col((x) => x.s.location?.lng ?? null),
+        col((x) => x.s.timeWindow?.start ?? null),
+        col((x) => x.s.timeWindow?.end ?? null),
+        col((x) => x.s.serviceSeconds),
+        col((x) => x.s.priority),
+        col((x) => x.s.notes ?? null),
+        col((x) => (x.s.location ? (x.s.locationSource ?? "manual_pin") : null)),
+        col((x) => x.s.recipientPhone ?? null),
       ],
     );
-    const id = rows[0]!.id;
-    ids.push(id);
-    for (const tn of s.trackingNumbers) {
-      await tx.query(`insert into parcels (organization_id, stop_id, tracking_number, recipient_name) values ($1,$2,$3,$4)`, [orgId, id, tn, s.recipientName ?? null]);
-    }
+  }
+  // All parcels of the request in one statement (1,000 parcels: 1 round trip instead of 1,000).
+  // Replays of an existing stop add only parcels that stop does not have yet.
+  if (parcelRows.length) {
+    await tx.query(
+      `insert into parcels (organization_id, stop_id, tracking_number, recipient_name, company, import_position)
+       select $1, x.stop_id, x.tracking_number, x.recipient_name, x.company, x.position
+         from unnest($2::uuid[], $3::text[], $4::text[], $5::text[], $6::int[], $7::boolean[]) as x(stop_id, tracking_number, recipient_name, company, position, if_missing)
+        where not x.if_missing
+           or not exists (select 1 from parcels p where p.stop_id = x.stop_id and upper(p.tracking_number) = upper(x.tracking_number))`,
+      [
+        orgId,
+        parcelRows.map((p) => p.stopId),
+        parcelRows.map((p) => p.trackingNumber),
+        parcelRows.map((p) => p.recipientName),
+        parcelRows.map((p) => p.company),
+        parcelRows.map((p) => p.position),
+        parcelRows.map((p) => p.ifMissing),
+      ],
+    );
   }
   return ids;
 }
@@ -380,6 +452,19 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     if (b.depotId && req.membership!.role === "driver") return problem(reply, 403, "forbidden", "Drivers can only add stops to their own tour");
     const ids = await db.asUser(claims(req), (tx) => insertStops(tx, orgId, b, b.stops));
     return reply.status(201).send({ ids });
+  });
+
+  /**
+   * Import pre-check: which of these tracking numbers are already in TURVIO (company-wide)?
+   * `blocking` = planned or delivered (importing again would duplicate the parcel); otherwise an
+   * earlier attempt ended and a new stop is a re-delivery. Tour names only for visible depots.
+   */
+  app.post("/v1/orgs/:orgId/parcels/lookup", { preHandler: guards.requireTenant("stops.add_own") }, async (req, reply) => {
+    const { orgId } = OrgParams.parse(req.params);
+    const b = parse(z.object({ trackingNumbers: z.array(z.string().trim().min(1).max(64)).min(1).max(5000) }), req.body, reply);
+    if (!b) return;
+    const found = await db.asUser(claims(req), (tx) => plannedTracking(tx, orgId, b.trackingNumbers));
+    return { found, blocking: found.filter((f) => f.blocking).length };
   });
 
   app.patch("/v1/orgs/:orgId/stops/:id", { preHandler: guards.requireTenant("stops.manage") }, async (req, reply) => {

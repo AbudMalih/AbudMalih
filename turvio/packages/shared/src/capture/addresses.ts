@@ -262,9 +262,9 @@ export interface DuplicateFinding {
   trackingNumber?: string;
 }
 
-/** Address key that also treats ASCII umlaut spellings as equal (Mueller = Müller). */
+/** Same as addressKey (which treats ASCII umlaut spellings as equal, Mueller = Müller); kept for callers. */
 export function looseAddressKey(a: Pick<Stop["address"], "street" | "houseNumber" | "postalCode" | "city"> & { countryCode?: string }): string {
-  return addressKey({ ...a, countryCode: a.countryCode ?? "DE", street: a.street.replace(/([aou])e/gi, "$1"), city: a.city.replace(/([aou])e/gi, "$1") } as Stop["address"]);
+  return addressKey({ ...a, countryCode: a.countryCode ?? "DE" });
 }
 
 export function findDuplicates(

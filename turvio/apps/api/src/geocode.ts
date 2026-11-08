@@ -206,6 +206,15 @@ export class PostgresGeocoder implements Geocoder {
   readonly name = "postgres";
   constructor(private readonly query: Query) {}
 
+  /** Cities that use each postcode in the address data (empty array = postcode unknown here). */
+  async postcodeCities(codes: string[]): Promise<Map<string, string[]>> {
+    const { rows } = await this.query<{ postcode: string; cities: string[] }>(
+      `select postcode, array_agg(distinct city order by city) as cities from geo.addresses where postcode = any($1::text[]) group by postcode`,
+      [codes],
+    );
+    return new Map(codes.map((c) => [c, rows.find((r) => r.postcode === c)?.cities ?? []]));
+  }
+
   async search(q: string, opts: { limit?: number } = {}): Promise<GeocodeResult[]> {
     const p = parseQuery(q);
     const street = normAddressPart(p.street);

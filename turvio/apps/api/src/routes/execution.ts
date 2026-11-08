@@ -329,5 +329,28 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
     return { provider: g.name, results };
   });
 
+  /**
+   * Does each postcode belong to the given city? (import validation; never changes anything).
+   * ok = the address data has this postcode in this city; mismatch = it has the postcode, but only
+   * in other cities (listed); unknown = postcode not in the address data (cannot be checked).
+   */
+  app.post("/v1/geocode/postcodes", { preHandler: guards.authenticate }, async (req, reply) => {
+    const b = parse(z.object({ pairs: z.array(z.object({ postalCode: z.string().trim().regex(/^\d{5}$/), city: z.string().trim().min(1).max(100) })).min(1).max(2000) }), req.body, reply);
+    if (!b) return;
+    const g = extra.geocoder as (typeof extra.geocoder & { postcodeCities?: (codes: string[]) => Promise<Map<string, string[]>> }) | undefined;
+    if (!g?.postcodeCities) return { available: false, results: b.pairs.map((p) => ({ ...p, status: "unknown" as const })) };
+    const known = await g.postcodeCities([...new Set(b.pairs.map((p) => p.postalCode))]);
+    const norm = (s: string) => s.toLowerCase().replace(/ß/g, "ss").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/([aou])e/g, "$1").replace(/[^a-z0-9]/g, "");
+    const results = b.pairs.map((p) => {
+      const cities = known.get(p.postalCode) ?? [];
+      if (!cities.length) return { ...p, status: "unknown" as const };
+      const c = norm(p.city);
+      // "Hannover" also matches "Hannover-List" / "Hannover OT Linden".
+      const ok = cities.some((k) => norm(k) === c || c.startsWith(norm(k)) || norm(k).startsWith(c));
+      return ok ? { ...p, status: "ok" as const } : { ...p, status: "mismatch" as const, knownCities: cities.slice(0, 5) };
+    });
+    return { available: true, results };
+  });
+
   app.get("/v1/geocode/status", { preHandler: guards.authenticate }, async () => ({ provider: extra.geocoder?.name ?? "none", available: !!extra.geocoder && extra.geocoder.name !== "none" }));
 }

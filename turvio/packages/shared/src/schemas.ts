@@ -102,6 +102,8 @@ export const Parcel = z.object({
   trackingNumber: z.string().trim().min(1).max(64),
   barcode: z.string().trim().max(128).optional(),
   recipientName: z.string().trim().max(120).optional(),
+  /** Recipient company (e.g. "Praxis am Park GmbH"), per parcel. */
+  company: z.string().trim().max(160).optional(),
   /** Set when the parcel was scanned into the vehicle. */
   loadedAt: z.iso.datetime().optional(),
 });
@@ -259,6 +261,17 @@ export const DriverSettings = z.object({
 });
 export type DriverSettings = z.infer<typeof DriverSettings>;
 
+/** Most parcels one stop (one address) may carry – e.g. a business receiving a whole pallet. */
+export const MAX_PARCELS_PER_STOP = 1000;
+
+/** One shipment of a new stop: its own tracking number, recipient and company. */
+export const NewParcelInput = z.object({
+  trackingNumber: z.string().trim().min(1).max(64),
+  recipientName: z.string().trim().max(120).optional(),
+  company: z.string().trim().max(160).optional(),
+});
+export type NewParcelInput = z.infer<typeof NewParcelInput>;
+
 /** Payload for manual stop entry (driver app and dispatch). */
 export const NewStopInput = z.object({
   /** Client-generated id (UUID) – makes offline creation idempotent. */
@@ -273,7 +286,12 @@ export const NewStopInput = z.object({
   serviceSeconds: z.number().int().min(0).max(3 * 3600).default(120),
   priority: z.boolean().default(false),
   notes: z.string().trim().max(1000).optional(),
-  trackingNumbers: z.array(z.string().trim().min(1).max(64)).max(50).default([]),
+  trackingNumbers: z.array(z.string().trim().min(1).max(64)).max(MAX_PARCELS_PER_STOP).default([]),
+  /**
+   * Parcels with their own recipient/company (imports). When given, they are the stop's parcels
+   * and `trackingNumbers` is ignored; without it every tracking number gets the stop's recipient.
+   */
+  parcels: z.array(NewParcelInput).max(MAX_PARCELS_PER_STOP).optional(),
 });
 export type NewStopInput = z.input<typeof NewStopInput>;
 export type NewStopParsed = z.output<typeof NewStopInput>;
