@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import "./gsap"; // registers ScrollTrigger once for the whole app
 import { stage, measureTier, updateViewport } from "@/lib/stage/store";
-import { isCine } from "./env";
+import { isCine, restoreEnvClass } from "./env";
 
 /**
  * Scrolling is the browser's own (native) on every device: the document
@@ -34,6 +34,9 @@ export function scrollToTarget(
 
 /** Initialises the shared stage (environment, viewport) for scroll-driven scenes. */
 export default function ScrollSetup() {
+  // before any passive effect (the globe and the scenes read the class)
+  useLayoutEffect(() => restoreEnvClass());
+
   useEffect(() => {
     stage.cine = isCine();
     stage.rtl = document.documentElement.dir === "rtl";
