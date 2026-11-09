@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "npm install --no-save --no-audit --no-fund eslint@8.57.1 eslint-config-next@15.5.27 && next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --import ./tests/resolve-ts.mjs --test tests/*.test.ts",
+    "test:e2e": "node tests/e2e/language-switch.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter-tight": "^5.3.0",
