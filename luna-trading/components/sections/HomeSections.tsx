@@ -340,6 +340,7 @@ export default function HomeSections() {
               </p>
               <CommerceFlow copy={dict.commerce} />
               <p className={s.note}>{im.channelsNote}</p>
+              <p className={`${s.note} ${s.noteFine}`}>{im.trademarkNote}</p>
             </div>
           </section>
         </>

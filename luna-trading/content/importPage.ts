@@ -39,6 +39,8 @@ export type ImportCopy = {
   channelsTitle: string;
   channelsText: string;
   channelsNote: string;
+  /** trademark notice below the homepage e-commerce diagram */
+  trademarkNote: string;
   carriers: string;
   ctaTitle: string;
   ctaText: string;
@@ -150,6 +152,8 @@ const de: ImportCopy = {
     "Nach der Ankunft bereiten wir Produkte für den Verkauf vor: [Listing, Bilder, Texte](/what-we-do#ecommerce) und [Logistik](/what-we-do#distribution) für die wichtigsten Kanäle.",
   channelsNote:
     "Vertriebskanäle, für die wir Produkte vorbereiten. Keine Partnerschaften.",
+  trademarkNote:
+    "Alle Marken und Logos sind Eigentum ihrer jeweiligen Inhaber und werden ausschließlich zur Kennzeichnung und Information genannt. Eine Verbindung oder Empfehlung ist damit nicht verbunden.",
   carriers:
     "Buchung über internationale Reedereien, Bahnoperateure und Luftfrachtführer.",
   ctaTitle: "Ihr nächster Import beginnt mit einem Gespräch.",
@@ -262,6 +266,8 @@ const en: ImportCopy = {
   channelsText:
     "After arrival we prepare products for sale: [listings, images, copy](/what-we-do#ecommerce) and [logistics](/what-we-do#distribution) for the major channels.",
   channelsNote: "Sales channels we prepare products for. Not partnerships.",
+  trademarkNote:
+    "All trademarks and logos are the property of their respective owners and are displayed for identification and informational purposes only. No affiliation or endorsement is implied.",
   carriers:
     "Booked with international shipping lines, rail operators and air carriers.",
   ctaTitle: "Your next import starts with a conversation.",
@@ -373,6 +379,8 @@ const ar: ImportCopy = {
   channelsText:
     "بعد الوصول نجهّز المنتجات للبيع: [الإدراج والصور والنصوص](/what-we-do#ecommerce) و[الخدمات اللوجستية](/what-we-do#distribution) لأهم القنوات.",
   channelsNote: "قنوات بيع نجهّز المنتجات لها. ليست شراكات.",
+  trademarkNote:
+    "جميع العلامات التجارية والشعارات ملك لأصحابها المعنيين، وتُعرض لأغراض التعريف والمعلومات فقط، ولا يعني ذلك وجود أي ارتباط أو تأييد.",
   carriers:
     "الحجز لدى شركات الشحن البحري الدولية ومشغّلي السكك الحديدية وشركات الشحن الجوي.",
   ctaTitle: "استيرادك القادم يبدأ بمحادثة.",

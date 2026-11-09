@@ -12,6 +12,12 @@
  * useMark: off for all five (client decision, 7 Nov 2026): the site shows
  * the names as plain text only, no logo symbols, so nothing suggests a
  * partnership or a licensed logo use. The glyph data stays unused.
+ * Re-checked 9 Nov 2026 against the owners' official pages: Shopify ("use of
+ * our brand assets must be expressly authorized in writing"), WooCommerce
+ * ("you may not use the WooCommerce and Woo logos for any purpose"), eBay
+ * (logo only with a written trademark licence), Amazon (logo only with prior
+ * written approval), OTTO (no published permission). Without written
+ * permission the names stay plain text.
  */
 export type PlatformGroup = "store" | "marketplace";
 export type Platform = {
