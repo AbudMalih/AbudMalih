@@ -440,3 +440,8 @@ textarea {
 .rich-link:focus-visible {
   text-decoration-color: currentColor;
 }
+
+/* endless animations are paused while off-screen (components/chrome/OffscreenPause.tsx) */
+[data-offscreen] {
+  animation-play-state: paused !important;
+}
