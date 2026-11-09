@@ -9,6 +9,7 @@ import "../globals.css";
 import { ENV_SCRIPT } from "@/lib/motion/env";
 import ScrollSetup from "@/lib/motion/scroll";
 import Navigation from "@/components/chrome/Navigation";
+import OffscreenPause from "@/components/chrome/OffscreenPause";
 import Footer from "@/components/chrome/Footer";
 import { I18nProvider } from "@/content/i18n/I18nProvider";
 import { insightsLocales, insightSlugMap } from "@/content/insights";
@@ -111,6 +112,7 @@ export default async function LocaleLayout({
           <Navigation />
           <main id="main">{children}</main>
           <Footer />
+          <OffscreenPause />
         </I18nProvider>
       </body>
     </html>
