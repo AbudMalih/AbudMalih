@@ -316,27 +316,29 @@
   }
 }
 
-/* social profiles: quiet placeholders, not links (see Footer.tsx) */
+/* social profiles: placeholders, not links (see Footer.tsx). Light strokes
+   and a visible ring so they read clearly on the dark footer. */
 .social {
   display: flex;
-  gap: 10px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-top: 20px;
 }
 .socialIcon {
-  width: 34px;
-  height: 34px;
-  padding: 7px;
+  width: 42px;
+  height: 42px;
+  padding: 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.08);
   fill: none;
-  stroke: #8d8e93;
-  stroke-width: 1.5;
+  stroke: #ececee;
+  stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
+  cursor: default;
 }
 .socialFill {
-  fill: #8d8e93;
+  fill: #ececee;
   stroke: none;
 }
 
