@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  HOME_PLATFORMS as PLATFORMS,
-  type Platform,
-} from "@/content/platforms";
+import { HOME_PLATFORMS as PLATFORMS } from "@/content/platforms";
 import s from "./CommerceFlow.module.css";
 
 /**
@@ -157,7 +154,7 @@ export default function CommerceFlow({
         </span>
         {nodes.map(({ p, at }) => (
           <span key={p.id} className={s.node} style={pct(at)}>
-            <PlatformLabel p={p} />
+            {p.name}
           </span>
         ))}
         {ENDS.map((e, i) => (
@@ -222,7 +219,7 @@ export default function CommerceFlow({
         </span>
         {vNodes.map(({ p, at }) => (
           <span key={p.id} className={`${s.node} ${s.nodeV}`} style={vpct(at)}>
-            <PlatformLabel p={p} />
+            {p.name}
           </span>
         ))}
         {V_ENDS.map((e, i) => (
@@ -243,37 +240,5 @@ export default function CommerceFlow({
         ].join(", ")}
       </p>
     </div>
-  );
-}
-
-/** Marks whose logo is the name itself: shown in place of the text, cropped
- *  to the outline of the logo (viewBox) so all share one visible height.
- *  Symbol marks (Shopify, Amazon) sit beside the name. */
-const WORDMARKS: Record<string, string> = {
-  woocommerce: "0 9.58 24 4.84",
-  ebay: "0 7.212 24 9.576",
-  otto: "0 7.95 24 8.1",
-};
-
-function PlatformLabel({ p }: { p: Platform }) {
-  if (!p.useMark) return <>{p.name}</>;
-  const box = WORDMARKS[p.id];
-  if (box)
-    return (
-      <svg
-        viewBox={box}
-        className={`${s.wordmark} ${s[`wm_${p.id}`] ?? ""}`}
-        aria-hidden="true"
-      >
-        <path d={p.path} />
-      </svg>
-    );
-  return (
-    <>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d={p.path} />
-      </svg>
-      {p.name}
-    </>
   );
 }

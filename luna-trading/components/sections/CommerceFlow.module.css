@@ -137,27 +137,6 @@
   height: 20px;
   fill: #141518;
 }
-/* platform marks (client request, 9 Nov 2026): a symbol beside the name,
-   or a wordmark in place of it, at one optical height */
-.node:has(svg) {
-  padding-inline: 14px 18px;
-}
-.node:has(svg.wordmark) {
-  padding-inline: 20px;
-}
-.node svg.wordmark {
-  width: auto;
-  height: var(--wm-h);
-}
-.wm_woocommerce {
-  --wm-h: 17px;
-}
-.wm_ebay {
-  --wm-h: 22px;
-}
-.wm_otto {
-  --wm-h: 17px;
-}
 .end {
   display: inline-flex;
   align-items: center;
@@ -245,16 +224,6 @@
 .nodeV svg {
   width: 15px;
   height: 15px;
-}
-.nodeV:has(svg) {
-  padding-inline: 11px 13px;
-}
-.nodeV:has(svg.wordmark) {
-  padding-inline: 14px;
-}
-.nodeV svg.wordmark {
-  width: auto;
-  height: calc(var(--wm-h) * 0.8);
 }
 .endV {
   height: 38px;
