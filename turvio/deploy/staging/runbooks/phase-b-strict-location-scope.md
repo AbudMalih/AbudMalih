@@ -39,9 +39,14 @@ Scripts (tested end to end, including wrong passphrase, tampered file and failed
 - Database password and backup passphrase are typed at hidden prompts; never stored or logged.
 - `pg_dump | gpg` (AES-256, SHA-512 key derivation): the dump never exists unencrypted on disk; a failed
   dump leaves no file. Output `~/turvio-backups/turvio-staging-<UTC time>.dump.gpg` (read-only) + `.sha256`.
-- Verify: checksum, encryption, archive readable (table of contents), full restore of tables and rows into a
-  throwaway PostgreSQL 17 container (memory only, no network, deleted afterwards; decrypted stream piped
-  directly), then a per-table fingerprint (counts + hashes, no personal data) to compare with staging.
+- Verify (`turvio-staging-backup-verify.sh`): checksum, AES-256 encryption, readable archive; then in a
+  throwaway PostgreSQL 17 container unique to the run (memory only, no network, no logs, removed at the
+  end; decrypted stream piped directly): [3] DATA restore of all tables and rows, [4] SCHEMA restore of
+  constraints, foreign keys, indexes, triggers, row-level security and policies with object counts compared
+  to the archive; each phase is one transaction and any error fails the run. [5] per-table fingerprint
+  (counts + hashes, no personal data). "VERIFIED" only after all checks and confirmed container removal.
+  Not covered: owners/grants and Supabase-managed schemas (auth, storage, vault, cron), which are not in
+  the backup; auth.users is stubbed with only the user ids the foreign keys reference.
 
 ### B. In-database snapshot (Claude, with approval, just before the migration)
 
