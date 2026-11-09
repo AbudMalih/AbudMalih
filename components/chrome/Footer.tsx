@@ -111,6 +111,14 @@ export default function Footer() {
                 </span>
               </span>
             </div>
+            {/* social profiles: visual placeholders only, no links until the
+                official profile URLs exist (hidden from assistive technology
+                so no non-existent account is announced) */}
+            <div className={styles.social} aria-hidden="true">
+              <SocialIcon name="linkedin" />
+              <SocialIcon name="instagram" />
+              <SocialIcon name="facebook" />
+            </div>
           </div>
 
           <nav aria-label={dict.a11y.footerNav} className={styles.col}>
@@ -194,7 +202,49 @@ export default function Footer() {
             <span className={styles.topArrow} aria-hidden="true" />
           </button>
         </div>
+
+        {/* development credit (same wording in every language) */}
+        <p className={styles.credit} lang="en" dir="ltr">
+          Developed by{" "}
+          <a
+            href="https://lunapact.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.creditLink}
+            data-cursor="link"
+          >
+            Lunapact Technologies
+          </a>
+        </p>
       </div>
     </footer>
+  );
+}
+
+/** Monochrome outline marks, drawn to match the footer (not interactive). */
+function SocialIcon({ name }: { name: "linkedin" | "instagram" | "facebook" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={styles.socialIcon} focusable="false">
+      {name === "linkedin" && (
+        <>
+          <rect x="2.8" y="2.8" width="18.4" height="18.4" rx="4.2" />
+          <path d="M7.6 10.6v6.2M11.2 16.8v-6.2M11.2 13.6c0-1.9 1.1-3.1 2.7-3.1s2.5 1.1 2.5 3v3.3" />
+          <circle cx="7.6" cy="7.7" r="0.9" className={styles.socialFill} />
+        </>
+      )}
+      {name === "instagram" && (
+        <>
+          <rect x="3" y="3" width="18" height="18" rx="5.2" />
+          <circle cx="12" cy="12" r="4.1" />
+          <circle cx="17.3" cy="6.7" r="0.9" className={styles.socialFill} />
+        </>
+      )}
+      {name === "facebook" && (
+        <>
+          <circle cx="12" cy="12" r="9.2" />
+          <path d="M13 21.1v-7.6h2.4M10.6 13.5h4.8M13 21.1V9.9c0-1.4.8-2.2 2.2-2.2h1.2" />
+        </>
+      )}
+    </svg>
   );
 }
