@@ -1,8 +1,12 @@
 import type { Article } from "../types";
+import { importChinaSources } from "./import-china.sources";
+import { importChinaEn } from "./import-china.en";
+import { importChinaAr } from "./import-china.ar";
 
 /**
  * PUBLISHED (Phase 3B, article 1); goes live only with a deployment.
- * German only. Every legal or regulatory statement was checked against the official sources listed in `sources`
+ * German original; English and Arabic translations in import-china.en.ts and
+ * import-china.ar.ts. Every legal or regulatory statement was checked against the official sources listed in `sources`
  * on the review date (8 November 2026). Costs are named as components only:
  * no prices are stated. Transport times are the same indicative ranges as on
  * the Import page.
@@ -460,174 +464,9 @@ export const importChina: Article = {
           text: "Luna Trading begleitet Unternehmen von der Lieferantensuche über Qualitätskontrolle und Transport bis zur Verzollung. Welche Leistungen wir anbieten, sehen Sie unter [Leistungen](/what-we-do).",
         },
       ],
-      sources: [
-        {
-          title:
-            "Beantragung einer EORI-Nummer und Änderung der Beteiligtendaten",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Zoelle/EORI-Nummer/Beantragung-einer-EORI-Nummer/beantragung-einer-eori-nummer_node.html",
-        },
-        {
-          title: "Onlineverpflichtung ab 1. Oktober 2026 für EORI-Formulare",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/SharedDocs/Fachmeldungen/Aktuelle-Einzelmeldungen/2026/azr_onlineverpflichtung_eori_formulare_ab_20261001.html",
-        },
-        {
-          title: "Vertretung im Zollrecht",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Zoelle/Zollanmeldung/Vertretung/vertretung_node.html",
-        },
-        {
-          title: "Zollanmeldung: notwendige Unterlagen",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Zoelle/Zollanmeldung/Notwendige-Unterlagen/notwendige-unterlagen_node.html",
-        },
-        {
-          title:
-            "Verbindliche Zolltarifauskunft: Antrag, Erteilung, Gültigkeit",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Zoelle/Zolltarif/verbindliche-Zolltarifauskunft/Antrag-Erteilung-Gueltigkeit/antrag-erteilung-gueltigkeit_node.html",
-        },
-        {
-          title: "Zollwert: Beförderungs- und Versicherungskosten",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Zoelle/Zollwert/Methoden-der-Zollwertermittlung/Transaktionswert-fuer-die-eingefuehrte-Ware/Berichtigungen-Artikel-71-72-UZK/Befoerderungs-und-Versicherungskosten/befoerderungs-und-versicherungskosten_node.html",
-        },
-        {
-          title: "Wegfall der 150-Euro-Zollfreigrenze",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Zoelle/Wegfall-der-150-Euro-Zollfreigrenze/wegfall-der-150-euro-zollfreigrenze_node.html",
-        },
-        {
-          title:
-            "Verordnung (EU) 2026/382 zur Abschaffung der schwellenbasierten Zollbefreiung",
-          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
-          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32026R0382",
-        },
-        {
-          title: "Einfuhrumsatzsteuer: Bemessungsgrundlage",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Steuern/Einfuhrumsatzsteuer/Bemessungsgrundlage/bemessungsgrundlage_node.html",
-        },
-        {
-          title: "Berechnung von Einfuhrabgaben (Rechenbeispiel)",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Steuern/Einfuhrumsatzsteuer/Bemessungsgrundlage/marginalspalte_beispiel_faq.html?faqCalledDoc=132938",
-        },
-        {
-          title: "Einfuhrumsatzsteuer: Vorsteuerabzug",
-          publisher: "Zoll online, Generalzolldirektion",
-          url: "https://www.zoll.de/DE/Fachthemen/Steuern/Einfuhrumsatzsteuer/Vorsteuerabzug/vorsteuerabzug_node.html",
-        },
-        {
-          title:
-            "§ 21 Umsatzsteuergesetz: Besondere Vorschriften für die Einfuhrumsatzsteuer",
-          publisher: "Bundesministerium der Justiz, gesetze-im-internet.de",
-          url: "https://www.gesetze-im-internet.de/ustg_1980/__21.html",
-        },
-        {
-          title:
-            "Delegierte Verordnung (EU) Nr. 1421/2013 (Streichung Chinas aus dem Allgemeinen Präferenzsystem)",
-          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
-          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32013R1421",
-        },
-        {
-          title: "EU extends duties on electric bicycles from China",
-          publisher: "Europäische Kommission, GD Handel",
-          url: "https://policy.trade.ec.europa.eu/news/eu-extends-duties-electric-bicycles-china-2025-01-24_en",
-        },
-        {
-          title: "Access2Markets: Zölle und Maßnahmen nach Warennummer",
-          publisher: "Europäische Kommission",
-          url: "https://trade.ec.europa.eu/access-to-markets/de/home",
-        },
-        {
-          title: "ICS2 extends to rail and road transportation from April 2025",
-          publisher: "Europäische Kommission, GD Steuern und Zollunion",
-          url: "https://taxation-customs.ec.europa.eu/news/eu-import-control-system-2-ics2-extends-rail-and-road-transportation-april-2025-2025-02-03_en",
-        },
-        {
-          title: "Incoterms® rules",
-          publisher: "Internationale Handelskammer (ICC)",
-          url: "https://iccwbo.org/business-solutions/incoterms-rules/",
-        },
-        {
-          title: "Incoterms® 2020: FCA or FOB?",
-          publisher: "ICC Academy",
-          url: "https://academy.iccwbo.org/incoterms/article/incoterms-2020-fca-or-fob/",
-        },
-        {
-          title:
-            "Verordnung (EU) 2023/988 über die allgemeine Produktsicherheit",
-          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
-          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32023R0988",
-        },
-        {
-          title:
-            "Beschluss Nr. 768/2008/EG über einen gemeinsamen Rechtsrahmen für die Vermarktung von Produkten",
-          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
-          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32008D0768",
-        },
-        {
-          title:
-            "Verordnung (EU) 2019/1020 über Marktüberwachung und die Konformität von Produkten",
-          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
-          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32019R1020",
-        },
-        {
-          title: "PPWR und VerpackDG: Das gilt seit dem 12. August 2026",
-          publisher: "Zentrale Stelle Verpackungsregister",
-          url: "https://www.verpackungsregister.org/ich-moechte-wissen-was-seit-dem-12-august-2026-gilt",
-        },
-        {
-          title:
-            "§ 3 Elektro- und Elektronikgerätegesetz: Begriffsbestimmungen",
-          publisher: "Bundesministerium der Justiz, gesetze-im-internet.de",
-          url: "https://www.gesetze-im-internet.de/elektrog_2015/__3.html",
-        },
-        {
-          title: "§ 6 Elektro- und Elektronikgerätegesetz: Registrierung",
-          publisher: "Bundesministerium der Justiz, gesetze-im-internet.de",
-          url: "https://www.gesetze-im-internet.de/elektrog_2015/__6.html",
-        },
-        {
-          title: "stiftung elektro-altgeräte register",
-          publisher: "stiftung ear",
-          url: "https://www.stiftung-ear.de",
-        },
-        {
-          title: "Carbon Border Adjustment Mechanism",
-          publisher: "Europäische Kommission, GD Steuern und Zollunion",
-          url: "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en",
-        },
-        {
-          title:
-            "Verordnung (EU) 2023/956 (CBAM), konsolidierte Fassung, Artikel 2a und Anhang VII",
-          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
-          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:02023R0956-20251020",
-        },
-        {
-          title: "CBAM: communication and FAQs",
-          publisher: "Europäische Kommission, GD Steuern und Zollunion",
-          url: "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-communication-and-faqs_en",
-        },
-        {
-          title: "Regulation on Deforestation-free Products",
-          publisher: "Europäische Kommission, GD Umwelt",
-          url: "https://environment.ec.europa.eu/topics/forests/deforestation/regulation-deforestation-free-products_en",
-        },
-        {
-          title: "Verordnung (EU) 2025/2650 zur Änderung der EUDR",
-          publisher: "EUR-Lex, Amt für Veröffentlichungen der EU",
-          url: "https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32025R2650",
-        },
-        {
-          title:
-            "Delay until December 2026 and other developments in the implementation of the EUDR",
-          publisher: "Europäische Kommission, Access2Markets",
-          url: "https://trade.ec.europa.eu/access-to-markets/en/news/delay-until-december-2026-and-other-developments-implementation-eudr-regulation",
-        },
-      ],
+      sources: importChinaSources("de"),
     },
+    en: importChinaEn,
+    ar: importChinaAr,
   },
 };
