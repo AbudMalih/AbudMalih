@@ -1,4 +1,4 @@
-import { formatClock, formatDuration, type DelayCertainty, type StopDeadlineState, type Tour, type TourProjection } from "@turvio/shared";
+import { formatClock, formatDuration, isOpen, type DelayCertainty, type Stop, type StopDeadlineState, type Tour, type TourProjection, type TourSummary } from "@turvio/shared";
 import type { BadgeTone } from "@turvio/web-ui/ds";
 
 /**
@@ -86,13 +86,35 @@ export function basisLabel(p: TourProjection): string {
   return p.source === "road" ? "Road times (OSRM)" : `Straight-line estimate – ${p.estimateReason ? ESTIMATE_REASON[p.estimateReason] : "no road times"}`;
 }
 
-/** One line under a finish/ETA figure: basis · origin · condition · completeness. */
+/**
+ * A planned tour that is late to start has two finishes: the scheduled one (had it left at its
+ * planned start) and the revised one (departing now). Null when there is only one.
+ */
+export function scheduledFinishLabel(p: TourProjection): string | null {
+  return p.scheduledFinishMinute === null ? null : `scheduled finish ${p.complete ? "" : "≥ "}${formatClock(p.scheduledFinishMinute)}`;
+}
+
+/** One line under a finish/ETA figure: basis · origin · condition · scheduled finish · completeness. */
 export function projectionNote(p: TourProjection): string {
   const parts = [basisLabel(p), originLabel(p)];
   const c = conditionLabel(p);
   if (c) parts.push(c);
+  const sched = scheduledFinishLabel(p);
+  if (sched) parts.push(sched);
   if (!p.complete) parts.push(`incomplete: ${p.unlocatedStopIds.length} stop${p.unlocatedStopIds.length > 1 ? "s" : ""} without a map position`);
   return parts.join(" · ");
+}
+
+const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+/** Map tooltip of a stop: ETA and warning from the same projection as the stop row and list. */
+export function stopTooltipHtml(s: TourSummary, stop: Stop, index: number): string {
+  const eta = s.timeline.projections.get(stop.id);
+  const warn = eta ? stopStateLabel(eta.state, s.timeline.projection.source) : null;
+  const etaText = eta && Number.isFinite(eta.etaMinute) ? `ETA ${formatClock(eta.etaMinute)}${s.timeline.projection.source === "estimate" ? " (est.)" : ""}` : "";
+  return `<strong>${index}. ${esc(stop.recipientName ?? "")}</strong><br/>${esc(stop.address.street)} ${esc(stop.address.houseNumber ?? "")}<br/>${
+    !isOpen(stop.status) ? esc(stop.status) : etaText
+  }${stop.timeWindow ? ` · window ${formatClock(stop.timeWindow.start)}–${formatClock(stop.timeWindow.end)}` : ""}${warn ? `<br/>${esc(warn.label)}` : ""}`;
 }
 
 export const minutes = (seconds: number) => formatDuration(Math.round(seconds / 60));

@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
-import { finishShort, finishValue, projectionNote } from "../lib/eta";
+import { finishShort, finishValue, projectionNote, scheduledFinishLabel } from "../lib/eta";
 import { TOUR_STATUS, TourStatusBadge } from "./StatusBadge";
 import { TourDetailSheet } from "./TourDetail";
 
@@ -213,7 +213,11 @@ export function ListView() {
                           {s.status !== "completed" && s.timeline.projection.source === "estimate" ? " (est.)" : ""}
                         </span>
                         <span className="block text-2xs text-muted">
-                          {s.status === "completed" ? "finished" : `${finishShort(s.tour, s.timeline.projection).toLowerCase()} · shift until ${formatClock(s.timeline.shiftEndMinute)}`}
+                          {s.status === "completed"
+                            ? "finished"
+                            : scheduledFinishLabel(s.timeline.projection)
+                              ? `if departing now · ${scheduledFinishLabel(s.timeline.projection)}`
+                              : `${finishShort(s.tour, s.timeline.projection).toLowerCase()} · shift until ${formatClock(s.timeline.shiftEndMinute)}`}
                         </span>
                       </td>
                     </tr>

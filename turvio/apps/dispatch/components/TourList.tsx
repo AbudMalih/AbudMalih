@@ -6,7 +6,7 @@ import { ArrowUpFromLine, Route, SearchX, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
-import { finishShort, finishValue, projectionNote } from "../lib/eta";
+import { finishShort, finishValue, projectionNote, scheduledFinishLabel } from "../lib/eta";
 import { TourStatusBadge } from "./StatusBadge";
 
 export type TourFilter = "all" | "active" | "delayed" | "planned" | "completed";
@@ -115,7 +115,11 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                     {(deadline !== null || s.status === "planned") && (
                       <div className="mt-2 flex items-center justify-between gap-2 text-2xs text-muted">
                         {s.status === "planned" ? (
-                          <span>Starts {formatClock(s.tour.plannedStartMinute)}</span>
+                          <span title={projectionNote(s.timeline.projection)}>
+                            {scheduledFinishLabel(s.timeline.projection)
+                              ? `Start ${formatClock(s.tour.plannedStartMinute)} missed · ${finishShort(s.tour, s.timeline.projection)} ${finishValue(s.timeline.projection)} if departing now`
+                              : `Starts ${formatClock(s.tour.plannedStartMinute)}`}
+                          </span>
                         ) : (
                           <span title={projectionNote(s.timeline.projection)}>
                             {finishShort(s.tour, s.timeline.projection)} {finishValue(s.timeline.projection)}

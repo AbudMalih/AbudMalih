@@ -101,6 +101,12 @@ export interface TourProjection {
   fromMinute: number;
   /** Projected finish (return to the end point, or end of service at the last stop). */
   finishMinute: number;
+  /**
+   * Finish had the tour left at its planned start – set only when it differs in kind from
+   * `finishMinute`: a planned tour that is late to start (condition "start_now"), so the
+   * scheduled finish and the revised "departs now" finish can be shown side by side.
+   */
+  scheduledFinishMinute: number | null;
   endsAtLastStop: boolean;
   shiftEndMinute: number;
   totalMeters: number;
@@ -152,7 +158,8 @@ export function projectTour(input: ProjectionInput): TourProjection {
   const shiftEndMinute = tour.plannedStartMinute + input.maxShiftMinutes;
   const open = ordered.filter((s) => isOpen(s.status));
   const openLocated = open.filter((s) => s.location);
-  const unlocatedStopIds = open.filter((s) => !s.location).map((s) => s.id);
+  // A completed tour predicts nothing: stops left open there get no ETA and make nothing "incomplete".
+  const unlocatedStopIds = tour.status === "completed" ? [] : open.filter((s) => !s.location).map((s) => s.id);
   // Same rule as the driver app's remaining figures: from the last completed stop, if any.
   const anchor = lastCompletedStop(ordered, minuteOf);
   const anchorPoint = anchor?.location ?? start;
@@ -281,6 +288,20 @@ export function projectTour(input: ProjectionInput): TourProjection {
     }
   }
   const finishMinute = tour.status === "completed" ? (minuteOf(tour.finishedAt) ?? t) : t;
+  // Same legs, waits and service, departing at the planned start instead of now.
+  let scheduledFinishMinute: number | null = null;
+  if (condition === "start_now") {
+    let st = tour.plannedStartMinute;
+    let p = anchorPoint;
+    openLocated.forEach((s, i) => {
+      let arrive = st + leg(i, p, s.location!).seconds / 60;
+      if (s.timeWindow && arrive < s.timeWindow.start) arrive = s.timeWindow.start;
+      st = arrive + s.serviceSeconds / 60;
+      p = s.location!;
+    });
+    if (end) st += leg(openLocated.length, p, end).seconds / 60;
+    scheduledFinishMinute = st;
+  }
 
   // ---- totals for the whole tour (road plan or straight line)
   let totalMeters = 0;
@@ -323,9 +344,10 @@ export function projectTour(input: ProjectionInput): TourProjection {
       });
     if (finishMinute > shiftEndMinute)
       reasons.push({ kind: "finish_after_shift", certainty: predicted, text: predicted === "projected" ? "Projected finish after the shift ends" : "Finish possibly after the shift ends (estimate)" });
-    if (tour.status === "planned" && !tour.driverId && tour.plannedStartMinute - nowMinute < 60) {
+    // Only on the operating day itself: other days' clocks (00:00 / 23:59) say nothing about "the next hour".
+    if (tour.status === "planned" && !tour.driverId && input.isToday === true && tour.plannedStartMinute - nowMinute < 60) {
       const h = Math.floor(tour.plannedStartMinute / 60), m = tour.plannedStartMinute % 60;
-      const overdue = input.isToday === true && nowMinute > tour.plannedStartMinute;
+      const overdue = nowMinute > tour.plannedStartMinute;
       reasons.push({
         kind: "no_driver",
         certainty: "confirmed",
@@ -347,6 +369,7 @@ export function projectTour(input: ProjectionInput): TourProjection {
     stops,
     fromMinute,
     finishMinute,
+    scheduledFinishMinute,
     endsAtLastStop: !end,
     shiftEndMinute,
     totalMeters,

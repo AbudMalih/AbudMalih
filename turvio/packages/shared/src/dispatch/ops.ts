@@ -57,6 +57,18 @@ export function nowInZone(timeZone: string, now: Date = new Date()): { date: str
 }
 
 /**
+ * The clock an operating day is projected at, in the organisation's time zone: today → the current
+ * local minute; a past day → 23:59 (everything is over); a future day → 00:00 (nothing has started,
+ * so planned tours keep their planned start). Local wall-clock dates, so DST and the UTC/Berlin
+ * midnight offset decide nothing.
+ */
+export function operatingClock(date: string | undefined, timeZone: string, now: Date = new Date()): { date: string; asOfMinute: number; isToday: boolean } {
+  const n = nowInZone(timeZone, now);
+  const day = date ?? n.date;
+  return { date: day, asOfMinute: day === n.date ? n.minute : day < n.date ? 24 * 60 - 1 : 0, isToday: day === n.date };
+}
+
+/**
  * Times of one tour, from the shared projection model (projection.ts): road legs from the API
  * when `opts.road` carries them, otherwise a straight-line estimate that is labelled as such.
  */

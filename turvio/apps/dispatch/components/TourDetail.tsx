@@ -342,6 +342,12 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
       {open && (conditionLabel(proj) || !proj.complete || proj.source === "estimate") && (
         <div className="rounded-md border border-line bg-surface-2/60 px-3 py-2 text-xs text-ink-2" data-testid="projection-notice">
           {conditionLabel(proj) && <p>{conditionLabel(proj)}.</p>}
+          {proj.scheduledFinishMinute !== null && (
+            <p data-testid="scheduled-vs-revised">
+              Scheduled: departure {formatClock(s.tour.plannedStartMinute)}, finish {proj.complete ? "" : "≥ "}
+              {formatClock(proj.scheduledFinishMinute)}. Revised: departure now, finish {finishValue(proj)}.
+            </p>
+          )}
           {!proj.complete && (
             <p>
               Times are incomplete: {proj.unlocatedStopIds.length} stop{proj.unlocatedStopIds.length > 1 ? "s have" : " has"} no map position (

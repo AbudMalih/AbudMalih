@@ -1,4 +1,4 @@
-import { nowInZone, type Depot, type DispatchDataset, type Driver, type Stop, type Tour, type UnassignedStop, type Vehicle } from "@turvio/shared";
+import { operatingClock, type Depot, type DispatchDataset, type Driver, type Stop, type Tour, type UnassignedStop, type Vehicle } from "@turvio/shared";
 import type { Tx } from "../db";
 
 /* Row -> domain mappers. Every query runs under RLS (Db.asUser). */
@@ -198,8 +198,8 @@ export async function orgTimeZone(tx: Tx, orgId: string): Promise<string> {
 /** Everything Dispatch needs for one operating day, already scoped by RLS. */
 export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | undefined): Promise<DispatchDataset> {
   const timeZone = await orgTimeZone(tx, orgId);
-  const now = nowInZone(timeZone);
-  const day = date ?? now.date;
+  const clock = operatingClock(date, timeZone);
+  const day = clock.date;
   const [depots, drivers, vehicles, tours] = await Promise.all([
     tx.query<DepotRow>(`select * from public.depots where organization_id = $1 order by name`, [orgId]),
     tx.query<DriverRow>(`select * from public.drivers where organization_id = $1 order by display_name`, [orgId]),
@@ -214,8 +214,8 @@ export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | 
   return {
     organizationId: orgId,
     date: day,
-    asOfMinute: day === now.date ? now.minute : day < now.date ? 24 * 60 - 1 : 0,
-    isToday: day === now.date,
+    asOfMinute: clock.asOfMinute,
+    isToday: clock.isToday,
     timeZone,
     depots: depots.rows.map(toDepot),
     drivers: drivers.rows.map(toDriver),

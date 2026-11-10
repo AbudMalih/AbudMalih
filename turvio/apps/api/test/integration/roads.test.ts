@@ -142,6 +142,27 @@ describe.runIf(available)("road-based Dispatch times", () => {
     expect((await env.as(U.driverHannover1, "POST", `/v1/orgs/${org()}/tours/${tourId}/status`, { status: "in_progress" })).statusCode).toBe(200);
   });
 
+  it("tour tomorrow 08:00: projected from tomorrow's planned departure, not from now", async () => {
+    const d = new Date(Date.now() + 36 * 3600_000); // safely "tomorrow" in Berlin whatever the hour
+    const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+    const t = (await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/tours`, { depotId: env.data.depots.hannover, date: tomorrow, name: "TOMORROW", plannedStartMinute: 480 })).json();
+    const r = await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/stops`, {
+      tourId: t.id,
+      stops: [0, 1, 2].map((i) => ({ recipientName: `Morgen ${i}`, address: { street: "Teststraße", houseNumber: String(i + 1), postalCode: "30159", city: "Hannover" }, location: { lat: 52.37 + i * 0.004, lng: 9.73 } })),
+    });
+    expect(r.statusCode).toBe(201);
+    const res = await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/dispatch?date=${tomorrow}`);
+    expect(res.statusCode).toBe(200);
+    const data = res.json() as DispatchDataset;
+    expect(data).toMatchObject({ date: tomorrow, isToday: false, asOfMinute: 0 });
+    const p = summaryOf(data, t.id).timeline.projection;
+    expect(p.source).toBe("road");
+    expect(p).toMatchObject({ fromMinute: 480, condition: null, scheduledFinishMinute: null });
+    // 3 × (5 min road + service) + 5 min back, from 08:00 – independent of the current time.
+    const service = data.stops.filter((s) => s.tourId === t.id).reduce((a, s) => a + s.serviceSeconds / 60, 0);
+    expect(p.finishMinute).toBeCloseTo(480 + 4 * 5 + service, 6);
+  });
+
   it("routing down: the tour is a labelled estimate, the page still loads", async () => {
     const id = await makeTour(1, 2, 52.4);
     osrm.fail = true;
