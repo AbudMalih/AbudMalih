@@ -36,7 +36,7 @@ export function stopStateLabel(state: StopDeadlineState, source: TourProjection[
     case "at_risk":
       return { label: est ? "Close to deadline (estimate)" : "Close to deadline", tone: "warning" };
     case "unknown":
-      return { label: "No ETA – no map position", tone: "danger" };
+      return { label: "No ETA – no usable map position", tone: "danger" };
     default:
       return null;
   }
@@ -101,20 +101,22 @@ export function projectionNote(p: TourProjection): string {
   if (c) parts.push(c);
   const sched = scheduledFinishLabel(p);
   if (sched) parts.push(sched);
-  if (!p.complete) parts.push(`incomplete: ${p.unlocatedStopIds.length} stop${p.unlocatedStopIds.length > 1 ? "s" : ""} without a map position`);
+  if (!p.complete) parts.push(`incomplete: ${p.unlocatedStopIds.length} stop${p.unlocatedStopIds.length > 1 ? "s" : ""} without a usable map position`);
   return parts.join(" · ");
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-/** Map tooltip of a stop: ETA and warning from the same projection as the stop row and list. */
-export function stopTooltipHtml(s: TourSummary, stop: Stop, index: number): string {
+/** Map tooltip of a stop: ETA and warning from the same projection as the stop row and list; location check and approach (P0-3.4). */
+export function stopTooltipHtml(s: TourSummary, stop: Stop, index: number, location?: { label: string } | null): string {
   const eta = s.timeline.projections.get(stop.id);
   const warn = eta ? stopStateLabel(eta.state, s.timeline.projection.source) : null;
   const etaText = eta && Number.isFinite(eta.etaMinute) ? `ETA ${formatClock(eta.etaMinute)}${s.timeline.projection.source === "estimate" ? " (est.)" : ""}` : "";
   return `<strong>${index}. ${esc(stop.recipientName ?? "")}</strong><br/>${esc(stop.address.street)} ${esc(stop.address.houseNumber ?? "")}<br/>${
     !isOpen(stop.status) ? esc(stop.status) : etaText
-  }${stop.timeWindow ? ` · window ${formatClock(stop.timeWindow.start)}–${formatClock(stop.timeWindow.end)}` : ""}${warn ? `<br/>${esc(warn.label)}` : ""}`;
+  }${stop.timeWindow ? ` · window ${formatClock(stop.timeWindow.start)}–${formatClock(stop.timeWindow.end)}` : ""}${warn ? `<br/>${esc(warn.label)}` : ""}${
+    location && isOpen(stop.status) ? `<br/>${esc(location.label)}` : ""
+  }${stop.approach && isOpen(stop.status) ? `<br/>Navigation approach: ${esc(stop.approach.roadName ?? "set")}` : ""}`;
 }
 
 export const minutes = (seconds: number) => formatDuration(Math.round(seconds / 60));

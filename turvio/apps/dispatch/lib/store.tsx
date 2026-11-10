@@ -8,13 +8,16 @@ import {
   summarizeTours,
   type DispatchDataset,
   type DispatchKpis,
+  type GeoPoint,
   type NewStopInput,
   type PickupRow,
+  type Stop,
   type Tour,
   type TourSummary,
 } from "@turvio/shared";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiCallError, api } from "./api";
+import type { LocationChecksResponse, LocationEvent, LocationReport, StopLocationDetail } from "./locations";
 
 export interface SessionInfo {
   userName: string;
@@ -88,11 +91,31 @@ interface DispatchState {
   optimizeTour: (tour: Tour, opts?: { apply?: boolean; confirmActive?: boolean }) => Promise<OptimizeOutcome>;
   optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; unlocatedStopIds?: string[]; locationErrors?: { stopId: string; codes: string[] }[]; matrixSource: string }>;
   /** `rejectPlannedTracking`: refuse (409) if a parcel is already planned/delivered in the company (imports). */
-  addStops: (target: { tourId?: string; depotId?: string }, stops: NewStopInput[], opts?: { rejectPlannedTracking?: boolean }) => Promise<string[]>;
+  addStops: (
+    target: { tourId?: string; depotId?: string },
+    stops: NewStopInput[],
+    opts?: { rejectPlannedTracking?: boolean; provenance?: "import_file" | "import_paste" | "dispatch_manual" },
+  ) => Promise<string[]>;
   assignStops: (stopIds: string[], tourId: string | null) => Promise<void>;
   setPriority: (stopId: string, value: boolean) => Promise<void>;
   deleteStop: (stopId: string) => Promise<void>;
-  editStopAddress: (stopId: string, address: { street: string; houseNumber?: string | null; postalCode: string; city: string }, recipientName?: string | null) => Promise<void>;
+  editStopAddress: (
+    stopId: string,
+    address: { street: string; houseNumber?: string | null; postalCode: string; city: string },
+    recipientName?: string | null,
+    opts?: { reason?: string; expectedAddressVersion?: number },
+  ) => Promise<void>;
+  /** Location checks of the open stops of the selected day (P0-3.4); empty while unavailable. */
+  locationChecks: Map<string, LocationReport>;
+  locationChecksPending: boolean;
+  /** Move the pin (address unchanged). Reason required on published tours; stale versions → 409. */
+  moveStopPin: (stop: Stop, location: GeoPoint, opts: { reason?: string; precision?: string }) => Promise<void>;
+  confirmStopLocation: (stop: Stop, issueCodes: string[], note?: string) => Promise<void>;
+  /** Explicitly accept a navigation approach point – never done automatically. */
+  acceptApproach: (stop: Stop, point: GeoPoint, reason?: string) => Promise<void>;
+  clearApproach: (stop: Stop, reason?: string) => Promise<void>;
+  stopLocation: (stopId: string) => Promise<StopLocationDetail>;
+  stopLocationHistory: (stopId: string) => Promise<LocationEvent[]>;
   /** New order of a tour's open stops. */
   reorderStops: (tourId: string, openStopIds: string[]) => Promise<void>;
   switchWorkspace: (orgId: string) => void;
@@ -117,6 +140,23 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
   dateRef.current = date;
 
   const pendingRetry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [locationChecks, setLocationChecks] = useState<Map<string, LocationReport>>(() => new Map());
+  const [locationChecksPending, setLocationChecksPending] = useState(false);
+  const locationRetry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Location checks load beside the dataset (never block it); while some still run, again in 3 s.
+  const loadLocationChecks = useCallback(async () => {
+    clearTimeout(locationRetry.current);
+    try {
+      const r = await api<LocationChecksResponse>("GET", `/v1/orgs/${org}/location-checks?date=${dateRef.current}`);
+      setLocationChecks(new Map(r.checks.map((c) => [c.stopId, c])));
+      setLocationChecksPending(r.pending);
+      if (r.pending) locationRetry.current = setTimeout(() => void loadLocationChecks(), 3_000);
+    } catch {
+      // Not available (permission, network): show nothing rather than a false "checked".
+      setLocationChecks(new Map());
+      setLocationChecksPending(false);
+    }
+  }, [org]);
   const lastReload = useRef(0);
   const reload = useCallback(async () => {
     setLoading(true);
@@ -124,6 +164,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     try {
       const d = await api<DispatchDataset>("GET", `/v1/orgs/${org}/dispatch?date=${dateRef.current}`);
       setScoped(d);
+      void loadLocationChecks();
       setLastLoadedAt(Date.now());
       // Road times still being computed (labelled as estimates meanwhile): fetch them shortly.
       clearTimeout(pendingRetry.current);
@@ -131,7 +172,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     } finally {
       setLoading(false);
     }
-  }, [org]);
+  }, [org, loadLocationChecks]);
 
   const setDate = useCallback(
     (d: string) => {
@@ -168,8 +209,14 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
       clearInterval(poll);
       clearTimeout(timer);
       clearTimeout(pendingRetry.current);
+      clearTimeout(locationRetry.current);
     };
   }, [org, reload]);
+
+  // First load (the server-rendered dataset arrives without location checks).
+  useEffect(() => {
+    void loadLocationChecks();
+  }, [loadLocationChecks]);
 
   const data = useMemo(() => filterByDepot(scoped, depotId), [scoped, depotId]);
   const summaries = useMemo(() => summarizeTours(data), [data]);
@@ -236,11 +283,65 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
         }),
       ),
     optimizePlan: (tourIds, includeUnassigned) => run(() => api("POST", `/v1/orgs/${org}/plans/optimize`, { tourIds, includeUnassigned })),
-    addStops: (target, stops, opts) => run(async () => (await api<{ ids: string[] }>("POST", `/v1/orgs/${org}/stops`, { ...target, stops, ...(opts?.rejectPlannedTracking ? { rejectPlannedTracking: true } : {}) })).ids),
+    addStops: (target, stops, opts) =>
+      run(
+        async () =>
+          (
+            await api<{ ids: string[] }>("POST", `/v1/orgs/${org}/stops`, {
+              ...target,
+              stops,
+              ...(opts?.rejectPlannedTracking ? { rejectPlannedTracking: true } : {}),
+              ...(opts?.provenance ? { provenance: opts.provenance } : {}),
+            })
+          ).ids,
+      ),
     assignStops: (stopIds, tourId) => run(() => api<void>("POST", `/v1/orgs/${org}/stops/assign`, { stopIds, tourId })),
     setPriority: (stopId, v) => run(() => api<void>("PATCH", `/v1/orgs/${org}/stops/${stopId}`, { priority: v })),
     deleteStop: (stopId) => run(() => api<void>("DELETE", `/v1/orgs/${org}/stops/${stopId}`)),
-    editStopAddress: (stopId, address, recipientName) => run(() => api<void>("PATCH", `/v1/orgs/${org}/stops/${stopId}`, { address, ...(recipientName !== undefined ? { recipientName } : {}) })),
+    editStopAddress: (stopId, address, recipientName, opts) =>
+      run(() =>
+        api<void>("PATCH", `/v1/orgs/${org}/stops/${stopId}`, {
+          address,
+          ...(recipientName !== undefined ? { recipientName } : {}),
+          ...(opts?.reason ? { reason: opts.reason } : {}),
+          ...(opts?.expectedAddressVersion ? { expectedAddressVersion: opts.expectedAddressVersion } : {}),
+        }),
+      ),
+    locationChecks,
+    locationChecksPending,
+    moveStopPin: (stop, location, opts) =>
+      run(() =>
+        api<void>("PATCH", `/v1/orgs/${org}/stops/${stop.id}`, {
+          location,
+          locationPrecision: opts.precision ?? "manual_pin",
+          ...(opts.reason ? { reason: opts.reason } : {}),
+          ...(stop.locationVersion ? { expectedLocationVersion: stop.locationVersion } : {}),
+        }),
+      ),
+    confirmStopLocation: (stop, issueCodes, note) =>
+      run(() =>
+        api<void>("POST", `/v1/orgs/${org}/stops/${stop.id}/location/confirm`, {
+          expectedLat: stop.location!.lat,
+          expectedLng: stop.location!.lng,
+          expectedAddressVersion: stop.addressVersion,
+          issueCodes,
+          ...(note ? { note } : {}),
+        }),
+      ),
+    acceptApproach: (stop, point, reason) =>
+      run(() =>
+        api<void>("POST", `/v1/orgs/${org}/stops/${stop.id}/location/approach`, {
+          lat: point.lat,
+          lng: point.lng,
+          expectedLat: stop.location!.lat,
+          expectedLng: stop.location!.lng,
+          expectedAddressVersion: stop.addressVersion,
+          ...(reason ? { reason } : {}),
+        }),
+      ),
+    clearApproach: (stop, reason) => run(() => api<void>("DELETE", `/v1/orgs/${org}/stops/${stop.id}/location/approach${reason ? `?reason=${encodeURIComponent(reason)}` : ""}`)),
+    stopLocation: (stopId) => api<StopLocationDetail>("GET", `/v1/orgs/${org}/stops/${stopId}/location`),
+    stopLocationHistory: async (stopId) => (await api<{ events: LocationEvent[] }>("GET", `/v1/orgs/${org}/stops/${stopId}/location/history`)).events,
     reorderStops: (tourId, ids) => run(() => api<void>("POST", `/v1/me/tours/${tourId}/sequence`, { stopIds: ids })),
     switchWorkspace: (orgId) => {
       document.cookie = `tv_org=${encodeURIComponent(orgId)}; path=/; samesite=lax; max-age=31536000`;

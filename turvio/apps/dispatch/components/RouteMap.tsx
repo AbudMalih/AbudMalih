@@ -3,6 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import { formatClock, isNotDelivered, isOpen, type Depot, type TourSummary, type UnassignedStop } from "@turvio/shared";
 import { stopTooltipHtml } from "../lib/eta";
+import { locationBadge, type LocationReport } from "../lib/locations";
 import { Button, Skeleton, Tooltip, cn } from "@turvio/web-ui/ds";
 import { CircleAlert, Layers, LocateFixed, Maximize2, Minus, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -33,6 +34,8 @@ export interface RouteMapProps {
   onSelectVehicle?: (v: LiveVehicle) => void;
   /** Change `n` to centre the map on this point (e.g. a selected vehicle). */
   focus?: { lat: number; lng: number; n: number } | null;
+  /** Location checks per stop (P0-3.4): shown in the stop tooltip. */
+  locationChecks?: Map<string, LocationReport>;
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -203,7 +206,7 @@ export function RouteMap(props: RouteMapProps) {
         const done = !isOpen(stop.status);
         if (done && !showCompleted) return;
         const idx = s.stops.indexOf(stop) + 1;
-        const tip = stopTooltipHtml(s, stop, idx);
+        const tip = stopTooltipHtml(s, stop, idx, locationBadge(latest.current.locationChecks?.get(stop.id)));
         const onClick = (e: Leaflet.LeafletEvent) => {
           Lf.DomEvent.stopPropagation(e as Leaflet.LeafletMouseEvent);
           latest.current.onSelectStop(stop.id, s.tour.id);
@@ -257,7 +260,7 @@ export function RouteMap(props: RouteMapProps) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, props.summaries, props.depots, props.unassigned, props.selectedTourId, props.selectedStopId, showCompleted, showUnassigned, props.road]);
+  }, [state, props.summaries, props.depots, props.unassigned, props.selectedTourId, props.selectedStopId, showCompleted, showUnassigned, props.road, props.locationChecks]);
 
   // Live vehicles: own layer, redrawn on every position update / clock tick only.
   useEffect(() => {

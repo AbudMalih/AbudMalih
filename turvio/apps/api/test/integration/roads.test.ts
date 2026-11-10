@@ -7,7 +7,7 @@ import { createTestEnv, postgresAvailable, type TestEnv } from "./helpers";
 /**
  * Road-based Dispatch times (P0-2): the dispatch dataset carries OSRM legs per tour; every figure is
  * computed by the shared projectTour. A simulated OSRM server behind the real OsrmRouting provider:
- * every leg 2 km / 5 min, live-position legs 900 m / 3 min. Points north of 60° N are "outside the
+ * every leg 2 km / 5 min, live-position legs 900 m / 3 min. Points east of 14.9° E (in Germany) are "outside the
  * road data". Requests are counted (cache, in-flight sharing, one table call for live positions).
  */
 const available = await postgresAvailable();
@@ -19,7 +19,8 @@ const fakeOsrm: typeof fetch = async (input) => {
   if (osrm.latencyMs) await new Promise((r) => setTimeout(r, osrm.latencyMs));
   if (osrm.fail) throw new Error("connect ECONNREFUSED");
   const coords = url.pathname.split("/").at(-1)!.split(";").map((c) => c.split(",").map(Number) as [number, number]);
-  const snap = (c: [number, number]) => ({ distance: c[1] >= 60 ? 50_000 : 8 });
+  // East of 14.9° E (Görlitz – inside Germany) is "outside the road data" here.
+  const snap = (c: [number, number]) => ({ distance: c[0] >= 14.9 ? 50_000 : 8 });
   if (url.pathname.includes("/table/")) {
     osrm.table++;
     const n = url.searchParams.get("sources")!.split(";").length;
@@ -180,12 +181,23 @@ describe.runIf(available)("road-based Dispatch times", () => {
     const id = await makeTour(2, 2, 52.45);
     const far = (await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/stops`, {
       tourId: id,
-      stops: [{ recipientName: "Far", address: { street: "Weit", houseNumber: "1", postalCode: "30159", city: "Hannover" }, location: { lat: 61, lng: 9.73 } }],
+      stops: [{ recipientName: "Far", address: { street: "Weit", houseNumber: "1", postalCode: "02826", city: "Görlitz" }, location: { lat: 51.15, lng: 14.99 } }],
     })).json();
     const d = await dataset();
     const road = d.roads![id]!;
     expect(road).toMatchObject({ source: "estimate", reason: "out_of_coverage" });
     expect(road.source === "estimate" ? road.stopIds : []).toContain(far.ids[0]);
+    // P0-3: a certainly wrong coordinate (German address at 61° N) is not routed at all: the tour
+    // keeps road times for the rest, the stop counts as "no usable map position".
+    const id2 = await makeTour(4, 2, 52.46);
+    const wrong = (await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/stops`, {
+      tourId: id2,
+      stops: [{ recipientName: "Wrong", address: { street: "Weit", houseNumber: "2", postalCode: "30159", city: "Hannover" }, location: { lat: 61, lng: 9.73 } }],
+    })).json();
+    const d2 = await dataset();
+    expect(d2.roads![id2]!.source).toBe("osrm");
+    const p2 = summaryOf(d2, id2).timeline.projection;
+    expect(p2).toMatchObject({ source: "road", complete: false, unlocatedStopIds: [wrong.ids[0]] });
   });
 
   it("slow routing never blocks the page: pending tours are labelled, the next load has road times", async () => {

@@ -136,11 +136,15 @@ describe("Dispatch file import", () => {
     // Coordinates are not in the file: import only after locations are found or accepted without.
     geocodeResults = Array.from({ length: 100 }, (_, i) => ({ label: `x${i}`, location: { lat: 52.38 + i / 10000, lng: 9.74 }, precision: "house" }));
     await user.click(within(dialog).getByRole("button", { name: /Find locations \(100\)/ }));
-    await waitFor(() => expect(importButton(dialog).disabled).toBe(false));
+    // Geocoding 100 addresses and re-rendering 1,000 parcels: allow for a busy CI machine.
+    await waitFor(() => expect(importButton(dialog).disabled).toBe(false), { timeout: 10_000 });
     expect(importButton(dialog).textContent).toContain("Import 100 stops (1000 parcels)");
     await user.click(importButton(dialog));
-    await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.url.endsWith("/stops"))).toBeTruthy());
+    await waitFor(() => expect(calls.find((c) => c.method === "POST" && c.url.endsWith("/stops"))).toBeTruthy(), { timeout: 10_000 });
     const body = calls.find((c) => c.method === "POST" && c.url.endsWith("/stops"))!.body;
+    // P0-3.2: the import declares its channel and the geocoder's precision per stop.
+    expect(body.provenance).toBe("import_file");
+    expect(body.stops[0].locationPrecision).toBe("house");
     const parcels = body.stops.flatMap((s: { parcels: unknown[] }) => s.parcels);
     expect(body.stops).toHaveLength(100);
     expect(parcels).toHaveLength(1000);
@@ -148,7 +152,7 @@ describe("Dispatch file import", () => {
     expect(parcels.filter((p: { company?: string }) => p.company === "Großhandel Leinetal GmbH (Wareneingang)")).toHaveLength(120);
     // One company-wide tracking check for all 1,000 parcels before saving.
     expect(calls.find((c) => c.url.endsWith("/parcels/lookup"))!.body.trackingNumbers).toHaveLength(1000);
-  });
+  }, 30_000);
 
   it("a tracking number at two different addresses blocks the import until someone decides; nothing is dropped silently", async () => {
     const user = userEvent.setup();

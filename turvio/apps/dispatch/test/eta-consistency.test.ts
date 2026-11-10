@@ -115,7 +115,7 @@ describe("one projection for every Dispatch view", () => {
     expect(finishValue(c.timeline.projection)).toMatch(/^≥ /);
     expect(finishTitle(c.tour, c.timeline.projection)).toBe("Finish at last stop");
     expect(finishTitle(byId.A!.tour, byId.A!.timeline.projection)).toBe("Return to depot");
-    expect(projectionNote(c.timeline.projection)).toMatch(/incomplete: 1 stop without a map position/);
-    expect(stopStateLabel(c.timeline.projections.get("C-s1")!.state, "road")!.label).toBe("No ETA – no map position");
+    expect(projectionNote(c.timeline.projection)).toMatch(/incomplete: 1 stop without a usable map position/);
+    expect(stopStateLabel(c.timeline.projections.get("C-s1")!.state, "road")!.label).toBe("No ETA – no usable map position");
   });
 });

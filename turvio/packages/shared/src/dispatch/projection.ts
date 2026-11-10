@@ -1,6 +1,16 @@
 import { estimateDrive, routePoint } from "../geo";
 import type { GeoPoint, Stop, Tour } from "../schemas";
+import { coordinateIssues } from "../location/checks";
 import { isOpen } from "../stopStatus";
+
+/**
+ * A stop whose coordinate can be used for times and routes: present and not certainly wrong
+ * (0,0, out of range, a German address outside Germany – P0-3). Others count as "no hasUsableLocation map
+ * position": the projection is incomplete and names them, exactly like stops without a pin.
+ */
+export function hasUsableLocation(s: Pick<Stop, "location" | "address">): boolean {
+  return !!s.location && coordinateIssues(s.location, s.address?.countryCode).length === 0;
+}
 import { sortBySequence, tourEndPoint, tourStartPoint } from "../tour";
 
 /**
@@ -138,7 +148,7 @@ export function lastCompletedStop(stops: Stop[], minuteOf: (iso: string | undefi
   let best: Stop | undefined;
   let bestMinute = -Infinity;
   for (const s of sortBySequence(stops)) {
-    if (s.type === "break" || isOpen(s.status) || !s.location) continue;
+    if (s.type === "break" || isOpen(s.status) || !hasUsableLocation(s)) continue;
     const m = minuteOf(s.completedAt) ?? -1;
     if (m >= bestMinute) {
       best = s;
@@ -157,9 +167,9 @@ export function projectTour(input: ProjectionInput): TourProjection {
   const end = tourEndPoint(tour, input.depotLocation);
   const shiftEndMinute = tour.plannedStartMinute + input.maxShiftMinutes;
   const open = ordered.filter((s) => isOpen(s.status));
-  const openLocated = open.filter((s) => s.location);
+  const openLocated = open.filter(hasUsableLocation);
   // A completed tour predicts nothing: stops left open there get no ETA and make nothing "incomplete".
-  const unlocatedStopIds = tour.status === "completed" ? [] : open.filter((s) => !s.location).map((s) => s.id);
+  const unlocatedStopIds = tour.status === "completed" ? [] : open.filter((s) => !hasUsableLocation(s)).map((s) => s.id);
   // Same rule as the driver app's remaining figures: from the last completed stop, if any.
   const anchor = lastCompletedStop(ordered, minuteOf);
   const anchorPoint = (anchor && routePoint(anchor)) ?? start;
@@ -170,12 +180,12 @@ export function projectTour(input: ProjectionInput): TourProjection {
 
   // ---- legs for the remaining route: all road (same stop order) or all straight line
   const remainingIds: (string | null)[] = [null, ...openLocated.map((s) => s.id), ...(end ? [null] : [])];
-  const planIds: (string | null)[] = [null, ...ordered.filter((s) => s.location).map((s) => s.id), ...(end ? [null] : [])];
+  const planIds: (string | null)[] = [null, ...ordered.filter(hasUsableLocation).map((s) => s.id), ...(end ? [null] : [])];
   let legs: RoadLegValue[] | null = null;
   let estimateReason: RoadEstimateReason | null = null;
   if (road?.source === "osrm") {
     if (road.remaining && road.remaining.anchorStopId === (anchor?.id ?? null) && same(road.remaining.stopIds, remainingIds)) legs = road.remaining.legs;
-    else if (!anchor && same(road.plan.stopIds, planIds) && openLocated.length === ordered.filter((s) => s.location).length) legs = road.plan.legs;
+    else if (!anchor && same(road.plan.stopIds, planIds) && openLocated.length === ordered.filter(hasUsableLocation).length) legs = road.plan.legs;
     else estimateReason = "stale"; // order or progress changed since the road data was computed
   } else {
     estimateReason = road?.source === "estimate" ? road.reason : "not_configured";
@@ -314,7 +324,7 @@ export function projectTour(input: ProjectionInput): TourProjection {
   } else {
     let p = start;
     for (const s of ordered) {
-      if (!s.location) continue;
+      if (!hasUsableLocation(s)) continue;
       const l = estimateDrive(p, routePoint(s)!);
       totalMeters += l.meters;
       totalDriveSeconds += l.seconds;
@@ -394,11 +404,11 @@ export function roadWaypoints(
   const ordered = sortBySequence(stops.filter((s) => s.type !== "break"));
   const start = tourStartPoint(tour, depotLocation);
   const end = tourEndPoint(tour, depotLocation);
-  const located = ordered.filter((s) => s.location);
+  const located = ordered.filter(hasUsableLocation);
   const plan = { points: [start, ...located.map((s) => routePoint(s)!), ...(end ? [end] : [])], stopIds: [null, ...located.map((s) => s.id), ...(end ? [null] : [])] };
   if (tour.status === "completed") return { plan, remaining: null, firstOpen: null };
   const anchor = lastCompletedStop(ordered, minuteOf);
-  const openLocated = ordered.filter((s) => isOpen(s.status) && s.location);
+  const openLocated = ordered.filter((s) => isOpen(s.status) && hasUsableLocation(s));
   if (!anchor && openLocated.length === located.length) return { plan, remaining: null, firstOpen: openLocated[0] ?? null };
   return {
     plan,

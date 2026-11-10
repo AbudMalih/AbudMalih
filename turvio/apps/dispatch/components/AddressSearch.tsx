@@ -9,6 +9,8 @@ export interface PickedPlace {
   lat: number;
   lng: number;
   label: string;
+  /** Search hits: the geocoder's precision; typed coordinates: undefined (a hand-placed pin). */
+  precision?: "house" | "street" | "postal_code" | "city" | "other";
 }
 
 interface GeocodeHit {
@@ -96,7 +98,7 @@ export function AddressSearch({ near, onPick, placeholder = "Street and number, 
                 type="button"
                 role="option"
                 aria-selected={false}
-                onClick={() => onPick({ lat: h.location.lat, lng: h.location.lng, label: h.label })}
+                onClick={() => onPick({ lat: h.location.lat, lng: h.location.lng, label: h.label, precision: h.precision })}
                 className="flex w-full items-start justify-between gap-2 px-2.5 py-2 text-start text-sm hover:bg-surface-2"
               >
                 <span className="text-ink">{h.label}</span>

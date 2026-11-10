@@ -232,3 +232,18 @@ describe("accepted approach point", () => {
     expect(project(t, stops, 400, road).source).toBe("road");
   });
 });
+
+describe("certainly wrong coordinates (P0-3)", () => {
+  it("a swapped or 0,0 coordinate counts as no usable map position: incomplete, named, no 16,000 km estimate", () => {
+    const t = tour();
+    const swapped = stop(1, { location: { lat: 9.74, lng: 52.38 } });
+    const zero = stop(2, { location: { lat: 0, lng: 0 } });
+    const p = project(t, [stop(0), swapped, zero], 400);
+    expect(p.complete).toBe(false);
+    expect(p.unlocatedStopIds).toEqual(["s1", "s2"]);
+    expect(p.stops.get("s1")!.state).toBe("unknown");
+    expect(p.totalMeters).toBeLessThan(10_000);
+    // Road waypoints leave them out too (they would make the whole tour "out of coverage").
+    expect(roadWaypoints(t, [stop(0), swapped, zero], DEPOT, minuteOf).plan.stopIds).toEqual([null, "s0", null]);
+  });
+});

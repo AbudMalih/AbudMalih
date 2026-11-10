@@ -38,6 +38,8 @@ import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ProofList } from "./ProofViewer";
 import { StopEditActions } from "./StopEditActions";
+import { LocationReview } from "./LocationReview";
+import { locationBadge, needsReview } from "../lib/locations";
 import { FAILURE_REASON, STOP_STATUS, TourStatusBadge, deadlineLabel } from "./StatusBadge";
 
 function Fact({ icon, label, value, sub }: { icon: ReactNode; label: string; value: ReactNode; sub?: ReactNode }) {
@@ -73,7 +75,9 @@ function StopMarker({ stop, color, index }: { stop: Stop; color: string; index: 
 }
 
 export function StopRow({ summary, stop, index, expanded, onToggle }: { summary: TourSummary; stop: Stop; index: number; expanded: boolean; onToggle: () => void }) {
-  const { scoped, setPriority } = useDispatch();
+  const { scoped, setPriority, locationChecks, session } = useDispatch();
+  const locReport = locationChecks.get(stop.id);
+  const locBadge = locationBadge(locReport);
   const [busy, setBusy] = useState(false);
   const color = tourColor(scoped, summary.tour.id);
   // ETA, colour and warning all come from the one projection of this tour.
@@ -91,6 +95,13 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
             <span className={cn("truncate text-[13px] font-medium", isOpen(stop.status) ? "text-ink" : "text-muted")}>{stop.recipientName ?? formatAddress(stop)}</span>
             {stop.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-violet-600" aria-label="Pickup" />}
             {stop.priority && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-500" aria-label="Priority" />}
+            {locBadge && isOpen(stop.status) && (
+              <span className="shrink-0" data-testid="stop-location-badge">
+                <Badge tone={locBadge.tone} className="px-1.5 py-0 text-2xs">
+                  {locBadge.label}
+                </Badge>
+              </span>
+            )}
           </span>
           <span className="block truncate text-xs text-muted">{formatAddress(stop)}</span>
         </span>
@@ -151,6 +162,7 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
                 </div>
               )}
               {(stop.proofs?.length ?? 0) > 0 && <ProofList stop={stop} />}
+              {session.role !== "driver" && (isOpen(stop.status) || locReport) && <LocationReview summary={summary} stop={stop} report={locReport} />}
               {summary.tour.status !== "completed" && <StopEditActions summary={summary} stop={stop} />}
               {stop.status === "pending" && summary.tour.status !== "completed" && (
                 <div>
@@ -261,7 +273,7 @@ function Activity({ tourId, version, stopsDone }: { tourId: string; version?: nu
 }
 
 export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: () => void }) {
-  const { selectedStopId, selectStop, scoped, optimizeTour, publishTour, unpublishTour, deleteTour, selectTour, session } = useDispatch();
+  const { selectedStopId, selectStop, scoped, optimizeTour, publishTour, unpublishTour, deleteTour, selectTour, session, locationChecks } = useDispatch();
   const [busy, setBusy] = useState<null | "optimize">(null);
   const [confirm, setConfirm] = useState<null | "publish" | "withdraw" | "delete">(null);
   const [adding, setAdding] = useState(false);
@@ -275,6 +287,8 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
   // The map line still comes from the route endpoint; every figure comes from the projection.
   const road = useRoadRoute(session.organizationId, s.tour.id, routeKey(s.stops));
   const proj = t.projection;
+  // Stops a dispatcher should look at: location errors and unconfirmed warnings (P0-3.4).
+  const locationReview = s.stops.filter((x) => isOpen(x.status) && needsReview(locationChecks.get(x.id)));
 
   const active = s.tour.status === "in_progress" || s.tour.status === "paused";
   const [preview, setPreview] = useState<OptimizeMeta | null>(null);
@@ -339,6 +353,17 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
           </ul>
         </div>
       )}
+      {open && canManage && locationReview.length > 0 && (
+        <button
+          type="button"
+          onClick={() => selectStop(locationReview[0]!.id, s.tour.id)}
+          className="rounded-md border border-amber-200 bg-warning-soft px-3 py-2 text-start text-xs text-warning-ink"
+          data-testid="location-review-banner"
+        >
+          {locationReview.length} stop{locationReview.length > 1 ? "s need" : " needs"} a location review
+          {locationReview.some((x) => locationChecks.get(x.id)?.severity === "error") ? " – including location errors (not optimized)" : ""}. Open the stop to check it.
+        </button>
+      )}
       {open && (conditionLabel(proj) || !proj.complete || proj.source === "estimate") && (
         <div className="rounded-md border border-line bg-surface-2/60 px-3 py-2 text-xs text-ink-2" data-testid="projection-notice">
           {conditionLabel(proj) && <p>{conditionLabel(proj)}.</p>}
@@ -350,7 +375,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
           )}
           {!proj.complete && (
             <p>
-              Times are incomplete: {proj.unlocatedStopIds.length} stop{proj.unlocatedStopIds.length > 1 ? "s have" : " has"} no map position (
+              Times are incomplete: {proj.unlocatedStopIds.length} stop{proj.unlocatedStopIds.length > 1 ? "s have" : " has"} no usable map position (missing or certainly wrong; 
               {proj.unlocatedStopIds
                 .map((id) => s.stops.find((x) => x.id === id))
                 .map((x) => (x ? (x.recipientName ?? formatAddress(x)) : ""))

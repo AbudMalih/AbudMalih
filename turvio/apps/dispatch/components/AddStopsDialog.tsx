@@ -72,7 +72,9 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
       // The API takes at most 500 stops per request. File imports are checked for parcels that are
       // already planned (company-wide); the server refuses the whole request if any are.
       const ids: string[] = [];
-      for (let i = 0; i < stops.length; i += 500) ids.push(...(await addStops(target, stops.slice(i, i + 500), { rejectPlannedTracking: mode === "file" })));
+      // The channel is recorded with each stop's original location (P0-3.2).
+      const provenance = mode === "single" ? "dispatch_manual" : mode === "file" ? "import_file" : "import_paste";
+      for (let i = 0; i < stops.length; i += 500) ids.push(...(await addStops(target, stops.slice(i, i + 500), { rejectPlannedTracking: mode === "file", provenance })));
       toast.success(`${ids.length} stop${ids.length > 1 ? "s" : ""} added to ${targetLabel}`, { description: target.tourId ? "Optimize the tour to place them in the route." : "They are waiting in the unassigned list." });
       setF({ ...EMPTY, city: defaultCity ?? "" });
       setPaste("");

@@ -330,6 +330,11 @@ export function FileImport({
             trackingNumbers: parcels.map((p) => p.trackingNumber),
             location: loc,
             locationSource: g.input.location ? "import" : loc ? (geo[g.key]?.status === "manual" ? "dispatch" : "geocoder") : null,
+            // Precision as known here: coordinates from the file are unverified (server default);
+            // a street-level match is stored as approximate, never as a house position.
+            ...(!g.input.location && loc
+              ? { locationPrecision: geo[g.key]?.status === "found" ? ("house" as const) : geo[g.key]?.status === "street" ? ("street" as const) : ("manual_pin" as const) }
+              : {}),
           };
         })
         .filter((s): s is NewStopInput => !!s),

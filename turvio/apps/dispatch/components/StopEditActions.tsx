@@ -15,6 +15,11 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
   const [moving, setMoving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState({ recipientName: stop.recipientName ?? "", street: stop.address.street, houseNumber: stop.address.houseNumber ?? "", postalCode: stop.address.postalCode, city: stop.address.city });
+  const [reason, setReason] = useState("");
+  // After publication every address change needs a reason (it is recorded with the change).
+  const published = !!summary.tour.publishedAt;
+  const addressChanged =
+    form.street !== stop.address.street || form.houseNumber !== (stop.address.houseNumber ?? "") || form.postalCode !== stop.address.postalCode || form.city !== stop.address.city;
   const open = summary.stops.filter((s) => isOpen(s.status)).sort((a, b) => a.sequence - b.sequence);
   const idx = open.findIndex((s) => s.id === stop.id);
   const targets = summaries.filter((s) => s.tour.id !== summary.tour.id && s.depot.id === summary.depot.id && s.tour.status !== "completed");
@@ -59,16 +64,20 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
         open={editing}
         onOpenChange={setEditing}
         title="Edit address"
-        description="If the address changes, the old map position is removed until a new one is set."
+        description="If the address changes, the old map position is removed until a new one is set. The original address stays in the history."
         footer={
           <Button
             onClick={async () => {
               await attempt("Address saved", () =>
-                editStopAddress(stop.id, { street: form.street, houseNumber: form.houseNumber || null, postalCode: form.postalCode, city: form.city }, form.recipientName || null),
+                editStopAddress(stop.id, { street: form.street, houseNumber: form.houseNumber || null, postalCode: form.postalCode, city: form.city }, form.recipientName || null, {
+                  reason: reason.trim() || undefined,
+                  expectedAddressVersion: stop.addressVersion,
+                }),
               );
               setEditing(false);
+              setReason("");
             }}
-            disabled={!form.street || !form.postalCode || !form.city}
+            disabled={!form.street || !form.postalCode || !form.city || (published && addressChanged && !reason.trim())}
           >
             <MapPinned /> Save
           </Button>
@@ -89,6 +98,12 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
               <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label} />
             </label>
           ))}
+          {addressChanged && (
+            <label className="col-span-6 flex flex-col gap-1">
+              <span className="font-medium text-ink-2">Reason{published ? " (required – the tour is published)" : " (optional)"}</span>
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason for the change" maxLength={500} />
+            </label>
+          )}
         </div>
       </Dialog>
 

@@ -183,6 +183,7 @@ export function MapWorkspace() {
             selectedDriverId={liveOfSelected?.driverId ?? null}
             onSelectVehicle={selectVehicle}
             focus={focus}
+            locationChecks={d.locationChecks}
           />
           {isDesktop && (
             <div className="absolute start-3 top-3 z-[460] flex gap-1.5">
