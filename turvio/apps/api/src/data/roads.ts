@@ -1,4 +1,4 @@
-import { LIVE_GPS_MAX_AGE_SECONDS, minuteOfDay, roadWaypoints, type DispatchDataset, type GeoPoint, type RoadLegValue, type TourRoad } from "@turvio/shared";
+import { LIVE_GPS_MAX_AGE_SECONDS, minuteOfDay, roadWaypoints, routePoint, type DispatchDataset, type GeoPoint, type RoadLegValue, type TourRoad } from "@turvio/shared";
 import { RoutingOutOfCoverage, type RoadRoute, type RoutingProvider } from "../routing";
 
 /**
@@ -76,7 +76,7 @@ export async function buildRoads(
     const wp = roadWaypoints(tour, stops, depot.location, minuteOf);
     const pos = positions.get(tour.id);
     const running = tour.status === "in_progress" || tour.status === "paused";
-    const gpsPair = running && pos && pos.ageSeconds <= LIVE_GPS_MAX_AGE_SECONDS && wp.firstOpen ? { from: { lat: pos.lat, lng: pos.lng }, to: wp.firstOpen.location!, toStopId: wp.firstOpen.id } : undefined;
+    const gpsPair = running && pos && pos.ageSeconds <= LIVE_GPS_MAX_AGE_SECONDS && wp.firstOpen ? { from: { lat: pos.lat, lng: pos.lng }, to: routePoint(wp.firstOpen)!, toStopId: wp.firstOpen.id } : undefined;
     const done = (async (): Promise<TourRoad> => {
       // Which stop list a routing error's point indexes refer to: the plan, or the remaining route
       // (whose index 0 is the last completed stop, the anchor).

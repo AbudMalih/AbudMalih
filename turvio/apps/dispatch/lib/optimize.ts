@@ -12,6 +12,7 @@ export function optimizeProblems(r: OptimizeMeta): string[] {
     overtime ? `Tour runs ${Math.round(overtime.minutes ?? 0)} min past the driver's shift` : null,
     unreachable ? `${unreachable} stop(s) cannot be reached by road – kept at the end, check the address` : null,
     infeasible ? `${infeasible} stop(s) could not be scheduled – kept at the end` : null,
+    r.locationErrors?.length ? `${r.locationErrors.length} stop(s) with a wrong or unreachable location were not optimized – kept at the end, check their location` : null,
     // Older optimizer responses without violation details.
     !v.length && r.unassignedStopIds.length ? `${r.unassignedStopIds.length} stop(s) could not be scheduled within windows/shift` : null,
   ].filter((x): x is string => !!x);
@@ -21,5 +22,6 @@ export function optimizeNotes(r: OptimizeMeta): string[] {
   return [
     r.matrixSource === "osrm" ? "road-network travel times" : "straight-line travel-time ESTIMATE (no road routing configured)",
     r.unlocatedStopIds?.length ? `${r.unlocatedStopIds.length} stop(s) without map position kept at the end` : null,
+    r.approachStopIds?.length ? `${r.approachStopIds.length} stop(s) routed to their accepted approach point` : null,
   ].filter((x): x is string => !!x);
 }

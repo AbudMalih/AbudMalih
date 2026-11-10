@@ -211,3 +211,24 @@ describe("HER-01 with real road legs (Hannover OSRM)", () => {
     expect(s!.status).toBe("planned");
   });
 });
+
+// ---------------------------------------------------------------- accepted approach points (P0-3.3)
+describe("accepted approach point", () => {
+  it("routing waypoints and straight-line estimates use the approach point; the stop keeps its coordinate", () => {
+    const t = tour();
+    const approach = { lat: 52.3905, lng: 9.7505, roadName: "Klusriede" };
+    const stops = [stop(0), stop(1, { approach }), stop(2)];
+    const wp = roadWaypoints(t, stops, DEPOT, minuteOf);
+    expect(wp.plan.points[2]).toEqual({ lat: approach.lat, lng: approach.lng });
+    expect(wp.plan.stopIds[2]).toBe("s1");
+    expect(stops[1]!.location).toEqual(stop(1).location);
+    // Straight-line estimate: different from the same tour without the approach point.
+    const withA = project(t, stops, 400);
+    const without = project(t, [stop(0), stop(1), stop(2)], 400);
+    expect(withA.source).toBe("estimate");
+    expect(withA.totalMeters).not.toBe(without.totalMeters);
+    // Road legs computed for the approach waypoints are accepted (same stop ids / order).
+    const road = roadFor(t, stops);
+    expect(project(t, stops, 400, road).source).toBe("road");
+  });
+});

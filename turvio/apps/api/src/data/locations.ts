@@ -1,6 +1,6 @@
-import type { GeoPoint, StopApproach } from "@turvio/shared";
+import { coordinateIssues, type GeoPoint, type StopApproach } from "@turvio/shared";
 import type { Db, Tx } from "../db";
-import type { CheckToStore, StoredCheck } from "../location-check";
+import type { CheckToStore, LocationChecker, StoredCheck } from "../location-check";
 
 /**
  * Persistence for stop location checks and decisions (P0-3.2). Reads run as the user (RLS);
@@ -135,6 +135,37 @@ export async function loadDecisions(tx: Tx, stops: { id: string; location: GeoPo
           }
         : null;
     if (confirmation || approach) out.set(r.stop_id, { stopId: r.stop_id, confirmation, approach });
+  }
+  return out;
+}
+
+/**
+ * Stops that must not be optimized because their location is certainly wrong (P0-3.3): invalid
+ * coordinates / German address outside Germany (pure checks), or a current stored check with an
+ * error (outside the road data, no road connection). Pending or stale results never exclude a stop;
+ * the optimizer's own coverage check stays as the backstop.
+ */
+export async function locationErrors(
+  tx: Tx,
+  checker: LocationChecker | undefined,
+  stops: { id: string; lat: number | null; lng: number | null; street: string; house_number: string | null; postal_code: string; city: string; country_code: string; address_version?: number }[],
+  origin: GeoPoint | null,
+): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  const located = stops.filter((s) => s.lat != null && s.lng != null);
+  for (const s of located) {
+    const codes = coordinateIssues({ lat: s.lat!, lng: s.lng! }, s.country_code.trim()).map((i) => i.code);
+    if (codes.length) out.set(s.id, codes);
+  }
+  if (!checker) return out;
+  const stored = await loadStoredChecks(tx, located.filter((s) => !out.has(s.id)).map((s) => s.id));
+  for (const s of located) {
+    const st = stored.get(s.id);
+    if (!st) continue;
+    const stop = { id: s.id, location: { lat: s.lat!, lng: s.lng! }, address: { street: s.street, houseNumber: s.house_number, postalCode: s.postal_code, city: s.city, countryCode: s.country_code.trim() }, addressVersion: s.address_version };
+    if (!checker.isCurrent(st, stop, origin)) continue;
+    const errors = st.issues.filter((i) => i.severity === "error").map((i) => i.code);
+    if (errors.length) out.set(s.id, errors);
   }
   return out;
 }

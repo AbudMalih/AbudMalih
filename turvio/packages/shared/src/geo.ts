@@ -107,3 +107,12 @@ export function clusterForRegion<T>(
   }
   return out;
 }
+
+/**
+ * The point routing drives to for a stop: its accepted approach point when one is valid (only
+ * then present on the stop), otherwise its coordinate. Addresses and map pins stay the stop's own.
+ */
+export function routePoint(s: { location?: GeoPoint | null; approach?: { lat: number; lng: number } | null }): GeoPoint | null {
+  if (!s.location) return null;
+  return s.approach ? { lat: s.approach.lat, lng: s.approach.lng } : s.location;
+}

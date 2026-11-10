@@ -142,6 +142,7 @@ export interface StopRow {
   address_version?: number;
   location_version?: number;
   location_precision?: Stop["locationPrecision"];
+  approach?: { lat: number; lng: number; roadName: string | null } | null;
   recipient_phone?: string | null;
   parcels: { id: string; tracking_number: string; barcode: string | null; recipient_name: string | null; company?: string | null; loaded_at?: string | null }[] | null;
   proofs?: { id: string; kind: "photo" | "signature"; captured_at: string; recipient_name: string | null; notes: string | null; has_location: boolean }[] | null;
@@ -172,6 +173,7 @@ function stopBase(r: StopRow) {
     driverNotes: r.driver_notes ?? undefined,
     locked: r.locked ?? false,
     locationSource: r.location_source ?? null,
+    ...(r.approach ? { approach: { lat: r.approach.lat, lng: r.approach.lng, ...(r.approach.roadName ? { roadName: r.approach.roadName } : {}) } } : {}),
     ...(r.address_version != null ? { addressVersion: r.address_version, locationVersion: r.location_version!, locationPrecision: r.location_precision ?? "unknown" } : {}),
     recipientPhone: r.recipient_phone ?? undefined,
     proofs: (r.proofs ?? []).map((p) => ({
@@ -188,7 +190,13 @@ export const toStop = (r: StopRow): Stop => ({ ...stopBase(r), tourId: r.tour_id
 export const toUnassigned = (r: StopRow): UnassignedStop => ({ ...stopBase(r), depotId: r.depot_id! });
 
 export const STOP_SELECT = `
-  select s.*, (select coalesce(json_agg(json_build_object('id', p.id, 'tracking_number', p.tracking_number, 'barcode', p.barcode, 'recipient_name', p.recipient_name, 'company', p.company, 'loaded_at', p.loaded_at) order by p.created_at, p.import_position nulls last, p.id), '[]'::json)
+  select s.*,
+         -- Accepted navigation approach, only while valid for this exact coordinate + address (P0-3.2/3.3; RLS applies).
+         (select json_build_object('lat', d.approach_lat, 'lng', d.approach_lng, 'roadName', d.approach_road_name)
+            from public.stop_location_decisions d
+           where d.stop_id = s.id and d.approach_lat is not null
+             and d.approach_for_lat = s.lat and d.approach_for_lng = s.lng and d.approach_for_address_version = s.address_version) as approach,
+         (select coalesce(json_agg(json_build_object('id', p.id, 'tracking_number', p.tracking_number, 'barcode', p.barcode, 'recipient_name', p.recipient_name, 'company', p.company, 'loaded_at', p.loaded_at) order by p.created_at, p.import_position nulls last, p.id), '[]'::json)
                  from public.parcels p where p.stop_id = s.id) as parcels,
               (select coalesce(json_agg(json_build_object('id', f.id, 'kind', f.kind, 'captured_at', f.captured_at, 'recipient_name', f.recipient_name, 'notes', f.notes, 'has_location', f.lat is not null) order by f.captured_at), '[]'::json)
                  from public.proofs f where f.stop_id = s.id) as proofs

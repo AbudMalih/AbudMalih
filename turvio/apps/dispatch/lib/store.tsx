@@ -35,6 +35,10 @@ export interface OptimizeMeta {
   matrixSource: string;
   unassignedStopIds: string[];
   unlocatedStopIds?: string[];
+  /** Stops with a certain location error (P0-3.3): not optimized, kept at the end. */
+  locationErrors?: { stopId: string; codes: string[] }[];
+  /** Stops routed to their accepted approach point. */
+  approachStopIds?: string[];
   distanceMeters?: number;
   durationSeconds?: number;
   driveSeconds?: number | null;
@@ -82,7 +86,7 @@ interface DispatchState {
   unpublishTour: (tour: Tour) => Promise<void>;
   /** apply=false: preview only. confirmActive: the dispatcher confirmed re-sequencing a tour on the road. */
   optimizeTour: (tour: Tour, opts?: { apply?: boolean; confirmActive?: boolean }) => Promise<OptimizeOutcome>;
-  optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; unlocatedStopIds?: string[]; matrixSource: string }>;
+  optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; unlocatedStopIds?: string[]; locationErrors?: { stopId: string; codes: string[] }[]; matrixSource: string }>;
   /** `rejectPlannedTracking`: refuse (409) if a parcel is already planned/delivered in the company (imports). */
   addStops: (target: { tourId?: string; depotId?: string }, stops: NewStopInput[], opts?: { rejectPlannedTracking?: boolean }) => Promise<string[]>;
   assignStops: (stopIds: string[], tourId: string | null) => Promise<void>;

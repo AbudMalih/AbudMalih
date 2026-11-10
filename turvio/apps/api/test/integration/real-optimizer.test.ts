@@ -215,9 +215,23 @@ describe.runIf(available)("real optimizer and OSRM through the API", () => {
   }, 120_000);
 
   it("a stop outside the road data is refused with routing_out_of_coverage – never routed in a straight line", async () => {
-    const id = await tourWith(env.data.depots.hannover!, [...FIX.hannover!.addresses.slice(0, 5), { street: "Rue de Rivoli", houseNumber: "1", postalCode: "75001", city: "Paris", lat: 48.8566, lng: 2.3522 }]);
+    // Berlin is in Germany (no coordinate error) but outside the Hannover graph; never checked:
+    // the optimizer's own coverage check refuses the whole optimization (backstop).
+    const id = await tourWith(env.data.depots.hannover!, [...FIX.hannover!.addresses.slice(0, 5), { street: "Unter den Linden", houseNumber: "1", postalCode: "10117", city: "Berlin", lat: 52.517, lng: 13.389 }]);
+    await env.superuser.query(`delete from stop_location_checks where stop_id in (select id from stops where tour_id = $1)`, [id]);
     const r = await env.as(U.jarbouOwner, "POST", `/v1/orgs/${org()}/tours/${id}/optimize`, {});
     expect(r.statusCode).toBe(422);
     expect(r.json().error.code).toBe("routing_out_of_coverage");
+  }, 60_000);
+
+  it("P0-3.3: a German address with coordinates in Paris is a certain location error – left out and reported, the rest is optimized on roads", async () => {
+    const id = await tourWith(env.data.depots.hannover!, [...FIX.hannover!.addresses.slice(0, 5), { street: "Lister Meile", houseNumber: "1", postalCode: "30161", city: "Hannover", lat: 48.8566, lng: 2.3522 }]);
+    const r = await env.as(U.jarbouOwner, "POST", `/v1/orgs/${org()}/tours/${id}/optimize`, {});
+    expect(r.statusCode).toBe(200);
+    const body = r.json();
+    expect(body.result.matrixSource).toBe("osrm");
+    const paris = body.stops.find((s: { location: { lat: number } | null }) => s.location?.lat === 48.8566);
+    expect(body.result.locationErrors).toEqual([{ stopId: paris.id, codes: ["outside_country"] }]);
+    expect(body.stops.at(-1).id).toBe(paris.id);
   }, 60_000);
 });

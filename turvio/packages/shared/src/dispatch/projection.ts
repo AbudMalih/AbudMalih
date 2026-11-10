@@ -1,4 +1,4 @@
-import { estimateDrive } from "../geo";
+import { estimateDrive, routePoint } from "../geo";
 import type { GeoPoint, Stop, Tour } from "../schemas";
 import { isOpen } from "../stopStatus";
 import { sortBySequence, tourEndPoint, tourStartPoint } from "../tour";
@@ -162,7 +162,7 @@ export function projectTour(input: ProjectionInput): TourProjection {
   const unlocatedStopIds = tour.status === "completed" ? [] : open.filter((s) => !s.location).map((s) => s.id);
   // Same rule as the driver app's remaining figures: from the last completed stop, if any.
   const anchor = lastCompletedStop(ordered, minuteOf);
-  const anchorPoint = anchor?.location ?? start;
+  const anchorPoint = (anchor && routePoint(anchor)) ?? start;
   const road = input.road;
   const gpsAgeSeconds = road?.gps ? road.gps.ageSeconds : null;
   const running = tour.status === "in_progress" || tour.status === "paused";
@@ -237,7 +237,7 @@ export function projectTour(input: ProjectionInput): TourProjection {
   let remainingWaitSeconds = 0;
   if (tour.status !== "completed") {
     openLocated.forEach((s, i) => {
-      const l = leg(i, pos, s.location!);
+      const l = leg(i, pos, routePoint(s)!);
       remainingMeters += l.meters;
       remainingDriveSeconds += l.seconds;
       let arrive = t + l.seconds / 60;
@@ -263,7 +263,7 @@ export function projectTour(input: ProjectionInput): TourProjection {
       });
       t = arrive + s.serviceSeconds / 60;
       remainingServiceSeconds += s.serviceSeconds;
-      pos = s.location!;
+      pos = routePoint(s)!;
     });
     for (const id of unlocatedStopIds) {
       const s = ordered.find((x) => x.id === id)!;
@@ -294,10 +294,10 @@ export function projectTour(input: ProjectionInput): TourProjection {
     let st = tour.plannedStartMinute;
     let p = anchorPoint;
     openLocated.forEach((s, i) => {
-      let arrive = st + leg(i, p, s.location!).seconds / 60;
+      let arrive = st + leg(i, p, routePoint(s)!).seconds / 60;
       if (s.timeWindow && arrive < s.timeWindow.start) arrive = s.timeWindow.start;
       st = arrive + s.serviceSeconds / 60;
-      p = s.location!;
+      p = routePoint(s)!;
     });
     if (end) st += leg(openLocated.length, p, end).seconds / 60;
     scheduledFinishMinute = st;
@@ -315,10 +315,10 @@ export function projectTour(input: ProjectionInput): TourProjection {
     let p = start;
     for (const s of ordered) {
       if (!s.location) continue;
-      const l = estimateDrive(p, s.location);
+      const l = estimateDrive(p, routePoint(s)!);
       totalMeters += l.meters;
       totalDriveSeconds += l.seconds;
-      p = s.location;
+      p = routePoint(s)!;
     }
     if (end) {
       const l = estimateDrive(p, end);
@@ -395,7 +395,7 @@ export function roadWaypoints(
   const start = tourStartPoint(tour, depotLocation);
   const end = tourEndPoint(tour, depotLocation);
   const located = ordered.filter((s) => s.location);
-  const plan = { points: [start, ...located.map((s) => s.location!), ...(end ? [end] : [])], stopIds: [null, ...located.map((s) => s.id), ...(end ? [null] : [])] };
+  const plan = { points: [start, ...located.map((s) => routePoint(s)!), ...(end ? [end] : [])], stopIds: [null, ...located.map((s) => s.id), ...(end ? [null] : [])] };
   if (tour.status === "completed") return { plan, remaining: null, firstOpen: null };
   const anchor = lastCompletedStop(ordered, minuteOf);
   const openLocated = ordered.filter((s) => isOpen(s.status) && s.location);
@@ -403,7 +403,7 @@ export function roadWaypoints(
   return {
     plan,
     remaining: {
-      points: [anchor?.location ?? start, ...openLocated.map((s) => s.location!), ...(end ? [end] : [])],
+      points: [(anchor && routePoint(anchor)) ?? start, ...openLocated.map((s) => routePoint(s)!), ...(end ? [end] : [])],
       stopIds: [null, ...openLocated.map((s) => s.id), ...(end ? [null] : [])],
       anchorStopId: anchor?.id ?? null,
     },

@@ -4,6 +4,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
 import { ApiError, type Tx } from "../db";
+import { locationErrors } from "../data/locations";
 import { STOP_SELECT, orgTimeZone, toStop, toTour, toUnassigned, tourEndOf, tourStartOf, type StopRow, type TourRow } from "../data/dispatch";
 
 const Uuid = z.string().uuid();
@@ -645,11 +646,13 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       const tz = await orgTimeZone(tx, orgId);
       const v = await vehicleFor(tx, tour, nowInZone(tz).minute);
       const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 and s.status in ('pending', 'in_progress') order by s.sequence`, [id])).rows;
-      return { v, stops };
+      // Stops whose location is certainly wrong are not optimized (kept at the end, reported).
+      const errors = await locationErrors(tx, deps.locationChecker, stops, tourStartOf(v.tour, v.depot));
+      return { v, stops, errors };
     });
     const locked = opts.respectLocks ? input.stops.filter((s) => s.locked) : [];
-    const located = input.stops.filter((s) => s.lat != null && s.lng != null && !locked.includes(s));
-    if (located.length === 0) return problem(reply, 422, "nothing_to_optimize", "This tour has no open, unlocked stops with a map position");
+    const located = input.stops.filter((s) => s.lat != null && s.lng != null && !locked.includes(s) && !input.errors.has(s.id));
+    if (located.length === 0) return problem(reply, 422, "nothing_to_optimize", "This tour has no open, unlocked stops with a usable map position", { locationErrorStopIds: [...input.errors.keys()] });
     // Explicit choice in the request, else what the tour is planned with (undefined = last stop).
     const end = opts.end === "none" ? undefined : opts.end === "depot" ? input.v.depot : opts.end ? opts.end : tourEndOf(input.v.tour, input.v.depot);
     const request = OptimizeRequest.parse({
@@ -665,7 +668,8 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       ],
       stops: located.map((s) => ({
         id: s.id,
-        location: { lat: s.lat!, lng: s.lng! },
+        // An accepted approach point (valid for this coordinate + address) is where the vehicle goes.
+        location: s.approach ? { lat: s.approach.lat, lng: s.approach.lng } : { lat: s.lat!, lng: s.lng! },
         serviceSeconds: s.service_seconds,
         timeWindow: s.tw_start_minute != null && s.tw_end_minute != null ? { start: s.tw_start_minute, end: s.tw_end_minute } : undefined,
         priority: s.priority,
@@ -689,6 +693,9 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       matrixSource: result.matrixSource,
       unassignedStopIds: result.unassignedStopIds,
       unlocatedStopIds: input.stops.filter((s) => s.lat == null).map((s) => s.id),
+      /** Stops with a certain location error (invalid, outside the road data, unreachable): not optimized. */
+      locationErrors: [...input.errors].map(([stopId, codes]) => ({ stopId, codes })),
+      approachStopIds: located.filter((s) => s.approach).map((s) => s.id),
       distanceMeters: result.routes[0]?.distanceMeters ?? 0,
       durationSeconds: result.routes[0]?.durationSeconds ?? 0,
       driveSeconds: result.routes[0]?.driveSeconds ?? null,
@@ -748,9 +755,14 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
           [b.tourIds, b.includeUnassigned, depotId],
         )
       ).rows;
-      return { tours, stops };
+      // Certain location errors: tour stops against their tour's start, unassigned against the depot.
+      const starts = new Map(tours.map((v) => [v.tour.id, tourStartOf(v.tour, v.depot)]));
+      const errors = new Map<string, string[]>();
+      for (const [origin, group] of [...starts].map(([tid, o]) => [o, stops.filter((s) => s.tour_id === tid)] as const).concat([[tours[0]!.depot, stops.filter((s) => !s.tour_id)]]))
+        for (const [k, v] of await locationErrors(tx, deps.locationChecker, group, origin)) errors.set(k, v);
+      return { tours, stops, errors };
     });
-    const located = input.stops.filter((s) => s.lat != null && s.lng != null);
+    const located = input.stops.filter((s) => s.lat != null && s.lng != null && !input.errors.has(s.id));
     // Stops without a map position cannot be planned: they stay where they are (tour stops at the
     // end of their tour, unassigned stops unassigned) and are reported – never silently left out.
     const unlocated = input.stops.filter((s) => s.lat == null || s.lng == null);
@@ -766,7 +778,8 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       })),
       stops: located.map((s) => ({
         id: s.id,
-        location: { lat: s.lat!, lng: s.lng! },
+        // An accepted approach point (valid for this coordinate + address) is where the vehicle goes.
+        location: s.approach ? { lat: s.approach.lat, lng: s.approach.lng } : { lat: s.lat!, lng: s.lng! },
         serviceSeconds: s.service_seconds,
         timeWindow: s.tw_start_minute != null && s.tw_end_minute != null ? { start: s.tw_start_minute, end: s.tw_end_minute } : undefined,
         priority: s.priority,
@@ -791,6 +804,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
             matrixSource: result.matrixSource,
             unassignedStopIds: result.unassignedStopIds,
             unlocatedStopIds: unlocated.filter((s) => s.tour_id === route.vehicleId).map((s) => s.id),
+            locationErrors: [...input.errors].filter(([sid]) => input.stops.find((s) => s.id === sid)?.tour_id === route.vehicleId).map(([stopId, codes]) => ({ stopId, codes })),
             plan: true,
           }),
         ]);
@@ -800,6 +814,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       routes: result.routes.map((r) => ({ tourId: r.vehicleId, stops: r.visits.length, distanceMeters: r.distanceMeters, durationSeconds: r.durationSeconds })),
       unassignedStopIds: result.unassignedStopIds,
       unlocatedStopIds: unlocated.map((s) => s.id),
+      locationErrors: [...input.errors].map(([stopId, codes]) => ({ stopId, codes })),
       matrixSource: result.matrixSource,
     };
   });
