@@ -50,6 +50,13 @@ export const driverEn = {
   "stops.lock": "Lock position",
   "stops.unlock": "Unlock position",
   "stops.needsLocation": "Needs map position",
+  "location.pillError": "Location problem",
+  "location.pillWarning": "Check location",
+  "location.error": "Dispatch flagged a location problem – call dispatch before driving there.",
+  "location.warning": "Location not yet confirmed by dispatch:",
+  "location.confirmed": "Dispatch checked and confirmed this location.",
+  "location.approach": "Navigation goes to the approach point set by dispatch: {road}",
+  "location.navApproach": "Navigates to the approach point {road} (set by dispatch)",
   "stops.parcelsCount": "{n} parcels",
   "stops.oneParcel": "1 parcel",
 

@@ -52,6 +52,13 @@ export const driverAr: Record<DriverMessageKey, string> = {
   "stops.lock": "تثبيت الموضع",
   "stops.unlock": "إلغاء التثبيت",
   "stops.needsLocation": "يحتاج موقعًا على الخريطة",
+  "location.pillError": "مشكلة في الموقع",
+  "location.pillWarning": "تحقق من الموقع",
+  "location.error": "أبلغت إدارة التوزيع عن مشكلة في الموقع – اتصل بها قبل التوجه إلى هناك.",
+  "location.warning": "لم تؤكد إدارة التوزيع هذا الموقع بعد:",
+  "location.confirmed": "تحققت إدارة التوزيع من هذا الموقع وأكدته.",
+  "location.approach": "تتجه الملاحة إلى نقطة الوصول التي حددتها إدارة التوزيع: {road}",
+  "location.navApproach": "يتم التوجيه إلى نقطة الوصول {road} (حددتها إدارة التوزيع)",
   "stops.parcelsCount": "{n} طرود",
   "stops.oneParcel": "طرد واحد",
 

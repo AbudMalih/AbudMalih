@@ -26,9 +26,27 @@ export type OutboxItem = Base &
     | { kind: "scans"; tourId: string; scans: { code: string; at: string }[] }
     | { kind: "create_tour"; tourId: string; name: string; date: string }
     | { kind: "create_stops"; tourId: string; stops: (NewStopInput & { id: string })[] }
-    | { kind: "stop_update"; stopId: string; locked?: boolean; location?: GeoPoint; locationSource?: "geocoder" | "manual_pin" }
+    | {
+        kind: "stop_update";
+        stopId: string;
+        locked?: boolean;
+        location?: GeoPoint;
+        locationSource?: "geocoder" | "manual_pin";
+        /** Location version this move was made against (P0-3.2): a newer dispatcher change → 409, never overwritten. */
+        expectedLocationVersion?: number;
+        reason?: string;
+      }
     | { kind: "sequence"; tourId: string; stopIds: string[] }
-    | { kind: "stop_edit"; stopId: string; recipientName?: string; address: { street: string; houseNumber?: string; postalCode: string; city: string }; location?: GeoPoint; locationSource?: "geocoder" | "manual_pin" }
+    | {
+        kind: "stop_edit";
+        stopId: string;
+        recipientName?: string;
+        address: { street: string; houseNumber?: string; postalCode: string; city: string };
+        location?: GeoPoint;
+        locationSource?: "geocoder" | "manual_pin";
+        expectedAddressVersion?: number;
+        reason?: string;
+      }
     | { kind: "stop_remove"; stopId: string }
     | { kind: "stop_merge"; stopId: string; intoStopId: string }
     | {
@@ -89,13 +107,26 @@ export async function sendItem(item: OutboxItem, deps: OutboxDeps): Promise<void
       await c.request("POST", `/v1/orgs/${o}/stops`, { tourId: item.tourId, stops: item.stops });
       return;
     case "stop_update":
-      await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/driver-update`, { locked: item.locked, location: item.location, locationSource: item.locationSource });
+      await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/driver-update`, {
+        locked: item.locked,
+        location: item.location,
+        locationSource: item.locationSource,
+        ...(item.location && item.expectedLocationVersion ? { expectedLocationVersion: item.expectedLocationVersion } : {}),
+        ...(item.reason ? { reason: item.reason } : {}),
+      });
       return;
     case "sequence":
       await c.request("POST", `/v1/me/tours/${item.tourId}/sequence`, { stopIds: item.stopIds });
       return;
     case "stop_edit":
-      await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/edit`, { recipientName: item.recipientName ?? null, address: item.address, location: item.location, locationSource: item.locationSource });
+      await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/edit`, {
+        recipientName: item.recipientName ?? null,
+        address: item.address,
+        location: item.location,
+        locationSource: item.locationSource,
+        ...(item.expectedAddressVersion ? { expectedAddressVersion: item.expectedAddressVersion } : {}),
+        ...(item.reason ? { reason: item.reason } : {}),
+      });
       return;
     case "stop_remove":
       await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/remove`, {});

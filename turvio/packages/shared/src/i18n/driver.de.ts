@@ -51,6 +51,13 @@ export const driverDe: Record<DriverMessageKey, string> = {
   "stops.lock": "Position fixieren",
   "stops.unlock": "Fixierung lösen",
   "stops.needsLocation": "Kartenposition fehlt",
+  "location.pillError": "Standortproblem",
+  "location.pillWarning": "Standort prüfen",
+  "location.error": "Die Disposition hat ein Standortproblem gemeldet – vor der Anfahrt bitte die Disposition anrufen.",
+  "location.warning": "Standort noch nicht von der Disposition bestätigt:",
+  "location.confirmed": "Die Disposition hat diesen Standort geprüft und bestätigt.",
+  "location.approach": "Die Navigation führt zum Anfahrtspunkt der Disposition: {road}",
+  "location.navApproach": "Navigiert zum Anfahrtspunkt {road} (von der Disposition festgelegt)",
   "stops.parcelsCount": "{n} Pakete",
   "stops.oneParcel": "1 Paket",
 

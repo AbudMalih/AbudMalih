@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { ApiError, type Tx } from "../db";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
-import { loadDispatchDataset } from "../data/dispatch";
+import { STOP_SELECT, loadDispatchDataset, toStop, tourStartOf, type StopRow, type TourRow } from "../data/dispatch";
 import { loadDecisions, loadStoredChecks, saveChecks, type StopDecision } from "../data/locations";
 import type { CheckGroup, CheckStop, LocationChecker, ReportedCheck } from "../location-check";
 
@@ -123,6 +123,34 @@ export function registerLocationRoutes(app: FastifyInstance, { deps, guards }: R
         pending: report.pending,
         noLocation: checks.filter((c) => c.status === "no_location").length,
       },
+    };
+  });
+
+  /**
+   * The checks of one tour, for its driver (P0-3.5) or staff: RLS limits drivers to their own
+   * published tour. Drivers get what matters on the road – no originals, no history.
+   */
+  app.get("/v1/orgs/:orgId/tours/:id/location-checks", { preHandler: guards.requireTenant("tours.view_own") }, async (req) => {
+    const { orgId, id } = IdParams.parse(req.params);
+    const { tour, depot, stops } = await db.asUser(claims(req), async (tx) => {
+      const tour = (await tx.query<TourRow>(`select * from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
+      if (!tour) throw new ApiError(404, "not_found", "Tour not found");
+      const depot = (await tx.query<{ lat: number; lng: number }>(`select lat, lng from depots where id = $1`, [tour.depot_id])).rows[0];
+      const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 and s.status in ('pending', 'in_progress') order by s.sequence`, [id])).rows.map(toStop);
+      return { tour, depot, stops };
+    });
+    const origin = depot ? tourStartOf(tour, depot) : null;
+    const { checks, report } = await runChecks({ db, claims: claims(req) }, checker, [{ origin, stops: stops.map(toCheck) }]);
+    return {
+      tourId: id,
+      pending: report.pending > 0,
+      checks: checks.map((c) => ({
+        stopId: c.stopId,
+        status: c.status,
+        severity: c.severity,
+        issues: c.issues.map((i) => ({ code: i.code, severity: i.severity, message: i.message })),
+        acknowledged: c.acknowledged,
+      })),
     };
   });
 

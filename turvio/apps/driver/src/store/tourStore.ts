@@ -30,6 +30,7 @@ import { uuid } from "../lib/ids";
 import type { NavApp } from "../lib/navigation";
 import { apiBaseUrl, optimizeLocally, type OptimizationOutcome, type OptimizeOptions } from "../lib/optimizer";
 import { drainOutbox, type OutboxItem } from "../lib/outbox";
+import type { DriverLocationCheck } from "../lib/locationCheck";
 import { DEFAULT_DRIVER_SETTINGS, applyOutbox, snapshotFrom, type DriverSettingsView, type MyTour } from "../lib/sync";
 
 /**
@@ -89,6 +90,8 @@ export interface CachedRoad {
 
 export interface TourState extends SyntheticDataset {
   roads: Record<string, CachedRoad>;
+  /** Location checks by stop (P0-3.5), each for the coordinate it was made for. */
+  locationChecks: Record<string, DriverLocationCheck>;
   loadRoad(tourId: string): Promise<void>;
   driverId: string;
   locale: Locale | null;
@@ -211,6 +214,7 @@ export const useTourStore = create<TourState>()(
         optimizing: false,
         scans: {},
         roads: {},
+        locationChecks: {},
         user: null,
         outbox: [],
         failed: [],
@@ -376,8 +380,12 @@ export const useTourStore = create<TourState>()(
         setStopLocation: (stopId, location, source) => {
           const stop = get().stops.find((s) => s.id === stopId);
           if (!stop) return;
-          updateStop(stopId, (s) => ({ ...s, location, locationSource: source }));
-          enqueue({ id: uuid(), kind: "stop_update", orgId: stop.organizationId, at: now(), stopId, location, locationSource: source });
+          // Made against the version on the phone: if dispatch moved the pin meanwhile, the server
+          // refuses (409) instead of silently overwriting it.
+          const item: OutboxItem = { id: uuid(), kind: "stop_update", orgId: stop.organizationId, at: now(), stopId, location, locationSource: source, expectedLocationVersion: stop.locationVersion };
+          const local = applyOutbox({ ...EMPTY_SERVER, driverId: "", settingsByOrg: {}, stops: [stop], tours: [] }, [item]).stops[0]!;
+          updateStop(stopId, () => local);
+          enqueue(item);
         },
 
         editStop: (stopId, edit) => {
@@ -394,6 +402,7 @@ export const useTourStore = create<TourState>()(
             address: edit.address,
             location: edit.location ?? undefined,
             locationSource: edit.location ? (edit.locationSource ?? "manual_pin") : undefined,
+            expectedAddressVersion: stop.addressVersion,
           };
           // Same rule as the server: a changed address without a new pin loses the old position.
           const local = applyOutbox({ ...EMPTY_SERVER, driverId: "", settingsByOrg: {}, stops: [stop], tours: [] }, [item]).stops[0]!;
@@ -530,6 +539,18 @@ export const useTourStore = create<TourState>()(
           } catch {
             // offline: keep the cached route; it is only shown while the stop order still matches
           }
+          // Location warnings from dispatch's checks (P0-3.5); kept with the coordinate they belong to.
+          try {
+            const c = await auth().request<{ checks: DriverLocationCheck[] }>("GET", `/v1/orgs/${tour.organizationId}/tours/${tourId}/location-checks`);
+            const byStop = { ...get().locationChecks };
+            for (const x of c.checks) {
+              const s = get().stops.find((st) => st.id === x.stopId);
+              if (s?.location) byStop[x.stopId] = { ...x, forLat: s.location.lat, forLng: s.location.lng };
+            }
+            set({ locationChecks: byStop });
+          } catch {
+            // offline / older server: no warnings shown (never a false "checked")
+          }
         },
 
         resetData: () => set({ ...createSyntheticDataset(), lastOptimization: null, scans: {}, activeTourId: null, settingsByOrg: {} }),
@@ -624,6 +645,7 @@ export const useTourStore = create<TourState>()(
         lastOptimization: s.lastOptimization,
         scans: s.scans,
         roads: s.roads,
+        locationChecks: s.locationChecks,
         user: s.user,
         outbox: s.outbox,
         failed: s.failed,

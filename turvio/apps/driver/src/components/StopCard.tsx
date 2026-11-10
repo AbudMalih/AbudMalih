@@ -2,6 +2,8 @@ import { isOpen, type Stop } from "@turvio/shared";
 import { Pressable, Text, View } from "react-native";
 import { addressLine, statusTone, windowText } from "../lib/format";
 import { useT } from "../lib/i18n";
+import { locationPill } from "../lib/locationCheck";
+import { useTourStore } from "../store/tourStore";
 import { radii, space, type as ty, useTheme } from "../theme";
 import { Ionicons, Pill, toneColors } from "./ui";
 
@@ -18,6 +20,7 @@ function Meta({ icon, color, text }: { icon: React.ComponentProps<typeof Ionicon
 }
 
 export function StopCard({ stop, index, current, onPress, right, testID }: { stop: Stop; index: number; current?: boolean; onPress?: () => void; right?: React.ReactNode; testID?: string }) {
+  const locPill = locationPill(stop, useTourStore((st) => st.locationChecks[stop.id]));
   const { c } = useTheme();
   const t = useT();
   const open = isOpen(stop.status);
@@ -70,11 +73,12 @@ export function StopCard({ stop, index, current, onPress, right, testID }: { sto
             {windowText(stop) && <Meta icon="time-outline" color={c.textMuted} text={windowText(stop)!} />}
           </View>
         )}
-        {(!open || stop.status === "in_progress" || (!stop.location && open)) && (
+        {(!open || stop.status === "in_progress" || (!stop.location && open) || (open && !!locPill)) && (
           <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
             {!open && <Pill label={t(`stopStatus.${stop.status}` as never)} tone={statusTone(stop.status)} />}
             {stop.status === "in_progress" && <Pill label={t("stopStatus.in_progress")} tone="primary" />}
             {!stop.location && open && <Pill icon="location-outline" label={t("stops.needsLocation")} tone="warning" />}
+            {open && locPill && <Pill icon="alert-circle-outline" label={t(locPill.key)} tone={locPill.tone} testID="stop-location-pill" />}
           </View>
         )}
       </View>

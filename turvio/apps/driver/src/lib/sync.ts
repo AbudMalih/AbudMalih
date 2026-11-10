@@ -76,6 +76,12 @@ export function snapshotFrom(payload: { tours: MyTour[] }, fallbackDriverId: str
  * Re-apply not-yet-confirmed local changes on top of fresh server data, so
  * nothing the driver did offline disappears from the screen while it waits.
  */
+/** A stop without its approach point (invalid once the address or pin changed). */
+const withoutApproach = (s: Stop): Stop => {
+  const { approach: _a, ...rest } = s;
+  return rest;
+};
+
 export function applyOutbox(snapshot: ServerSnapshot, outbox: OutboxItem[], localTours: Tour[] = []): ServerSnapshot {
   if (!outbox.length) return snapshot;
   let { stops, tours } = snapshot;
@@ -134,9 +140,19 @@ export function applyOutbox(snapshot: ServerSnapshot, outbox: OutboxItem[], loca
         break;
       }
       case "stop_update":
+        // Same rules as the database (P0-3.2): a moved pin gets the next location version and loses
+        // its approach point (that belonged to the old position).
         stops = stops.map((s) =>
           s.id === o.stopId
-            ? { ...s, locked: o.locked ?? s.locked, location: o.location ?? s.location, locationSource: o.location ? (o.locationSource ?? "manual_pin") : s.locationSource }
+            ? o.location
+              ? withoutApproach({
+                  ...s,
+                  locked: o.locked ?? s.locked,
+                  location: o.location,
+                  locationSource: o.locationSource ?? "manual_pin",
+                  ...(s.locationVersion != null ? { locationVersion: s.locationVersion + 1 } : {}),
+                })
+              : { ...s, locked: o.locked ?? s.locked }
             : s,
         );
         break;
@@ -154,13 +170,18 @@ export function applyOutbox(snapshot: ServerSnapshot, outbox: OutboxItem[], loca
         stops = stops.map((s) => {
           if (s.id !== o.stopId) return s;
           const changed = s.address.street !== o.address.street || (s.address.houseNumber ?? "") !== (o.address.houseNumber ?? "") || s.address.postalCode !== o.address.postalCode || s.address.city !== o.address.city;
-          return {
+          const location = o.location ?? (changed ? null : s.location);
+          const moved = (location?.lat ?? null) !== (s.location?.lat ?? null) || (location?.lng ?? null) !== (s.location?.lng ?? null);
+          const next: Stop = {
             ...s,
             recipientName: o.recipientName ?? undefined,
             address: { ...s.address, ...o.address },
-            location: o.location ?? (changed ? null : s.location),
+            location,
             locationSource: o.location ? (o.locationSource ?? "manual_pin") : changed ? null : s.locationSource,
+            ...(changed && s.addressVersion != null ? { addressVersion: s.addressVersion + 1 } : {}),
+            ...(moved && s.locationVersion != null ? { locationVersion: s.locationVersion + 1 } : {}),
           };
+          return changed || moved ? withoutApproach(next) : next;
         });
         break;
       case "stop_remove":

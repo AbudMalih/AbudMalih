@@ -8,6 +8,7 @@ import { addressLine, statusTone, timeOf, windowText } from "../../lib/format";
 import { feedback } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { pendingProofIds } from "../../lib/sync";
+import { locationNotices } from "../../lib/locationCheck";
 import { useTourStore } from "../../store/tourStore";
 import { useStop } from "../../store/useMyTour";
 import { radii, space, type as ty, useTheme } from "../../theme";
@@ -25,6 +26,7 @@ export default function StopDetail() {
   const [merging, setMerging] = useState(false);
   const outbox = useTourStore((s) => s.outbox);
   const stops = useTourStore((s) => s.stops);
+  const locationCheck = useTourStore((s) => (id ? s.locationChecks[String(id)] : undefined));
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,6 +77,15 @@ export default function StopDetail() {
       {!stop.location && (
         <Banner text={t("address.noPin")} tone="warning" icon="location-outline" action={{ label: t("stop.setLocation"), onPress: () => router.push(`/pick-location/${stop.id}`) }} />
       )}
+      {open &&
+        locationNotices(stop, locationCheck).map((n) => (
+          <Banner
+            key={n.key}
+            text={n.key === "location.approach" ? t(n.key, { road: n.text }) : `${t(n.key)}${n.text ? ` ${n.text}` : ""}`}
+            tone={n.tone === "info" ? "primary" : n.tone}
+            icon={n.key === "location.approach" ? "navigate-outline" : "alert-circle-outline"}
+          />
+        ))}
 
       {open && (
         <Card>

@@ -1,0 +1,108 @@
+import type { Stop } from "@turvio/shared";
+import { currentCheck, locationNotices, locationPill, navigationPoint, type DriverLocationCheck } from "../src/lib/locationCheck";
+import { navigationUrls } from "../src/lib/navigation";
+import { drainOutbox, type OutboxItem } from "../src/lib/outbox";
+import { applyOutbox } from "../src/lib/sync";
+
+/** P0-3.5: what the driver sees about stop locations, where navigation goes, and stale-edit protection. */
+const stop = (extra: Partial<Stop> = {}): Stop =>
+  ({
+    id: "s1",
+    organizationId: "o",
+    tourId: "t",
+    type: "delivery",
+    sequence: 0,
+    status: "pending",
+    address: { street: "Klusriede", houseNumber: "1", postalCode: "30419", city: "Hannover", countryCode: "DE" },
+    location: { lat: 52.4274, lng: 9.7419 },
+    serviceSeconds: 120,
+    priority: false,
+    parcels: [],
+    addressVersion: 3,
+    locationVersion: 5,
+    ...extra,
+  }) as Stop;
+const check = (extra: Partial<DriverLocationCheck> = {}): DriverLocationCheck => ({
+  stopId: "s1",
+  status: "checked",
+  severity: "warning",
+  issues: [{ code: "motorway", severity: "warning", message: "The location is on a motorway (A 2)." }],
+  acknowledged: false,
+  forLat: 52.4274,
+  forLng: 9.7419,
+  ...extra,
+});
+const APPROACH = { lat: 52.4277, lng: 9.7423, roadName: "Klusriede" };
+
+describe("navigation target", () => {
+  it("goes to the accepted approach point when there is one, else to the pin", () => {
+    expect(navigationPoint(stop())).toEqual({ lat: 52.4274, lng: 9.7419 });
+    expect(navigationPoint(stop({ approach: APPROACH }))).toEqual({ lat: 52.4277, lng: 9.7423 });
+    expect(navigationPoint(stop({ location: null, approach: APPROACH }))).toBeNull();
+    const urls = navigationUrls("google", { location: navigationPoint(stop({ approach: APPROACH })), addressText: "Klusriede 1" }, "android");
+    expect(urls.native).toBe("google.navigation:q=52.4277,9.7423&mode=d");
+  });
+});
+
+describe("location notices for the driver", () => {
+  it("unconfirmed warning: pill + notice; confirmed by dispatch: no pill, an info notice", () => {
+    expect(locationPill(stop(), check())).toEqual({ tone: "warning", key: "location.pillWarning" });
+    expect(locationNotices(stop(), check())[0]).toMatchObject({ key: "location.warning", text: "The location is on a motorway (A 2)." });
+    expect(locationPill(stop(), check({ acknowledged: true }))).toBeNull();
+    expect(locationNotices(stop(), check({ acknowledged: true }))[0]!.key).toBe("location.confirmed");
+  });
+  it("errors are shown as such; information never bothers the driver", () => {
+    const err = check({ severity: "error", issues: [{ code: "out_of_coverage", severity: "error", message: "No road within 1.0 km." }] });
+    expect(locationPill(stop(), err)).toEqual({ tone: "danger", key: "location.pillError" });
+    const info = check({ severity: "info", issues: [{ code: "restricted_access", severity: "info", message: "Residents only." }] });
+    expect(locationPill(stop(), info)).toBeNull();
+    expect(locationNotices(stop(), info)).toEqual([]);
+  });
+  it("a pending check or one made for another coordinate is never shown", () => {
+    expect(locationPill(stop(), check({ status: "pending" }))).toBeNull();
+    expect(locationNotices(stop(), check({ status: "pending" }))).toEqual([]);
+    const moved = stop({ location: { lat: 52.43, lng: 9.75 } });
+    expect(currentCheck(moved, check())).toBeUndefined();
+    expect(locationPill(moved, check())).toBeNull();
+  });
+  it("names the approach point navigation goes to", () => {
+    expect(locationNotices(stop({ approach: APPROACH }), undefined)).toEqual([{ tone: "info", key: "location.approach", text: "Klusriede" }]);
+  });
+});
+
+describe("local edits follow the database rules", () => {
+  const snap = (s: Stop) => ({ driverId: "d", stops: [s], tours: [], depots: [], drivers: [], settingsByOrg: {} }) as never;
+  it("a moved pin gets the next location version and loses its approach point", () => {
+    const item: OutboxItem = { id: "1", orgId: "o", at: "", kind: "stop_update", stopId: "s1", location: { lat: 52.43, lng: 9.75 }, locationSource: "manual_pin", expectedLocationVersion: 5 };
+    const s = applyOutbox(snap(stop({ approach: APPROACH })), [item]).stops[0]!;
+    expect(s).toMatchObject({ location: { lat: 52.43, lng: 9.75 }, locationVersion: 6, addressVersion: 3 });
+    expect(s.approach).toBeUndefined();
+    // Locking only: nothing about the location changes.
+    const lock = applyOutbox(snap(stop({ approach: APPROACH })), [{ id: "2", orgId: "o", at: "", kind: "stop_update", stopId: "s1", locked: true }]).stops[0]!;
+    expect(lock).toMatchObject({ locked: true, locationVersion: 5, approach: APPROACH });
+  });
+  it("a changed address: next address version, pin removed (next location version), approach gone", () => {
+    const item: OutboxItem = { id: "1", orgId: "o", at: "", kind: "stop_edit", stopId: "s1", address: { street: "Klusriede", houseNumber: "3", postalCode: "30419", city: "Hannover" }, expectedAddressVersion: 3 };
+    const s = applyOutbox(snap(stop({ approach: APPROACH })), [item]).stops[0]!;
+    expect(s).toMatchObject({ location: null, addressVersion: 4, locationVersion: 6 });
+    expect(s.approach).toBeUndefined();
+  });
+});
+
+describe("outbox sends the version the change was made against", () => {
+  it("driver-update and edit carry expectedLocationVersion / expectedAddressVersion and the reason", async () => {
+    const sent: { path: string; body: Record<string, unknown> }[] = [];
+    const queue: OutboxItem[] = [
+      { id: "1", orgId: "o", at: "", kind: "stop_update", stopId: "s1", location: { lat: 52.43, lng: 9.75 }, locationSource: "manual_pin", expectedLocationVersion: 5, reason: "Gate on side street" },
+      { id: "2", orgId: "o", at: "", kind: "stop_edit", stopId: "s1", address: { street: "Klusriede", houseNumber: "3", postalCode: "30419", city: "Hannover" }, expectedAddressVersion: 3 },
+    ];
+    await drainOutbox(
+      () => queue[0],
+      (id) => queue.splice(queue.findIndex((q) => q.id === id), 1),
+      () => undefined,
+      { client: { request: async (_m: string, path: string, body?: unknown) => void sent.push({ path, body: body as Record<string, unknown> }) as never }, readFileBase64: async () => "", deleteFile: async () => undefined },
+    );
+    expect(sent[0]!.body).toMatchObject({ location: { lat: 52.43, lng: 9.75 }, expectedLocationVersion: 5, reason: "Gate on side street" });
+    expect(sent[1]!.body).toMatchObject({ address: { houseNumber: "3" }, expectedAddressVersion: 3 });
+  });
+});

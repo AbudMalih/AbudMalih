@@ -1,4 +1,4 @@
-import { DriverSettings, defaultFailureReasons, nowInZone, roadMetrics, routePoint, sortBySequence } from "@turvio/shared";
+import { DriverSettings, defaultFailureReasons, hasUsableLocation, nowInZone, roadMetrics, routePoint, sortBySequence } from "@turvio/shared";
 import { STOP_SELECT, orgTimeZone, toStop, tourEndOf, tourStartOf, type StopRow, type TourRow } from "../data/dispatch";
 import { RoutingOutOfCoverage, RoutingUnavailable, type RoutingProvider } from "../routing";
 import type { FastifyInstance } from "fastify";
@@ -264,11 +264,12 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
     const start = tourStartOf(data.tour, data.depot);
     // undefined = the tour ends at its last stop: no return leg in the route, distance or ETAs.
     const end = tourEndOf(data.tour, data.depot);
-    const located = sortBySequence(data.stops).filter((s) => s.type !== "break" && s.location);
+    // Certainly wrong coordinates (0,0, German address abroad) are not routed – same rule as the projection.
+    const located = sortBySequence(data.stops).filter((s) => s.type !== "break" && hasUsableLocation(s));
     const waypointStopIds: (string | null)[] = [null, ...located.map((s) => s.id), ...(end ? [null] : [])];
     // Accepted approach points are where the vehicle drives to (the map line ends there, too).
     const points = [start, ...located.map((s) => routePoint(s)!), ...(end ? [end] : [])];
-    const unlocated = data.stops.filter((s) => !s.location).map((s) => s.id);
+    const unlocated = data.stops.filter((s) => !hasUsableLocation(s)).map((s) => s.id);
     if (points.length < 2) return { source: "none", note: "No located stops to route", waypointStopIds, unlocatedStopIds: unlocated };
     if (!extra.routing) return { source: "none", note: "No routing service configured – figures are straight-line estimates", waypointStopIds, unlocatedStopIds: unlocated };
     try {

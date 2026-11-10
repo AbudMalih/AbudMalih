@@ -52,6 +52,13 @@ export const driverRo: Record<DriverMessageKey, string> = {
   "stops.lock": "Blochează poziția",
   "stops.unlock": "Deblochează poziția",
   "stops.needsLocation": "Lipsește poziția pe hartă",
+  "location.pillError": "Problemă de locație",
+  "location.pillWarning": "Verificați locația",
+  "location.error": "Dispeceratul a semnalat o problemă de locație – sunați la dispecerat înainte de a merge acolo.",
+  "location.warning": "Locația nu a fost încă confirmată de dispecerat:",
+  "location.confirmed": "Dispeceratul a verificat și a confirmat această locație.",
+  "location.approach": "Navigația merge la punctul de acces stabilit de dispecerat: {road}",
+  "location.navApproach": "Navighează la punctul de acces {road} (stabilit de dispecerat)",
   "stops.parcelsCount": "{n} colete",
   "stops.oneParcel": "1 colet",
 

@@ -6,7 +6,9 @@ import { fileDeps, setAuthClient, useTourStore } from "../src/store/tourStore";
 
 const ds = createDispatchDataset(new Date("2026-11-05T10:00:00Z"));
 const tour = { ...ds.tours.find((t) => t.name === "KAS-01")!, status: "planned" as const };
-const stops = ds.stops.filter((s) => s.tourId === tour.id && s.type === "delivery").map((s) => ({ ...s, status: "pending" as const, completedAt: undefined }));
+const stops = ds.stops
+  .filter((s) => s.tourId === tour.id && s.type === "delivery")
+  .map((s) => ({ ...s, status: "pending" as const, completedAt: undefined, addressVersion: 1, locationVersion: 1 }));
 const payload = (): { tours: MyTour[] } => ({
   tours: [
     {
@@ -29,6 +31,7 @@ let online = true;
 let calls: { method: string; url: string; body?: Record<string, unknown>; auth?: string }[] = [];
 let accessValid = true;
 let rejectWith: number | null = null;
+let rejectMessage = "Tour was withdrawn";
 /** Simulates "server committed, response lost": the request reaches the server, the client sees a network error. */
 let dropResponseOnce = false;
 const serverSeen = new Map<string, number>();
@@ -48,10 +51,12 @@ const fetchMock = jest.fn(async (url: string, init?: RequestInit) => {
   if (url.endsWith("/v1/auth/logout")) return json(204, {});
   if (!accessValid) return json(401, { error: { code: "unauthenticated" } });
   if (url.endsWith("/v1/me/tours") && method === "GET") return json(200, payload());
+  if (url.includes("/location-checks") && method === "GET")
+    return json(200, { checks: [{ stopId: stops[1]!.id, status: "checked", severity: "warning", issues: [{ code: "motorway", severity: "warning", message: "On a motorway." }], acknowledged: false }] });
   if (method === "POST") {
     const key = String(body?.clientEventId ?? body?.id ?? url);
     serverSeen.set(key, (serverSeen.get(key) ?? 0) + 1);
-    if (rejectWith) return json(rejectWith, { error: { code: "invalid_operation", message: "Tour was withdrawn" } });
+    if (rejectWith) return json(rejectWith, { error: { code: rejectWith === 409 ? "version_conflict" : "invalid_operation", message: rejectMessage } });
     if (dropResponseOnce) {
       dropResponseOnce = false;
       throw new TypeError("Network request failed"); // after the server processed it
@@ -71,6 +76,7 @@ beforeEach(async () => {
   online = true;
   accessValid = true;
   rejectWith = null;
+  rejectMessage = "Tour was withdrawn";
   dropResponseOnce = false;
   calls = [];
   serverSeen.clear();
@@ -182,6 +188,33 @@ describe("driver server mode", () => {
     s.retryFailed(s.failed[0]!.item.id);
     await useTourStore.getState().sync();
     expect(useTourStore.getState().failed).toHaveLength(0);
+  });
+
+  it("P0-3.5: consecutive offline pin moves carry consecutive versions (no false conflict)", async () => {
+    online = false;
+    useTourStore.getState().setStopLocation(stops[2]!.id, { lat: 51.31, lng: 9.5 }, "manual_pin");
+    useTourStore.getState().setStopLocation(stops[2]!.id, { lat: 51.311, lng: 9.501 }, "manual_pin");
+    expect(useTourStore.getState().stops.find((x) => x.id === stops[2]!.id)!.locationVersion).toBe(3);
+    online = true;
+    await useTourStore.getState().sync();
+    const moves = posts().filter((p) => p.url.endsWith("/driver-update"));
+    expect(moves.map((m) => m.body!.expectedLocationVersion)).toEqual([1, 2]);
+  });
+
+  it("P0-3.5: a pin move that meets a newer dispatcher change is refused and shown – never silently applied", async () => {
+    rejectWith = 409;
+    rejectMessage = "The stop's address or location was changed by someone else. Reload and try again.";
+    useTourStore.getState().setStopLocation(stops[3]!.id, { lat: 51.32, lng: 9.51 }, "manual_pin");
+    await useTourStore.getState().sync();
+    const s = useTourStore.getState();
+    expect(s.failed).toHaveLength(1);
+    expect(s.syncMessage).toMatch(/changed by someone else/);
+  });
+
+  it("P0-3.5: loads the tour's location warnings with the coordinate they belong to", async () => {
+    await useTourStore.getState().loadRoad(tour.id);
+    const c = useTourStore.getState().locationChecks[stops[1]!.id]!;
+    expect(c).toMatchObject({ severity: "warning", forLat: stops[1]!.location!.lat, forLng: stops[1]!.location!.lng });
   });
 
   it("creates a personal route and its stops before sending their statuses", async () => {

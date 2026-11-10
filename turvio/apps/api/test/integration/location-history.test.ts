@@ -25,7 +25,14 @@ const fakeOsrm: typeof fetch = async (input) => {
   return Response.json({
     code: "Ok",
     waypoints: coords.map((c) => ({ distance: c[0] > 9.8 ? 0 : 8, name: c[0] > 9.8 ? "" : "Teststraße", location: c })),
-    routes: [{ legs: coords.slice(0, -1).map((c) => ({ steps: [{ ref: c[0] > 9.8 ? "A 2" : "", intersections: [{ classes: c[0] > 9.8 ? ["motorway"] : [] }] }] })) }],
+    routes: [
+      {
+        distance: (coords.length - 1) * 1000,
+        duration: (coords.length - 1) * 120,
+        geometry: { coordinates: coords },
+        legs: coords.slice(0, -1).map((c) => ({ distance: 1000, duration: 120, steps: [{ ref: c[0] > 9.8 ? "A 2" : "", intersections: [{ classes: c[0] > 9.8 ? ["motorway"] : [] }] }] })),
+      },
+    ],
   });
 };
 
@@ -300,6 +307,30 @@ describe.runIf(available)("stop location history (P0-3.2)", () => {
     const loc = (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/stops/${S.a}/location`)).json();
     expect(loc.original).toMatchObject({ kind: "original", label: "Original (as created)", provenance: "import_file", location: { lat: 52.38, lng: 9.74 } });
     expect(loc.current.location).toEqual({ lat: 52.3802, lng: 9.7402 });
+  });
+
+  it("P0-3.5: the driver gets the tour's checks (own published tour only) and the accepted approach in the sync payload", async () => {
+    const r = await env.as(U.driverHannover1, "GET", `/v1/orgs/${org()}/tours/${tourId}/location-checks`);
+    expect(r.statusCode).toBe(200);
+    const body = r.json();
+    expect(body.checks.length).toBeGreaterThan(0);
+    expect(Object.keys(body.checks[0]).sort()).toEqual(["acknowledged", "issues", "severity", "status", "stopId"]);
+    expect((await env.as(U.driverHannover2, "GET", `/v1/orgs/${org()}/tours/${tourId}/location-checks`)).statusCode).toBe(404);
+    expect((await env.as(U.musterDriver, "GET", `/v1/orgs/${org()}/tours/${tourId}/location-checks`)).statusCode).toBe(403);
+    const cur = await stopRow(S.d!);
+    expect(
+      (await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/stops/${S.d}/location/approach`, { lat: cur.lat + 0.0005, lng: cur.lng, expectedLat: cur.lat, expectedLng: cur.lng, expectedAddressVersion: cur.address_version, reason: "Rear entrance" }))
+        .statusCode,
+    ).toBe(204);
+    const me = (await env.as(U.driverHannover1, "GET", `/v1/me/tours`)).json();
+    const st = me.tours.flatMap((t: { stops: { id: string }[] }) => t.stops).find((x: { id: string }) => x.id === S.d);
+    expect(st).toMatchObject({ approach: { lat: cur.lat + 0.0005, lng: cur.lng, roadName: "Teststraße" }, locationVersion: cur.location_version, addressVersion: cur.address_version });
+    // The driver's own route line goes to the approach point too.
+    const route = (await env.as(U.driverHannover1, "GET", `/v1/orgs/${org()}/tours/${tourId}/route`)).json();
+    expect(route.source).toBe("osrm");
+    const i = route.waypointStopIds.indexOf(S.d);
+    expect(route.geometry).toContainEqual([cur.lat + 0.0005, cur.lng]);
+    expect(i).toBeGreaterThan(0);
   });
 
   it("deleted stops: original removed with the stop, history kept (admins), purged by retention; checks purged after completion", async () => {

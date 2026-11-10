@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 import { addressLine } from "../lib/format";
 import { useT } from "../lib/i18n";
 import { availableNavApps, openNavigation, type NavApp } from "../lib/navigation";
+import { navigationPoint } from "../lib/locationCheck";
 import { useTourStore } from "../store/tourStore";
 import { space, type as ty, useTheme } from "../theme";
 import { Button, ListRow, Sheet } from "./ui";
@@ -17,7 +18,8 @@ export function NavigateButton({ stop, variant = "primary", testID }: { stop: St
   const [open, setOpen] = useState(false);
   const [remember, setRemember] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const target = { location: stop.location, addressText: addressLine(stop) };
+  // An approach point accepted by dispatch (valid for this pin) is where the vehicle goes.
+  const target = { location: navigationPoint(stop), addressText: addressLine(stop) };
 
   const go = async (app: NavApp) => {
     setOpen(false);
@@ -30,6 +32,11 @@ export function NavigateButton({ stop, variant = "primary", testID }: { stop: St
     <View style={{ gap: 4, flex: 1 }}>
       <Button label={t("stop.navigate")} icon="navigate" variant={variant} onPress={() => (navApp ? void go(navApp) : setOpen(true))} testID={testID ?? "navigate"} />
       {note && <Text style={[ty.small, { color: c.textMuted }]}>{note}</Text>}
+      {stop.approach && (
+        <Text style={[ty.small, { color: c.textMuted }]} testID="navigate-approach">
+          {t("location.navApproach", { road: stop.approach.roadName ?? "" })}
+        </Text>
+      )}
       <Sheet visible={open} onClose={() => setOpen(false)} title={t("nav.choose")}>
         {availableNavApps().map((app) => (
           <ListRow key={app} icon={app === "waze" ? "car-sport-outline" : "map-outline"} title={t(`nav.${app}`)} onPress={() => void go(app)} testID={`nav-${app}`} />
