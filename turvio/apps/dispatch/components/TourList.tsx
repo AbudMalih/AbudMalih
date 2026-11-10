@@ -137,7 +137,7 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
         )}
       </div>
       <div className="border-t border-line px-3 py-2 text-2xs text-subtle">
-        {visible.length} of {summaries.length} tours · return times are estimates
+        {visible.length} of {summaries.length} tours · finish times from road times{summaries.some((s) => s.tour.status !== "completed" && s.timeline.projection.source === "estimate") ? " · “est.” = straight-line estimate" : ""}
       </div>
     </div>
   );

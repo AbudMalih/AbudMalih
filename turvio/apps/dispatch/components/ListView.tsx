@@ -94,7 +94,11 @@ export function ListView() {
         <div className="mb-4 flex flex-col gap-1">
           <h1 className="text-[20px] font-semibold tracking-tight text-ink">Tours</h1>
           <p className="text-sm text-muted">
-            {data.tours.length} tours on {data.date} · estimated completion uses straight-line travel estimates
+            {data.tours.length} tours on {data.date} · completion from road times
+            {(() => {
+              const est = summaries.filter((s) => s.tour.status !== "completed" && s.timeline.projection.source === "estimate").length;
+              return est ? ` · ${est} marked “est.” use straight-line estimates (no road times)` : "";
+            })()}
           </p>
         </div>
         <Card className="overflow-hidden">
@@ -155,7 +159,7 @@ export function ListView() {
                     <Th label="Left" k="remaining" sort={sort} dir={dir} onSort={onSort} />
                     <Th label="Pickups" k="pickups" sort={sort} dir={dir} onSort={onSort} />
                     <Th label="Status" k="status" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label="Est. completion" k="eta" sort={sort} dir={dir} onSort={onSort} className="pe-4" />
+                    <Th label="Finish" k="eta" sort={sort} dir={dir} onSort={onSort} className="pe-4" />
                   </tr>
                 </thead>
                 <tbody>

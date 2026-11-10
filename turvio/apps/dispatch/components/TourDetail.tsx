@@ -47,7 +47,7 @@ function Fact({ icon, label, value, sub }: { icon: ReactNode; label: string; val
       <div className="min-w-0">
         <div className="text-2xs font-medium uppercase tracking-[0.06em] text-subtle">{label}</div>
         <div className="truncate text-[13px] font-medium text-ink">{value}</div>
-        {sub && <div className="truncate text-2xs text-muted">{sub}</div>}
+        {sub && <div className="line-clamp-3 text-2xs text-muted">{sub}</div>}
       </div>
     </div>
   );

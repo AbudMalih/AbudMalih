@@ -323,7 +323,15 @@ export function projectTour(input: ProjectionInput): TourProjection {
       });
     if (finishMinute > shiftEndMinute)
       reasons.push({ kind: "finish_after_shift", certainty: predicted, text: predicted === "projected" ? "Projected finish after the shift ends" : "Finish possibly after the shift ends (estimate)" });
-    if (tour.status === "planned" && !tour.driverId && tour.plannedStartMinute - nowMinute < 60) reasons.push({ kind: "no_driver", certainty: "confirmed", text: "Starts within the hour without a driver" });
+    if (tour.status === "planned" && !tour.driverId && tour.plannedStartMinute - nowMinute < 60) {
+      const h = Math.floor(tour.plannedStartMinute / 60), m = tour.plannedStartMinute % 60;
+      const overdue = input.isToday === true && nowMinute > tour.plannedStartMinute;
+      reasons.push({
+        kind: "no_driver",
+        certainty: "confirmed",
+        text: overdue ? `Should have started at ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} – no driver` : "Starts within the hour without a driver",
+      });
+    }
   }
   const certainty: DelayCertainty | null = reasons.length === 0 ? null : reasons.some((r) => r.certainty === "confirmed") ? "confirmed" : reasons.some((r) => r.certainty === "projected") ? "projected" : "estimated";
 

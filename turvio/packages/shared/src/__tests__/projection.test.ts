@@ -98,6 +98,13 @@ describe("projection from road legs", () => {
     expect(p.stops.get("s1")!.etaMinute).toBe(610);
   });
 
+  it("overdue tour without a driver says so (not 'starts within the hour')", () => {
+    const t = tour({ driverId: null });
+    const p = project(t, [stop(0)], 540, roadFor(t, [stop(0)]), { isToday: true });
+    expect(p.delayReasons.find((r) => r.kind === "no_driver")!.text).toBe("Should have started at 08:00 – no driver");
+    expect(project(t, [stop(0)], 450, roadFor(t, [stop(0)]), { isToday: true }).delayReasons.find((r) => r.kind === "no_driver")!.text).toBe("Starts within the hour without a driver");
+  });
+
   it("planned tour that should have started: 'start now' today, the plan on other days", () => {
     const t = tour();
     const stops = [stop(0)];

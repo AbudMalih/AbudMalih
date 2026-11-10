@@ -85,7 +85,7 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
                     {p.tourName ?? "No tour"} · {p.stop.timeWindow ? `${formatClock(p.stop.timeWindow.start)}–${formatClock(p.stop.timeWindow.end)}` : ""} · closes {deadlineLabel(p.minutesToDeadline)}
                   </div>
                 </div>
-                <PickupStateBadge state={p.state} />
+                <PickupStateBadge state={p.state} estimated={p.estimated} />
               </li>
             ))}
           </ul>
