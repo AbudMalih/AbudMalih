@@ -9,6 +9,7 @@ import { feedback } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { pendingProofIds } from "../../lib/sync";
 import { locationNotices } from "../../lib/locationCheck";
+import { locationIssueText } from "@turvio/shared";
 import { useTourStore } from "../../store/tourStore";
 import { useStop } from "../../store/useMyTour";
 import { radii, space, type as ty, useTheme } from "../../theme";
@@ -81,7 +82,11 @@ export default function StopDetail() {
         locationNotices(stop, locationCheck).map((n) => (
           <Banner
             key={n.key}
-            text={n.key === "location.approach" ? t(n.key, { road: n.text }) : `${t(n.key)}${n.text ? ` ${n.text}` : ""}`}
+            text={
+              n.key === "location.approach"
+                ? t(n.key, { road: n.road || t("location.unnamedRoad") })
+                : [t(n.key), ...n.issues.map((i) => locationIssueText(i as never, t))].join(" ")
+            }
             tone={n.tone === "info" ? "primary" : n.tone}
             icon={n.key === "location.approach" ? "navigate-outline" : "alert-circle-outline"}
           />

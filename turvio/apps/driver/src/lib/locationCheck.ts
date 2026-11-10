@@ -9,13 +9,27 @@ export interface DriverLocationCheck {
   stopId: string;
   status: "checked" | "partial" | "pending" | "no_location";
   severity: "error" | "warning" | "info" | null;
-  issues: { code: string; severity: "error" | "warning" | "info"; message: string }[];
+  issues: DriverIssue[];
   acknowledged: boolean;
   forLat?: number;
   forLng?: number;
 }
 
-export type LocationNotice = { tone: "danger" | "warning" | "info"; key: "location.error" | "location.warning" | "location.confirmed" | "location.approach"; text: string };
+export interface DriverIssue {
+  code: string;
+  severity: "error" | "warning" | "info";
+  /** English fallback; the app words the issue from code + details in the driver's language. */
+  message: string;
+  details?: Record<string, string | number | boolean | null>;
+}
+export type LocationNotice = {
+  tone: "danger" | "warning" | "info";
+  key: "location.error" | "location.warning" | "location.confirmed" | "location.approach";
+  /** Issues to list under the notice (translated by the screen). */
+  issues: DriverIssue[];
+  /** location.approach: road name of the approach point. */
+  road?: string;
+};
 
 /** The check result for the stop as it is now – undefined if it was made for another coordinate. */
 export function currentCheck(stop: Stop, check: DriverLocationCheck | undefined): DriverLocationCheck | undefined {
@@ -39,11 +53,11 @@ export function locationNotices(stop: Stop, check: DriverLocationCheck | undefin
   const c = currentCheck(stop, check);
   if (c && c.status !== "pending") {
     const relevant = c.issues.filter((i) => i.severity !== "info");
-    if (c.severity === "error") out.push({ tone: "danger", key: "location.error", text: relevant.map((i) => i.message).join(" ") });
-    else if (c.severity === "warning" && !c.acknowledged) out.push({ tone: "warning", key: "location.warning", text: relevant.map((i) => i.message).join(" ") });
-    else if (c.severity === "warning" && c.acknowledged) out.push({ tone: "info", key: "location.confirmed", text: "" });
+    if (c.severity === "error") out.push({ tone: "danger", key: "location.error", issues: relevant });
+    else if (c.severity === "warning" && !c.acknowledged) out.push({ tone: "warning", key: "location.warning", issues: relevant });
+    else if (c.severity === "warning" && c.acknowledged) out.push({ tone: "info", key: "location.confirmed", issues: [] });
   }
-  if (stop.approach) out.push({ tone: "info", key: "location.approach", text: stop.approach.roadName ?? "" });
+  if (stop.approach) out.push({ tone: "info", key: "location.approach", issues: [], road: stop.approach.roadName ?? "" });
   return out;
 }
 

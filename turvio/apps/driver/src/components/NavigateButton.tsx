@@ -34,7 +34,7 @@ export function NavigateButton({ stop, variant = "primary", testID }: { stop: St
       {note && <Text style={[ty.small, { color: c.textMuted }]}>{note}</Text>}
       {stop.approach && (
         <Text style={[ty.small, { color: c.textMuted }]} testID="navigate-approach">
-          {t("location.navApproach", { road: stop.approach.roadName ?? "" })}
+          {t("location.navApproach", { road: stop.approach.roadName || t("location.unnamedRoad") })}
         </Text>
       )}
       <Sheet visible={open} onClose={() => setOpen(false)} title={t("nav.choose")}>

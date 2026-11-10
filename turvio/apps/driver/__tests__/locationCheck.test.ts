@@ -47,7 +47,7 @@ describe("navigation target", () => {
 describe("location notices for the driver", () => {
   it("unconfirmed warning: pill + notice; confirmed by dispatch: no pill, an info notice", () => {
     expect(locationPill(stop(), check())).toEqual({ tone: "warning", key: "location.pillWarning" });
-    expect(locationNotices(stop(), check())[0]).toMatchObject({ key: "location.warning", text: "The location is on a motorway (A 2)." });
+    expect(locationNotices(stop(), check())[0]).toMatchObject({ key: "location.warning", issues: [{ code: "motorway" }] });
     expect(locationPill(stop(), check({ acknowledged: true }))).toBeNull();
     expect(locationNotices(stop(), check({ acknowledged: true }))[0]!.key).toBe("location.confirmed");
   });
@@ -66,7 +66,7 @@ describe("location notices for the driver", () => {
     expect(locationPill(moved, check())).toBeNull();
   });
   it("names the approach point navigation goes to", () => {
-    expect(locationNotices(stop({ approach: APPROACH }), undefined)).toEqual([{ tone: "info", key: "location.approach", text: "Klusriede" }]);
+    expect(locationNotices(stop({ approach: APPROACH }), undefined)).toEqual([{ tone: "info", key: "location.approach", issues: [], road: "Klusriede" }]);
   });
 });
 

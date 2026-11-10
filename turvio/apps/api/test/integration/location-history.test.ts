@@ -378,17 +378,18 @@ describe.runIf(available)("stop location history (P0-3.2)", () => {
       return performance.now() - t0;
     };
     await importAll("warm"); // warm-up (plans, connections)
-    const withHistory = await importAll("with");
+    // Best of three runs each: single runs vary by ±25 % on a shared machine.
+    const withHistory = Math.min(await importAll("with"), await importAll("with2"), await importAll("with3"));
     const trig = ["stops_location_created", "stops_location_init"];
     for (const t of trig) await env.superuser.query(`alter table stops disable trigger ${t}`);
-    const without = await importAll("without");
+    const without = Math.min(await importAll("without"), await importAll("without2"), await importAll("without3"));
     for (const t of trig) await env.superuser.query(`alter table stops enable trigger ${t}`);
-    const origins = (await env.superuser.query(`select count(*)::int n from stop_location_origins o join stops s on s.id = o.stop_id where s.recipient_name like 'with%'`)).rows[0].n;
-    expect(origins).toBe(2000);
+    const origins = (await env.superuser.query(`select count(*)::int n from stop_location_origins o join stops s on s.id = o.stop_id where s.recipient_name like 'with%' and s.recipient_name not like 'without%'`)).rows[0].n;
+    expect(origins).toBe(6000);
     console.log("import-overhead report", JSON.stringify({ stops: 2000, withHistoryMs: Math.round(withHistory), withoutMs: Math.round(without), overheadPct: Math.round(((withHistory - without) / without) * 100) }));
-    expect(withHistory).toBeLessThan(without * 2.5);
+    expect(withHistory).toBeLessThan(without * 1.6);
     await env.superuser.query(`delete from stops where recipient_name like 'warm%' or recipient_name like 'with%'`);
-  }, 120_000);
+  }, 300_000);
 
   it("deleting a whole company removes its history without tripping the append-only guards", async () => {
     const other = env.data.orgs.muster;

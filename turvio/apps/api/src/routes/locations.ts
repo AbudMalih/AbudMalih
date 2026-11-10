@@ -148,7 +148,8 @@ export function registerLocationRoutes(app: FastifyInstance, { deps, guards }: R
         stopId: c.stopId,
         status: c.status,
         severity: c.severity,
-        issues: c.issues.map((i) => ({ code: i.code, severity: i.severity, message: i.message })),
+        // Details let the app word the issue in the driver's language (P0-3.6).
+        issues: c.issues.map((i) => ({ code: i.code, severity: i.severity, message: i.message, ...(i.details ? { details: i.details } : {}) })),
         acknowledged: c.acknowledged,
       })),
     };

@@ -144,9 +144,9 @@ const inBox = (lat: number, lng: number, b = DE_BOX) => lat >= b.minLat && lat <
 export function coordinateIssues(location: GeoPoint, countryCode?: string): LocationIssue[] {
   const { lat, lng } = location;
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
-    return [{ code: "coordinates_invalid", severity: "error", message: "The coordinates are not valid." }];
+    return [{ code: "coordinates_invalid", severity: "error", message: "The coordinates are not valid.", details: { reason: "range" } }];
   if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01)
-    return [{ code: "coordinates_invalid", severity: "error", message: "The coordinates are 0,0 – no real location was set." }];
+    return [{ code: "coordinates_invalid", severity: "error", message: "The coordinates are 0,0 – no real location was set.", details: { reason: "zero" } }];
   if ((countryCode ?? "DE").toUpperCase() === "DE" && !inBox(lat, lng)) {
     const swapped = inBox(lng, lat);
     return [
@@ -191,10 +191,15 @@ export function evaluateStopLocation(input: StopLocationInput, t: LocationThresh
     road = { distanceMeters: Math.round(r.distanceMeters), roadName: r.roadName, roadRef: r.roadRef, classes: r.classes };
     const roadLabel = r.roadName || r.roadRef || "an unnamed road";
     if (r.distanceMeters > t.coverageMeters) {
-      issues.push({ code: "out_of_coverage", severity: "error", message: `No road in the routing data within ${(t.coverageMeters / 1000).toFixed(1)} km (nearest ${(r.distanceMeters / 1000).toFixed(1)} km away).`, details: { snapMeters: Math.round(r.distanceMeters) } });
+      issues.push({
+        code: "out_of_coverage",
+        severity: "error",
+        message: `No road in the routing data within ${(t.coverageMeters / 1000).toFixed(1)} km (nearest ${(r.distanceMeters / 1000).toFixed(1)} km away).`,
+        details: { snapMeters: Math.round(r.distanceMeters), limitMeters: t.coverageMeters },
+      });
     } else {
       if (r.distanceMeters > t.farFromRoadMeters)
-        issues.push({ code: "far_from_road", severity: "warning", message: `The nearest drivable road (${roadLabel}) is ${m(r.distanceMeters)} away – check the location.`, details: { snapMeters: Math.round(r.distanceMeters), roadName: r.roadName } });
+        issues.push({ code: "far_from_road", severity: "warning", message: `The nearest drivable road (${roadLabel}) is ${m(r.distanceMeters)} away – check the location.`, details: { snapMeters: Math.round(r.distanceMeters), roadName: r.roadName || r.roadRef } });
       if (r.classes?.includes("motorway")) {
         const alt = r.nonMotorway && r.nonMotorway.distanceMeters <= t.motorwayAlternativeMeters ? r.nonMotorway : null;
         issues.push({
@@ -203,14 +208,14 @@ export function evaluateStopLocation(input: StopLocationInput, t: LocationThresh
           message: alt
             ? `The location is on a motorway${r.roadRef ? ` (${r.roadRef})` : ""}. Nearest normal road: ${alt.roadName || "unnamed road"}, ${m(alt.distanceMeters)} – check the location (correct for a service-area delivery).`
             : `The location is on a motorway${r.roadRef ? ` (${r.roadRef})` : ""} and no normal road is within ${m(t.motorwayAlternativeMeters)} – check the location (correct for a service-area delivery).`,
-          details: { roadRef: r.roadRef },
+          details: { roadRef: r.roadRef, alternativeRoad: alt ? alt.roadName : null, alternativeMeters: alt ? Math.round(alt.distanceMeters) : null, limitMeters: t.motorwayAlternativeMeters },
           ...(alt ? { suggestion: { kind: "approach" as const, location: alt.location, roadName: alt.roadName, distanceMeters: Math.round(alt.distanceMeters) } } : {}),
         });
       }
       if (r.classes?.includes("restricted"))
-        issues.push({ code: "restricted_access", severity: "info", message: `Access via ${roadLabel} is restricted (residents, delivery or destination traffic only).` });
+        issues.push({ code: "restricted_access", severity: "info", message: `Access via ${roadLabel} is restricted (residents, delivery or destination traffic only).`, details: { roadName: r.roadName || r.roadRef } });
       if (input.street && r.distanceMeters > t.accessRoadHintMeters && !sameStreet(input.street, r.roadName))
-        issues.push({ code: "different_access_road", severity: "info", message: `Nearest car access is ${roadLabel}, ${m(r.distanceMeters)} away (e.g. pedestrian zone or courtyard).`, details: { snapMeters: Math.round(r.distanceMeters), roadName: r.roadName } });
+        issues.push({ code: "different_access_road", severity: "info", message: `Nearest car access is ${roadLabel}, ${m(r.distanceMeters)} away (e.g. pedestrian zone or courtyard).`, details: { snapMeters: Math.round(r.distanceMeters), roadName: r.roadName || r.roadRef } });
     }
   }
 
