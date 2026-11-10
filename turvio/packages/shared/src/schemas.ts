@@ -388,5 +388,19 @@ export const OptimizeResponse = z.object({
   engine: z.string(),
   violations: z.array(OptimizeViolation).optional(),
   solveSeconds: z.number().nullable().optional(),
+  /** Where the optimizer's time budget went (seconds), measured end to end inside the optimizer. */
+  timings: z
+    .object({
+      budgetSeconds: z.number(),
+      matrixSeconds: z.number(),
+      warmStartSeconds: z.number(),
+      reinsertionSeconds: z.number(),
+      searchSeconds: z.number(),
+      totalSeconds: z.number(),
+      reinsertionTruncated: z.boolean().optional(),
+      warmStartFallback: z.boolean().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 export type OptimizeResponse = z.infer<typeof OptimizeResponse>;

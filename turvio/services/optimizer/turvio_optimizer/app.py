@@ -3,6 +3,9 @@ and must not be exposed publicly (no end-user authentication here)."""
 
 from __future__ import annotations
 
+import time
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -11,7 +14,16 @@ from .matrix import RoutingError
 from .models import OptimizeRequest, OptimizeResponse
 from .solver import solve
 
-app = FastAPI(title="TURVIO Optimizer", version=__version__)
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # The first VROOM worker process (warmstart.py) starts here, not inside the first request's budget.
+    from . import warmstart
+
+    warmstart.prestart()
+    yield
+
+
+app = FastAPI(title="TURVIO Optimizer", version=__version__, lifespan=lifespan)
 
 
 @app.exception_handler(RoutingError)
@@ -30,4 +42,5 @@ def health() -> dict[str, str]:
 def optimize(req: OptimizeRequest) -> OptimizeResponse:
     # Sync endpoint: FastAPI runs it in a worker thread, so the CPU-bound
     # solver does not block the event loop.
-    return solve(req)
+    # The time budget counts from here (request parsed) to the response.
+    return solve(req, started_at=time.monotonic())

@@ -266,6 +266,40 @@ express deadlines. Fails on any late/unplanned stop, > VROOM + 2 %, > 97 % of th
 plan). NN + 2-opt ignores deadlines: it is late at 2–6 stops per tour; TURVIO at none. Full tables:
 `docs/benchmarks/*-gate-2026-11-08.md`.
 
+### E. Time budget for the whole optimization (2026-11-10)
+**Defect (route intelligence audit, 2026-11-09):** the time limit applied only to the OR-Tools search.
+The VROOM warm start and the Python re-insertion of stops VROOM leaves out ran unbounded: a 500-stop
+tour for one driver took 365 s against a 15 s budget (the API gives up after budget + 30 s → error).
+
+**Now** one deadline covers matrix, warm start, re-insertion, search and response (`solver.py`):
+- VROOM runs in a separate worker process (`warmstart.py`, `python -m turvio_optimizer.warmstart`,
+  pickles over stdin/stdout, one process kept ready) and is stopped at its share of the budget (40 %);
+  its own timeout is asked for less (construction overruns it). One driver with > 200 stops: VROOM
+  timeout 3 s, exploration level 0 above 200 stops.
+- Re-insertion: same choice as before (least lateness, then least extra driving, same ties) but
+  visits positions in order of a lower bound and simulates only while a position can still win;
+  checked against the old exhaustive implementation on 400 random instances with express deadlines
+  and non-metric matrices (`tests/test_time_budget.py`). 500-stop tour: ~280 s → 0.2–0.4 s.
+- OR-Tools gets exactly the remaining time. If it returns nothing in time, the warm start is
+  returned only after validation (each stop once, capacity, strict windows, hard shift; re-inserted
+  stops that break a hard constraint are taken out and reported unassigned; otherwise `no_solution`).
+  If VROOM is not done in time, one driver's tour starts from nearest neighbour + exact re-insertion.
+- Every result is checked to contain each requested stop exactly once (route or unassigned).
+- Responses carry `timings` (matrix, warm start, re-insertion, search, total, budget).
+
+**Before / after** (same Hannover OSRM graph, same tours, end to end incl. matrix; 4 vCPU):
+| Tour | Budget | Before: time | After: time | Driving before → after | Late / unassigned after |
+|---|---:|---:|---:|---:|---:|
+| 80 stops dense, 3 tours | 10 s | 9.6–9.8 s | 9.9 s | identical (all 3) | 0 / 0 |
+| 100 stops dense, 3 tours | 10 s | 9.1–9.5 s | 9.9 s | identical (all 3) | 0 / 0 |
+| 80 stops suburban, 3 tours | 10 s | 9.5–9.7 s | 9.9 s | identical (all 3) | 0 / 0 |
+| 100 stops suburban, 3 tours | 10 s | 9.2–9.5 s | 9.9 s | identical (all 3) | 0 / 0 |
+| 200 stops, 1 driver | 15 s | 14.4 s | 14.9 s | 520.4 → 518.8 min (−0.3 %) | 0 / 0 |
+| 500 stops, 1 driver | 15 s | **365 s** (API error) | **14.9 s** | 912.2 → 937.1 min (+2.7 %) | 23 late (same as before) / 0 |
+| 500 stops, 5 drivers | 15 s | **25.4 s** | **14.9 s** | 890.3 → 917.8 min (+3.1 %) | 0 / 0 |
+The 500-stop rows trade a few percent of driving for answering within the budget; a 30 s budget did
+not improve them reliably (measured), so the API budgets (5/10/15 s) are unchanged.
+
 ## 5. Limits (stated, not hidden)
 - **No traffic**: OSRM uses static road speeds. Rush-hour delays are not in the travel times.
 - **Coverage**: staging still serves Region Hannover only. The Germany graph (section 4C) is

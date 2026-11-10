@@ -245,8 +245,11 @@ def test_http_api_roundtrip_uses_camel_case():
     res = client.post("/optimize", json=body)
     assert res.status_code == 200
     data = res.json()
-    assert set(data) == {"routes", "unassignedStopIds", "matrixSource", "matrixNote", "status", "engine", "violations", "solveSeconds"}
+    assert set(data) == {"routes", "unassignedStopIds", "matrixSource", "matrixNote", "status", "engine", "violations", "solveSeconds", "timings"}
     assert len(data["routes"][0]["visits"]) == 3
+    # Where the time budget went (end to end inside the optimizer, camelCase like the rest).
+    assert set(data["timings"]) == {"budgetSeconds", "matrixSeconds", "warmStartSeconds", "reinsertionSeconds", "searchSeconds", "totalSeconds", "reinsertionTruncated", "warmStartFallback"}
+    assert data["timings"]["totalSeconds"] <= data["timings"]["budgetSeconds"]
 
 
 def test_http_api_rejects_invalid_input():

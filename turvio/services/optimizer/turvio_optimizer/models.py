@@ -119,6 +119,22 @@ class Violation(_Model):
     minutes: Optional[float] = None
 
 
+class Timings(_Model):
+    """Where the time budget went (seconds). total ≤ budget except when the road matrix alone
+    takes longer (OSRM) – measured end to end inside the optimizer."""
+
+    budget_seconds: float
+    matrix_seconds: float
+    warm_start_seconds: float
+    reinsertion_seconds: float
+    search_seconds: float
+    total_seconds: float
+    # Out of re-insertion time: remaining left-out stops went to their cheapest position.
+    reinsertion_truncated: bool = False
+    # The search returned nothing in time: the validated warm start is the result.
+    warm_start_fallback: bool = False
+
+
 class OptimizeResponse(_Model):
     routes: list[Route]
     unassigned_stop_ids: list[str]
@@ -132,3 +148,4 @@ class OptimizeResponse(_Model):
     # Empty when every stop is served on time within the shift.
     violations: list[Violation] = Field(default_factory=list)
     solve_seconds: Optional[float] = None
+    timings: Optional[Timings] = None
