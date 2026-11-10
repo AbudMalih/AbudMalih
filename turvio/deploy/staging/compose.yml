@@ -84,6 +84,10 @@ services:
       OPTIMIZER_URL: http://optimizer:8000
       OSRM_URL: http://osrm:5000
       OSRM_MAX_SNAP_METERS: ${OSRM_MAX_SNAP_METERS:-1000}
+      # P0-3: label of the active OSRM graph (e.g. its build directory name) and of the address
+      # data; stored location checks of another label are stale. Empty = 24 h validity.
+      ROUTING_DATA_VERSION: ${ROUTING_DATA_VERSION:-}
+      ADDRESS_DATA_VERSION: ${ADDRESS_DATA_VERSION:-}
       GEOCODER: ${GEOCODER:-none}
       MAILER: smtp
       SMTP_URL: ${SMTP_URL:?set SMTP_URL (EU SMTP provider)}

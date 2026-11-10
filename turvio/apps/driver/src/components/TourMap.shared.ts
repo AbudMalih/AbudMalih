@@ -1,4 +1,4 @@
-import { isOpen, isSuccess, tourEndPoint, tourStartPoint, type Depot, type GeoPoint, type Stop, type Tour } from "@turvio/shared";
+import { hasUsableLocation, isOpen, isSuccess, tourEndPoint, tourStartPoint, type Depot, type GeoPoint, type Stop, type Tour } from "@turvio/shared";
 import type { ViewStyle } from "react-native";
 import type { Palette } from "../theme";
 
@@ -43,12 +43,13 @@ export function tourMapEnds(depot: Depot | undefined, tour?: TourMapProps["tour"
 /** Points the map must show at first: start, own end address, stops and a pin being placed. */
 export function initialMapPoints(props: Pick<TourMapProps, "depot" | "tour" | "stops" | "pendingPin">): GeoPoint[] {
   const { start, end } = tourMapEnds(props.depot, props.tour);
-  return [...(start ? [start] : []), ...(end ? [end] : []), ...props.stops.filter((s) => s.location).map((s) => s.location!), ...(props.pendingPin ? [props.pendingPin] : [])];
+  return [...(start ? [start] : []), ...(end ? [end] : []), ...props.stops.filter((s) => hasUsableLocation(s)).map((s) => s.location!), ...(props.pendingPin ? [props.pendingPin] : [])];
 }
 
 /** Straight-line fallback (no road geometry): from the last completed stop – or the tour's start – through the open stops. */
 export function fallbackPath(props: Pick<TourMapProps, "depot" | "tour" | "stops">): GeoPoint[] {
-  const located = props.stops.filter((s): s is Stop & { location: GeoPoint } => s.location !== null);
+  // Certainly wrong coordinates (0,0, swapped) are not drawn and do not stretch the map.
+  const located = props.stops.filter((s): s is Stop & { location: GeoPoint } => s.location !== null && hasUsableLocation(s));
   const { start, end } = tourMapEnds(props.depot, props.tour);
   const from = located.filter((s) => !isOpen(s.status)).at(-1)?.location ?? start;
   const open = located.filter((s) => isOpen(s.status)).map((s) => s.location);

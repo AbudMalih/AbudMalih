@@ -198,3 +198,15 @@ describe("withDecision: which warnings count as handled", () => {
     expect(withDecision(c(["motorway"], "pending"), { stopId: "s", confirmation: null, approach }).acknowledged).toBe(false);
   });
 });
+
+describe("data versions (deployment prerequisite)", () => {
+  it("ROUTING_DATA_VERSION / ADDRESS_DATA_VERSION reach the checker; empty values from compose mean 'not set'", async () => {
+    const { loadConfig } = await import("../src/config");
+    const base = { AUTH_PROVIDER: "local", DATABASE_URL: "postgres://x", JWT_SECRET: "x".repeat(40) };
+    expect(loadConfig({ ...base, ROUTING_DATA_VERSION: "build-20261106T121800Z", ADDRESS_DATA_VERSION: "osm-2026-11" })).toMatchObject({ ROUTING_DATA_VERSION: "build-20261106T121800Z", ADDRESS_DATA_VERSION: "osm-2026-11" });
+    const empty = loadConfig({ ...base, ROUTING_DATA_VERSION: "", ADDRESS_DATA_VERSION: " " });
+    expect(empty.ROUTING_DATA_VERSION).toBeUndefined();
+    expect(empty.ADDRESS_DATA_VERSION).toBeUndefined();
+    expect(new LocationChecker(undefined, undefined, { versions: { road: "build-x", address: null } }).dataVersions).toEqual({ road: "build-x", address: "unversioned", rules: 1 });
+  });
+});

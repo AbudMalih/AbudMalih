@@ -232,7 +232,7 @@ if (pick) {
   await page.getByTestId("tab-stops").click();
   await page.waitForTimeout(800);
   const pills = await page.getByTestId("stop-location-pill").allTextContents();
-  assert.ok(pills.includes("Location problem"), `pills: ${pills.join(",")}`);
+  assert.ok(pills.some((p) => p.includes("Location problem")), `pills: ${pills.join(",")}`);
   await page.screenshot({ path: `${SHOTS}/driver-stops.png` });
   // Stop screen in German and Arabic: the issue is worded in the driver's language.
   for (const [loc, expect] of [

@@ -1,4 +1,4 @@
-import type { GeoPoint, Stop } from "@turvio/shared";
+import { hasUsableLocation, type GeoPoint, type Stop } from "@turvio/shared";
 
 /**
  * Location checks as the driver sees them (P0-3.5). Dispatch decides; the driver is told what
@@ -61,8 +61,12 @@ export function locationNotices(stop: Stop, check: DriverLocationCheck | undefin
   return out;
 }
 
-/** Where navigation goes: the accepted approach point (set by dispatch, valid for this pin), else the pin. */
-export function navigationPoint(stop: Pick<Stop, "location" | "approach">): GeoPoint | null {
-  if (!stop.location) return null;
+/**
+ * Where navigation goes: the accepted approach point (set by dispatch, valid for this pin), else the
+ * pin – but never a certainly wrong coordinate (0,0, swapped, German address abroad): then null, and
+ * the navigation app gets the address text instead.
+ */
+export function navigationPoint(stop: Pick<Stop, "location" | "approach"> & { address?: { countryCode?: string } }): GeoPoint | null {
+  if (!stop.location || !hasUsableLocation(stop)) return null;
   return stop.approach ? { lat: stop.approach.lat, lng: stop.approach.lng } : stop.location;
 }

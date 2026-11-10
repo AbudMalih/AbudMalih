@@ -39,6 +39,12 @@ describe("navigation target", () => {
     expect(navigationPoint(stop())).toEqual({ lat: 52.4274, lng: 9.7419 });
     expect(navigationPoint(stop({ approach: APPROACH }))).toEqual({ lat: 52.4277, lng: 9.7423 });
     expect(navigationPoint(stop({ location: null, approach: APPROACH }))).toBeNull();
+    // A certainly wrong coordinate is never handed to the navigation app (address text instead).
+    expect(navigationPoint(stop({ location: { lat: 9.7462, lng: 52.3826 } }))).toBeNull();
+    expect(navigationPoint(stop({ location: { lat: 0, lng: 0 } }))).toBeNull();
+    expect(navigationUrls("google", { location: navigationPoint(stop({ location: { lat: 0, lng: 0 } })), addressText: "Klusriede 1, 30419 Hannover" }, "android").native).toBe(
+      `google.navigation:q=${encodeURIComponent("Klusriede 1, 30419 Hannover")}&mode=d`,
+    );
     const urls = navigationUrls("google", { location: navigationPoint(stop({ approach: APPROACH })), addressText: "Klusriede 1" }, "android");
     expect(urls.native).toBe("google.navigation:q=52.4277,9.7423&mode=d");
   });
