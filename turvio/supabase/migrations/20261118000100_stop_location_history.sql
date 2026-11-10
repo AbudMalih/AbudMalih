@@ -251,27 +251,31 @@ $$;
 -- Name sorts after stops_address_guard (which may clear lat/lng) and before stops_touch.
 create trigger stops_location_versions before update on public.stops for each row execute function app.stops_location_versions();
 
+-- One statement-level trigger per INSERT (imports add up to 500 stops at once): originals and
+-- "created" events are written set-based from the transition table.
 create function app.stops_location_created() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare
-  role text := app.actor_role(new.organization_id);
   declared text := current_setting('turvio.origin_provenance', true);
-  prov text;
+  uid uuid := auth.uid();
 begin
   -- Drivers' stops are driver captures, whatever the client declares. Staff may declare the
-  -- import channel; anything else is 'api'.
-  prov := case
-    when role = 'driver' then 'driver_capture'
-    when declared in ('import_file', 'import_paste', 'dispatch_manual') then declared
-    else 'api' end;
+  -- import channel; anything else is 'api'. Role from memberships, never from the client.
+  with r as (select o as organization_id, app.actor_role(o) as role from (select distinct organization_id o from new_rows) x)
   insert into public.stop_location_origins (stop_id, organization_id, kind, provenance, street, house_number, postal_code, city, country_code, lat, lng, location_source, location_precision, captured_by)
-  values (new.id, new.organization_id, 'original', prov, new.street, new.house_number, new.postal_code, new.city, new.country_code, new.lat, new.lng, new.location_source, new.location_precision, auth.uid());
+  select n.id, n.organization_id, 'original',
+         case when r.role = 'driver' then 'driver_capture' when declared in ('import_file', 'import_paste', 'dispatch_manual') then declared else 'api' end,
+         n.street, n.house_number, n.postal_code, n.city, n.country_code, n.lat, n.lng, n.location_source, n.location_precision, uid
+    from new_rows n join r on r.organization_id = n.organization_id;
+  with r as (select o as organization_id, app.actor_role(o) as role from (select distinct organization_id o from new_rows) x)
   insert into public.stop_location_events (organization_id, stop_id, actor_user_id, actor_role, action, reason, previous, new)
-  values (new.organization_id, new.id, auth.uid(), role, 'created', app.change_reason(), null, app.stop_location_json(new) || jsonb_build_object('provenance', prov));
+  select n.organization_id, n.id, uid, r.role, 'created', app.change_reason(), null,
+         app.stop_location_json(n) || jsonb_build_object('provenance', case when r.role = 'driver' then 'driver_capture' when declared in ('import_file', 'import_paste', 'dispatch_manual') then declared else 'api' end)
+    from new_rows n join r on r.organization_id = n.organization_id;
   return null;
 end;
 $$;
-create trigger stops_location_created after insert on public.stops for each row execute function app.stops_location_created();
+create trigger stops_location_created after insert on public.stops referencing new table as new_rows for each statement execute function app.stops_location_created();
 
 create function app.stops_location_changed() returns trigger
 language plpgsql security definer set search_path = '' as $$

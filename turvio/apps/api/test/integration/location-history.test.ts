@@ -366,6 +366,30 @@ describe.runIf(available)("stop location history (P0-3.2)", () => {
     await env.superuser.query(`update organizations set location_audit_retention_days = null where id = $1`, [org()]);
   });
 
+  it("performance: importing 2,000 stops with the location history (originals + events) vs without", async () => {
+    const batch = (tag: string, n: number) =>
+      Array.from({ length: n }, (_, i) => ({ recipientName: `${tag}${i}`, address: { street: "Perfstraße", houseNumber: String(i + 1), postalCode: "30159", city: "Hannover" }, location: { lat: 52.37 + i * 1e-5, lng: 9.73 } }));
+    const importAll = async (tag: string) => {
+      const t0 = performance.now();
+      for (let k = 0; k < 4; k++) {
+        const r = await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/stops`, { depotId: env.data.depots.hannover, provenance: "import_file", stops: batch(`${tag}${k}-`, 500) });
+        expect(r.statusCode).toBe(201);
+      }
+      return performance.now() - t0;
+    };
+    await importAll("warm"); // warm-up (plans, connections)
+    const withHistory = await importAll("with");
+    const trig = ["stops_location_created", "stops_location_init"];
+    for (const t of trig) await env.superuser.query(`alter table stops disable trigger ${t}`);
+    const without = await importAll("without");
+    for (const t of trig) await env.superuser.query(`alter table stops enable trigger ${t}`);
+    const origins = (await env.superuser.query(`select count(*)::int n from stop_location_origins o join stops s on s.id = o.stop_id where s.recipient_name like 'with%'`)).rows[0].n;
+    expect(origins).toBe(2000);
+    console.log("import-overhead report", JSON.stringify({ stops: 2000, withHistoryMs: Math.round(withHistory), withoutMs: Math.round(without), overheadPct: Math.round(((withHistory - without) / without) * 100) }));
+    expect(withHistory).toBeLessThan(without * 2.5);
+    await env.superuser.query(`delete from stops where recipient_name like 'warm%' or recipient_name like 'with%'`);
+  }, 120_000);
+
   it("deleting a whole company removes its history without tripping the append-only guards", async () => {
     const other = env.data.orgs.muster;
     const n = (await env.superuser.query(`select count(*)::int n from stop_location_origins where organization_id = $1`, [other])).rows[0].n;
