@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { translate, type Locale } from "../i18n";
+import { translate } from "../i18n";
+import type { Locale } from "../schemas";
 import { coordinateIssues, evaluateStopLocation, type Evidence, type LocationIssue, type RoadSnapEvidence } from "../location/checks";
 import { locationIssueText } from "../location/text";
 
