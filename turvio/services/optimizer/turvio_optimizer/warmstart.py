@@ -73,16 +73,24 @@ def _spawn() -> subprocess.Popen:
     )
 
 
+_STARTING = 0  # spares being started right now (counted so concurrent refills do not overshoot)
+
+
 def _refill() -> None:
-    try:
-        with _LOCK:
-            missing = POOL_SIZE - sum(1 for p in _IDLE if p.poll() is None)
-        for _ in range(max(0, missing)):
+    global _STARTING
+    with _LOCK:
+        _IDLE[:] = [p for p in _IDLE if p.poll() is None]
+        missing = max(0, POOL_SIZE - len(_IDLE) - _STARTING)
+        _STARTING += missing
+    for _ in range(missing):
+        try:
             proc = _spawn()
-            with _LOCK:
+        except Exception:  # noqa: BLE001 – the next job starts its own process
+            proc = None
+        with _LOCK:
+            _STARTING -= 1
+            if proc is not None:
                 _IDLE.append(proc)
-    except Exception:  # noqa: BLE001 – the next job starts its own process
-        pass
 
 
 def _take() -> subprocess.Popen:
