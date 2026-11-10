@@ -66,6 +66,9 @@ WARM_START = os.environ.get("TURVIO_WARM_START", "vroom")
 RESPONSE_RESERVE_S = 0.1  # kept free for building and validating the response (measured ~2 ms for 500 stops)
 WARM_START_SHARE = 0.4  # VROOM's own timeout: at most this share of the budget
 REINSERT_SHARE = 0.15  # exact re-insertion until this share is used, then cheapest position
+# The OSRM matrix may use at most this share of the budget (and never more than leaves
+# MIN_SEARCH_S): a slow or hung routing service fails the request in time instead of overrunning.
+MATRIX_SHARE = 0.5
 MIN_SEARCH_S = 0.2  # below this, OR-Tools is skipped and the validated warm start is returned
 # VROOM's timeout stops its search but not its construction heuristics (measured: 1.4–2.0 s for a
 # 1 s timeout on one 500-stop route). Asking for less leaves room for that; the worker process is
@@ -285,7 +288,7 @@ def solve(req: OptimizeRequest, matrix: Matrix | None = None, started_at: float 
     if matrix is None:
         t0 = time.monotonic()
         try:
-            matrix = build_matrix(points)
+            matrix = build_matrix(points, deadline=min(deadline - MIN_SEARCH_S, t_start + MATRIX_SHARE * req.time_limit_seconds))
             phase["matrix"] = time.monotonic() - t0
         except RoutingError as e:
             # Name the affected depot positions / stops for the caller.

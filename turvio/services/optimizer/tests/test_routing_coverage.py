@@ -49,7 +49,7 @@ def test_zero_durations_between_distinct_points_are_rejected():
 def test_without_routing_required_the_fallback_is_labelled(monkeypatch):
     monkeypatch.setenv("OSRM_URL", "http://osrm.test")
     monkeypatch.delenv("ROUTING_REQUIRED", raising=False)
-    monkeypatch.setattr(m, "osrm_matrix", lambda points, base: (_ for _ in ()).throw(m.RoutingError("routing_out_of_coverage", "6 location(s) are outside the road-routing area", [(0, 1.0)])))
+    monkeypatch.setattr(m, "osrm_matrix", lambda points, base, **_kw: (_ for _ in ()).throw(m.RoutingError("routing_out_of_coverage", "6 location(s) are outside the road-routing area", [(0, 1.0)])))
     res = m.build_matrix(pts(SUHL[:2]) + [GeoPoint(lat=50.6, lng=10.7)])
     assert res.source == "haversine_estimate"
     assert res.note and "outside the road-routing area" in res.note
@@ -68,7 +68,7 @@ def test_optimize_answers_422_with_the_affected_stops_when_routing_is_required(m
     monkeypatch.setenv("ROUTING_REQUIRED", "true")
     m._CACHE.clear()
     real = m.osrm_matrix
-    monkeypatch.setattr(m, "osrm_matrix", lambda points, base: real(points, base, httpx.Client(transport=httpx.MockTransport(osrm_snapping_everything_to_one_node(165_000)))))
+    monkeypatch.setattr(m, "osrm_matrix", lambda points, base, **_kw: real(points, base, httpx.Client(transport=httpx.MockTransport(osrm_snapping_everything_to_one_node(165_000)))))
     r = TestClient(app).post("/optimize", json=_request())
     assert r.status_code == 422
     d = r.json()["detail"]

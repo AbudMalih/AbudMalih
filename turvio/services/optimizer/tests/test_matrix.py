@@ -46,7 +46,7 @@ def test_caches_identical_requests(monkeypatch):
     calls: list[httpx.Request] = []
     monkeypatch.setenv("OSRM_URL", "http://osrm.test")
     m._CACHE.clear()
-    def counting(pts, url):
+    def counting(pts, url, **_kw):
         calls.append(1)
         return m.Matrix([[0]], [[0]], "osrm")
 

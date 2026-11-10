@@ -10,7 +10,10 @@ from __future__ import annotations
 
 import math
 import os
+import time
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeout
 from dataclasses import dataclass
 from typing import Literal, Sequence
 
@@ -113,8 +116,46 @@ def _cache_key(points: Sequence[GeoPoint]) -> tuple:
     return tuple((round(p.lat, 5), round(p.lng, 5)) for p in points)
 
 
-def osrm_matrix(points: Sequence[GeoPoint], base_url: str, client: httpx.Client | None = None) -> Matrix:
-    """Road-network matrix from an OSRM `table` endpoint (chunked by sources)."""
+class MatrixDeadline(TimeoutError):
+    """The road matrix was not complete before the optimizer's matrix deadline (request cancelled)."""
+
+
+# One worker thread per concurrent request at most; the thread only waits on the HTTP call.
+_HTTP = ThreadPoolExecutor(max_workers=8, thread_name_prefix="osrm-table")
+
+
+def _get_before(client: httpx.Client, url: str, params: dict, deadline: float | None, own: bool) -> httpx.Response:
+    """GET that returns before `deadline` or raises MatrixDeadline.
+
+    httpx timeouts apply per phase (connect / each read), so a server that trickles bytes could
+    exceed them in total. The call therefore runs in a worker and is waited for at most until the
+    deadline; on expiry the client we own is closed, which aborts the connection (cancellation).
+    """
+    if deadline is None:
+        return client.get(url, params=params)
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise MatrixDeadline("matrix deadline reached before the request")
+    fut = _HTTP.submit(client.get, url, params=params, timeout=min(TIMEOUT_S, remaining))
+    try:
+        return fut.result(timeout=remaining)
+    except FuturesTimeout:
+        fut.cancel()
+        if own:
+            client.close()  # aborts the in-flight request
+        raise MatrixDeadline(f"OSRM did not answer within {remaining:.2f} s") from None
+    except httpx.TimeoutException as e:
+        if time.monotonic() >= deadline - 0.01:
+            raise MatrixDeadline(f"OSRM did not answer within {remaining:.2f} s") from e
+        raise
+
+
+def osrm_matrix(points: Sequence[GeoPoint], base_url: str, client: httpx.Client | None = None, deadline: float | None = None) -> Matrix:
+    """Road-network matrix from an OSRM `table` endpoint (chunked by sources).
+
+    `deadline` (time.monotonic()): every request – and the matrix as a whole – must finish before
+    it; otherwise MatrixDeadline is raised and the open request is cancelled.
+    """
     coords = ";".join(f"{p.lng:.6f},{p.lat:.6f}" for p in points)
     url = f"{base_url.rstrip('/')}/table/v1/driving/{coords}"
     n = len(points)
@@ -128,7 +169,7 @@ def osrm_matrix(points: Sequence[GeoPoint], base_url: str, client: httpx.Client 
             params = {"annotations": "duration,distance"}
             if n > TABLE_CHUNK:
                 params["sources"] = ";".join(map(str, sources))
-            res = client.get(url, params=params)
+            res = _get_before(client, url, params, deadline, own)
             res.raise_for_status()
             data = res.json()
             if data.get("code") != "Ok":
@@ -155,7 +196,7 @@ def osrm_matrix(points: Sequence[GeoPoint], base_url: str, client: httpx.Client 
     return m
 
 
-def build_matrix(points: Sequence[GeoPoint]) -> Matrix:
+def build_matrix(points: Sequence[GeoPoint], deadline: float | None = None) -> Matrix:
     """Road matrix when OSRM_URL is set.
 
     Without ROUTING_REQUIRED a failure falls back to a labelled straight-line estimate (`note`
@@ -173,7 +214,13 @@ def build_matrix(points: Sequence[GeoPoint]) -> Matrix:
         _CACHE.move_to_end(key)
         return _CACHE[key]
     try:
-        m = osrm_matrix(points, base_url)
+        m = osrm_matrix(points, base_url, deadline=deadline)
+    except MatrixDeadline as e:
+        # Too slow for this request's time budget: never wait past it.
+        if required:
+            raise RoutingError("routing_unavailable", f"Road routing did not answer within the time budget ({e})") from e
+        est = estimate_matrix(points)
+        return Matrix(est.distances_m, est.durations_s, est.source, "OSRM too slow for the time budget: straight-line estimate used")
     except RoutingError as e:
         if required:
             raise
