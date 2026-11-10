@@ -8,6 +8,10 @@ import { errorMessage } from "../lib/api";
 import { ACTION_LABEL, PRECISION_LABEL, checkStatusLabel, locationBadge, type LocationEvent, type LocationReport, type StopLocationDetail } from "../lib/locations";
 import { useDispatch } from "../lib/store";
 import { AddressSearch, type PickedPlace } from "./AddressSearch";
+import { LocationPickerMap, pickStatus, type PickerMarker } from "./LocationPickerMap";
+
+/** Approach points may be up to this far from the pin (same limit as the database). */
+const APPROACH_LIMIT_M = 300;
 
 const ICON = { error: CircleAlert, warning: TriangleAlert, info: Info } as const;
 const TONE = { error: "text-danger-ink", warning: "text-warning-ink", info: "text-muted" } as const;
@@ -25,7 +29,10 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
   const published = !!summary.tour.publishedAt;
   const [moving, setMoving] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [approachFor, setApproachFor] = useState<{ lat: number; lng: number; roadName: string; distanceMeters: number } | null>(null);
+  // Navigation approach dialog: open with an optional proposal (the check's suggestion); applied only on "Use this approach".
+  const [approachOpen, setApproachOpen] = useState(false);
+  const [approachPick, setApproachPick] = useState<{ lat: number; lng: number } | null>(null);
+  const [original, setOriginal] = useState<StopLocationDetail["original"] | undefined>(undefined);
   const [picked, setPicked] = useState<PickedPlace | null>(null);
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
@@ -36,6 +43,15 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
   const warnings = report?.issues.filter((i) => i.severity === "warning") ?? [];
   const badge = locationBadge(report);
   const reasonMissing = published && !reason.trim();
+  const suggestion = report?.issues.find((i) => i.suggestion)?.suggestion;
+  const refMarkers = (): PickerMarker[] => [
+    ...(stop.location ? [{ point: stop.location, label: "Current pin", kind: "current" as const }] : []),
+    ...(original?.location ? [{ point: original.location, label: original.kind === "original" ? "Original location" : "Earliest recorded location", kind: "original" as const }] : []),
+    ...(suggestion ? [{ point: suggestion.location, label: `Suggested approach: ${suggestion.roadName || "unnamed road"}`, kind: "suggestion" as const }] : []),
+    ...(report?.approach ? [{ point: { lat: report.approach.lat, lng: report.approach.lng }, label: "Current navigation approach", kind: "approach" as const }] : []),
+  ];
+  const moveStatus = pickStatus(picked ? { lat: picked.lat, lng: picked.lng } : null, stop.location ?? scoped.depots[0]!.location);
+  const approachStatus = stop.location ? pickStatus(approachPick, stop.location, APPROACH_LIMIT_M) : { meters: null, allowed: false };
 
   const act = async (label: string, fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -76,7 +92,16 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
                 <span>
                   {i.message}
                   {open && i.suggestion && !report.approach && (
-                    <Button size="sm" variant="secondary" className="ms-2" disabled={busy} onClick={() => setApproachFor({ ...i.suggestion!.location, roadName: i.suggestion!.roadName, distanceMeters: i.suggestion!.distanceMeters })}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="ms-2"
+                      disabled={busy}
+                      onClick={() => {
+                        setApproachPick(i.suggestion!.location);
+                        setApproachOpen(true);
+                      }}
+                    >
                       <Navigation /> Use as navigation approach…
                     </Button>
                   )}
@@ -107,9 +132,32 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
 
       {open && (
         <div className="flex flex-wrap gap-1.5">
-          <Button size="sm" variant="secondary" onClick={() => setMoving(true)} disabled={busy}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              setMoving(true);
+              // The original location is shown on the map for reference (staff only).
+              if (original === undefined) void stopLocation(stop.id).then((d) => setOriginal(d.original)).catch(() => setOriginal(null));
+            }}
+            disabled={busy}
+          >
             <MapPin /> Move pin…
           </Button>
+          {stop.location && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setApproachPick(report?.approach ? { lat: report.approach.lat, lng: report.approach.lng } : (suggestion?.location ?? null));
+                setApproachOpen(true);
+              }}
+              disabled={busy}
+              data-testid="choose-approach"
+            >
+              <Navigation /> {report?.approach ? "Change navigation approach…" : "Choose navigation approach…"}
+            </Button>
+          )}
           {stop.location && warnings.length > 0 && !report?.acknowledged && report?.status !== "pending" && (
             <Button size="sm" variant="secondary" onClick={() => setConfirming(true)} disabled={busy} data-testid="confirm-location">
               <CheckCircle2 /> Location is correct…
@@ -173,7 +221,7 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
           if (!o) setPicked(null);
         }}
         title="Move the map pin"
-        description="Only the map position changes – the delivery address stays as it is. The original location is kept in the history."
+        description="Click the map (or drag the blue point) – or search a place. Only the map position changes; the delivery address stays as it is and the original location is kept in the history."
         footer={
           <Button
             disabled={!picked || reasonMissing || busy}
@@ -194,8 +242,21 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
         }
       >
         <div className="flex flex-col gap-2 text-[13px]">
-          <AddressSearch near={stop.location ?? undefined} onPick={setPicked} placeholder="Search a place or type coordinates (52.37, 9.73)" />
-          {picked && <div className="text-xs text-muted">New position: {picked.label}</div>}
+          {moving && (
+            <LocationPickerMap
+              center={stop.location ?? original?.location ?? scoped.depots[0]!.location}
+              markers={refMarkers().filter((m) => m.kind !== "suggestion" && m.kind !== "approach")}
+              value={picked ? { lat: picked.lat, lng: picked.lng } : null}
+              onPick={(p) => setPicked({ ...p, label: `Map point ${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}` })}
+            />
+          )}
+          <AddressSearch near={stop.location ?? undefined} onPick={setPicked} placeholder="…or search a place / type coordinates (52.37, 9.73)" />
+          {picked && (
+            <div className="text-xs text-muted" data-testid="move-pin-summary">
+              New position: {picked.label}
+              {moveStatus.meters !== null && stop.location ? ` · ${moveStatus.meters} m from the current pin` : ""}
+            </div>
+          )}
           <label className="flex flex-col gap-1">
             <span className="font-medium text-ink-2">Reason{published ? " (required – the tour is published)" : " (optional)"}</span>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason" maxLength={500} />
@@ -230,22 +291,22 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
       </Dialog>
 
       <Dialog
-        open={!!approachFor}
-        onOpenChange={(o) => !o && setApproachFor(null)}
-        title="Use as navigation approach?"
-        description={
-          approachFor
-            ? `Drivers and routing will go to ${approachFor.roadName || "this point"} (${approachFor.distanceMeters} m from the pin) instead of the pin. The delivery address and the pin stay unchanged. Valid until the address or pin changes.`
-            : ""
-        }
+        open={approachOpen}
+        onOpenChange={(o) => {
+          setApproachOpen(o);
+          if (!o) setApproachPick(null);
+        }}
+        title="Navigation approach"
+        description={`Where drivers and routing should go for this stop – click the map within ${APPROACH_LIMIT_M} m of the pin (dashed circle) or the green suggestion. The delivery address and the pin stay unchanged. Valid until the address or pin changes.`}
         footer={
           <Button
-            disabled={busy || reasonMissing}
+            disabled={busy || reasonMissing || !approachStatus.allowed}
             onClick={async () => {
-              if (!approachFor) return;
-              const ok = await act("Navigation approach set", () => acceptApproach(stop, approachFor, reason.trim() || undefined));
+              if (!approachPick) return;
+              const ok = await act("Navigation approach set", () => acceptApproach(stop, approachPick, reason.trim() || undefined));
               if (ok) {
-                setApproachFor(null);
+                setApproachOpen(false);
+                setApproachPick(null);
                 setReason("");
               }
             }}
@@ -254,10 +315,20 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
           </Button>
         }
       >
-        <label className="flex flex-col gap-1 text-[13px]">
-          <span className="font-medium text-ink-2">Reason{published ? " (required – the tour is published)" : " (optional)"}</span>
-          <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Approach reason" maxLength={500} />
-        </label>
+        <div className="flex flex-col gap-2 text-[13px]">
+          {approachOpen && stop.location && <LocationPickerMap center={stop.location} limit={APPROACH_LIMIT_M} markers={refMarkers()} value={approachPick} onPick={setApproachPick} />}
+          <div className="text-xs text-muted" data-testid="approach-summary">
+            {approachPick
+              ? approachStatus.allowed
+                ? `${approachStatus.meters} m from the pin${suggestion && approachPick.lat === suggestion.location.lat && approachPick.lng === suggestion.location.lng ? ` · suggested: ${suggestion.roadName || "unnamed road"}` : ""} – the server checks that it is on a normal road.`
+                : `${approachStatus.meters} m from the pin – more than ${APPROACH_LIMIT_M} m, choose a closer point.`
+              : "No point chosen yet."}
+          </div>
+          <label className="flex flex-col gap-1">
+            <span className="font-medium text-ink-2">Reason{published ? " (required – the tour is published)" : " (optional)"}</span>
+            <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Approach reason" maxLength={500} />
+          </label>
+        </div>
       </Dialog>
     </div>
   );

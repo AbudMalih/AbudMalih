@@ -16,6 +16,23 @@ import { DispatchProvider, type SessionInfo } from "../lib/store";
  * explicit click; a pending check is never shown as checked; after publication edits need a reason.
  */
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(""), usePathname: () => "/map", useRouter: () => ({ push: vi.fn() }) }));
+// The Leaflet map is replaced by buttons that "click" fixed points (the dialog logic is what is tested).
+vi.mock("../components/LocationPickerMap", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../components/LocationPickerMap")>();
+  return {
+    ...actual,
+    LocationPickerMap: (p: { onPick: (x: { lat: number; lng: number }) => void; markers: { label: string }[]; limit?: number }) => (
+      <div data-testid="picker" data-markers={p.markers.map((m) => m.label).join("|")} data-limit={p.limit ?? ""}>
+        <button type="button" onClick={() => p.onPick({ lat: 52.3826, lng: 9.7403 })}>
+          map near
+        </button>
+        <button type="button" onClick={() => p.onPick({ lat: 52.3866, lng: 9.7403 })}>
+          map far
+        </button>
+      </div>
+    ),
+  };
+});
 
 const stop = (i: number, extra: Partial<Stop> = {}): Stop =>
   ({
@@ -189,5 +206,49 @@ describe("address edit after publication", () => {
     await user.click(save);
     await waitFor(() => expect(calls.find((c) => c.method === "PATCH")).toBeTruthy());
     expect(calls.find((c) => c.method === "PATCH")!.body).toMatchObject({ address: { houseNumber: "1a" }, reason: "Customer called", expectedAddressVersion: 1 });
+  });
+});
+
+describe("map-based placement (P0-3.6)", () => {
+  const openStop = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
+    wrap(<TourDetail summary={summary()} />);
+    await screen.findByTestId("location-review-banner");
+    await user.click(within(row(name)).getByRole("button", { name: new RegExp(name) }));
+    return screen.findByTestId("location-review");
+  };
+
+  it("move pin by clicking the map: shows the distance, needs a reason on a published tour, sends a hand-placed pin", async () => {
+    const user = userEvent.setup();
+    const panel = await openStop(user, "Kunde 0");
+    await user.click(within(panel).getByRole("button", { name: /Move pin/ }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByTestId("picker").dataset.markers).toContain("Current pin");
+    await user.click(within(dialog).getByRole("button", { name: "map near" }));
+    expect(within(dialog).getByTestId("move-pin-summary").textContent).toMatch(/m from the current pin/);
+    const go = within(dialog).getByRole("button", { name: /^Move pin$/ }) as HTMLButtonElement;
+    expect(go.disabled).toBe(true);
+    await user.type(within(dialog).getByRole("textbox", { name: "Reason" }), "Entrance at the back");
+    await user.click(go);
+    await waitFor(() => expect(calls.find((c) => c.method === "PATCH")).toBeTruthy());
+    expect(calls.find((c) => c.method === "PATCH")!.body).toEqual({ location: { lat: 52.3826, lng: 9.7403 }, locationPrecision: "manual_pin", reason: "Entrance at the back", expectedLocationVersion: 1 });
+  });
+
+  it("choose an approach on the map: limited to 300 m, nothing sent until 'Use this approach'", async () => {
+    const user = userEvent.setup();
+    const panel = await openStop(user, "Kunde 0");
+    await user.click(within(panel).getByTestId("choose-approach"));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByTestId("picker").dataset.limit).toBe("300");
+    await user.type(within(dialog).getByRole("textbox", { name: "Approach reason" }), "Loading bay");
+    const go = within(dialog).getByRole("button", { name: /Use this approach/ }) as HTMLButtonElement;
+    await user.click(within(dialog).getByRole("button", { name: "map far" })); // ~ 445 m
+    expect(within(dialog).getByTestId("approach-summary").textContent).toMatch(/more than 300 m/);
+    expect(go.disabled).toBe(true);
+    await user.click(within(dialog).getByRole("button", { name: "map near" }));
+    expect(go.disabled).toBe(false);
+    expect(calls.some((c) => c.url.includes("/approach"))).toBe(false);
+    await user.click(go);
+    await waitFor(() => expect(calls.find((c) => c.url.includes("/location/approach"))).toBeTruthy());
+    expect(calls.find((c) => c.url.includes("/location/approach"))!.body).toMatchObject({ lat: 52.3826, lng: 9.7403, expectedAddressVersion: 1, reason: "Loading bay" });
   });
 });
