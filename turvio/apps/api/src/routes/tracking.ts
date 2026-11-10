@@ -1,7 +1,8 @@
-import { isOpen, nowInZone, sortBySequence } from "@turvio/shared";
+import { isOpen, minuteOfDay, nowInZone, projectTour, sortBySequence, type DispatchDataset } from "@turvio/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { STOP_SELECT, orgTimeZone, toStop, tourEndOf, type StopRow, type TourRow } from "../data/dispatch";
+import { STOP_SELECT, orgTimeZone, toStop, toTour, type StopRow, type TourRow } from "../data/dispatch";
+import { buildRoads } from "../data/roads";
 import { ApiError } from "../db";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
 import { RoutingUnavailable } from "../routing";
@@ -195,7 +196,7 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
   app.get("/v1/orgs/:orgId/tours/:id/eta", { preHandler: guards.requireTenant("tracking.view_live") }, async (req, reply) => {
     const { orgId, id } = IdParams.parse(req.params);
     const data = await db.asUser(claims(req), async (tx) => {
-      const tour = (await tx.query<Pick<TourRow, "id" | "status" | "depot_id" | "end_lat" | "end_lng" | "end_mode">>(`select * from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
+      const tour = (await tx.query<TourRow>(`select * from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
       if (!tour) return null;
       const pos = (
         await tx.query<{ lat: number; lng: number; recorded_at: Date; age: number }>(
@@ -205,53 +206,57 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
       ).rows[0];
       const depot = (await tx.query<{ lat: number; lng: number }>(`select lat, lng from depots where id = $1`, [tour.depot_id])).rows[0]!;
       const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 order by s.sequence`, [id])).rows.map(toStop);
-      const now = nowInZone(await orgTimeZone(tx, orgId)).minute;
-      return { tour, pos, depot, stops, now };
+      const tz = await orgTimeZone(tx, orgId);
+      const now = nowInZone(tz).minute;
+      const maxShift = tour.driver_id ? ((await tx.query<{ max_shift_minutes: number }>(`select max_shift_minutes from drivers where id = $1`, [tour.driver_id])).rows[0]?.max_shift_minutes ?? 480) : 480;
+      return { tour, pos, depot, stops, now, tz, maxShift };
     });
     if (!data) return problem(reply, 404, "not_found", "Tour not found");
-    if (data.tour.status !== "in_progress") return { source: "none", reason: "tour_not_in_progress" };
+    const paused = data.tour.status === "paused";
+    if (data.tour.status !== "in_progress" && !paused) return { source: "none", reason: "tour_not_in_progress" };
     if (!data.pos) return { source: "none", reason: "no_live_position" };
     if (data.pos.age > FRESH_GPS_SECONDS) return { source: "none", reason: "position_stale", positionAgeSeconds: data.pos.age };
-    const routing = deps.routing;
-    if (!routing) return { source: "none", reason: "no_routing" };
-    const open = sortBySequence(data.stops).filter((s) => isOpen(s.status) && s.type !== "break" && s.location);
-    // undefined = the tour ends at its last stop (no trip back in the remaining distance/finish time).
-    const end = tourEndOf(data.tour, data.depot);
-    const points = [{ lat: data.pos.lat, lng: data.pos.lng }, ...open.map((s) => s.location!), ...(end ? [end] : [])];
-    let legs: { meters: number; seconds: number }[];
-    try {
-      legs = points.length < 2 ? [] : (await routing.route(points)).legs;
-    } catch (e) {
-      if (e instanceof RoutingUnavailable) return { source: "none", reason: "routing_unavailable", note: e.message };
-      throw e;
-    }
-    let t = data.now;
-    let remainingMeters = 0;
-    let remainingDriveSeconds = 0;
-    const stops = open.map((s, i) => {
-      const leg = legs[i] ?? { meters: 0, seconds: 0 };
-      remainingMeters += leg.meters;
-      remainingDriveSeconds += leg.seconds;
-      t += leg.seconds / 60;
-      if (s.timeWindow && t < s.timeWindow.start) t = s.timeWindow.start;
-      const eta = Math.round(t);
-      const lateMinutes = s.timeWindow && eta > s.timeWindow.end ? eta - s.timeWindow.end : 0;
-      t += s.serviceSeconds / 60;
-      return { stopId: s.id, etaMinute: eta, deadlineMinute: s.timeWindow?.end ?? null, lateMinutes, priority: s.priority };
-    });
-    const back = legs[open.length] ?? { meters: 0, seconds: 0 };
-    remainingMeters += back.meters;
-    remainingDriveSeconds += back.seconds;
-    const atRisk = stops.filter((x) => x.lateMinutes > 0);
+    if (!deps.routing) return { source: "none", reason: "no_routing" };
+    // Same road data and projection as the dispatch dataset (data/roads.ts + shared projectTour).
+    const tour = toTour(data.tour);
+    const mini: DispatchDataset = {
+      organizationId: orgId,
+      date: tour.date,
+      asOfMinute: data.now,
+      isToday: true,
+      timeZone: data.tz,
+      depots: [{ id: tour.depotId, organizationId: orgId, name: "", address: { street: "", houseNumber: "", postalCode: "", city: "", countryCode: "DE" }, location: data.depot }],
+      drivers: [],
+      vehicles: [],
+      tours: [tour],
+      stops: data.stops,
+      unassigned: [],
+    };
+    const { roads } = await buildRoads(mini, deps.routing, new Map([[tour.id, { lat: data.pos.lat, lng: data.pos.lng, ageSeconds: data.pos.age }]]), { budgetMs: 8000 });
+    const road = roads[tour.id];
+    if (road?.source !== "osrm" || !road.gps?.firstLeg) return { source: "none", reason: "routing_unavailable" };
+    const p = projectTour({ tour, stops: data.stops, depotLocation: data.depot, maxShiftMinutes: data.maxShift, nowMinute: data.now, isToday: true, road, minuteOf: (iso) => minuteOfDay(iso, data.tz) });
+    const stops = sortBySequence(data.stops)
+      .filter((s) => isOpen(s.status) && s.type !== "break" && s.location)
+      .map((s) => {
+        const x = p.stops.get(s.id)!;
+        return { stopId: s.id, etaMinute: Math.round(x.etaMinute), deadlineMinute: x.deadlineMinute, lateMinutes: Math.round(x.lateMinutes), priority: s.priority, state: x.state };
+      });
+    const atRisk = stops.filter((x) => x.state === "projected_late" || x.state === "deadline_missed");
     return {
       source: "osrm",
-      from: "gps",
+      from: p.origin,
+      condition: p.condition,
       positionAgeSeconds: data.pos.age,
       computedAtMinute: data.now,
+      complete: p.complete,
+      unlocatedStopIds: p.unlocatedStopIds,
       stops,
-      remainingMeters: Math.round(remainingMeters),
-      remainingDriveSeconds: Math.round(remainingDriveSeconds),
-      finishMinute: Math.round(t + back.seconds / 60),
+      remainingMeters: Math.round(p.remainingMeters),
+      remainingDriveSeconds: Math.round(p.remainingDriveSeconds),
+      remainingServiceSeconds: Math.round(p.remainingServiceSeconds),
+      finishMinute: Math.round(p.finishMinute),
+      endsAtLastStop: p.endsAtLastStop,
       atRiskStopIds: atRisk.map((x) => x.stopId),
       // A suggestion for the dispatcher/driver – the order is never changed automatically.
       suggestReoptimize: atRisk.length > 0,

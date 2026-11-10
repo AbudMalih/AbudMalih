@@ -1,5 +1,6 @@
-import type { DispatchTourStatus, PickupState, StopStatus } from "@turvio/shared";
+import type { DelayCertainty, DispatchTourStatus, PickupState, StopStatus } from "@turvio/shared";
 import { Badge, type BadgeTone } from "@turvio/web-ui/ds";
+import { delayLabel } from "../lib/eta";
 
 export const TOUR_STATUS: Record<DispatchTourStatus, { label: string; tone: BadgeTone }> = {
   in_progress: { label: "On route", tone: "brand" },
@@ -10,8 +11,9 @@ export const TOUR_STATUS: Record<DispatchTourStatus, { label: string; tone: Badg
 };
 
 export const PICKUP_STATE: Record<PickupState, { label: string; tone: BadgeTone }> = {
-  late: { label: "Will be late", tone: "danger" },
-  at_risk: { label: "At risk", tone: "warning" },
+  missed: { label: "Window missed", tone: "danger" },
+  late: { label: "Projected late", tone: "danger" },
+  at_risk: { label: "Close to deadline", tone: "warning" },
   unassigned: { label: "Unassigned", tone: "warning" },
   scheduled: { label: "Scheduled", tone: "brand" },
   completed: { label: "Picked up", tone: "success" },
@@ -42,20 +44,25 @@ export const FAILURE_REASON: Record<string, string> = {
   other: "Other",
 };
 
-export function TourStatusBadge({ status }: { status: DispatchTourStatus }) {
+/** `certainty` tells a delay that already happened from a projected or estimated one. */
+export function TourStatusBadge({ status, certainty = null }: { status: DispatchTourStatus; certainty?: DelayCertainty | null }) {
   const s = TOUR_STATUS[status];
+  const label = status === "delayed" ? delayLabel(certainty) : s.label;
+  const tone: BadgeTone = status === "delayed" && certainty === "estimated" ? "warning" : s.tone;
   return (
-    <Badge tone={s.tone} dot>
-      {s.label}
+    <Badge tone={tone} dot data-testid="tour-status">
+      {label}
     </Badge>
   );
 }
 
-export function PickupStateBadge({ state }: { state: PickupState }) {
+export function PickupStateBadge({ state, estimated = false }: { state: PickupState; estimated?: boolean }) {
   const s = PICKUP_STATE[state];
+  const est = estimated && (state === "late" || state === "at_risk");
+  const label = est && state === "late" ? "Possibly late (estimate)" : est ? `${s.label} (estimate)` : s.label;
   return (
-    <Badge tone={s.tone} dot>
-      {s.label}
+    <Badge tone={est && state === "late" ? "warning" : s.tone} dot>
+      {label}
     </Badge>
   );
 }

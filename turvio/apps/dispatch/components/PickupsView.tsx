@@ -28,7 +28,7 @@ export function PickupsView() {
   const chips: { key: Filter; label: string }[] = [
     { key: "attention", label: "Needs attention" },
     { key: "all", label: "All" },
-    ...(["late", "at_risk", "unassigned", "scheduled", "completed"] as PickupState[]).map((k) => ({ key: k as Filter, label: PICKUP_STATE[k].label })),
+    ...(["missed", "late", "at_risk", "unassigned", "scheduled", "completed"] as PickupState[]).map((k) => ({ key: k as Filter, label: PICKUP_STATE[k].label })),
   ];
   const count = (f: Filter) => filterPickups(pickups, f, "").length;
 
@@ -116,9 +116,11 @@ export function PickupsView() {
                             <span className="text-warning-ink">Not on a tour</span>
                           )}
                         </td>
-                        <td className={cn("whitespace-nowrap px-3 py-3 tabular", r.state === "late" ? "font-medium text-danger-ink" : "text-ink-2")}>{r.etaMinute !== null ? formatClock(r.etaMinute) : "–"}</td>
+                        <td className={cn("whitespace-nowrap px-3 py-3 tabular", r.state === "missed" || (r.state === "late" && !r.estimated) ? "font-medium text-danger-ink" : r.state === "late" ? "text-warning-ink" : "text-ink-2")}>
+                          {r.etaMinute !== null ? `${formatClock(r.etaMinute)}${r.estimated ? " (est.)" : ""}` : "–"}
+                        </td>
                         <td className="whitespace-nowrap px-3 py-3">
-                          <PickupStateBadge state={r.state} />
+                          <PickupStateBadge state={r.state} estimated={r.estimated} />
                         </td>
                         <td className="whitespace-nowrap py-3 pe-4 ps-3 text-end">
                           {r.state === "unassigned" ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { formatClock } from "@turvio/shared";
+import { delayLabel } from "../lib/eta";
 import { Button, Sheet, Tooltip, cn } from "@turvio/web-ui/ds";
 import { AlertTriangle, ArrowUpFromLine, List, Map as MapIcon, MousePointerClick, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -54,7 +55,9 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
               <li key={s.tour.id}>
                 <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-md border border-red-200 bg-danger-soft/60 px-3 py-2 text-start text-[13px] hover:bg-danger-soft">
                   <span className="font-semibold text-danger-ink">{s.tour.name}</span> <span className="text-muted">· {s.driver?.displayName ?? "no driver"}</span>
-                  <span className="mt-0.5 block text-xs text-danger-ink/80">{s.timeline.delayReasons[0]}</span>
+                  <span className="mt-0.5 block text-xs text-danger-ink/80">
+                    {delayLabel(s.delayCertainty)} · {s.timeline.projection.delayReasons[0]?.text}
+                  </span>
                 </button>
               </li>
             ))}

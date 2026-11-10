@@ -60,7 +60,18 @@ export function OpsSummary() {
       <Metric icon={<CircleCheck />} label="Completed stops" value={kpis.completedStops} sub={`of ${kpis.totalStops}`} />
       <Metric icon={<PackageOpen />} label="Remaining deliveries" value={kpis.remainingDeliveries} sub={kpis.unassignedDeliveries ? `${kpis.unassignedDeliveries} unassigned` : undefined} />
       <Metric icon={<PackageCheck />} label="Pickups" value={kpis.scheduledPickups} sub={kpis.pickupConflicts ? `${kpis.pickupConflicts} need attention` : undefined} tone={kpis.pickupConflicts ? "warning" : undefined} href="/pickups" />
-      <Metric icon={<AlertTriangle />} label="Delayed tours" value={kpis.delayedTours} tone={kpis.delayedTours ? "danger" : undefined} href="/list?status=delayed" />
+      <Metric
+        icon={<AlertTriangle />}
+        label="Delayed tours"
+        value={kpis.delayedTours}
+        sub={
+          kpis.delayedTours
+            ? [kpis.delayedConfirmed && `${kpis.delayedConfirmed} confirmed`, kpis.delayedProjected && `${kpis.delayedProjected} projected`, kpis.delayedEstimated && `${kpis.delayedEstimated} estimate`].filter(Boolean).join(" · ")
+            : undefined
+        }
+        tone={kpis.delayedConfirmed || kpis.delayedProjected ? "danger" : kpis.delayedEstimated ? "warning" : undefined}
+        href="/list?status=delayed"
+      />
       <Metric icon={<Truck />} label="Available vehicles" value={kpis.availableVehicles} sub={`of ${kpis.totalVehicles}`} />
     </section>
   );

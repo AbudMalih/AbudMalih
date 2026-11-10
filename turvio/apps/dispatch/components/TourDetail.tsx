@@ -10,6 +10,7 @@ import {
   Clock,
   Crosshair,
   EyeOff,
+  Flag,
   Gauge,
   History,
   Loader2,
@@ -28,6 +29,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { api, errorMessage } from "../lib/api";
+import { basisLabel, conditionLabel, finishTitle, finishValue, minutes, projectionNote, stopStateLabel } from "../lib/eta";
 import { tourColor } from "../lib/helpers";
 import { routeKey, useRoadRoute } from "../lib/road";
 import { optimizeNotes, optimizeProblems } from "../lib/optimize";
@@ -70,11 +72,15 @@ function StopMarker({ stop, color, index }: { stop: Stop; color: string; index: 
   );
 }
 
-export function StopRow({ summary, stop, index, expanded, onToggle, roadEta }: { summary: TourSummary; stop: Stop; index: number; expanded: boolean; onToggle: () => void; roadEta?: number }) {
+export function StopRow({ summary, stop, index, expanded, onToggle }: { summary: TourSummary; stop: Stop; index: number; expanded: boolean; onToggle: () => void }) {
   const { scoped, setPriority } = useDispatch();
   const [busy, setBusy] = useState(false);
   const color = tourColor(scoped, summary.tour.id);
+  // ETA, colour and warning all come from the one projection of this tour.
+  const proj = summary.timeline.projection;
   const p = summary.timeline.projections.get(stop.id);
+  const warn = p ? stopStateLabel(p.state, proj.source) : null;
+  const hasEta = p !== undefined && Number.isFinite(p.etaMinute);
   const st = STOP_STATUS[stop.status];
   return (
     <li className={cn("rounded-md transition-colors", expanded ? "bg-surface-2/70" : "hover:bg-surface-2/50")}>
@@ -89,10 +95,12 @@ export function StopRow({ summary, stop, index, expanded, onToggle, roadEta }: {
           <span className="block truncate text-xs text-muted">{formatAddress(stop)}</span>
         </span>
         <span className="shrink-0 text-end">
-          <span className={cn("block text-xs font-medium tabular", p?.late ? "text-danger-ink" : p?.atRisk ? "text-warning-ink" : "text-ink-2")}>
-            {roadEta !== undefined && isOpen(stop.status) ? formatClock(roadEta) : p ? formatClock(p.etaMinute) : "–"}
+          <span className={cn("block text-xs font-medium tabular", warn?.tone === "danger" ? "text-danger-ink" : warn?.tone === "warning" ? "text-warning-ink" : "text-ink-2")} data-testid="stop-eta">
+            {hasEta ? formatClock(p!.etaMinute) : "–"}
           </span>
-          <span className={cn("block text-2xs", isNotDelivered(stop.status) ? "text-danger-ink" : "text-subtle")}>{stop.status === "pending" ? "ETA" : st.label}</span>
+          <span className={cn("block text-2xs", isNotDelivered(stop.status) ? "text-danger-ink" : "text-subtle")}>
+            {isOpen(stop.status) ? (proj.source === "estimate" ? "ETA (est.)" : "ETA") : st.label}
+          </span>
         </span>
         <ChevronDown className={cn("size-4 shrink-0 text-subtle transition-transform", expanded && "rotate-180")} />
       </button>
@@ -105,8 +113,12 @@ export function StopRow({ summary, stop, index, expanded, onToggle, roadEta }: {
                   {st.label}
                 </Badge>
                 <Badge tone={stop.type === "pickup" ? "brand" : "outline"}>{stop.type === "pickup" ? "Pickup" : "Delivery"}</Badge>
-                {p?.late && <Badge tone="danger">Window will be missed</Badge>}
-                {p?.atRisk && <Badge tone="warning">Close to deadline</Badge>}
+                {warn && (
+                  <Badge tone={warn.tone} data-testid="stop-deadline-state">
+                    {warn.label}
+                    {p && p.lateMinutes > 0 && p.state !== "unknown" ? ` · ${Math.round(p.lateMinutes)} min` : ""}
+                  </Badge>
+                )}
                 {!stop.location && <Badge tone="danger">No map position</Badge>}
               </div>
               {stop.failureReason && (
@@ -260,8 +272,9 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
   const startLabel = started !== null ? `${formatClock(started)} (actual)` : `${formatClock(s.tour.plannedStartMinute)} (planned)`;
   const open = s.tour.status !== "completed";
   const canManage = session.role !== "driver";
+  // The map line still comes from the route endpoint; every figure comes from the projection.
   const road = useRoadRoute(session.organizationId, s.tour.id, routeKey(s.stops));
-  const rm = road?.source === "osrm" ? road.metrics : undefined;
+  const proj = t.projection;
 
   const active = s.tour.status === "in_progress" || s.tour.status === "paused";
   const [preview, setPreview] = useState<OptimizeMeta | null>(null);
@@ -290,7 +303,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="size-2.5 rounded-full" style={{ backgroundColor: tourColor(scoped, s.tour.id) }} aria-hidden="true" />
-        <TourStatusBadge status={s.status} />
+        <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
         {s.tour.origin === "driver" && <Badge tone="outline">Driver's own route</Badge>}
         {s.tour.publishedAt ? (
           <Badge tone="success">
@@ -309,14 +322,38 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         </div>
       )}
 
-      {t.delayReasons.length > 0 && open && (
-        <div className="flex gap-2.5 rounded-md border border-red-200 bg-danger-soft px-3 py-2.5 text-[13px] text-danger-ink" role="alert">
+      {proj.delayReasons.length > 0 && open && (
+        <div
+          className={cn(
+            "flex gap-2.5 rounded-md border px-3 py-2.5 text-[13px]",
+            s.delayCertainty === "estimated" ? "border-amber-200 bg-warning-soft text-warning-ink" : "border-red-200 bg-danger-soft text-danger-ink",
+          )}
+          role="alert"
+          data-testid="delay-reasons"
+        >
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <ul className="flex flex-col gap-0.5">
-            {t.delayReasons.map((r) => (
-              <li key={r}>{r}</li>
+            {proj.delayReasons.map((r) => (
+              <li key={r.kind}>{r.text}</li>
             ))}
           </ul>
+        </div>
+      )}
+      {open && (conditionLabel(proj) || !proj.complete || proj.source === "estimate") && (
+        <div className="rounded-md border border-line bg-surface-2/60 px-3 py-2 text-xs text-ink-2" data-testid="projection-notice">
+          {conditionLabel(proj) && <p>{conditionLabel(proj)}.</p>}
+          {!proj.complete && (
+            <p>
+              Times are incomplete: {proj.unlocatedStopIds.length} stop{proj.unlocatedStopIds.length > 1 ? "s have" : " has"} no map position (
+              {proj.unlocatedStopIds
+                .map((id) => s.stops.find((x) => x.id === id))
+                .map((x) => (x ? (x.recipientName ?? formatAddress(x)) : ""))
+                .slice(0, 3)
+                .join(", ")}
+              {proj.unlocatedStopIds.length > 3 ? " …" : ""}) – the finish shown is the earliest possible.
+            </p>
+          )}
+          {proj.source === "estimate" && <p>{basisLabel(proj)} – figures are not road values.</p>}
         </div>
       )}
 
@@ -370,22 +407,25 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         />
         <Fact icon={<Truck />} label="Vehicle" value={s.vehicleLabel ?? <span className="text-warning-ink">Not assigned</span>} sub={s.vehiclePlate ?? undefined} />
         <Fact icon={<Warehouse />} label="Start depot" value={s.depot.name} sub={formatAddress(s.depot)} />
-        <Fact icon={<Clock />} label="Start" value={startLabel} sub={`Est. return ${formatClock(t.projectedEndMinute)}`} />
-        {rm ? (
-          <Fact icon={<Gauge />} label="Road driving time" value={formatDuration(Math.round(rm.totalDriveSeconds / 60))} sub={`${formatDuration(Math.round(rm.remainingDriveSeconds / 60))} remaining · road network`} />
-        ) : (
-          <Fact icon={<Gauge />} label="Est. duration" value={formatDuration(t.durationMinutes)} sub="estimate" />
-        )}
-        {rm ? (
-          <Fact icon={<Route />} label="Road distance" value={`${(rm.totalMeters / 1000).toFixed(1)} km total`} sub={`${(rm.remainingMeters / 1000).toFixed(1)} km remaining · road network (OSRM)`} />
-        ) : (
-          <Fact
-            icon={<Route />}
-            label="Est. distance"
-            value={`${(t.distanceMeters / 1000).toFixed(1)} km total`}
-            sub={`${(t.remainingMeters / 1000).toFixed(1)} km remaining · straight-line × 1.35`}
-          />
-        )}
+        <Fact icon={<Clock />} label="Start" value={startLabel} />
+        <Fact
+          icon={<Flag />}
+          label={open ? finishTitle(s.tour, proj) : "Finished"}
+          value={<span data-testid="tour-finish">{open ? finishValue(proj) : formatClock(t.projectedEndMinute)}</span>}
+          sub={open ? <span data-testid="projection-basis">{projectionNote(proj)}</span> : undefined}
+        />
+        <Fact
+          icon={<Gauge />}
+          label={proj.source === "road" ? "Driving time (road)" : "Driving time (estimate)"}
+          value={minutes(proj.totalDriveSeconds)}
+          sub={open ? `${minutes(proj.remainingDriveSeconds)} remaining · service ${minutes(proj.remainingServiceSeconds)}${proj.remainingWaitSeconds > 60 ? ` · waiting ${minutes(proj.remainingWaitSeconds)}` : ""}` : undefined}
+        />
+        <Fact
+          icon={<Route />}
+          label={proj.source === "road" ? "Distance (road)" : "Distance (estimate)"}
+          value={`${(proj.totalMeters / 1000).toFixed(1)} km total`}
+          sub={open ? `${(proj.remainingMeters / 1000).toFixed(1)} km remaining` : undefined}
+        />
         <Fact icon={<MapPin />} label="Stops" value={`${s.total} total`} sub={`${s.delivered} done · ${s.failed} not delivered`} />
         <Fact
           icon={<ArrowUpFromLine />}
@@ -423,7 +463,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
                   <p className="font-medium text-ink-1">
                     {preview.driveSeconds != null ? `Driving ${formatDuration(preview.driveSeconds)}` : null}
                     {preview.distanceMeters ? ` · ${(preview.distanceMeters / 1000).toFixed(1)} km` : null}
-                    {preview.endMinute != null ? ` · back by ${formatClock(Math.round(preview.endMinute))}` : null}
+                    {preview.endMinute != null ? ` · ${proj.endsAtLastStop ? "finish at last stop" : "back by"} ${formatClock(Math.round(preview.endMinute))}` : null}
                   </p>
                   {optimizeProblems(preview).map((p) => (
                     <p key={p} className="text-warning-ink">
@@ -476,14 +516,14 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
       <section aria-label="Stops in order">
         <div className="mb-1 flex items-baseline justify-between">
           <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">Stops in order</h3>
-          <span className="text-2xs text-subtle">{rm ? "ETA = road-network estimate" : "ETA = straight-line estimate"}</span>
+          <span className="text-2xs text-subtle">{proj.source === "road" ? "ETA = road times" : "ETA = straight-line estimate"}</span>
         </div>
         {s.stops.length === 0 ? (
           <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-[13px] text-muted">No stops yet. Add stops or assign unassigned ones in Planning.</p>
         ) : (
           <ol className="flex flex-col">
             {s.stops.map((stop, i) => (
-              <StopRow key={stop.id} summary={s} stop={stop} index={i + 1} expanded={selectedStopId === stop.id} onToggle={() => selectStop(selectedStopId === stop.id ? null : stop.id)} roadEta={rm?.etas[stop.id]} />
+              <StopRow key={stop.id} summary={s} stop={stop} index={i + 1} expanded={selectedStopId === stop.id} onToggle={() => selectStop(selectedStopId === stop.id ? null : stop.id)} />
             ))}
           </ol>
         )}

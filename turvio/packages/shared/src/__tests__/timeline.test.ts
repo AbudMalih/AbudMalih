@@ -124,6 +124,9 @@ describe("tour timeline: start and end options", () => {
   it("a late projection is still reported (the fix must not hide real delays)", () => {
     const tl = tourTimeline(tourWith({ endMode: "last_stop" }), stops, depot, driver(5), 400);
     expect(tl.delayed).toBe(true);
-    expect(tl.delayReasons).toContain("Projected end exceeds the driver's shift");
+    // No road data here: a straight-line estimate, so the delay is "possible", never presented as projected.
+    expect(tl.delayReasons).toContain("Finish possibly after the shift ends (estimate)");
+    expect(tl.projection.source).toBe("estimate");
+    expect(tl.projection.delayCertainty).toBe("estimated");
   });
 });

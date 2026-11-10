@@ -112,12 +112,18 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
   const dateRef = useRef(date);
   dateRef.current = date;
 
+  const pendingRetry = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastReload = useRef(0);
   const reload = useCallback(async () => {
     setLoading(true);
+    lastReload.current = Date.now();
     try {
       const d = await api<DispatchDataset>("GET", `/v1/orgs/${org}/dispatch?date=${dateRef.current}`);
       setScoped(d);
       setLastLoadedAt(Date.now());
+      // Road times still being computed (labelled as estimates meanwhile): fetch them shortly.
+      clearTimeout(pendingRetry.current);
+      if (d.roadsPending) pendingRetry.current = setTimeout(() => void reload().catch(() => undefined), 3_000);
     } finally {
       setLoading(false);
     }
@@ -145,7 +151,11 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
       es = new EventSource(`/api/turvio/v1/orgs/${org}/events`);
       es.addEventListener("ready", () => setLive("live"));
       es.addEventListener("change", scheduleReload);
-      es.addEventListener("position", () => setPositionTick((n) => n + 1));
+      es.addEventListener("position", () => {
+        setPositionTick((n) => n + 1);
+        // Live-position ETAs come with the dataset: refresh it, at most every 30 s.
+        if (Date.now() - lastReload.current > 30_000) scheduleReload();
+      });
       es.onerror = () => setLive("offline");
     } else setLive("offline");
     const poll = setInterval(() => void reload().catch(() => undefined), 60_000);
@@ -153,6 +163,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
       es?.close();
       clearInterval(poll);
       clearTimeout(timer);
+      clearTimeout(pendingRetry.current);
     };
   }, [org, reload]);
 

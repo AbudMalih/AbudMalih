@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
+import { finishShort, finishValue, projectionNote } from "../lib/eta";
 import { TOUR_STATUS, TourStatusBadge } from "./StatusBadge";
 import { TourDetailSheet } from "./TourDetail";
 
@@ -200,11 +201,16 @@ export function ListView() {
                         {s.pickupsRemaining > 0 && <span className="block text-2xs text-muted">{s.pickupsRemaining} open</span>}
                       </td>
                       <td className="whitespace-nowrap px-3 py-3">
-                        <TourStatusBadge status={s.status} />
+                        <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
                       </td>
                       <td className="whitespace-nowrap py-3 pe-4 ps-3 tabular">
-                        <span className={cn(s.status === "delayed" ? "font-medium text-danger-ink" : "text-ink-2")}>{formatClock(s.timeline.projectedEndMinute)}</span>
-                        <span className="block text-2xs text-muted">{s.status === "completed" ? "finished" : `shift until ${formatClock(s.timeline.shiftEndMinute)}`}</span>
+                        <span className={cn(s.status === "delayed" ? (s.delayCertainty === "estimated" ? "font-medium text-warning-ink" : "font-medium text-danger-ink") : "text-ink-2")} title={s.status === "completed" ? undefined : projectionNote(s.timeline.projection)}>
+                          {s.status === "completed" ? formatClock(s.timeline.projectedEndMinute) : finishValue(s.timeline.projection)}
+                          {s.status !== "completed" && s.timeline.projection.source === "estimate" ? " (est.)" : ""}
+                        </span>
+                        <span className="block text-2xs text-muted">
+                          {s.status === "completed" ? "finished" : `${finishShort(s.tour, s.timeline.projection).toLowerCase()} · shift until ${formatClock(s.timeline.shiftEndMinute)}`}
+                        </span>
                       </td>
                     </tr>
                   ))}

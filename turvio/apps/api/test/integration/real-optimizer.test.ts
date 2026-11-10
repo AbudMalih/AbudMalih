@@ -1,3 +1,4 @@
+import { summarizeTours, type DispatchDataset } from "@turvio/shared";
 /**
  * The full production path on REAL road data: TURVIO API -> optimizer service (VROOM + OR-Tools)
  * -> OSRM. No fake optimizer, no fake router. Skipped (with a note) unless both services run:
@@ -163,6 +164,21 @@ describe.runIf(available)("real optimizer and OSRM through the API", () => {
     report.hannover = { stops: 100, importKm: before.metrics.totalMeters / 1000, turvioKm: after.metrics.totalMeters / 1000, turvioDriveMin: o.result.driveSeconds / 60, baselineDriveMin: baseline / 60, wallSeconds: wall };
     expect(after.metrics.totalMeters).toBeLessThan(before.metrics.totalMeters * 0.5);
     expect(o.result.driveSeconds).toBeLessThanOrEqual(baseline * 1.02);
+  }, 120_000);
+
+  it("Dispatch times equal the optimizer's plan on real roads (P0-2); the old straight-line figure did not", async () => {
+    const d = (await env.as(U.jarbouOwner, "GET", `/v1/orgs/${org()}/dispatch`)).json() as DispatchDataset;
+    const s = summarizeTours(d).find((x) => x.tour.id === hannoverTour)!;
+    const p = s.timeline.projection;
+    expect(p.source).toBe("road");
+    const o = (await env.as(U.jarbouOwner, "POST", `/v1/orgs/${org()}/tours/${hannoverTour}/optimize`, { apply: false })).json();
+    const planMinutes = o.result.endMinute - s.tour.plannedStartMinute; // optimizer: shift start -> back at the depot
+    const dispatchMinutes = p.finishMinute - p.fromMinute; // same tour, as Dispatch shows it now
+    const old = summarizeTours({ ...d, roads: undefined }).find((x) => x.tour.id === hannoverTour)!.timeline.projection; // before P0-2
+    const oldMinutes = old.finishMinute - old.fromMinute;
+    report.dispatchVsPlan = { planMinutes, dispatchMinutes, oldStraightLineMinutes: oldMinutes, dispatchKm: p.totalMeters / 1000, planKm: o.result.distanceMeters / 1000 };
+    expect(Math.abs(dispatchMinutes - planMinutes)).toBeLessThan(1);
+    expect(Math.abs(p.totalMeters - o.result.distanceMeters) / o.result.distanceMeters).toBeLessThan(0.03);
   }, 120_000);
 
   it("Hannover, same tour ending at the last stop: no return leg, shorter, still beats the baseline", async () => {

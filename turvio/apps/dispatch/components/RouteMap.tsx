@@ -2,6 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { formatClock, isNotDelivered, isOpen, type Depot, type TourSummary, type UnassignedStop } from "@turvio/shared";
+import { stopStateLabel } from "../lib/eta";
 import { Button, Skeleton, Tooltip, cn } from "@turvio/web-ui/ds";
 import { CircleAlert, Layers, LocateFixed, Maximize2, Minus, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -203,9 +204,11 @@ export function RouteMap(props: RouteMapProps) {
         if (done && !showCompleted) return;
         const idx = s.stops.indexOf(stop) + 1;
         const eta = s.timeline.projections.get(stop.id);
+        const warn = eta ? stopStateLabel(eta.state, s.timeline.projection.source) : null;
+        const etaText = eta && Number.isFinite(eta.etaMinute) ? `ETA ${formatClock(eta.etaMinute)}${s.timeline.projection.source === "estimate" ? " (est.)" : ""}` : "";
         const tip = `<strong>${idx}. ${esc(stop.recipientName ?? "")}</strong><br/>${esc(stop.address.street)} ${esc(stop.address.houseNumber ?? "")}<br/>${
-          done ? esc(stop.status) : eta ? `ETA ${formatClock(eta.etaMinute)}` : ""
-        }${stop.timeWindow ? ` · window ${formatClock(stop.timeWindow.start)}–${formatClock(stop.timeWindow.end)}` : ""}`;
+          done ? esc(stop.status) : etaText
+        }${stop.timeWindow ? ` · window ${formatClock(stop.timeWindow.start)}–${formatClock(stop.timeWindow.end)}` : ""}${warn ? `<br/>${esc(warn.label)}` : ""}`;
         const onClick = (e: Leaflet.LeafletEvent) => {
           Lf.DomEvent.stopPropagation(e as Leaflet.LeafletMouseEvent);
           latest.current.onSelectStop(stop.id, s.tour.id);
@@ -226,7 +229,7 @@ export function RouteMap(props: RouteMapProps) {
         }
         const isSel = stop.id === selectedStopId;
         const failed = isNotDelivered(stop.status);
-        const late = eta?.late;
+        const late = eta?.state === "deadline_missed" || eta?.state === "delivered_late" || (eta?.state === "projected_late" && s.timeline.projection.source === "road");
         const shape = stop.type === "pickup" ? "border-radius:7px" : "border-radius:999px";
         const bg = failed ? "#fff" : done ? "#F1F5F9" : color;
         const fg = failed ? "#B91C1C" : done ? "#64748B" : "#fff";

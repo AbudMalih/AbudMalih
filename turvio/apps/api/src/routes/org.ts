@@ -4,7 +4,8 @@ import { z } from "zod";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
 import { newOpaqueToken } from "../auth/tokens";
 import { ApiError } from "../db";
-import { loadDispatchDataset, toDepot, toDriver, toVehicle, type DepotRow, type DriverRow, type VehicleRow } from "../data/dispatch";
+import { loadDispatchDataset, loadTourPositions, toDepot, toDriver, toVehicle, type DepotRow, type DriverRow, type VehicleRow } from "../data/dispatch";
+import { buildRoads } from "../data/roads";
 
 const Uuid = z.string().uuid();
 const IdParams = OrgParams.extend({ id: Uuid });
@@ -44,7 +45,16 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
     const { orgId } = OrgParams.parse(req.params);
     const q = parse(DateQuery, req.query, reply);
     if (!q) return;
-    return db.asUser(guards.claims(req), (tx) => loadDispatchDataset(tx, orgId, q.date));
+    const seesLive = can(req.membership!.role, "tracking.view_live");
+    const { data, positions } = await db.asUser(guards.claims(req), async (tx) => {
+      const data = await loadDispatchDataset(tx, orgId, q.date);
+      const open = data.tours.filter((t) => t.status === "in_progress" || t.status === "paused").map((t) => t.id);
+      return { data, positions: seesLive && data.isToday ? await loadTourPositions(tx, orgId, open) : new Map() };
+    });
+    // Road legs for every tour (outside the transaction; bounded time, never blocks the page).
+    const { roads, pending, report } = await buildRoads(data, deps.routing, positions);
+    req.log.info({ orgId, roads: report }, "dispatch road times");
+    return { ...data, roads, roadsPending: pending };
   });
 
   // ---------------------------------------------------------------- depots

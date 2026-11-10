@@ -6,6 +6,7 @@ import { ArrowUpFromLine, Route, SearchX, Truck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
+import { finishShort, finishValue, projectionNote } from "../lib/eta";
 import { TourStatusBadge } from "./StatusBadge";
 
 export type TourFilter = "all" | "active" | "delayed" | "planned" | "completed";
@@ -90,7 +91,7 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                         <span className="truncate text-[13px] font-semibold text-ink">{s.tour.name}</span>
                         <span className="truncate text-xs text-muted">{s.depot.name}</span>
                       </span>
-                      <TourStatusBadge status={s.status} />
+                      <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
                     </div>
                     <div className="mt-2.5 flex items-center gap-2.5">
                       <Avatar name={s.driver?.displayName ?? "–"} size="sm" />
@@ -113,7 +114,14 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                     </div>
                     {(deadline !== null || s.status === "planned") && (
                       <div className="mt-2 flex items-center justify-between gap-2 text-2xs text-muted">
-                        {s.status === "planned" ? <span>Starts {formatClock(s.tour.plannedStartMinute)}</span> : <span>Return ≈ {formatClock(s.timeline.projectedEndMinute)}</span>}
+                        {s.status === "planned" ? (
+                          <span>Starts {formatClock(s.tour.plannedStartMinute)}</span>
+                        ) : (
+                          <span title={projectionNote(s.timeline.projection)}>
+                            {finishShort(s.tour, s.timeline.projection)} {finishValue(s.timeline.projection)}
+                            {s.timeline.projection.source === "estimate" ? " (est.)" : ""}
+                          </span>
+                        )}
                         {deadline !== null && (
                           <span className={cn("flex items-center gap-1", deadline - asOf < 90 ? "font-medium text-warning-ink" : "")}>
                             <ArrowUpFromLine className="size-3" /> {s.pickupsRemaining} pickup{s.pickupsRemaining > 1 ? "s" : ""} · by {formatClock(deadline)}

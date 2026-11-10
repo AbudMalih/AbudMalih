@@ -1,3 +1,4 @@
 export * from "./dataset";
 export * from "./ops";
 export * from "./scope";
+export * from "./projection";

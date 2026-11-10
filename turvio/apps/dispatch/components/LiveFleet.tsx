@@ -3,7 +3,9 @@
 import { formatClock, formatDuration } from "@turvio/shared";
 import { Badge, Button, cn } from "@turvio/web-ui/ds";
 import { Crosshair, Radio, Truck } from "lucide-react";
-import { ageLabel, freshnessOf, FRESHNESS_LABEL, useLiveEta, type Freshness, type LiveVehicle } from "../lib/live";
+import { finishTitle, finishValue, projectionNote } from "../lib/eta";
+import { ageLabel, freshnessOf, FRESHNESS_LABEL, type Freshness, type LiveVehicle } from "../lib/live";
+import { useDispatch } from "../lib/store";
 
 const TONE: Record<Freshness, string> = {
   live: "bg-success-soft text-success-ink",
@@ -53,8 +55,12 @@ export function LiveFleetList({ vehicles, serverNow, onSelect }: { vehicles: Liv
 /** Details of the selected vehicle, above the tour detail. */
 export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; serverNow: number; onFocus: () => void }) {
   const { state } = freshnessOf(v.recordedAt, serverNow);
-  const eta = useLiveEta(v.tourId, state !== "offline");
-  const nextEta = eta?.stops?.find((x) => x.stopId === v.nextStop?.id);
+  // Same projection as the tour list, detail and map (dataset road times + live position).
+  const { summaries } = useDispatch();
+  const summary = summaries.find((x) => x.tour.id === v.tourId);
+  const proj = summary?.timeline.projection;
+  const next = v.nextStop ? summary?.timeline.projections.get(v.nextStop.id) : undefined;
+  const lateCount = proj ? [...proj.stops.values()].filter((x) => x.state === "projected_late" || x.state === "deadline_missed").length : 0;
   const total = v.progress.done + v.progress.remaining;
   const speedKmh = v.position.speedMps != null && state === "live" ? Math.round(v.position.speedMps * 3.6) : null;
   return (
@@ -111,28 +117,27 @@ export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; se
           </dd>
         </div>
       </dl>
-      <div className="rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-xs" aria-label="Live ETA">
-        {eta?.source === "osrm" ? (
+      <div className="rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-xs" aria-label="Live ETA" data-testid="live-eta">
+        {proj && summary ? (
           <div className="flex flex-col gap-1">
             <div className="text-ink">
-              {nextEta ? <>Next stop ETA <strong>{formatClock(nextEta.etaMinute)}</strong> · </> : null}
-              back by <strong>{formatClock(eta.finishMinute!)}</strong> · {formatDuration(eta.remainingDriveSeconds! / 60)} driving, {(eta.remainingMeters! / 1000).toFixed(1)} km left
+              {next && Number.isFinite(next.etaMinute) ? (
+                <>
+                  Next stop ETA <strong>{formatClock(next.etaMinute)}</strong> ·{" "}
+                </>
+              ) : null}
+              {finishTitle(summary.tour, proj).toLowerCase()} <strong>{finishValue(proj)}</strong> · {formatDuration(proj.remainingDriveSeconds / 60)} driving, {(proj.remainingMeters / 1000).toFixed(1)} km left
             </div>
-            <div className="text-subtle">Road route from the current GPS position (OSRM), planned stop order.</div>
-            {eta.suggestReoptimize && (
-              <div className="text-warning-ink">
-                {eta.atRiskStopIds!.length} stop(s) will miss their deadline in the current order. Consider “Re-optimize…” below – the order is not changed automatically.
+            <div className="text-subtle">{projectionNote(proj)}</div>
+            {lateCount > 0 && (
+              <div className={proj.source === "road" ? "text-danger-ink" : "text-warning-ink"}>
+                {lateCount} stop(s) {proj.source === "road" ? "projected late or already past their deadline" : "possibly late (estimate)"} in the current order. Consider “Re-optimize…” below – the order is not changed
+                automatically.
               </div>
             )}
           </div>
         ) : (
-          <div className="text-subtle">
-            {eta?.reason === "position_stale" || state === "offline"
-              ? "No live ETA: the last position is too old."
-              : eta?.reason === "no_routing" || eta?.reason === "routing_unavailable"
-                ? "No live ETA: road routing is not available."
-                : "Live ETA is calculated from the current position…"}
-          </div>
+          <div className="text-subtle">{state === "offline" ? "No live ETA: the last position is too old." : "No ETA for this vehicle's tour on the selected day."}</div>
         )}
       </div>
       <Button variant="secondary" size="sm" onClick={onFocus}>

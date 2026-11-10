@@ -1,26 +1,17 @@
-import { estimateDrive } from "../geo";
-import type { Depot, Driver, GeoPoint, Stop, Tour } from "../schemas";
+import type { Depot, Driver, Stop, Tour } from "../schemas";
 import { isNotDelivered, isOpen, isSuccess } from "../stopStatus";
-import { routeMetrics, sortBySequence, tourEndPoint, tourStartPoint } from "../tour";
+import { sortBySequence } from "../tour";
 import type { DispatchDataset, UnassignedStop } from "./dataset";
+import { projectTour, type DelayCertainty, type StopProjection, type TourProjection, type TourRoad } from "./projection";
 
 /**
- * Operational calculations for TURVIO Dispatch. Travel times use the same
- * straight-line estimate as the offline optimizer (see geo.ts) – every value
- * derived here is an ESTIMATE and is labelled as such in the UI.
+ * Operational calculations for TURVIO Dispatch. Every time and delay comes from the shared
+ * projection model (projection.ts): road values when the dataset carries them, otherwise a
+ * labelled straight-line estimate.
  */
 
-export const AT_RISK_MARGIN_MINUTES = 15;
-
-export interface StopProjection {
-  stopId: string;
-  /** Planned/actual arrival in minutes since midnight. */
-  etaMinute: number;
-  /** Arrives after the time window closes. */
-  late: boolean;
-  /** Arrives within AT_RISK_MARGIN_MINUTES of the window end. */
-  atRisk: boolean;
-}
+export { AT_RISK_MARGIN_MINUTES, LIVE_GPS_MAX_AGE_SECONDS } from "./projection";
+export type { StopProjection } from "./projection";
 
 export interface TourTimeline {
   tourId: string;
@@ -30,11 +21,13 @@ export interface TourTimeline {
   /** Latest allowed end (start + driver's max shift). */
   shiftEndMinute: number;
   distanceMeters: number;
-  /** From the last closed stop through the open stops back to the end point. */
+  /** From the projection's origin through the open stops to the end point. */
   remainingMeters: number;
   durationMinutes: number;
   delayed: boolean;
   delayReasons: string[];
+  /** The full projection (source, origin, certainty, completeness, per-stop states). */
+  projection: TourProjection;
 }
 
 export type DispatchTourStatus = Tour["status"] | "delayed";
@@ -63,61 +56,42 @@ export function nowInZone(timeZone: string, now: Date = new Date()): { date: str
   return { date, minute: minuteOfDay(now.toISOString(), timeZone)! };
 }
 
-export function tourTimeline(tour: Tour, stops: Stop[], depot: Depot, driver: Driver | undefined, asOfMinute: number, timeZone = "UTC"): TourTimeline {
+/**
+ * Times of one tour, from the shared projection model (projection.ts): road legs from the API
+ * when `opts.road` carries them, otherwise a straight-line estimate that is labelled as such.
+ */
+export function tourTimeline(
+  tour: Tour,
+  stops: Stop[],
+  depot: Depot,
+  driver: Driver | undefined,
+  asOfMinute: number,
+  timeZone = "UTC",
+  opts: { road?: TourRoad; isToday?: boolean } = {},
+): TourTimeline {
   const minuteOf = (iso: string | undefined) => minuteOfDay(iso, timeZone);
-  const ordered = sortBySequence(stops.filter((s) => s.type !== "break"));
+  const p = projectTour({
+    tour,
+    stops,
+    depotLocation: depot.location,
+    maxShiftMinutes: driver?.maxShiftMinutes ?? 480,
+    nowMinute: asOfMinute,
+    isToday: opts.isToday,
+    road: opts.road,
+    minuteOf,
+  });
   const startMinute = minuteOf(tour.startedAt) ?? tour.plannedStartMinute;
-  const shiftEndMinute = tour.plannedStartMinute + (driver?.maxShiftMinutes ?? 480);
-  const projections = new Map<string, StopProjection>();
-
-  // Where the tour starts and ends: its own start address / end option, else the depot.
-  // `end` undefined = the tour ends at its last stop (no drive back).
-  const start = tourStartPoint(tour, depot.location);
-  const end = tourEndPoint(tour, depot.location);
-  // Same figures as the driver app (shared routeMetrics): total and remaining.
-  const metrics = routeMetrics(start, ordered, end);
-  const distanceMeters = metrics.totalMeters;
-
-  // Project pending stops from the last completed stop (or the tour's start).
-  const done = ordered.filter((s) => !isOpen(s.status));
-  const pending = ordered.filter((s) => isOpen(s.status));
-  for (const s of done) {
-    const m = minuteOf(s.completedAt);
-    if (m !== null) projections.set(s.id, { stopId: s.id, etaMinute: m, late: !!s.timeWindow && m > s.timeWindow.end, atRisk: false });
-  }
-  const lastDone = done.at(-1);
-  let t = tour.status === "planned" ? tour.plannedStartMinute : Math.max(asOfMinute, minuteOf(lastDone?.completedAt) ?? startMinute);
-  let pos: GeoPoint = lastDone?.location ?? start;
-  for (const s of pending) {
-    if (!s.location) continue;
-    let arrive = t + estimateDrive(pos, s.location).seconds / 60;
-    if (s.timeWindow && arrive < s.timeWindow.start) arrive = s.timeWindow.start;
-    const late = !!s.timeWindow && arrive > s.timeWindow.end;
-    const atRisk = !!s.timeWindow && !late && arrive > s.timeWindow.end - AT_RISK_MARGIN_MINUTES;
-    projections.set(s.id, { stopId: s.id, etaMinute: arrive, late, atRisk });
-    t = arrive + s.serviceSeconds / 60;
-    pos = s.location;
-  }
-  const projectedEndMinute = tour.status === "completed" ? (minuteOf(tour.finishedAt) ?? t) : t + (end ? estimateDrive(pos, end).seconds / 60 : 0);
-
-  const delayReasons: string[] = [];
-  if (tour.status !== "completed") {
-    if (projectedEndMinute > shiftEndMinute) delayReasons.push("Projected end exceeds the driver's shift");
-    const lateStops = pending.filter((s) => projections.get(s.id)?.late).length;
-    if (lateStops > 0) delayReasons.push(`${lateStops} time window${lateStops > 1 ? "s" : ""} will be missed`);
-    if (tour.status === "planned" && !tour.driverId && tour.plannedStartMinute - asOfMinute < 60) delayReasons.push("Starts within the hour without a driver");
-  }
-
   return {
     tourId: tour.id,
-    projections,
-    projectedEndMinute,
-    shiftEndMinute,
-    distanceMeters,
-    remainingMeters: metrics.remainingMeters,
-    durationMinutes: projectedEndMinute - startMinute,
-    delayed: delayReasons.length > 0,
-    delayReasons,
+    projections: p.stops,
+    projectedEndMinute: p.finishMinute,
+    shiftEndMinute: p.shiftEndMinute,
+    distanceMeters: p.totalMeters,
+    remainingMeters: p.remainingMeters,
+    durationMinutes: p.finishMinute - startMinute,
+    delayed: p.delayed,
+    delayReasons: p.delayReasons.map((r) => r.text),
+    projection: p,
   };
 }
 
@@ -139,6 +113,8 @@ export interface TourSummary {
   nextPickupDeadline: number | null;
   timeline: TourTimeline;
   status: DispatchTourStatus;
+  /** How sure a "delayed" status is: confirmed (a deadline already passed), projected (road), estimated (straight line). */
+  delayCertainty: DelayCertainty | null;
 }
 
 export function summarizeTour(data: DispatchDataset, tour: Tour): TourSummary {
@@ -147,7 +123,7 @@ export function summarizeTour(data: DispatchDataset, tour: Tour): TourSummary {
   const vehicle = data.vehicles.find((v) => v.id === tour.vehicleId);
   const stops = sortBySequence(data.stops.filter((s) => s.tourId === tour.id));
   const work = stops.filter((s) => s.type !== "break");
-  const timeline = tourTimeline(tour, stops, depot, driver, data.asOfMinute, data.timeZone);
+  const timeline = tourTimeline(tour, stops, depot, driver, data.asOfMinute, data.timeZone, { road: data.roads?.[tour.id], isToday: data.isToday });
   const openPickups = work.filter((s) => s.type === "pickup" && isOpen(s.status));
   return {
     tour,
@@ -166,6 +142,7 @@ export function summarizeTour(data: DispatchDataset, tour: Tour): TourSummary {
     nextPickupDeadline: openPickups.reduce<number | null>((min, s) => (s.timeWindow ? Math.min(min ?? Infinity, s.timeWindow.end) : min), null),
     timeline,
     status: timeline.delayed && (tour.status === "in_progress" || tour.status === "paused" || tour.status === "planned") ? "delayed" : tour.status,
+    delayCertainty: timeline.delayed && tour.status !== "completed" ? timeline.projection.delayCertainty : null,
   };
 }
 
@@ -177,7 +154,8 @@ export function summarizeTours(data: DispatchDataset): TourSummary[] {
 // Pickups
 // ---------------------------------------------------------------------------
 
-export type PickupState = "completed" | "failed" | "late" | "at_risk" | "scheduled" | "unassigned";
+/** missed: the window already closed (a fact); late: projected after the window (a prediction). */
+export type PickupState = "completed" | "failed" | "missed" | "late" | "at_risk" | "scheduled" | "unassigned";
 
 export interface PickupRow {
   stop: Stop | UnassignedStop;
@@ -187,6 +165,8 @@ export interface PickupRow {
   driverName: string | null;
   state: PickupState;
   etaMinute: number | null;
+  /** The ETA/state is a straight-line estimate (road values unavailable for this tour). */
+  estimated: boolean;
   /** Minutes until the window closes, relative to the synthetic clock. */
   minutesToDeadline: number | null;
 }
@@ -199,8 +179,9 @@ export function pickupRows(data: DispatchDataset, summaries: TourSummary[] = sum
       let state: PickupState;
       if (stop.status === "picked_up") state = "completed";
       else if (!isOpen(stop.status)) state = "failed";
-      else if (p?.late) state = "late";
-      else if (p?.atRisk) state = "at_risk";
+      else if (p?.state === "deadline_missed") state = "missed";
+      else if (p?.state === "projected_late") state = "late";
+      else if (p?.state === "at_risk") state = "at_risk";
       else state = "scheduled";
       rows.push({
         stop,
@@ -209,7 +190,8 @@ export function pickupRows(data: DispatchDataset, summaries: TourSummary[] = sum
         tourName: s.tour.name,
         driverName: s.driver?.displayName ?? null,
         state,
-        etaMinute: p?.etaMinute ?? null,
+        etaMinute: p && Number.isFinite(p.etaMinute) ? p.etaMinute : null,
+        estimated: s.timeline.projection.source === "estimate",
         minutesToDeadline: stop.timeWindow ? stop.timeWindow.end - data.asOfMinute : null,
       });
     }
@@ -223,16 +205,17 @@ export function pickupRows(data: DispatchDataset, summaries: TourSummary[] = sum
       driverName: null,
       state: "unassigned",
       etaMinute: null,
+      estimated: false,
       minutesToDeadline: u.timeWindow ? u.timeWindow.end - data.asOfMinute : null,
     });
   }
-  const rank: Record<PickupState, number> = { late: 0, unassigned: 1, at_risk: 2, scheduled: 3, failed: 4, completed: 5 };
+  const rank: Record<PickupState, number> = { missed: 0, late: 1, unassigned: 2, at_risk: 3, scheduled: 4, failed: 5, completed: 6 };
   return rows.sort((a, b) => rank[a.state] - rank[b.state] || (a.minutesToDeadline ?? 1e9) - (b.minutesToDeadline ?? 1e9));
 }
 
 /** Pickups that need a dispatcher's attention: projected late/at risk, or not on any tour yet. */
 export function isPickupConflict(row: PickupRow): boolean {
-  return row.state === "late" || row.state === "at_risk" || row.state === "unassigned";
+  return row.state === "missed" || row.state === "late" || row.state === "at_risk" || row.state === "unassigned";
 }
 
 // ---------------------------------------------------------------------------
@@ -250,6 +233,10 @@ export interface DispatchKpis {
   scheduledPickups: number;
   pickupConflicts: number;
   delayedTours: number;
+  /** delayedTours split by certainty: a deadline already passed / road projection / straight-line estimate. */
+  delayedConfirmed: number;
+  delayedProjected: number;
+  delayedEstimated: number;
   availableVehicles: number;
   totalVehicles: number;
   completion: number;
@@ -274,6 +261,9 @@ export function dispatchKpis(data: DispatchDataset, summaries: TourSummary[] = s
     scheduledPickups: pickups.filter((p) => p.state !== "completed" && p.state !== "failed").length,
     pickupConflicts: pickups.filter(isPickupConflict).length,
     delayedTours: summaries.filter((s) => s.status === "delayed").length,
+    delayedConfirmed: summaries.filter((s) => s.status === "delayed" && s.delayCertainty === "confirmed").length,
+    delayedProjected: summaries.filter((s) => s.status === "delayed" && s.delayCertainty === "projected").length,
+    delayedEstimated: summaries.filter((s) => s.status === "delayed" && s.delayCertainty === "estimated").length,
     availableVehicles: data.vehicles.filter((v) => !busyVehicles.has(v.id)).length,
     totalVehicles: data.vehicles.length,
     completion: totalStops ? completedStops / totalStops : 0,

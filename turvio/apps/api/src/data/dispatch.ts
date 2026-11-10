@@ -215,6 +215,7 @@ export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | 
     organizationId: orgId,
     date: day,
     asOfMinute: day === now.date ? now.minute : day < now.date ? 24 * 60 - 1 : 0,
+    isToday: day === now.date,
     timeZone,
     depots: depots.rows.map(toDepot),
     drivers: drivers.rows.map(toDriver),
@@ -235,4 +236,14 @@ export function tourEndOf(t: Pick<TourRow, "end_lat" | "end_lng" | "end_mode">, 
   if (t.end_mode === "last_stop") return undefined;
   if (t.end_mode !== "depot" && t.end_lat != null && t.end_lng != null) return { lat: t.end_lat, lng: t.end_lng };
   return depot;
+}
+
+/** Latest live position per tour of the dataset (RLS: only tours the caller may see). No coordinates leave the API. */
+export async function loadTourPositions(tx: Tx, orgId: string, tourIds: string[]): Promise<Map<string, { lat: number; lng: number; ageSeconds: number }>> {
+  if (!tourIds.length) return new Map();
+  const { rows } = await tx.query<{ tour_id: string; lat: number; lng: number; age: number }>(
+    `select tour_id, lat, lng, greatest(0, extract(epoch from now() - recorded_at))::int as age from public.driver_positions where organization_id = $1 and tour_id = any($2::uuid[])`,
+    [orgId, tourIds],
+  );
+  return new Map(rows.map((r) => [r.tour_id, { lat: r.lat, lng: r.lng, ageSeconds: r.age }]));
 }

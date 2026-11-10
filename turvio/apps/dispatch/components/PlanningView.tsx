@@ -124,7 +124,7 @@ function TourCard({ s }: { s: TourSummary }) {
           {endsOpen && <TourEndsDialog tour={s.tour} depot={s.depot} open={endsOpen} onOpenChange={setEndsOpen} />}
         </div>
         <div className="flex flex-col items-end gap-1">
-          <TourStatusBadge status={s.status} />
+          <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
           {s.tour.publishedAt ? <Badge tone="success">Published</Badge> : <Badge tone="outline">Not published</Badge>}
         </div>
       </div>

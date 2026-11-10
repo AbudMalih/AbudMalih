@@ -1,3 +1,4 @@
+import type { TourRoad } from "./projection";
 import { orderStopsLocally } from "../localHeuristic";
 import { estimateDrive } from "../geo";
 import type { Depot, Driver, GeoPoint, Stop, Tour, TourStatus, Vehicle } from "../schemas";
@@ -31,6 +32,12 @@ export interface DispatchDataset {
   tours: Tour[];
   stops: Stop[];
   unassigned: UnassignedStop[];
+  /** Road legs per tour id (API, OSRM); missing = straight-line estimate, labelled. */
+  roads?: Record<string, TourRoad>;
+  /** Road values for some tours are still being computed: reload shortly. */
+  roadsPending?: boolean;
+  /** `date` is today in `timeZone`: deadlines in the past count as missed. */
+  isToday?: boolean;
 }
 
 export const DISPATCH_SNAPSHOT_MINUTE = 11 * 60 + 30;
