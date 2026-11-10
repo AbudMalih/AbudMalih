@@ -33,9 +33,14 @@ pre-existing row; apply → rollback → apply → rollback; PG 18 catalog round
 
 ## 1. Backup
 
-Encrypted dump with `deploy/staging/backup/turvio-staging-backup.sh` and verification with
-`…-verify.sh` (as for Phase B; update the expected latest migration in the script call to
-`20261117000100`). The migration changes no existing row; the backup is insurance.
+Encrypted dump with `deploy/staging/backup/turvio-staging-backup.sh` (expects `20261117000100` by
+default – no edit needed) and verification with `…-verify.sh`; it must end with `VERIFIED`. Keep the
+`[5]` fingerprint block. The migration changes no existing row; the backup is insurance and the
+disaster-recovery path (restore into a fresh project/database, then the previous release).
+
+Rehearsed locally on PostgreSQL 17 with `deploy/staging/test/release-rehearsal.sh` (stand-in written
+by the deployed release 59666cf; backup + the real verify script before and after the migration;
+apply; §3 checks; rollback; restore of the pre-migration backup equal to the baseline fingerprint).
 
 ## 2. Apply (one transaction)
 

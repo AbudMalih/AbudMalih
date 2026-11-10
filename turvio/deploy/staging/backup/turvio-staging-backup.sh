@@ -8,6 +8,8 @@
 #
 # Needs: Docker Desktop (runs the PostgreSQL 17 tools) and GnuPG (brew install gnupg).
 # Usage: bash turvio-staging-backup.sh
+#        EXPECT_MIGRATION=<version> bash turvio-staging-backup.sh   (default: the version staging is at
+#        before the P0-3 release, 20261117000100; the script refuses any other state)
 set -euo pipefail
 umask 077
 
@@ -15,6 +17,7 @@ REF="xwryomkbrkwjytwofgcu"                          # turvio-staging
 HOST="aws-1-eu-central-1.pooler.supabase.com"       # session pooler (port 5432; 6543 is not for pg_dump)
 CONN="host=$HOST port=5432 dbname=postgres user=postgres.$REF sslmode=require connect_timeout=15 application_name=turvio-backup"
 IMAGE="postgres:17"
+EXPECT_MIGRATION="${EXPECT_MIGRATION:-20261117000100}"
 DIR="$HOME/turvio-backups"
 OUT="$DIR/turvio-staging-$(date -u +%Y%m%dT%H%M%SZ).dump.gpg"
 
@@ -40,7 +43,7 @@ IFS='|' read -r who latest orgs ver <<<"$info"
 echo "Connected to turvio-staging ($REF) as $who – PostgreSQL $ver, latest migration $latest, organizations: $orgs"
 [ "$who" = "postgres" ] || die "unexpected database user $who"
 case "$ver" in 17.*) ;; *) die "expected PostgreSQL 17, got $ver" ;; esac
-[ "$latest" = "20261116000100" ] || die "expected latest migration 20261116000100 (pre-Phase-B), found $latest"
+[ "$latest" = "$EXPECT_MIGRATION" ] || die "expected latest migration $EXPECT_MIGRATION, found $latest (set EXPECT_MIGRATION if this is intended)"
 
 # 2. Passphrase for the backup file (keep it in your password manager; it is the only way to open the file).
 read -rsp "New passphrase for the backup file (min. 12 characters): " GPG_PASS; echo

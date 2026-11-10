@@ -2,6 +2,8 @@
 # TURVIO staging deployment (rootless Docker, commit-pinned, automatic rollback).
 #
 #   deploy.sh <40-character commit SHA>   build + start exactly this commit
+#   deploy.sh --build <commit SHA>        only build (and tag) the images of that commit; nothing is
+#                                         started or stopped – the following deploy.sh <SHA> reuses them
 #   deploy.sh --rollback                  switch back to the previous release
 #   deploy.sh --status                    show releases and container state
 #   deploy.sh --osrm-refresh              (re)build the routing graph (OSRM_REGION in .env)
@@ -131,11 +133,9 @@ osrm_ready() {
 }
 
 # ---------------------------------------------------------------- commands
-deploy() {
-  local sha="$1" current
+build_images() { # build_images <sha>: export + validate + build; the running release is not touched
+  local sha="$1" s
   fetch_and_export "$sha"
-  current="$(cat "$STATE/current" 2>/dev/null || true)"
-  [ "$sha" != "$current" ] || log "re-deploying the current release $sha"
   # Validate before touching anything: the running release stays untouched on errors.
   compose "$sha" config --quiet || die "compose configuration of $sha is invalid – nothing changed"
   log "building $sha (one service at a time – 4 GB RAM)"
@@ -147,6 +147,18 @@ deploy() {
       compose "$sha" build "$s"
     fi
   done
+}
+
+build_only() {
+  build_images "$1"
+  log "BUILT $1 – nothing started; deploy with: deploy.sh $1"
+}
+
+deploy() {
+  local sha="$1" current
+  current="$(cat "$STATE/current" 2>/dev/null || true)"
+  [ "$sha" != "$current" ] || log "re-deploying the current release $sha"
+  build_images "$sha"
   if ! osrm_ready "$sha"; then
     log "no routing graph yet – preparing Region Hannover (one-off, a few minutes)"
     compose "$sha" run --rm osrm-prepare
@@ -270,11 +282,12 @@ server_check() {
 }
 
 main() {
-  [ $# -ge 1 ] || { sed -n '3,13p' "$0"; exit 2; }
+  [ $# -ge 1 ] || { sed -n '3,15p' "$0"; exit 2; }
   preflight
   exec 9>"$STATE/deploy.lock"
   flock -n 9 || die "another deployment is running"
   case "$1" in
+    --build) [ $# -eq 2 ] || die "usage: deploy.sh --build <commit-sha>"; build_only "$2" ;;
     --rollback) rollback ;;
     --status) status ;;
     --osrm-refresh) osrm_refresh ;;

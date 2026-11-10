@@ -33,9 +33,21 @@
       "environment": "production",
       "env": { "APP_VARIANT": "production" },
       "autoIncrement": true
+    },
+    "store-test": {
+      "extends": "base",
+      "distribution": "store",
+      "environment": "preview",
+      "env": { "APP_VARIANT": "preview" },
+      "autoIncrement": true,
+      "android": { "buildType": "app-bundle" }
     }
   },
   "submit": {
-    "production": {}
+    "production": {},
+    "store-test": {
+      "android": { "track": "internal", "releaseStatus": "draft" },
+      "ios": {}
+    }
   }
 }

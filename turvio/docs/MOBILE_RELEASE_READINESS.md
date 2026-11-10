@@ -69,7 +69,39 @@ account, credential or decision of Lunapact · **[device]** needs a physical pho
 
 Record phone model, OS version, build profile and date for each run (template in `docs/DEVICE_TESTING.md`).
 
-## 6. Not yet done / blocking
+## 6. Process: TestFlight and Play internal testing (prepared – nothing submitted)
+
+Profile `store-test` in `apps/driver/eas.json`: the **test app** (`com.lunapact.turvio.driver.preview`,
+"TURVIO Driver (Test)", EAS environment `preview` = staging API) signed for the stores – an AAB for
+Google Play, an App Store build for TestFlight; build numbers increase automatically (remote
+version source). The production app id stays untouched until the commercial release. Submit
+profile `store-test`: Play track `internal`, release status `draft` (nothing reaches testers until
+someone presses "release" in the Play Console).
+
+Order – each step marked ⏸ waits for the owner's explicit go-ahead:
+
+1. Staging release (API + Dispatch, migration 20261118000100) done and smoke-tested – the driver
+   build talks to it.
+2. [you] `eas login` with the Lunapact Expo account (owner `lunapact-technologies`); check
+   `eas env:list --environment preview`: `EXPO_PUBLIC_API_URL` = HTTPS staging API (plain),
+   `GOOGLE_MAPS_ANDROID_API_KEY` (secret, restricted to `com.lunapact.turvio.driver.preview` + the
+   **Play app-signing** SHA-1 as well as the upload SHA-1).
+3. ⏸ Android: `cd apps/driver && eas build -p android --profile store-test` → AAB. Google requires
+   the **first** upload of a new app to be made by hand: Play Console → app "TURVIO Driver (Test)" →
+   Testing → Internal testing → create release → upload the AAB (Play App Signing on). Later builds:
+   ⏸ `eas submit -p android --profile store-test --latest` (needs a Play service-account JSON with
+   release rights, stored in EAS – never in the repo).
+4. ⏸ iOS: `eas build -p ios --profile store-test` (EAS creates the distribution certificate and the
+   App Store profiles for the app and its share extension, App Group
+   `group.com.lunapact.turvio.driver.preview`). Then ⏸ `eas submit -p ios --profile store-test --latest`
+   – asks for the App Store Connect app (record "TURVIO Driver (Test)" with the `.preview` bundle id);
+   TestFlight → internal group. Export compliance: the app uses only standard HTTPS encryption.
+   This is the **first iOS compile** (Vision OCR, background location) – expect fixes.
+5. Device runs per section 5 on at least one iPhone and one Android phone; record results.
+
+Nothing in this list has been run: no build, no submit, no store setting changed.
+
+## 7. Not yet done / blocking
 
 - No EAS cloud build has been made yet (Android or iOS); no staging host exists for `EXPO_PUBLIC_API_URL`.
 - iOS native code (Vision OCR, background location) has never been compiled.
