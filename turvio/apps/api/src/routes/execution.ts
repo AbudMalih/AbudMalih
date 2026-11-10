@@ -64,11 +64,30 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
   /** Driver corrections on their own stop: lock position, set/adjust the map position. */
   app.post("/v1/orgs/:orgId/stops/:id/driver-update", { preHandler: guards.requireTenant("stops.update_status_own") }, async (req, reply) => {
     const { id } = IdParams.parse(req.params);
-    const b = parse(z.object({ locked: z.boolean().optional(), location: Point.optional(), locationSource: z.enum(["geocoder", "manual_pin"]).optional() }), req.body, reply);
+    const b = parse(
+      z.object({
+        locked: z.boolean().optional(),
+        location: Point.optional(),
+        locationSource: z.enum(["geocoder", "manual_pin"]).optional(),
+        // P0-3.2: why, and the location version the driver saw (offline edits must not overwrite a newer change).
+        reason: z.string().trim().max(500).optional(),
+        expectedLocationVersion: z.number().int().min(1).optional(),
+      }),
+      req.body,
+      reply,
+    );
     if (!b) return;
     if (b.locked === undefined && !b.location) return problem(reply, 400, "validation_failed", "Nothing to update");
     await db.asUser(claims(req), (tx) =>
-      tx.query(`select driver_update_stop($1, $2, $3, $4, $5)`, [id, b.locked ?? null, b.location?.lat ?? null, b.location?.lng ?? null, b.location ? (b.locationSource ?? "manual_pin") : null]),
+      tx.query(`select driver_update_stop($1, $2, $3, $4, $5, $6, $7)`, [
+        id,
+        b.locked ?? null,
+        b.location?.lat ?? null,
+        b.location?.lng ?? null,
+        b.location ? (b.locationSource ?? "manual_pin") : null,
+        b.reason ?? null,
+        b.expectedLocationVersion ?? null,
+      ]),
     );
     return reply.status(204).send();
   });
@@ -82,10 +101,21 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
   });
   app.post("/v1/orgs/:orgId/stops/:id/edit", { preHandler: guards.requireTenant("stops.update_status_own") }, async (req, reply) => {
     const { orgId, id } = IdParams.parse(req.params);
-    const b = parse(z.object({ recipientName: z.string().trim().max(120).nullable().optional(), address: AddressBody, location: Point.optional(), locationSource: z.enum(["geocoder", "manual_pin"]).optional() }), req.body, reply);
+    const b = parse(
+      z.object({
+        recipientName: z.string().trim().max(120).nullable().optional(),
+        address: AddressBody,
+        location: Point.optional(),
+        locationSource: z.enum(["geocoder", "manual_pin"]).optional(),
+        reason: z.string().trim().max(500).optional(),
+        expectedAddressVersion: z.number().int().min(1).optional(),
+      }),
+      req.body,
+      reply,
+    );
     if (!b) return;
     const row = await db.asUser(claims(req), async (tx) => {
-      await tx.query(`select driver_edit_stop($1, $2, $3, $4, $5, $6, $7, $8, $9)`, [
+      await tx.query(`select driver_edit_stop($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [
         id,
         b.recipientName ?? null,
         b.address.street,
@@ -95,6 +125,8 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
         b.location?.lat ?? null,
         b.location?.lng ?? null,
         b.location ? (b.locationSource ?? "manual_pin") : null,
+        b.reason ?? null,
+        b.expectedAddressVersion ?? null,
       ]);
       return (await tx.query<StopRow>(`${STOP_SELECT} where s.id = $1 and s.organization_id = $2`, [id, orgId])).rows[0]!;
     });

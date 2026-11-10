@@ -1,5 +1,8 @@
 import {
   DEFAULT_LOCATION_THRESHOLDS,
+  LOCATION_RULES_VERSION,
+  type LocationIssue,
+  type LocationSeverity,
   coordinateIssues,
   duplicateCoordinates,
   evaluateStopLocation,
@@ -29,7 +32,46 @@ export interface CheckStop {
   id: string;
   location: GeoPoint | null;
   address: { street: string; houseNumber?: string | null; postalCode: string; city: string; countryCode?: string };
+  /** Database address version (P0-3.2) – stored results belong to exactly one. */
+  addressVersion?: number;
 }
+
+/** A row of stop_location_checks (P0-3.2). */
+export interface StoredCheck {
+  stopId: string;
+  status: "checked" | "partial";
+  severity: LocationSeverity | null;
+  issues: LocationIssue[];
+  road: (StopLocationCheck["road"] & { origin?: string | null; unavailable?: string[]; checks?: StopLocationCheck["checks"] }) | null;
+  checkedLat: number;
+  checkedLng: number;
+  checkedAddressVersion: number;
+  roadDataVersion: string;
+  addressDataVersion: string;
+  rulesVersion: number;
+  checkedAt: Date;
+}
+
+/** What the API persists for a finished check (app.store_location_check). */
+export interface CheckToStore {
+  stopId: string;
+  status: "checked" | "partial";
+  severity: LocationSeverity | null;
+  issues: LocationIssue[];
+  road: StoredCheck["road"];
+  suggestion: { lat: number; lng: number; roadName: string; distanceMeters: number } | null;
+  checkedLat: number;
+  checkedLng: number;
+  checkedAddressVersion: number;
+  roadDataVersion: string;
+  addressDataVersion: string;
+  rulesVersion: number;
+}
+
+export type ReportedCheck = StopLocationCheck & { source: "stored" | "computed"; checkedAt?: string };
+
+/** Without a configured data version a stored result counts as current for this long. */
+const UNVERSIONED_MAX_AGE_MS = 24 * 3600_000;
 
 export interface CheckGroup {
   /** Tour start (or the depot for unassigned stops): road connection is checked from/to here. */
@@ -41,6 +83,8 @@ export interface LocationCheckReport {
   stops: number;
   ms: number;
   pending: number;
+  /** Results reused from stop_location_checks (still current). */
+  stored?: number;
   routing?: Partial<RoutingStats>;
 }
 
@@ -74,9 +118,33 @@ export class LocationChecker {
   constructor(
     private readonly routing: RoutingProvider | undefined,
     private readonly geocoder: Geocoder | undefined,
-    private readonly opts: { budgetMs?: number; addressConcurrency?: number; thresholds?: Partial<LocationThresholds> } = {},
+    private readonly opts: {
+      budgetMs?: number;
+      addressConcurrency?: number;
+      thresholds?: Partial<LocationThresholds>;
+      versions?: { road: string | null; address: string | null };
+    } = {},
   ) {
     this.thresholds = { ...DEFAULT_LOCATION_THRESHOLDS, ...opts.thresholds };
+  }
+
+  /** Versions recorded with stored results ("unversioned" when not configured). */
+  get dataVersions() {
+    return { road: this.opts.versions?.road ?? "unversioned", address: this.opts.versions?.address ?? "unversioned", rules: LOCATION_RULES_VERSION };
+  }
+
+  /**
+   * Is a stored result still about this stop as it is now? Same coordinate (exact), same address
+   * version, same tour start, same data and rules versions – and, without configured data
+   * versions, not older than 24 h. Anything else is stale and must never be shown as current.
+   */
+  isCurrent(st: StoredCheck, stop: CheckStop, origin: GeoPoint | null, now = Date.now()): boolean {
+    const v = this.dataVersions;
+    if (!stop.location || stop.addressVersion == null) return false;
+    if (st.checkedLat !== stop.location.lat || st.checkedLng !== stop.location.lng || st.checkedAddressVersion !== stop.addressVersion) return false;
+    if (st.roadDataVersion !== v.road || st.addressDataVersion !== v.address || st.rulesVersion !== v.rules) return false;
+    if ((v.road === "unversioned" || v.address === "unversioned") && now - st.checkedAt.getTime() > UNVERSIONED_MAX_AGE_MS) return false;
+    return (st.road?.origin ?? null) === (origin ? pointKey(origin) : null);
   }
 
   private get canSnap() {
@@ -156,11 +224,22 @@ export class LocationChecker {
     this.startAddresses(located);
   }
 
-  async check(groups: CheckGroup[], budgetMs = this.opts.budgetMs ?? 1500): Promise<{ checks: StopLocationCheck[]; report: LocationCheckReport }> {
+  async check(
+    groups: CheckGroup[],
+    budgetMs = this.opts.budgetMs ?? 1500,
+    opts: { stored?: Map<string, StoredCheck> } = {},
+  ): Promise<{ checks: ReportedCheck[]; toStore: CheckToStore[]; report: LocationCheckReport }> {
     const t0 = Date.now();
     const before = this.routing?.stats?.();
+    // Stored results that are still current need no new evidence.
+    const current = new Map<string, StoredCheck>();
+    for (const g of groups)
+      for (const s of g.stops) {
+        const st = opts.stored?.get(s.id);
+        if (st && this.isCurrent(st, s, g.origin)) current.set(s.id, st);
+      }
     const all = groups.flatMap((g) => g.stops);
-    const valid = (s: CheckStop) => !!s.location && coordinateIssues(s.location, s.address.countryCode).length === 0;
+    const valid = (s: CheckStop) => !current.has(s.id) && !!s.location && coordinateIssues(s.location, s.address.countryCode).length === 0;
     this.startSnaps(all.filter(valid).map((s) => s.location!));
     for (const g of groups) if (g.origin) this.startReach(g.origin, g.stops.filter(valid).map((s) => s.location!));
     this.startAddresses(all.filter(valid));
@@ -181,9 +260,32 @@ export class LocationChecker {
 
     const dup = duplicateCoordinates(all.map((s) => ({ id: s.id, location: s.location, addressKey: addressKey(s.address) })));
     const ev = <T>(t: Tracked<T> | undefined, missing: string): Evidence<T> => (t ? t.outcome : { state: "unavailable", reason: missing });
-    const checks = groups.flatMap((g) =>
-      g.stops.map((s) =>
-        evaluateStopLocation(
+    const v = this.dataVersions;
+    const toStore: CheckToStore[] = [];
+    const checks: ReportedCheck[] = groups.flatMap((g) =>
+      g.stops.map((s): ReportedCheck => {
+        const st = current.get(s.id);
+        if (st) {
+          // Duplicates depend on the other stops of today, not on this stop alone: recomputed.
+          const issues = st.issues.filter((i) => i.code !== "duplicate_coordinates");
+          const fresh = evaluateStopLocation({ stopId: s.id, location: s.location, street: s.address.street, countryCode: s.address.countryCode, road: { state: "unavailable", reason: "-" }, reach: { state: "unavailable", reason: "-" }, address: { state: "unavailable", reason: "-" }, duplicateOf: dup.get(s.id) }, this.thresholds);
+          const merged = [...issues, ...fresh.issues.filter((i) => i.code === "duplicate_coordinates")];
+          const rank = { error: 3, warning: 2, info: 1 } as const;
+          merged.sort((a, b) => rank[b.severity] - rank[a.severity]);
+          const { origin: _o, unavailable, checks: storedChecks, ...road } = st.road ?? { origin: null };
+          return {
+            stopId: s.id,
+            status: st.status,
+            severity: merged[0]?.severity ?? null,
+            issues: merged,
+            checks: storedChecks ?? { road: "done", reach: "done", address: "done" },
+            unavailable: unavailable ?? [],
+            ...(st.road ? { road: road as StopLocationCheck["road"] } : {}),
+            source: "stored",
+            checkedAt: st.checkedAt.toISOString(),
+          };
+        }
+        const c = evaluateStopLocation(
           {
             stopId: s.id,
             location: s.location,
@@ -195,11 +297,33 @@ export class LocationChecker {
             duplicateOf: dup.get(s.id),
           },
           this.thresholds,
-        ),
-      ),
+        );
+        if ((c.status === "checked" || c.status === "partial") && s.location && s.addressVersion != null) {
+          const sug = c.issues.find((i) => i.suggestion)?.suggestion;
+          toStore.push({
+            stopId: s.id,
+            status: c.status,
+            severity: c.severity,
+            issues: c.issues,
+            road: { ...(c.road ?? ({} as NonNullable<StopLocationCheck["road"]>)), origin: g.origin ? pointKey(g.origin) : null, unavailable: c.unavailable, checks: c.checks },
+            suggestion: sug ? { lat: sug.location.lat, lng: sug.location.lng, roadName: sug.roadName, distanceMeters: sug.distanceMeters } : null,
+            checkedLat: s.location.lat,
+            checkedLng: s.location.lng,
+            checkedAddressVersion: s.addressVersion,
+            roadDataVersion: v.road,
+            addressDataVersion: v.address,
+            rulesVersion: v.rules,
+          });
+        }
+        return { ...c, source: "computed", ...(c.status === "checked" || c.status === "partial" ? { checkedAt: new Date().toISOString() } : {}) };
+      }),
     );
     const after = this.routing?.stats?.();
     const delta = before && after ? (Object.fromEntries(Object.entries(after).map(([k, v]) => [k, (v as number) - ((before as unknown as Record<string, number>)[k] ?? 0)])) as Partial<RoutingStats>) : undefined;
-    return { checks, report: { stops: all.length, ms: Date.now() - t0, pending: checks.filter((c) => c.status === "pending").length, ...(delta ? { routing: delta } : {}) } };
+    return {
+      checks,
+      toStore,
+      report: { stops: all.length, ms: Date.now() - t0, pending: checks.filter((c) => c.status === "pending").length, stored: current.size, ...(delta ? { routing: delta } : {}) },
+    };
   }
 }

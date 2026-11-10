@@ -33,6 +33,9 @@ export interface LocationThresholds {
   streetCentreMeters: number;
 }
 
+/** Bumped whenever the rules or thresholds change: stored results of older rules are stale. */
+export const LOCATION_RULES_VERSION = 1;
+
 export const DEFAULT_LOCATION_THRESHOLDS: LocationThresholds = {
   farFromRoadMeters: 150,
   addressMismatchMeters: 250,

@@ -34,3 +34,10 @@ grant select, insert, update, delete on geo.addresses to turvio_service;
 grant usage, select on all sequences in schema geo to turvio_service;
 grant execute on function geo.norm(text) to turvio_service;
 grant execute on function app.log_read(uuid, uuid, text, text) to turvio_service;
+-- Stop location checks (20261118000100_stop_location_history); skipped on older schemas.
+do $$
+begin
+  if to_regprocedure('app.store_location_check(uuid, text, text, jsonb, jsonb, double precision, double precision, text, int, double precision, double precision, int, text, text, int)') is not null then
+    grant execute on function app.store_location_check(uuid, text, text, jsonb, jsonb, double precision, double precision, text, int, double precision, double precision, int, text, text, int) to turvio_service;
+  end if;
+end $$;

@@ -21,9 +21,16 @@ describe("route editing", () => {
       await db.query(`select driver_edit_stop($1, null, 'Domplatz', '3', '99084', 'Erfurt', 50.977, 11.023, 'geocoder')`, [ids.stopA1]);
     });
     expect(await stop(ids.stopA1)).toEqual({ street: "Domplatz", lat: 50.977, location_source: "geocoder" });
-    // staff edits through the table are guarded by the same trigger
+    // staff edits through the table are guarded by the same trigger; on a published tour they
+    // need a reason (P0-3.2, D4)
     await asUser(db, ids.dispatcherA, async () => {
+      await expect(db.query(`update stops set street = 'Fischmarkt' where id = $1`, [ids.stopA1])).rejects.toThrow(/reason is required/);
+    });
+    await asUser(db, ids.dispatcherA, async () => {
+      // (the harness runs without a transaction: session-level setting, reset afterwards)
+      await db.query(`select set_config('turvio.change_reason', 'Customer called: shop moved', false)`);
       await db.query(`update stops set street = 'Fischmarkt' where id = $1`, [ids.stopA1]);
+      await db.query(`select set_config('turvio.change_reason', '', false)`);
     });
     expect((await stop(ids.stopA1))!.lat).toBeNull();
   });

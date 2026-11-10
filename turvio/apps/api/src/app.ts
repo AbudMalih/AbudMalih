@@ -42,6 +42,8 @@ export interface AppDeps {
   routing?: RoutingProvider;
   /** Stop location checks (default: built from routing + geocoder). */
   locationChecker?: LocationChecker;
+  /** Versions of the road / address data (stored checks of other versions are stale). */
+  locationDataVersions?: { road: string | null; address: string | null };
   /** Requests per minute per client IP (default 600; 0 = off). */
   rateLimitPerMinute?: number;
   /** Fastify trustProxy: true, false or the number of trusted proxy hops. */
@@ -210,7 +212,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   });
 
   if (deps.db) {
-    const locationChecker = deps.locationChecker ?? new LocationChecker(deps.routing, deps.geocoder);
+    const locationChecker = deps.locationChecker ?? new LocationChecker(deps.routing, deps.geocoder, { versions: deps.locationDataVersions });
     const ctx = { deps: { ...deps, locationChecker } as AppDeps & { db: Db }, guards };
     if (deps.auth) registerAuthRoutes(app, { ...ctx, auth: deps.auth });
     registerOrgRoutes(app, ctx);

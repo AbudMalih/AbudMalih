@@ -54,6 +54,13 @@ const Env = z.object({
   GEOCODER_USER_AGENT: z.string().default("TURVIO (development)"),
   /** Self-hosted OSRM for road distances, times and geometry (same instance the optimizer uses). Empty = straight-line estimates, labelled. */
   OSRM_URL: z.url().optional(),
+  /**
+   * Version label of the road data behind OSRM_URL (e.g. "de-2026-11-06"). Stored location checks
+   * of another version are stale. Unset: results count as current for 24 h only.
+   */
+  ROUTING_DATA_VERSION: z.string().trim().min(1).max(100).optional(),
+  /** Same for the local OSM address data (GEOCODER=postgres). */
+  ADDRESS_DATA_VERSION: z.string().trim().min(1).max(100).optional(),
   /** Requests per minute per client IP (0 disables; put a proxy/WAF in front in production as well). */
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(0).default(600),
   // Which X-Forwarded-For hops to trust: "true" (any – development only), a hop count

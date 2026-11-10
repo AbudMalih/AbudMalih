@@ -139,6 +139,9 @@ export interface StopRow {
   driver_notes?: string | null;
   locked?: boolean;
   location_source?: Stop["locationSource"];
+  address_version?: number;
+  location_version?: number;
+  location_precision?: Stop["locationPrecision"];
   recipient_phone?: string | null;
   parcels: { id: string; tracking_number: string; barcode: string | null; recipient_name: string | null; company?: string | null; loaded_at?: string | null }[] | null;
   proofs?: { id: string; kind: "photo" | "signature"; captured_at: string; recipient_name: string | null; notes: string | null; has_location: boolean }[] | null;
@@ -169,6 +172,7 @@ function stopBase(r: StopRow) {
     driverNotes: r.driver_notes ?? undefined,
     locked: r.locked ?? false,
     locationSource: r.location_source ?? null,
+    ...(r.address_version != null ? { addressVersion: r.address_version, locationVersion: r.location_version!, locationPrecision: r.location_precision ?? "unknown" } : {}),
     recipientPhone: r.recipient_phone ?? undefined,
     proofs: (r.proofs ?? []).map((p) => ({
       id: p.id,

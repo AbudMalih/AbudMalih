@@ -1,4 +1,4 @@
-import { NewStopInput, OptimizeRequest, StopStatus, TourPlace, haversineMeters, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
+import { LocationPrecision, NewStopInput, OptimizeRequest, StopStatus, TourPlace, haversineMeters, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -73,6 +73,8 @@ const CreateStops = z
      * driver app's offline replays (they must stay idempotent and never get stuck).
      */
     rejectPlannedTracking: z.boolean().default(false),
+    /** Declared channel for the original-location record (staff only; drivers are always "driver_capture"). */
+    provenance: z.enum(["import_file", "import_paste", "dispatch_manual"]).optional(),
   })
   .refine((b) => !!b.tourId !== !!b.depotId, { message: "Give either tourId or depotId (unassigned stops)" });
 
@@ -90,7 +92,27 @@ const UpdateStop = z.object({
   address: z
     .object({ street: z.string().trim().min(1).max(200), houseNumber: z.string().trim().max(20).nullable().optional(), postalCode: z.string().trim().regex(/^[0-9A-Za-z -]{3,10}$/), city: z.string().trim().min(1).max(100) })
     .optional(),
+  /** Precision of a new `location` (default: manual pin, since a dispatcher placed it). */
+  locationPrecision: LocationPrecision.optional(),
+  /** Why the address / location changes – required once the tour is published (P0-3.2). */
+  reason: z.string().trim().max(500).optional(),
+  /** Stale-edit protection: the versions the dispatcher saw (409 version_conflict otherwise). */
+  expectedAddressVersion: z.number().int().min(1).optional(),
+  expectedLocationVersion: z.number().int().min(1).optional(),
 });
+
+/** Content for the location audit (never identity: actor and role come from the database session). */
+export async function setLocationContext(tx: Tx, c: { reason?: string | null; provenance?: string | null; precision?: string | null }) {
+  await tx.query(`select set_config('turvio.change_reason', $1, true), set_config('turvio.origin_provenance', $2, true), set_config('turvio.location_precision', $3, true)`, [
+    c.reason ?? "",
+    c.provenance ?? "",
+    c.precision ?? "",
+  ]);
+}
+
+/** Default precision of a coordinate given at creation. */
+const precisionOf = (s: z.infer<typeof NewStopInput>): string =>
+  !s.location ? "unknown" : (s.locationPrecision ?? (s.locationSource === "manual_pin" ? "manual_pin" : s.locationSource === "import" ? "import_unverified" : "unknown"));
 
 /** Throws 409 if the driver/vehicle already works on another open tour that day. */
 async function assertAvailable(tx: Tx, tourId: string | null, date: string, driverId?: string | null, vehicleId?: string | null) {
@@ -193,13 +215,13 @@ async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; dep
     const col = <T>(f: (x: (typeof newStops)[number]) => T) => newStops.map(f);
     await tx.query(
       `insert into stops (id, organization_id, tour_id, depot_id, type, sequence, recipient_name, street, house_number, postal_code, city, country_code,
-                          lat, lng, tw_start_minute, tw_end_minute, service_seconds, priority, notes, location_source, recipient_phone)
+                          lat, lng, tw_start_minute, tw_end_minute, service_seconds, priority, notes, location_source, recipient_phone, location_precision)
        select x.id, $1, $2, $3, x.type::public.stop_type, x.sequence, x.recipient_name, x.street, x.house_number, x.postal_code, x.city, x.country_code,
-              x.lat, x.lng, x.tw_start, x.tw_end, x.service_seconds, x.priority, x.notes, x.location_source, x.recipient_phone
+              x.lat, x.lng, x.tw_start, x.tw_end, x.service_seconds, x.priority, x.notes, x.location_source, x.recipient_phone, x.location_precision
          from unnest($4::uuid[], $5::text[], $6::int[], $7::text[], $8::text[], $9::text[], $10::text[], $11::text[], $12::text[],
-                     $13::float8[], $14::float8[], $15::int[], $16::int[], $17::int[], $18::boolean[], $19::text[], $20::text[], $21::text[])
+                     $13::float8[], $14::float8[], $15::int[], $16::int[], $17::int[], $18::boolean[], $19::text[], $20::text[], $21::text[], $22::text[])
            with ordinality as x(id, type, sequence, recipient_name, street, house_number, postal_code, city, country_code,
-                                lat, lng, tw_start, tw_end, service_seconds, priority, notes, location_source, recipient_phone, ord)
+                                lat, lng, tw_start, tw_end, service_seconds, priority, notes, location_source, recipient_phone, location_precision, ord)
         order by x.ord`,
       [
         orgId,
@@ -223,6 +245,7 @@ async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; dep
         col((x) => x.s.notes ?? null),
         col((x) => (x.s.location ? (x.s.locationSource ?? "manual_pin") : null)),
         col((x) => x.s.recipientPhone ?? null),
+        col((x) => precisionOf(x.s)),
       ],
     );
   }
@@ -450,7 +473,10 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     const b = parse(CreateStops, req.body, reply);
     if (!b) return;
     if (b.depotId && req.membership!.role === "driver") return problem(reply, 403, "forbidden", "Drivers can only add stops to their own tour");
-    const ids = await db.asUser(claims(req), (tx) => insertStops(tx, orgId, b, b.stops));
+    const ids = await db.asUser(claims(req), async (tx) => {
+      await setLocationContext(tx, { provenance: b.provenance ?? null });
+      return insertStops(tx, orgId, b, b.stops);
+    });
     // Start the location checks now (background, read-only), so Dispatch rarely sees "pending".
     deps.locationChecker?.warm(
       b.stops.map((s, i) => ({ id: ids[i] ?? "", location: s.location ?? null, address: { ...s.address, countryCode: s.address.countryCode ?? "DE" } })),
@@ -503,6 +529,14 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         add("location_source = ?", b.location ? "dispatch" : null);
       }
       if (!sets.length) throw new ApiError(400, "validation_failed", "Nothing to update");
+      if (b.address || b.location !== undefined) {
+        // Lock the row and compare with what the dispatcher saw (a driver may have moved the pin).
+        const cur = (await tx.query<{ address_version: number; location_version: number }>(`select address_version, location_version from stops where id = $1 and organization_id = $2 for update`, [id, orgId])).rows[0];
+        if (!cur) throw new ApiError(404, "not_found", "Stop not found");
+        if ((b.expectedAddressVersion !== undefined && cur.address_version !== b.expectedAddressVersion) || (b.expectedLocationVersion !== undefined && cur.location_version !== b.expectedLocationVersion))
+          throw new ApiError(409, "version_conflict", "The stop's address or location was changed by someone else. Reload and try again.");
+        await setLocationContext(tx, { reason: b.reason ?? null, precision: b.location ? (b.locationPrecision ?? "manual_pin") : null });
+      }
       const { rows } = await tx.query<{ id: string }>(`update stops set ${sets.join(", ")} where id = $1 and organization_id = $2 returning id`, vals);
       if (!rows[0]) throw new ApiError(404, "not_found", "Stop not found");
       return (await tx.query<StopRow>(`${STOP_SELECT} where s.id = $1`, [id])).rows[0]!;

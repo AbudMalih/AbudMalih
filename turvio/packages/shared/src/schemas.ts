@@ -114,6 +114,12 @@ export type Parcel = z.infer<typeof Parcel>;
 /** Where a stop's coordinates came from. `null` location = needs resolution. */
 export const LocationSource = z.enum(["geocoder", "manual_pin", "import", "dispatch"]);
 export type LocationSource = z.infer<typeof LocationSource>;
+/** How precise the current coordinate is (P0-3.2). "unknown" when nobody stated it. */
+export const LocationPrecision = z.enum(["house", "street", "postal_code", "city", "manual_pin", "import_unverified", "unknown"]);
+export type LocationPrecision = z.infer<typeof LocationPrecision>;
+/** Navigation approach point a dispatcher accepted for the stop's current coordinate and address. */
+export const StopApproach = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), roadName: z.string().max(200).optional() });
+export type StopApproach = z.infer<typeof StopApproach>;
 
 export const ProofKind = z.enum(["photo", "signature"]);
 export type ProofKind = z.infer<typeof ProofKind>;
@@ -158,6 +164,15 @@ export const Stop = z.object({
   /** Recipient phone – only present when the organization shares it with drivers. */
   recipientPhone: z.string().max(40).optional(),
   proofs: z.array(ProofSummary).optional(),
+  /** Incremented by the database on every address / coordinate change (stale-edit protection). */
+  addressVersion: z.number().int().min(1).optional(),
+  locationVersion: z.number().int().min(1).optional(),
+  locationPrecision: LocationPrecision.optional(),
+  /**
+   * Accepted navigation approach point – only present while valid for the current coordinate and
+   * address. Routing and navigation use it instead of `location`; it is never set automatically.
+   */
+  approach: StopApproach.optional(),
 });
 export type Stop = z.infer<typeof Stop>;
 
@@ -280,6 +295,8 @@ export const NewStopInput = z.object({
   id: z.uuid().optional(),
   type: StopType.exclude(["break"]).default("delivery"),
   locationSource: LocationSource.nullable().optional(),
+  /** Precision of `location` as the client knows it (e.g. "street" for a street-level match). */
+  locationPrecision: LocationPrecision.optional(),
   recipientPhone: z.string().trim().max(40).optional(),
   recipientName: z.string().trim().max(120).optional(),
   address: Address,
