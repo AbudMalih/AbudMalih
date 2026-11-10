@@ -1,7 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { formatClock, isNotDelivered, isOpen, type Depot, type TourSummary, type UnassignedStop } from "@turvio/shared";
+import { formatClock, hasUsableLocation, isNotDelivered, isOpen, type Depot, type TourSummary, type UnassignedStop } from "@turvio/shared";
 import { stopTooltipHtml } from "../lib/eta";
 import { locationBadge, type LocationReport } from "../lib/locations";
 import { Button, Skeleton, Tooltip, cn } from "@turvio/web-ui/ds";
@@ -161,7 +161,7 @@ export function RouteMap(props: RouteMapProps) {
       const color = colorOf(s.tour.id);
       const selected = s.tour.id === selectedTourId;
       const dim = selectedTourId !== null && !selected;
-      const located = s.stops.filter((x) => x.location);
+      const located = s.stops.filter((x) => hasUsableLocation(x));
       const ends = tourMapPoints(s.tour, s.depot, located);
       const path: [number, number][] = ends.path.map((p) => [p.lat, p.lng] as [number, number]);
       // An own start/end address gets its own small marker (the depot marker stays where it is).

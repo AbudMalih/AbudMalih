@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildRoads } from "../src/data/roads";
-import { LocationChecker, type CheckStop } from "../src/location-check";
+import { LocationChecker, type CheckStop, type ReportedCheck } from "../src/location-check";
+import { withDecision } from "../src/routes/locations";
 import { OsrmRouting, RoutingOutOfCoverage, type RoadRoute, type RoutingProvider } from "../src/routing";
 import type { DispatchDataset, Stop, Tour } from "@turvio/shared";
 
@@ -178,5 +179,22 @@ describe("roads.ts: an out-of-coverage remaining route names the right stops (fi
     };
     const { roads } = await buildRoads(data, routing, new Map());
     expect(roads.t).toMatchObject({ source: "estimate", reason: "out_of_coverage", stopIds: ["s3"] });
+  });
+});
+
+describe("withDecision: which warnings count as handled", () => {
+  const c = (codes: string[], status: ReportedCheck["status"] = "checked"): ReportedCheck =>
+    ({ stopId: "s", status, severity: codes.length ? "warning" : null, issues: codes.map((code) => ({ code, severity: "warning", message: code })), checks: { road: "done", reach: "done", address: "done" }, unavailable: [], source: "computed" }) as ReportedCheck;
+  const approach = { lat: 1, lng: 1, distanceMeters: 49, acceptedBy: null, acceptedAt: "2026-11-10T10:00:00Z" };
+  const confirmation = (issueCodes: string[]) => ({ by: null, at: "2026-11-10T10:00:00Z", issueCodes, note: null });
+  it("motorway warning: handled by a chosen approach or a confirmation", () => {
+    expect(withDecision(c(["motorway"]), { stopId: "s", confirmation: null, approach }).acknowledged).toBe(true);
+    expect(withDecision(c(["motorway"]), { stopId: "s", confirmation: confirmation(["motorway"]), approach: null }).acknowledged).toBe(true);
+    expect(withDecision(c(["motorway"]), undefined).acknowledged).toBe(false);
+  });
+  it("other warnings need their own confirmation; an approach does not cover them; pending is never acknowledged", () => {
+    expect(withDecision(c(["motorway", "address_mismatch"]), { stopId: "s", confirmation: null, approach }).acknowledged).toBe(false);
+    expect(withDecision(c(["far_from_road"]), { stopId: "s", confirmation: confirmation(["motorway"]), approach }).acknowledged).toBe(false);
+    expect(withDecision(c(["motorway"], "pending"), { stopId: "s", confirmation: null, approach }).acknowledged).toBe(false);
   });
 });

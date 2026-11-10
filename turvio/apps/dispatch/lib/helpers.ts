@@ -1,4 +1,4 @@
-import { formatClock, parseMinuteOfDay, tourEndPoint, tourStartPoint, type DispatchDataset, type GeoPoint, type NewStopInput, type Stop, type Tour } from "@turvio/shared";
+import { hasUsableLocation, formatClock, parseMinuteOfDay, tourEndPoint, tourStartPoint, type DispatchDataset, type GeoPoint, type NewStopInput, type Stop, type Tour } from "@turvio/shared";
 
 /** Open tours (not completed) that already use this driver / vehicle. */
 export function driverBusy(data: Pick<DispatchDataset, "tours">, driverId: string, exceptTourId?: string): Tour | undefined {
@@ -14,13 +14,15 @@ export function vehicleBusy(data: Pick<DispatchDataset, "tours">, vehicleId: str
  * depot is not drawn (it was not before; the road route shows the full trip). `customStart`/`customEnd`
  * are set when they differ from the depot, so the map can mark them.
  */
-export function tourMapPoints(tour: Tour, depot: { location: GeoPoint }, stops: Pick<Stop, "location">[]) {
+export function tourMapPoints(tour: Tour, depot: { location: GeoPoint }, stops: { location?: GeoPoint | null; address?: { countryCode?: string } }[]) {
   const start = tourStartPoint(tour, depot.location);
   const end = tourEndPoint(tour, depot.location);
   const same = (a: GeoPoint, b: GeoPoint) => a.lat === b.lat && a.lng === b.lng;
   const customStart = same(start, depot.location) ? null : start;
   const customEnd = end && !same(end, depot.location) ? end : null;
-  const located = stops.filter((s): s is { location: GeoPoint } => !!s.location).map((s) => s.location);
+  // Certainly wrong coordinates (0,0, German address abroad) are neither drawn nor used to fit the
+  // map – one swapped coordinate would otherwise zoom the whole map out to the Atlantic.
+  const located = stops.filter((s) => hasUsableLocation(s)).map((s) => s.location!);
   return { path: [start, ...located, ...(customEnd ? [customEnd] : [])], customStart, customEnd, endsAtLastStop: !end };
 }
 

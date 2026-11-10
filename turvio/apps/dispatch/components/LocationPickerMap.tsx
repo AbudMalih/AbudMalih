@@ -66,7 +66,9 @@ export function LocationPickerMap({
         const m = mod.map(el.current, { zoomControl: true, attributionControl: true });
         mod.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(m);
         fixed.current = mod.layerGroup().addTo(m);
-        m.setView([center.lat, center.lng], 17);
+        // With an allowed area: show all of it; otherwise close in on the pin.
+        if (limit) m.fitBounds(mod.latLng(center.lat, center.lng).toBounds(limit * 2.2));
+        else m.setView([center.lat, center.lng], 17);
         m.on("click", (e: Leaflet.LeafletMouseEvent) => latest.current({ lat: Number(e.latlng.lat.toFixed(6)), lng: Number(e.latlng.lng.toFixed(6)) }));
         map.current = m;
         setState("ready");

@@ -46,6 +46,7 @@ up() {
   start api "$ROOT/apps/api" env NODE_ENV=development AUTH_PROVIDER=local DATABASE_URL="$DB_URL" JWT_SECRET="$JWT_SECRET" \
     OPTIMIZER_URL=http://localhost:8000 DEV_MAILBOX=true MAILER=outbox ${TURVIO_OSRM_URL:+OSRM_URL=$TURVIO_OSRM_URL} GEOCODER="${TURVIO_GEOCODER:-none}" \
     ${TURVIO_RATE_LIMIT:+RATE_LIMIT_PER_MINUTE=$TURVIO_RATE_LIMIT} \
+    ${TURVIO_ROUTING_DATA_VERSION:+ROUTING_DATA_VERSION=$TURVIO_ROUTING_DATA_VERSION} ${TURVIO_ADDRESS_DATA_VERSION:+ADDRESS_DATA_VERSION=$TURVIO_ADDRESS_DATA_VERSION} \
     CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:8081 npx tsx src/server.ts
   start dispatch "$ROOT/apps/dispatch" env TURVIO_API_URL=http://localhost:4000 npx next start --port 3000
   start admin "$ROOT/apps/admin" env TURVIO_API_URL=http://localhost:4000 npx next start --port 3001

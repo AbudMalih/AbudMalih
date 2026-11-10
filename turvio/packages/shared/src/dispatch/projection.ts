@@ -8,7 +8,7 @@ import { isOpen } from "../stopStatus";
  * (0,0, out of range, a German address outside Germany – P0-3). Others count as "no hasUsableLocation map
  * position": the projection is incomplete and names them, exactly like stops without a pin.
  */
-export function hasUsableLocation(s: Pick<Stop, "location" | "address">): boolean {
+export function hasUsableLocation(s: { location?: GeoPoint | null; address?: { countryCode?: string } }): boolean {
   return !!s.location && coordinateIssues(s.location, s.address?.countryCode).length === 0;
 }
 import { sortBySequence, tourEndPoint, tourStartPoint } from "../tour";

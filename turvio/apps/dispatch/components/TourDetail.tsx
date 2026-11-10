@@ -375,7 +375,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
           )}
           {!proj.complete && (
             <p>
-              Times are incomplete: {proj.unlocatedStopIds.length} stop{proj.unlocatedStopIds.length > 1 ? "s have" : " has"} no usable map position (missing or certainly wrong; 
+              Times are incomplete: {proj.unlocatedStopIds.length} stop{proj.unlocatedStopIds.length > 1 ? "s have" : " has"} no usable map position (missing or certainly wrong:{" "} 
               {proj.unlocatedStopIds
                 .map((id) => s.stops.find((x) => x.id === id))
                 .map((x) => (x ? (x.recipientName ?? formatAddress(x)) : ""))

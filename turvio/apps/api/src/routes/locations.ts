@@ -22,7 +22,10 @@ const toCheck = (s: Pick<Stop, "id" | "location" | "address" | "addressVersion">
 
 export function withDecision(c: ReportedCheck, d: StopDecision | undefined): LocationReport {
   const warnings = c.issues.filter((i) => i.severity === "warning").map((i) => i.code);
-  const acknowledged = !!d?.confirmation && c.status !== "pending" && warnings.length > 0 && warnings.every((w) => d.confirmation!.issueCodes.includes(w));
+  // A warning is handled when staff confirmed it for this exact location – or, for a motorway
+  // snap, when they chose a navigation approach for it (that is the decision the warning asks for).
+  const handled = (w: string) => (d?.confirmation?.issueCodes.includes(w) ?? false) || (w === "motorway" && !!d?.approach);
+  const acknowledged = c.status !== "pending" && warnings.length > 0 && warnings.every(handled);
   return { ...c, confirmation: d?.confirmation ?? null, approach: d?.approach ?? null, acknowledged };
 }
 
