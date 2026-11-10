@@ -57,6 +57,8 @@ export async function createTestEnv(
     /** Optimizer service: default the deterministic fake; real-service tests pass a URL and fetch. */
     optimizerUrl?: string;
     fetchImpl?: typeof fetch;
+    /** Server settings of the test database (as a hosted server's configuration), set before any connection. */
+    databaseSettings?: Record<string, string>;
   } = {},
 ) {
   const dbName = `turvio_it_${name}_${process.pid}`;
@@ -64,6 +66,7 @@ export async function createTestEnv(
   await admin.connect();
   await admin.query(`drop database if exists ${dbName} with (force)`);
   await admin.query(`create database ${dbName}`);
+  for (const [k, v] of Object.entries(opts.databaseSettings ?? {})) await admin.query(`alter database ${dbName} set ${pg.escapeIdentifier(k)} = ${pg.escapeLiteral(v)}`);
   await admin.end();
 
   const c = new pg.Client({ connectionString: adminUrl(dbName) });

@@ -1,4 +1,4 @@
-import type { GeoPoint, NewStopInput, StopStatus, TourStatus } from "@turvio/shared";
+import { roundPoint, type GeoPoint, type NewStopInput, type StopStatus, type TourStatus } from "@turvio/shared";
 import { ApiError, isTransient } from "./auth";
 
 /**
@@ -104,12 +104,13 @@ export async function sendItem(item: OutboxItem, deps: OutboxDeps): Promise<void
       await c.request("POST", "/v1/me/tours", { id: item.tourId, name: item.name, date: item.date });
       return;
     case "create_stops":
-      await c.request("POST", `/v1/orgs/${o}/stops`, { tourId: item.tourId, stops: item.stops });
+      // Device positions go out to 7 decimals (~1 cm), the precision the server stores and compares.
+      await c.request("POST", `/v1/orgs/${o}/stops`, { tourId: item.tourId, stops: item.stops.map((s) => (s.location ? { ...s, location: roundPoint(s.location) } : s)) });
       return;
     case "stop_update":
       await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/driver-update`, {
         locked: item.locked,
-        location: item.location,
+        location: item.location ? roundPoint(item.location) : item.location,
         locationSource: item.locationSource,
         ...(item.location && item.expectedLocationVersion ? { expectedLocationVersion: item.expectedLocationVersion } : {}),
         ...(item.reason ? { reason: item.reason } : {}),
@@ -122,7 +123,7 @@ export async function sendItem(item: OutboxItem, deps: OutboxDeps): Promise<void
       await c.request("POST", `/v1/orgs/${o}/stops/${item.stopId}/edit`, {
         recipientName: item.recipientName ?? null,
         address: item.address,
-        location: item.location,
+        location: item.location ? roundPoint(item.location) : item.location,
         locationSource: item.locationSource,
         ...(item.expectedAddressVersion ? { expectedAddressVersion: item.expectedAddressVersion } : {}),
         ...(item.reason ? { reason: item.reason } : {}),

@@ -2,6 +2,21 @@ import type { GeoPoint } from "./schemas";
 
 const EARTH_RADIUS_M = 6_371_008.8;
 
+/**
+ * A device-captured coordinate (GPS fix, map tap/drag) normalised to 7 decimal places (~1 cm).
+ * Raw device values carry 13–15 decimals; such a value printed by a server with
+ * `extra_float_digits = 0` (15 significant digits) no longer equals the stored one, which breaks
+ * exact location-change checks. 7 decimals stay exact in every float output setting.
+ */
+export function roundCoordinate(v: number): number {
+  return Math.round(v * 1e7) / 1e7;
+}
+
+/** {@link roundCoordinate} for both axes. */
+export function roundPoint<P extends GeoPoint>(p: P): P {
+  return { ...p, lat: roundCoordinate(p.lat), lng: roundCoordinate(p.lng) };
+}
+
 /** Great-circle distance in metres. */
 export function haversineMeters(a: GeoPoint, b: GeoPoint): number {
   const toRad = (d: number) => (d * Math.PI) / 180;

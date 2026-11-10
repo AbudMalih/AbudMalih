@@ -1,4 +1,4 @@
-import { DriverSettings, defaultFailureReasons, hasUsableLocation, nowInZone, roadMetrics, routePoint, sortBySequence } from "@turvio/shared";
+import { DriverSettings, defaultFailureReasons, hasUsableLocation, roundPoint, nowInZone, roadMetrics, routePoint, sortBySequence } from "@turvio/shared";
 import { STOP_SELECT, orgTimeZone, toStop, tourEndOf, tourStartOf, type StopRow, type TourRow } from "../data/dispatch";
 import { RoutingOutOfCoverage, RoutingUnavailable, type RoutingProvider } from "../routing";
 import type { FastifyInstance } from "fastify";
@@ -10,7 +10,8 @@ import { sha256, validateProofContent, type ProofStore } from "../storage";
 
 const Uuid = z.string().uuid();
 const IdParams = OrgParams.extend({ id: Uuid });
-const Point = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
+// Device-captured positions (also from older app builds) are stored to 7 decimals (~1 cm).
+const Point = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) }).transform(roundPoint);
 
 const ProofUpload = z.object({
   /** Client-generated id: retries of the same upload never create a second record. */

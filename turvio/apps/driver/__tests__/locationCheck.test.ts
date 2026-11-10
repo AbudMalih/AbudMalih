@@ -1,4 +1,4 @@
-import type { Stop } from "@turvio/shared";
+import { NewStopInput, type Stop } from "@turvio/shared";
 import { currentCheck, locationNotices, locationPill, navigationPoint, type DriverLocationCheck } from "../src/lib/locationCheck";
 import { navigationUrls } from "../src/lib/navigation";
 import { drainOutbox, type OutboxItem } from "../src/lib/outbox";
@@ -110,5 +110,41 @@ describe("outbox sends the version the change was made against", () => {
     );
     expect(sent[0]!.body).toMatchObject({ location: { lat: 52.43, lng: 9.75 }, expectedLocationVersion: 5, reason: "Gate on side street" });
     expect(sent[1]!.body).toMatchObject({ address: { houseNumber: "3" }, expectedAddressVersion: 3 });
+  });
+});
+
+describe("outbox sends device positions to 7 decimals (exact on every server)", () => {
+  it("create_stops, stop_update and stop_edit round raw GPS / map positions; other fields untouched", async () => {
+    const raw = { lat: 52.38123456789012, lng: 9.741234567890123 };
+    const want = { lat: 52.3812346, lng: 9.7412346 };
+    const sent: { path: string; body: Record<string, unknown> }[] = [];
+    const queue: OutboxItem[] = [
+      {
+        id: "1",
+        orgId: "o",
+        at: "",
+        kind: "create_stops",
+        tourId: "t1",
+        stops: [
+          { ...NewStopInput.parse({ address: { street: "A", postalCode: "30159", city: "Hannover" }, location: raw }), id: "a" },
+          { ...NewStopInput.parse({ address: { street: "B", postalCode: "30159", city: "Hannover" } }), id: "b" },
+        ],
+      },
+      { id: "2", orgId: "o", at: "", kind: "stop_update", stopId: "s1", location: raw, locationSource: "manual_pin", expectedLocationVersion: 2 },
+      { id: "3", orgId: "o", at: "", kind: "stop_edit", stopId: "s1", address: { street: "C", postalCode: "30159", city: "Hannover" }, location: raw, locationSource: "manual_pin" },
+      { id: "4", orgId: "o", at: "", kind: "stop_update", stopId: "s2", locked: true },
+    ];
+    await drainOutbox(
+      () => queue[0],
+      (id) => queue.splice(queue.findIndex((q) => q.id === id), 1),
+      () => undefined,
+      { client: { request: async (_m: string, path: string, body?: unknown) => void sent.push({ path, body: body as Record<string, unknown> }) as never }, readFileBase64: async () => "", deleteFile: async () => undefined },
+    );
+    const stops = sent[0]!.body.stops as { location?: unknown; address: { street: string } }[];
+    expect(stops[0]!.location).toEqual(want);
+    expect(stops[1]!.location).toBeNull();
+    expect(sent[1]!.body).toMatchObject({ location: want, expectedLocationVersion: 2 });
+    expect(sent[2]!.body).toMatchObject({ location: want, address: { street: "C" } });
+    expect(sent[3]!.body).toMatchObject({ locked: true, location: undefined });
   });
 });

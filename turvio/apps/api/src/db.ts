@@ -30,11 +30,26 @@ export type Tx = pg.PoolClient;
  * `asService` runs as the API's own role (local auth tables, invitation
  * acceptance); it does not bypass RLS on tenant tables.
  */
+/**
+ * Every pooled connection prints floats exactly (shortest round-trip form). Hosted servers may be
+ * configured with `extra_float_digits = 0` (Supabase is), which prints 15 significant digits: a GPS
+ * coordinate read that way differs from the stored one, so exact location-change checks
+ * (`store_location_check`, confirm, approach) would fail. A session setting, so it also holds
+ * behind the session pooler; queued before the first query of each new connection.
+ */
+export function withExactFloats(pool: pg.Pool): pg.Pool {
+  pool.on("connect", (client) => {
+    // Never continue silently with rounded floats: a failure closes this connection (the request errors).
+    client.query("set extra_float_digits = 1").catch(() => client.end().catch(() => undefined));
+  });
+  return pool;
+}
+
 export class Db {
   readonly pool: pg.Pool;
 
   constructor(connectionString: string, ssl: PgSsl = false) {
-    this.pool = new pg.Pool({ connectionString, max: 10, ssl: pgSslOptions(ssl) });
+    this.pool = withExactFloats(new pg.Pool({ connectionString, max: 10, ssl: pgSslOptions(ssl) }));
   }
 
   async asUser<T>(claims: Claims, fn: (tx: Tx) => Promise<T>): Promise<T> {

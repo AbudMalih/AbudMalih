@@ -1,4 +1,4 @@
-import { LocationPrecision, NewStopInput, OptimizeRequest, StopStatus, TourPlace, haversineMeters, isSubscriptionUsable, nowInZone, type OptimizeResponse } from "@turvio/shared";
+import { LocationPrecision, NewStopInput, OptimizeRequest, StopStatus, TourPlace, haversineMeters, isSubscriptionUsable, nowInZone, roundPoint, type OptimizeResponse } from "@turvio/shared";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -474,6 +474,8 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     const b = parse(CreateStops, req.body, reply);
     if (!b) return;
     if (b.depotId && req.membership!.role === "driver") return problem(reply, 403, "forbidden", "Drivers can only add stops to their own tour");
+    // Device-captured positions (also from older app builds) are stored to 7 decimals (~1 cm).
+    if (req.membership!.role === "driver") for (const s of b.stops) if (s.location) s.location = roundPoint(s.location);
     const ids = await db.asUser(claims(req), async (tx) => {
       await setLocationContext(tx, { provenance: b.provenance ?? null });
       return insertStops(tx, orgId, b, b.stops);

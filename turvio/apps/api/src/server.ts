@@ -6,7 +6,7 @@ import type { AuthProvider } from "./auth/provider";
 import { SupabaseAuthProvider } from "./auth/supabase";
 import { buildApp } from "./app";
 import { loadConfig } from "./config";
-import { Db, type PgSsl } from "./db";
+import { Db, type PgSsl, withExactFloats } from "./db";
 import { ChangeFeed } from "./events";
 import { OutboxMailer, SmtpMailer, type Mailer } from "./mail";
 import { PgTenancyRepository, syntheticTenancy } from "./tenancy";
@@ -44,7 +44,7 @@ if (config.AUTH_PROVIDER === "dev") {
   const geocoder: Geocoder =
     config.GEOCODER === "postgres"
       ? config.GEOCODER_DATABASE_URL
-        ? new PostgresGeocoder(((pool) => (sql: string, params: unknown[]) => pool.query(sql, params) as never)(new pg.Pool({ connectionString: config.GEOCODER_DATABASE_URL, max: 4 })))
+        ? new PostgresGeocoder(((pool) => (sql: string, params: unknown[]) => pool.query(sql, params) as never)(withExactFloats(new pg.Pool({ connectionString: config.GEOCODER_DATABASE_URL, max: 4 }))))
         : new PostgresGeocoder((sql, params) => db.asService((tx) => tx.query(sql, params)) as never)
       : config.GEOCODER === "nominatim"
       ? new NominatimGeocoder(config.GEOCODER_URL!, config.GEOCODER_USER_AGENT)
