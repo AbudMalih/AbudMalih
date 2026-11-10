@@ -300,6 +300,42 @@ tour for one driver took 365 s against a 15 s budget (the API gives up after bud
 The 500-stop rows trade a few percent of driving for answering within the budget; a 30 s budget did
 not improve them reliably (measured), so the API budgets (5/10/15 s) are unchanged.
 
+## 4b. Stop location checks (P0-3.1)
+
+`GET /v1/orgs/:orgId/location-checks?date=&tourId=` reports, per open stop, errors / warnings /
+information with explicit reasons (shared rules: `packages/shared/src/location/checks.ts`,
+service: `apps/api/src/location-check.ts`). Read-only: no stop, address or coordinate is changed;
+a suggested approach point (motorway case) is only returned, never applied.
+
+| Severity | Code | Rule |
+|---|---|---|
+| error | `coordinates_invalid` | not finite, out of range, or 0,0 |
+| error | `outside_country` | German address outside Germany (swapped lat/lng named) |
+| error | `out_of_coverage` | nearest drivable road > 1,000 m (same limit as routing) |
+| error | `unreachable` | no road connection from / to the tour start (OSRM table null) |
+| warning | `far_from_road` | nearest drivable road > 150 m |
+| warning | `motorway` | snapped onto a motorway; nearest normal road ≤ 250 m offered as suggestion (service areas can be correct) |
+| warning | `address_mismatch` | > 250 m from the house our OSM address data has for this address |
+| warning | `approximate_location` | stop sits at the street centre (house number not in the data) |
+| warning | `duplicate_coordinates` | same coordinate as a stop with another address |
+| info | `different_access_road` | nearest car road has another name and is > 75 m away (pedestrian zone, courtyard) |
+| info | `restricted_access` | access=destination/delivery/private road (OSRM class `restricted`) |
+| info | `address_not_in_map_data` | address not in the local address data – not cross-checked |
+
+Status per stop: `checked`, `partial` (a check could not run: no routing / no local address
+data – reasons listed), `pending` (still running – never a verdict), `no_location`. The request
+waits ≤ 1.5 s; unfinished checks continue in the background (cached per coordinate / address).
+Road-name mismatch alone is never a warning.
+
+Measured (Region Hannover OSRM, local): 1,000 real house addresses → 0 errors, 0 warnings, 45
+information notes; 477 ms for all 1,000 cold (48 ms per 100 stops: 11 route + 22 table requests),
+cached repeat < 200 ms. Address cross-check: 100 stops in 41–69 ms against 21,140 addresses, 0
+false flags; the same addresses moved 300 m: 99 of 100 flagged (snap distance alone flags almost
+none of them – a wrong point still lies near some road).
+
+Not detectable with the standard car profile: expressways (trunk roads such as the Schnellweg) –
+needs a profile with a `trunk` class and a graph rebuild (P0-3.7, deferred).
+
 ## 5. Limits (stated, not hidden)
 - **No traffic**: OSRM uses static road speeds. Rush-hour delays are not in the travel times.
 - **Coverage**: staging still serves Region Hannover only. The Germany graph (section 4C) is

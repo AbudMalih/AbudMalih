@@ -311,7 +311,9 @@ export function PlanningView() {
         true,
       );
       toast.success(`${plannedHere.length} tours of ${depot.name} re-planned and saved`, {
-        description: `${r.matrixSource === "osrm" ? "Road-network times" : "Straight-line time estimates"}${r.unassignedStopIds.length ? ` · ${r.unassignedStopIds.length} stop(s) left unassigned` : ""}`,
+        description: `${r.matrixSource === "osrm" ? "Road-network times" : "Straight-line time estimates"}${r.unassignedStopIds.length ? ` · ${r.unassignedStopIds.length} stop(s) left unassigned` : ""}${
+          r.unlocatedStopIds?.length ? ` · ${r.unlocatedStopIds.length} stop(s) without a map position not planned – set their location` : ""
+        }`,
       });
     } catch (e) {
       toast.error("Plan optimization failed", { description: errorMessage(e) });

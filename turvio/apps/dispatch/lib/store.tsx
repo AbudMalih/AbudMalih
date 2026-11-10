@@ -82,7 +82,7 @@ interface DispatchState {
   unpublishTour: (tour: Tour) => Promise<void>;
   /** apply=false: preview only. confirmActive: the dispatcher confirmed re-sequencing a tour on the road. */
   optimizeTour: (tour: Tour, opts?: { apply?: boolean; confirmActive?: boolean }) => Promise<OptimizeOutcome>;
-  optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; matrixSource: string }>;
+  optimizePlan: (tourIds: string[], includeUnassigned: boolean) => Promise<{ unassignedStopIds: string[]; unlocatedStopIds?: string[]; matrixSource: string }>;
   /** `rejectPlannedTracking`: refuse (409) if a parcel is already planned/delivered in the company (imports). */
   addStops: (target: { tourId?: string; depotId?: string }, stops: NewStopInput[], opts?: { rejectPlannedTracking?: boolean }) => Promise<string[]>;
   assignStops: (stopIds: string[], tourId: string | null) => Promise<void>;

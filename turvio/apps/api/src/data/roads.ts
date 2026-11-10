@@ -78,8 +78,12 @@ export async function buildRoads(
     const running = tour.status === "in_progress" || tour.status === "paused";
     const gpsPair = running && pos && pos.ageSeconds <= LIVE_GPS_MAX_AGE_SECONDS && wp.firstOpen ? { from: { lat: pos.lat, lng: pos.lng }, to: wp.firstOpen.location!, toStopId: wp.firstOpen.id } : undefined;
     const done = (async (): Promise<TourRoad> => {
+      // Which stop list a routing error's point indexes refer to: the plan, or the remaining route
+      // (whose index 0 is the last completed stop, the anchor).
+      let failedIds: (string | null)[] = wp.plan.stopIds;
       try {
         const plan = wp.plan.points.length >= 2 ? await run(() => routing.route(wp.plan.points)) : null;
+        if (wp.remaining) failedIds = wp.remaining.stopIds.map((id, i) => (i === 0 ? wp.remaining!.anchorStopId : id));
         const rem = wp.remaining && wp.remaining.points.length >= 2 ? await run(() => routing.route(wp.remaining!.points)) : null;
         return {
           source: "osrm",
@@ -89,7 +93,7 @@ export async function buildRoads(
         };
       } catch (e) {
         if (e instanceof RoutingOutOfCoverage) {
-          const ids = e.points.map((p) => wp.plan.stopIds[p.index]).filter((x): x is string => !!x);
+          const ids = e.points.map((p) => failedIds[p.index]).filter((x): x is string => !!x);
           return { source: "estimate", reason: "out_of_coverage", stopIds: ids, gps: gpsOf(tour.id) };
         }
         return { source: "estimate", reason: "routing_unavailable", gps: gpsOf(tour.id) };

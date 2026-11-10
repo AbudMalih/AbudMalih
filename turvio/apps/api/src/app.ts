@@ -11,6 +11,8 @@ import { registerAuthRoutes } from "./routes/auth";
 import { registerDriverRoutes } from "./routes/driver";
 import { registerEventRoutes } from "./routes/events";
 import { registerExecutionRoutes } from "./routes/execution";
+import { registerLocationRoutes } from "./routes/locations";
+import { LocationChecker } from "./location-check";
 import type { Geocoder } from "./geocode";
 import type { ProofStore } from "./storage";
 import type { RoutingProvider } from "./routing";
@@ -38,6 +40,8 @@ export interface AppDeps {
   proofStore?: ProofStore;
   geocoder?: Geocoder;
   routing?: RoutingProvider;
+  /** Stop location checks (default: built from routing + geocoder). */
+  locationChecker?: LocationChecker;
   /** Requests per minute per client IP (default 600; 0 = off). */
   rateLimitPerMinute?: number;
   /** Fastify trustProxy: true, false or the number of trusted proxy hops. */
@@ -206,7 +210,8 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   });
 
   if (deps.db) {
-    const ctx = { deps: deps as AppDeps & { db: Db }, guards };
+    const locationChecker = deps.locationChecker ?? new LocationChecker(deps.routing, deps.geocoder);
+    const ctx = { deps: { ...deps, locationChecker } as AppDeps & { db: Db }, guards };
     if (deps.auth) registerAuthRoutes(app, { ...ctx, auth: deps.auth });
     registerOrgRoutes(app, ctx);
     registerTourRoutes(app, ctx);
@@ -214,6 +219,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     registerExecutionRoutes(app, ctx, { proofStore: deps.proofStore, geocoder: deps.geocoder, routing: deps.routing });
     registerPlatformRoutes(app, ctx);
     registerTrackingRoutes(app, ctx);
+    registerLocationRoutes(app, ctx, locationChecker);
     if (deps.events) registerEventRoutes(app, { ...ctx, events: deps.events });
   }
 

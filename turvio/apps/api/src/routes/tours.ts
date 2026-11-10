@@ -451,6 +451,10 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     if (!b) return;
     if (b.depotId && req.membership!.role === "driver") return problem(reply, 403, "forbidden", "Drivers can only add stops to their own tour");
     const ids = await db.asUser(claims(req), (tx) => insertStops(tx, orgId, b, b.stops));
+    // Start the location checks now (background, read-only), so Dispatch rarely sees "pending".
+    deps.locationChecker?.warm(
+      b.stops.map((s, i) => ({ id: ids[i] ?? "", location: s.location ?? null, address: { ...s.address, countryCode: s.address.countryCode ?? "DE" } })),
+    );
     return reply.status(201).send({ ids });
   });
 
@@ -713,7 +717,10 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       return { tours, stops };
     });
     const located = input.stops.filter((s) => s.lat != null && s.lng != null);
-    if (!located.length) return problem(reply, 422, "nothing_to_optimize", "No open stops with a map position");
+    // Stops without a map position cannot be planned: they stay where they are (tour stops at the
+    // end of their tour, unassigned stops unassigned) and are reported – never silently left out.
+    const unlocated = input.stops.filter((s) => s.lat == null || s.lng == null);
+    if (!located.length) return problem(reply, 422, "nothing_to_optimize", "No open stops with a map position", { unlocatedStopIds: unlocated.map((s) => s.id) });
     const request = OptimizeRequest.parse({
       vehicles: input.tours.map((v) => ({
         id: v.tour.id,
@@ -745,13 +752,20 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         await tx.query(`select set_tour_sequence($1, $2::uuid[], $3::jsonb)`, [
           route.vehicleId,
           route.visits.map((v) => v.stopId),
-          JSON.stringify({ engine: result.engine, matrixSource: result.matrixSource, unassignedStopIds: result.unassignedStopIds, plan: true }),
+          JSON.stringify({
+            engine: result.engine,
+            matrixSource: result.matrixSource,
+            unassignedStopIds: result.unassignedStopIds,
+            unlocatedStopIds: unlocated.filter((s) => s.tour_id === route.vehicleId).map((s) => s.id),
+            plan: true,
+          }),
         ]);
       }
     });
     return {
       routes: result.routes.map((r) => ({ tourId: r.vehicleId, stops: r.visits.length, distanceMeters: r.distanceMeters, durationSeconds: r.durationSeconds })),
       unassignedStopIds: result.unassignedStopIds,
+      unlocatedStopIds: unlocated.map((s) => s.id),
       matrixSource: result.matrixSource,
     };
   });

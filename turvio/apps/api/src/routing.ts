@@ -27,6 +27,21 @@ export interface RoutingProvider {
   pairLegs?(pairs: { from: GeoPoint; to: GeoPoint }[]): Promise<RoadLeg[]>;
   /** Counters for monitoring and benchmarks. Optional. */
   stats?(): RoutingStats;
+  /** Where each point lands on the road network (location checks). Optional. */
+  snapPoints?(points: GeoPoint[]): Promise<SnapPoint[]>;
+  /** Nearest road with motorways excluded (approach suggestion). Optional. */
+  nearestNonMotorway?(point: GeoPoint): Promise<{ location: GeoPoint; roadName: string; distanceMeters: number } | null>;
+  /** Road connection origin → point and point → origin for each point. Optional. */
+  reachability?(origin: GeoPoint, points: GeoPoint[]): Promise<{ fromOrigin: boolean; toOrigin: boolean }[]>;
+}
+
+export interface SnapPoint {
+  distanceMeters: number;
+  roadName: string;
+  roadRef: string;
+  /** OSRM classes of the snapped road; null when they could not be read (fallback lookup). */
+  classes: string[] | null;
+  snapped: GeoPoint;
 }
 
 export interface RoutingStats {
@@ -38,6 +53,10 @@ export interface RoutingStats {
   routeRequests: number;
   tableRequests: number;
   failures: number;
+  /** Location checks: snap route requests, single-point nearest requests, cache hits. */
+  snapRequests?: number;
+  nearestRequests?: number;
+  snapCacheHits?: number;
 }
 
 export class RoutingUnavailable extends Error {}
@@ -59,7 +78,11 @@ export class OsrmRouting implements RoutingProvider {
   private readonly inFlight = new Map<string, Promise<RoadRoute>>();
   /** "Outside the road data" answers, so a tour with such a stop is not re-requested on every page load. */
   private readonly outOfCoverage = new Map<string, { at: number; error: RoutingOutOfCoverage }>();
-  private readonly counters: RoutingStats = { cacheHits: 0, sharedInFlight: 0, routeRequests: 0, tableRequests: 0, failures: 0 };
+  private readonly counters: Required<RoutingStats> = { cacheHits: 0, sharedInFlight: 0, routeRequests: 0, tableRequests: 0, failures: 0, snapRequests: 0, nearestRequests: 0, snapCacheHits: 0 };
+  /** Location-check results per coordinate (the road data does not change while the API runs). */
+  private readonly snapCache = new Map<string, { at: number; snap: SnapPoint }>();
+  private readonly reachCache = new Map<string, { at: number; reach: { fromOrigin: boolean; toOrigin: boolean } }>();
+  private readonly altCache = new Map<string, { at: number; alt: { location: GeoPoint; roadName: string; distanceMeters: number } | null }>();
 
   stats(): RoutingStats {
     return { ...this.counters };
@@ -135,6 +158,141 @@ export class OsrmRouting implements RoutingProvider {
     this.cache.set(coords, { at: Date.now(), route });
     if (this.cache.size > (this.opts.cacheSize ?? 300)) this.cache.delete(this.cache.keys().next().value!);
     return route;
+  }
+
+  private url(path: string): string {
+    return `${this.baseUrl.replace(/\/$/, "")}${path}`;
+  }
+
+  private async getJson<T>(url: string): Promise<T> {
+    try {
+      const res = await (this.opts.fetchImpl ?? fetch)(url, { signal: AbortSignal.timeout(this.opts.timeoutMs ?? 8000) });
+      return (await res.json()) as T;
+    } catch (e) {
+      this.counters.failures++;
+      throw new RoutingUnavailable(`Routing service unavailable: ${(e as Error).message}`);
+    }
+  }
+
+  private remember<V>(map: Map<string, { at: number } & V>, key: string, value: V) {
+    map.set(key, { at: Date.now(), ...value } as { at: number } & V);
+    if (map.size > 20_000) map.delete(map.keys().next().value!);
+  }
+
+  /**
+   * Snap points to the road network with the road's name, ref and OSRM classes (motorway,
+   * restricted, …). One route request per 99 points through all of them (each leg's departure
+   * step lies on the snapped road); if that route fails (a point without road connection), the
+   * points are looked up one by one with /nearest – then the classes are unknown (null).
+   */
+  async snapPoints(points: GeoPoint[]): Promise<SnapPoint[]> {
+    const key = (p: GeoPoint) => `${p.lng.toFixed(6)},${p.lat.toFixed(6)}`;
+    const ttl = 60 * 60_000;
+    const out: (SnapPoint | undefined)[] = points.map((p) => {
+      const hit = this.snapCache.get(key(p));
+      if (hit && Date.now() - hit.at < ttl) {
+        this.counters.snapCacheHits++;
+        return hit.snap;
+      }
+      return undefined;
+    });
+    const missing = [...new Set(points.filter((_, i) => !out[i]).map(key))];
+    for (let i = 0; i < missing.length; i += 99) {
+      const chunk = missing.slice(i, i + 99);
+      const snaps = await this.snapChunk(chunk);
+      chunk.forEach((k, j) => this.remember(this.snapCache, k, { snap: snaps[j]! }));
+    }
+    return points.map((p, i) => out[i] ?? this.snapCache.get(key(p))!.snap);
+  }
+
+  private async snapChunk(coords: string[]): Promise<SnapPoint[]> {
+    type Wp = { distance?: number; name?: string; location: [number, number] };
+    type Step = { ref?: string; intersections?: { classes?: string[] }[] };
+    // Back to the first point at the end, so every point is the start of one leg.
+    const chain = coords.length === 1 ? [coords[0]!, coords[0]!] : [...coords, coords[0]!];
+    this.counters.snapRequests++;
+    const data = await this.getJson<{ code?: string; waypoints?: Wp[]; routes?: { legs: { steps: Step[] }[] }[] }>(
+      this.url(`/route/v1/driving/${chain.join(";")}?steps=true&overview=false&continue_straight=false`),
+    );
+    const legs = data.routes?.[0]?.legs;
+    if (data.code === "Ok" && legs && data.waypoints) {
+      return coords.map((_, i) => {
+        const w = data.waypoints![i]!;
+        const dep = legs[i]?.steps[0];
+        return {
+          distanceMeters: w.distance ?? 0,
+          roadName: w.name ?? "",
+          roadRef: dep?.ref ?? "",
+          classes: dep ? (dep.intersections?.[0]?.classes ?? []) : null,
+          snapped: { lat: w.location[1], lng: w.location[0] },
+        };
+      });
+    }
+    // No route through all points (e.g. one without road connection to the others): each point on
+    // its own (a route from the point to itself still lies on its road, classes included); if even
+    // that fails, /nearest – then the classes are unknown. At most 8 requests at a time.
+    const one = async (c: string): Promise<SnapPoint> => {
+      this.counters.snapRequests++;
+      const r = await this.getJson<{ code?: string; waypoints?: Wp[]; routes?: { legs: { steps: Step[] }[] }[] }>(this.url(`/route/v1/driving/${c};${c}?steps=true&overview=false`));
+      const w = r.waypoints?.[0];
+      const dep = r.routes?.[0]?.legs[0]?.steps[0];
+      if (r.code === "Ok" && w && dep)
+        return { distanceMeters: w.distance ?? 0, roadName: w.name ?? "", roadRef: dep.ref ?? "", classes: dep.intersections?.[0]?.classes ?? [], snapped: { lat: w.location[1], lng: w.location[0] } };
+      this.counters.nearestRequests++;
+      const n = await this.getJson<{ code?: string; waypoints?: Wp[] }>(this.url(`/nearest/v1/driving/${c}?number=1`));
+      const nw = n.waypoints?.[0];
+      if (n.code !== "Ok" || !nw) throw new RoutingUnavailable(`Routing failed: ${n.code ?? "?"}`);
+      return { distanceMeters: nw.distance ?? 0, roadName: nw.name ?? "", roadRef: "", classes: null, snapped: { lat: nw.location[1], lng: nw.location[0] } };
+    };
+    const out: SnapPoint[] = new Array(coords.length);
+    let next = 0;
+    await Promise.all(
+      Array.from({ length: Math.min(8, coords.length) }, async () => {
+        while (next < coords.length) {
+          const i = next++;
+          out[i] = await one(coords[i]!);
+        }
+      }),
+    );
+    return out;
+  }
+
+  /** Nearest road with motorways excluded (OSRM `exclude=motorway`); null if none or unsupported. */
+  async nearestNonMotorway(point: GeoPoint): Promise<{ location: GeoPoint; roadName: string; distanceMeters: number } | null> {
+    const k = `${point.lng.toFixed(6)},${point.lat.toFixed(6)}`;
+    const hit = this.altCache.get(k);
+    if (hit && Date.now() - hit.at < 60 * 60_000) return hit.alt;
+    this.counters.nearestRequests++;
+    const n = await this.getJson<{ code?: string; waypoints?: { distance?: number; name?: string; location: [number, number] }[] }>(this.url(`/nearest/v1/driving/${k}?number=1&exclude=motorway`));
+    const w = n.code === "Ok" ? n.waypoints?.[0] : undefined;
+    const alt = w ? { location: { lat: w.location[1], lng: w.location[0] }, roadName: w.name ?? "", distanceMeters: w.distance ?? 0 } : null;
+    this.remember(this.altCache, k, { alt });
+    return alt;
+  }
+
+  /** Road connection from the origin to each point and back (one table request per 99 points). */
+  async reachability(origin: GeoPoint, points: GeoPoint[]): Promise<{ fromOrigin: boolean; toOrigin: boolean }[]> {
+    const o = `${origin.lng.toFixed(6)},${origin.lat.toFixed(6)}`;
+    const key = (p: GeoPoint) => `${o}>${p.lng.toFixed(6)},${p.lat.toFixed(6)}`;
+    const ttl = 60 * 60_000;
+    const missing = [...new Set(points.filter((p) => !((this.reachCache.get(key(p))?.at ?? 0) > Date.now() - ttl)).map((p) => `${p.lng.toFixed(6)},${p.lat.toFixed(6)}`))];
+    for (let i = 0; i < missing.length; i += 99) {
+      const chunk = missing.slice(i, i + 99);
+      const n = chunk.length;
+      this.counters.tableRequests += 2;
+      const all = Array.from({ length: n }, (_, j) => j + 1).join(";");
+      // Two small tables: origin → points and points → origin.
+      const [fwd, back] = await Promise.all([
+        this.getJson<{ code?: string; durations?: (number | null)[][] }>(this.url(`/table/v1/driving/${o};${chunk.join(";")}?sources=0&destinations=${all}`)),
+        this.getJson<{ code?: string; durations?: (number | null)[][] }>(this.url(`/table/v1/driving/${o};${chunk.join(";")}?sources=${all}&destinations=0`)),
+      ]);
+      if (fwd.code !== "Ok" || back.code !== "Ok" || !fwd.durations || !back.durations) {
+        this.counters.failures++;
+        throw new RoutingUnavailable(`Routing failed: ${fwd.code ?? back.code ?? "?"}`);
+      }
+      chunk.forEach((c, j) => this.remember(this.reachCache, `${o}>${c}`, { reach: { fromOrigin: fwd.durations![0]![j] != null, toOrigin: back.durations![j]![0] != null } }));
+    }
+    return points.map((p) => this.reachCache.get(key(p))!.reach);
   }
 
   /** One OSRM table request: leg i = pairs[i].from -> pairs[i].to (live position -> next stop). Not cached. */
