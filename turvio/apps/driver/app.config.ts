@@ -30,6 +30,10 @@ const config: ExpoConfig = {
     supportsTablet: false,
     // Publisher: Lunapact Technologies (UAE). Confirm IDs before the first store submission.
     bundleIdentifier: appId,
+    // Test builds (TestFlight): only standard HTTPS/TLS encryption (exempt), so App Store Connect
+    // does not ask the export-compliance question for every build. Production: set when its
+    // store release is prepared.
+    ...(variant !== "production" ? { config: { usesNonExemptEncryption: false } } : {}),
     infoPlist: {
       // Lets the app hand navigation to Google Maps / Waze when they are installed.
       LSApplicationQueriesSchemes: ["comgooglemaps", "waze"],
@@ -66,6 +70,7 @@ const config: ExpoConfig = {
   web: { favicon: "./assets/favicon.png" },
   plugins: [
     "./plugins/withReleaseSigning",
+    "./plugins/withUniqueAppGroups",
     "expo-router",
     ["expo-splash-screen", { image: "./assets/splash-icon.png", imageWidth: 160, resizeMode: "contain", backgroundColor: "#FFFFFF", dark: { backgroundColor: "#060B16" } }],
     "expo-system-ui",

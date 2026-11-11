@@ -19,8 +19,9 @@ account, credential or decision of Lunapact · **[device]** needs a physical pho
 
 ## 2. Configuration per build profile (no secrets in the repo)
 
-- [you] `EXPO_PUBLIC_API_URL` in the EAS environment of the profile = HTTPS address of the staging API
-  (without it the build runs in demo mode).
+- [done 2026-11-11] `EXPO_PUBLIC_API_URL` = `https://api.staging.turvio.online` (plain text) in the EAS
+  `preview` environment only (`production`/`development`: none). Without it a build runs in demo mode.
+- [done] iOS test builds declare standard (exempt) encryption only (`ITSAppUsesNonExemptEncryption = false`).
 - [you] `GOOGLE_MAPS_ANDROID_API_KEY` (EAS secret), restricted to the package + signing SHA-1.
 - [done] Version `0.2.0`, `runtimeVersion: appVersion`; Android `versionCode` must increase for every
   build handed out (production profile: `autoIncrement`).
