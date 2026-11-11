@@ -205,6 +205,14 @@ describe.runIf(available)("TURVIO API on PostgreSQL", () => {
       tour = r.json().tour;
     });
 
+    it("tells the driver the company's time zone and calendar day, even without tours", async () => {
+      const body = (await env.as(U.driverHannover1, "GET", "/v1/me/tours")).json();
+      expect(body.tours).toHaveLength(0);
+      expect(body.timeZone).toBe("Europe/Berlin");
+      const berlin = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+      expect(body.today).toBe(berlin);
+    });
+
     it("drivers do not see the tour until it is published", async () => {
       expect((await env.as(U.driverHannover1, "GET", "/v1/me/tours")).json().tours).toHaveLength(0);
       const pub = await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${jarbou()}/tours/${tour.id}/publish`, { expectedVersion: tour.version });

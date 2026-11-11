@@ -13,8 +13,9 @@ export default function NewRoute() {
   const t = useT();
   const { c } = useTheme();
   const createRoute = useTourStore((s) => s.createRoute);
-  const [date, setDate] = useState(todayIso());
-  const [name, setName] = useState(t("route.defaultName", { date: todayIso() }));
+  const timeZone = useTourStore((s) => s.timeZone);
+  const [date, setDate] = useState(todayIso(timeZone));
+  const [name, setName] = useState(t("route.defaultName", { date: todayIso(timeZone) }));
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date));
   return (
     <Screen testID="new-route">

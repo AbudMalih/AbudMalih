@@ -18,7 +18,20 @@ export function statusTone(st: StopStatus): Tone {
   if (st === "skipped") return "warning";
   return "neutral";
 }
-export const todayIso = () => {
+/**
+ * Today's date as YYYY-MM-DD. With the company's time zone (from the server) this is the
+ * company's calendar day – the day the server lists tours for. Without it (demo mode, before the
+ * first sync) the phone's own day is used.
+ */
+export const todayIso = (timeZone?: string | null) => {
   const d = new Date();
+  if (timeZone) {
+    try {
+      const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(d).map((x) => [x.type, x.value]));
+      if (p.year && p.month && p.day) return `${p.year}-${p.month}-${p.day}`;
+    } catch {
+      // unknown zone on this device: fall back to the phone's day
+    }
+  }
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };

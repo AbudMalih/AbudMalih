@@ -98,6 +98,8 @@ export interface TourState extends SyntheticDataset {
   prefs: Prefs;
   activeTourId: string | null;
   settingsByOrg: Record<string, DriverSettingsView>;
+  /** Company time zone from the server (null in demo mode / before the first sync). */
+  timeZone: string | null;
   lastOptimization: (OptimizationOutcome & { tourId: string; at: string }) | null;
   optimizing: boolean;
   /** Scan history per tour (survives restarts). */
@@ -159,7 +161,7 @@ function replaceTourStops(all: Stop[], tourId: string, tourStops: Stop[]): Stop[
   return [...all.filter((s) => s.tourId !== tourId), ...tourStops];
 }
 
-const EMPTY_SERVER = { organizationId: "", organizationName: "", depots: [], drivers: [], vehicles: [], tours: [], stops: [] };
+const EMPTY_SERVER = { organizationId: "", organizationName: "", depots: [], drivers: [], vehicles: [], tours: [], stops: [], timeZone: null };
 /** Server payload for a stop created on the phone (offline queue; idempotent by stop id). */
 export function createStopPayload(stop: Stop): NewStopInput & { id: string } {
   return {
@@ -210,6 +212,7 @@ export const useTourStore = create<TourState>()(
         prefs: DEFAULT_PREFS,
         activeTourId: null,
         settingsByOrg: {},
+        timeZone: null,
         lastOptimization: null,
         optimizing: false,
         scans: {},
@@ -553,7 +556,7 @@ export const useTourStore = create<TourState>()(
           }
         },
 
-        resetData: () => set({ ...createSyntheticDataset(), lastOptimization: null, scans: {}, activeTourId: null, settingsByOrg: {} }),
+        resetData: () => set({ ...createSyntheticDataset(), lastOptimization: null, scans: {}, activeTourId: null, settingsByOrg: {}, timeZone: null }),
 
         retryFailed: (id) => {
           const f = get().failed.find((x) => x.item.id === id);
@@ -607,7 +610,7 @@ export const useTourStore = create<TourState>()(
                 set({ syncState: "offline", syncMessage: drained.error ?? null });
                 return;
               }
-              const payload = await auth().request<{ tours: MyTour[] }>("GET", "/v1/me/tours");
+              const payload = await auth().request<{ tours: MyTour[]; timeZone?: string | null }>("GET", "/v1/me/tours");
               const localTours = get().tours;
               const snap = applyOutbox(snapshotFrom(payload, get().driverId, get()), get().outbox, localTours);
               const active = get().activeTourId;
@@ -642,6 +645,7 @@ export const useTourStore = create<TourState>()(
         prefs: s.prefs,
         activeTourId: s.activeTourId,
         settingsByOrg: s.settingsByOrg,
+        timeZone: s.timeZone,
         lastOptimization: s.lastOptimization,
         scans: s.scans,
         roads: s.roads,

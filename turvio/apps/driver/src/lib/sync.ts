@@ -43,10 +43,12 @@ export interface ServerSnapshot {
   stops: Stop[];
   driverId: string;
   settingsByOrg: Record<string, DriverSettingsView>;
+  /** The company's IANA time zone; its calendar day decides which tours are "today". */
+  timeZone: string | null;
 }
 
 /** Map the API payload into the driver store shape. */
-export function snapshotFrom(payload: { tours: MyTour[] }, fallbackDriverId: string, previous?: Pick<ServerSnapshot, "depots" | "drivers">): ServerSnapshot {
+export function snapshotFrom(payload: { tours: MyTour[]; timeZone?: string | null }, fallbackDriverId: string, previous?: Pick<ServerSnapshot, "depots" | "drivers"> & { timeZone?: string | null }): ServerSnapshot {
   const t = payload.tours;
   const first = t[0];
   const depots = new Map<string, Depot>((previous?.depots ?? []).map((d) => [d.id, d]));
@@ -69,6 +71,7 @@ export function snapshotFrom(payload: { tours: MyTour[] }, fallbackDriverId: str
     stops: t.flatMap((x) => x.stops),
     driverId: first?.driver.id ?? fallbackDriverId,
     settingsByOrg,
+    timeZone: payload.timeZone ?? first?.organization.timeZone ?? previous?.timeZone ?? null,
   };
 }
 

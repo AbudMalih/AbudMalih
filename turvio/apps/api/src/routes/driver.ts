@@ -48,7 +48,18 @@ export function registerDriverRoutes(app: FastifyInstance, { deps, guards }: Rou
           stops,
         });
       }
-      return { tours: out };
+      // The company's calendar day: new personal routes must use it, not the phone's time zone
+      // (otherwise a route created near midnight, or on a phone set to another zone, is dated a
+      // day off and vanishes from this list).
+      const org = (
+        await tx.query<{ time_zone: string; today: string }>(
+          `select o.time_zone, to_char((now() at time zone o.time_zone)::date, 'YYYY-MM-DD') as today
+             from drivers d join organizations o on o.id = d.organization_id
+            where d.user_id = auth.uid() and d.active
+            order by d.created_at limit 1`,
+        )
+      ).rows[0];
+      return { tours: out, timeZone: org?.time_zone ?? null, today: org?.today ?? null };
     });
   });
 

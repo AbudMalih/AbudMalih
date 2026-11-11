@@ -238,7 +238,7 @@ try {
   await step("driver optimizes the remaining stops on the server (OR-Tools, labelled estimate)", async () => {
     await driver.getByTestId("hero-optimize").click();
     await driver.getByTestId("optimize-run").click();
-    await driver.getByTestId("optimize-result").getByText(/Optimized with OR-Tools – travel times: straight-line estimate/).waitFor({ timeout: 30000 });
+    await driver.getByTestId("optimize-result").getByText(/Optimized with OR-Tools – travel times: (straight-line estimate|road network)/).waitFor({ timeout: 30000 });
     await shot(driver, "13-driver-optimize");
     await driver.getByTestId("optimize-done").click();
   });

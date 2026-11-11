@@ -58,7 +58,10 @@ export default function ScanScreen() {
 
   // A route is needed to attach scans to: create a personal route if there is none yet.
   useEffect(() => {
-    if (!tour) createRoute(t("route.defaultName", { date: todayIso() }), todayIso());
+    if (!tour) {
+      const tz = useTourStore.getState().timeZone;
+      createRoute(t("route.defaultName", { date: todayIso(tz) }), todayIso(tz));
+    }
   }, [tour, createRoute, t]);
 
   const session = useMemo(() => new ScanSession({ known: parcelIndex(stops), entries: history ?? [] }), [tour?.id]); // eslint-disable-line react-hooks/exhaustive-deps
