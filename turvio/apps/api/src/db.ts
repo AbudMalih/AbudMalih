@@ -38,6 +38,13 @@ export type Tx = pg.PoolClient;
  * behind the session pooler; queued before the first query of each new connection.
  */
 export function withExactFloats(pool: pg.Pool): pg.Pool {
+  // An idle pooled connection can be closed by the server (database restart, pooler failover,
+  // idle timeout). pg reports that as an 'error' event on the pool; without a listener Node treats
+  // it as unhandled and the whole API process exits. The broken client is already discarded by the
+  // pool, so logging is all that is needed – the next request opens a fresh connection.
+  pool.on("error", (err: Error & { code?: string }) => {
+    console.error(JSON.stringify({ level: "error", msg: "idle database connection lost", code: err.code ?? null, error: err.message }));
+  });
   pool.on("connect", (client) => {
     // Never continue silently with rounded floats: a failure closes this connection (the request errors).
     client.query("set extra_float_digits = 1").catch(() => client.end().catch(() => undefined));
