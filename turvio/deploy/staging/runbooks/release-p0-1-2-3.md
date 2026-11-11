@@ -75,8 +75,9 @@ rollback starts in seconds without a build.
 | # | Item | Effect until done |
 |---|---|---|
 | 20 | ETA across a DST change in overnight tours | finish times of tours spanning the switch night can be off by one hour |
-| 21 | Running tours carried over from a previous date | such tours are projected like today's tours |
+| 21 | Unfinished tours across dates | the driver app shows only tours dated today (Europe/Berlin): a published tour still in progress from an earlier day disappears from Today/Stops/Map at midnight (seen on staging 2026-11-11 with the 7 Nov tour); Dispatch projects such tours like today's |
 | 22 | Day indicator for finish times after midnight | "01:10" without "+1 day" in Dispatch |
+| – | Driver Map/Stops empty states (device test 2026-11-11) | Map and Stops return a bare empty-state message without the themed screen container and safe-area inset; in dark mode its light text is invisible, so Map looks blank white |
 | – | Arabic right-to-left layout | texts translated; RTL layout only verified on a device after the restart prompt |
 | – | Expressway/motorway detection from road data (P0-3.7) | motorway warning uses the snap road name/class only |
 | – | Physical-device tests (iOS + Android) | `docs/MOBILE_RELEASE_READINESS.md` §5; first iOS compile still open |
