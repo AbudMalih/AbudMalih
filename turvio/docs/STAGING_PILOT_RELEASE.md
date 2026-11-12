@@ -56,10 +56,9 @@ ssh turviodeploy@<vps> /opt/turvio/bin/deploy --geodb-refresh
 ```
 
 Downloads Niedersachsen + Bremen from Geofabrik (checksums verified), extracts the addresses and loads
-them. Measured locally on the same data: ~9 min, ~5 M addresses, 1.2 GB database; the extractor peaked
-at ~2.1 GB resident (node index kept in a disk-backed file; how much of that is evictable file cache is
-being measured). The job's container limit is `GEODB_PREPARE_MEM_LIMIT` (default 2 GB) – run it when the
-server is quiet. Ends with
+them. Measured locally on the same data: ~9 min, ~5.3 M addresses, 1.2 GB database. The node index
+is a disk-backed file: the extractor's own memory peaked at 175 MB (anonymous); the other ~1.8 GB it
+touches is file cache the kernel can evict under the 2 GB job limit. Ends with
 `ACTIVE: osm-<date>-<id> (<rows> addresses)`; a failed or refused run changes nothing.
 Hessen (Kassel/Haiger depots) can be added later with `GEODB_REGIONS="niedersachsen bremen hessen"` in `.env`.
 
@@ -81,7 +80,8 @@ result; Planning → import the sample file → stops placed on the map → opti
 
 ## Step 4 – Android test build on phones
 
-EAS `preview` build (staging API, internal distribution, version code 3+). Install from the build page
+EAS `preview` build (staging API, internal distribution). Build `815c945f` (commit 86b06e9, company-day
+fix) is finished; later preview builds increase the version code automatically. Install from the build page
 link on the test phones, then run `docs/MOBILE_RELEASE_READINESS.md` §5 (permissions, scanning, OCR,
 offline, background location, navigation hand-off) and record the results in `docs/DEVICE_TESTING.md`.
 
