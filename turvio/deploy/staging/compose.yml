@@ -4,7 +4,7 @@
 # Secrets come only from /opt/turvio/.env (mode 600) – never from this file or Git.
 #
 # Memory budget (limits; typical use is lower):
-#   caddy 128M · api 512M · optimizer 768M · osrm 512M (OSRM_MEM_LIMIT) · dispatch 384M · admin 320M · geodb 256M = ~2.9 GB
+#   caddy 128M · api 512M · optimizer 768M · osrm 512M (OSRM_MEM_LIMIT) · dispatch 384M · admin 320M · geodb 384M = ~3.0 GB
 #   leaving headroom for the OS, Docker and image builds on a 4 GB server (plus 2 GB swap).
 
 name: turvio-staging
@@ -180,7 +180,7 @@ services:
     volumes:
       - geodb-data:/var/lib/postgresql/data
     networks: [internal]
-    mem_limit: ${GEODB_MEM_LIMIT:-256m}
+    mem_limit: ${GEODB_MEM_LIMIT:-384m}           # index builds during --geodb-refresh (maintenance_work_mem 128 MB)
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres", "-d", "geo"]
       interval: 15s

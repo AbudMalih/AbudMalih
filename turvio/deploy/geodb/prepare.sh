@@ -28,6 +28,12 @@ echo "preflight: regions='$REGIONS' free disk in $WORK: ${free_mb} MB (needs ~${
 run="$WORK/run-$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$run"
 trap 'rm -rf "$run"' EXIT
+# Node locations on disk (sparse file) instead of RAM: Niedersachsen + Bremen peaked at 2.2 GB
+# in memory, too much next to the running stack on a 4 GB server. GEODB_LOCATION_INDEX=flex_mem
+# uses memory (faster, for bigger machines).
+export OSM_LOCATION_INDEX="${GEODB_LOCATION_INDEX:-sparse_file_array,$run/node-locations.idx}"
+# The extractor ships next to this script in the image; in a checkout it lives in tools/.
+EXTRACT="$HERE/osm_addresses.py"; [ -f "$EXTRACT" ] || EXTRACT="$HERE/../../tools/osm_addresses.py"
 
 # ---- 1. source files (download with checksum, or given local files) -------------------------
 files=()
@@ -52,7 +58,7 @@ csv="$run/addresses.csv"
 : >"$csv"
 for f in "${files[@]}"; do
   echo "extracting addresses from $(basename "$f")"
-  python3 "$HERE/osm_addresses.py" "$f" | tail -n +2 >>"$csv"
+  python3 "$EXTRACT" "$f" | tail -n +2 >>"$csv"
 done
 echo "extracted $(wc -l <"$csv") address rows (before de-duplication)"
 

@@ -13,6 +13,7 @@ Requires pyosmium (pip install osmium). Data: © OpenStreetMap contributors, ODb
 keep the attribution wherever results are shown.
 """
 import csv
+import os
 import sys
 
 import osmium
@@ -64,7 +65,9 @@ def main(path):
     writer = csv.writer(sys.stdout, delimiter=";")
     writer.writerow(["street", "house_number", "postcode", "city", "lat", "lng"])
     h = Addresses(writer)
-    h.apply_file(path, locations=True)
+    # Node locations: in memory by default; OSM_LOCATION_INDEX="sparse_file_array,<file>" keeps them
+    # on disk instead (large extracts on a small server, see deploy/geodb/prepare.sh).
+    h.apply_file(path, locations=True, idx=os.environ.get("OSM_LOCATION_INDEX", "flex_mem"))
     print(f"{h.count} addresses", file=sys.stderr)
 
 
