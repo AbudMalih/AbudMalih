@@ -11,6 +11,8 @@
 #   deploy.sh --osrm-check                real road routes in Suhl, Hannover, Kassel, Bremen, Cologne
 #   deploy.sh --osrm-revert               switch back to the previous routing graph
 #   deploy.sh --server-check              RAM, swap, disk and routing-graph information
+#   deploy.sh --geodb-refresh             load OpenStreetMap addresses (GEODB_REGIONS) into the geocoder database
+#   deploy.sh --geodb-status              active address data (version, rows, size)
 #
 # Layout under TURVIO_ROOT (default /opt/turvio), owned by the deploy user:
 #   .env               secrets (mode 600) – see deploy/staging/.env.example
@@ -31,7 +33,7 @@ RELEASES="$ROOT/releases"
 STATE="$ROOT/state"
 PROJECT="turvio-staging"
 WAIT_TIMEOUT="${DEPLOY_WAIT_TIMEOUT:-300}"
-SERVICES=(api optimizer osrm dispatch admin)
+SERVICES=(api optimizer osrm geodb dispatch admin)
 
 # Non-interactive SSH sessions (ssh host deploy …) may lack the rootless Docker variables.
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
@@ -206,7 +208,7 @@ prune() { # keep the current and previous releases (directories + images)
     [[ " ${keep[*]} " == *" $sha "* ]] && continue
     rm -rf "$d"; log "removed release dir $sha"
   done
-  docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^turvio/(api|optimizer|osrm|dispatch|admin):[0-9a-f]{40}$' | while read -r img; do
+  docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^turvio/(api|optimizer|osrm|geodb|dispatch|admin):[0-9a-f]{40}$' | while read -r img; do
     [[ " ${keep[*]} " == *" ${img##*:} "* ]] || docker image rm "$img" >/dev/null 2>&1 || true
   done
   docker builder prune -f --filter until=168h >/dev/null 2>&1 || true
@@ -268,6 +270,19 @@ osrm_revert() {
   log "routing graph reverted"
 }
 
+geodb_refresh() {
+  local cur; cur="$(current_release)"
+  log "loading addresses into geodb (GEODB_REGIONS; download + import, ~10-30 min)"
+  compose "$cur" run --rm geodb-prepare | tee -a "$STATE/deploy.log" || die "address import failed or was refused – the previous address data stays active"
+  log "address import finished – set GEOCODER=postgres and ADDRESS_DATA_VERSION (printed above) in $ENV_FILE, then redeploy the current release"
+}
+
+geodb_status() {
+  local cur; cur="$(current_release)"
+  compose "$cur" exec -T geodb psql -U postgres -d geo -XAt -c "select version, regions, rows, imported_at from geo.meta order by imported_at desc limit 3" \
+    -c "select pg_size_pretty(pg_database_size('geo'))" || die "geodb is not running"
+}
+
 server_check() {
   echo "== host"; free -m; nproc | sed 's/^/vCPUs: /'
   echo "== disk (Docker data: $(docker info --format '{{.DockerRootDir}}'))"; df -h "$(docker info --format '{{.DockerRootDir}}')" "$ROOT"
@@ -282,7 +297,7 @@ server_check() {
 }
 
 main() {
-  [ $# -ge 1 ] || { sed -n '3,15p' "$0"; exit 2; }
+  [ $# -ge 1 ] || { sed -n '3,17p' "$0"; exit 2; }
   preflight
   exec 9>"$STATE/deploy.lock"
   flock -n 9 || die "another deployment is running"
@@ -295,6 +310,8 @@ main() {
     --osrm-check) osrm_check "$(current_release)" ;;
     --osrm-revert) osrm_revert ;;
     --server-check) server_check ;;
+    --geodb-refresh) geodb_refresh ;;
+    --geodb-status) geodb_status ;;
     -*) die "unknown option $1" ;;
     *) [ $# -eq 1 ] || die "usage: deploy.sh <commit-sha>"; deploy "$1" ;;
   esac

@@ -4,7 +4,7 @@
 # Secrets come only from /opt/turvio/.env (mode 600) – never from this file or Git.
 #
 # Memory budget (limits; typical use is lower):
-#   caddy 128M · api 512M · optimizer 768M · osrm 512M (OSRM_MEM_LIMIT) · dispatch 384M · admin 320M = ~2.6 GB
+#   caddy 128M · api 512M · optimizer 768M · osrm 512M (OSRM_MEM_LIMIT) · dispatch 384M · admin 320M · geodb 256M = ~2.9 GB
 #   leaving headroom for the OS, Docker and image builds on a 4 GB server (plus 2 GB swap).
 
 name: turvio-staging
@@ -30,6 +30,8 @@ volumes:
   caddy-data: {}           # TLS certificates and ACME account
   caddy-config: {}
   osrm-data: {}            # /data/current -> build-<timestamp> (see osrm/prepare.sh)
+  geodb-data: {}           # address database (OSM, ODbL) for GEOCODER=postgres
+  geodb-work: {}           # temporary downloads of deploy.sh --geodb-refresh (emptied after each run)
 
 services:
   caddy:
@@ -89,6 +91,8 @@ services:
       ROUTING_DATA_VERSION: ${ROUTING_DATA_VERSION:-}
       ADDRESS_DATA_VERSION: ${ADDRESS_DATA_VERSION:-}
       GEOCODER: ${GEOCODER:-none}
+      # Separate address database (geodb, select-only role); used when GEOCODER=postgres.
+      GEOCODER_DATABASE_URL: postgres://geo_reader:${GEODB_READER_PASSWORD:-unset}@geodb:5432/geo
       MAILER: smtp
       SMTP_URL: ${SMTP_URL:?set SMTP_URL (EU SMTP provider)}
       MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM}
@@ -104,6 +108,7 @@ services:
     mem_limit: 512m
     depends_on:
       optimizer: { condition: service_healthy }
+      geodb: { condition: service_healthy }
 
   optimizer:
     <<: *hardening
@@ -156,6 +161,57 @@ services:
       - osrm-data:/data
     networks: [edge]                       # needs internet for the download only
     mem_limit: ${OSRM_PREPARE_MEM_LIMIT:-1536m}
+    restart: "no"
+
+  # Address database for the geocoder (OpenStreetMap addresses). Internal network only.
+  geodb:
+    <<: *hardening
+    image: turvio/geodb:${TURVIO_RELEASE:?set by deploy.sh}
+    build: { context: ../.., dockerfile: deploy/docker/geodb.Dockerfile }
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]   # postgres entrypoint drops to the postgres user
+    environment:
+      POSTGRES_DB: geo
+      POSTGRES_PASSWORD: ${GEODB_PASSWORD:?set GEODB_PASSWORD}
+      GEODB_READER_PASSWORD: ${GEODB_READER_PASSWORD:?set GEODB_READER_PASSWORD}
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=30", "-c", "maintenance_work_mem=128MB"]
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /var/run/postgresql:size=1m,uid=999,gid=999
+    volumes:
+      - geodb-data:/var/lib/postgresql/data
+    networks: [internal]
+    mem_limit: ${GEODB_MEM_LIMIT:-256m}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "geo"]
+      interval: 15s
+      timeout: 4s
+      retries: 5
+      start_period: 30s
+
+  # One-off: loads/refreshes the addresses.  deploy.sh --geodb-refresh
+  geodb-prepare:
+    image: turvio/geodb:${TURVIO_RELEASE:?set by deploy.sh}
+    profiles: ["tools"]
+    entrypoint: ["/opt/geodb/prepare.sh"]
+    user: "999:999"
+    healthcheck: { disable: true }
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:size=64m"]
+    environment:
+      PGHOST: geodb
+      PGUSER: postgres
+      PGPASSWORD: ${GEODB_PASSWORD:?set GEODB_PASSWORD}
+      PGDATABASE: geo
+      GEODB_READER_PASSWORD: ${GEODB_READER_PASSWORD:?set GEODB_READER_PASSWORD}
+      GEODB_REGIONS: ${GEODB_REGIONS:-niedersachsen bremen}
+      GEODB_MIN_ROWS: ${GEODB_MIN_ROWS:-300000}
+      GEODB_WORK: /work
+    volumes:
+      - geodb-work:/work
+    networks: [edge, internal]             # internet for the download, internal for geodb
+    mem_limit: ${GEODB_PREPARE_MEM_LIMIT:-2048m}
     restart: "no"
 
   dispatch:
