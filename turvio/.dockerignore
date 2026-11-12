@@ -16,6 +16,7 @@ docs
 e2e
 branding
 tools
+!tools/osm_addresses.py
 supabase
 # The driver app is not deployed; only its manifest is needed for the pnpm lockfile.
 apps/driver/**

@@ -33,7 +33,7 @@ RELEASES="$ROOT/releases"
 STATE="$ROOT/state"
 PROJECT="turvio-staging"
 WAIT_TIMEOUT="${DEPLOY_WAIT_TIMEOUT:-300}"
-SERVICES=(api optimizer osrm geodb dispatch admin)
+SERVICES=(api optimizer osrm geodb geodb-prepare dispatch admin)
 
 # Non-interactive SSH sessions (ssh host deploy …) may lack the rootless Docker variables.
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
@@ -208,7 +208,7 @@ prune() { # keep the current and previous releases (directories + images)
     [[ " ${keep[*]} " == *" $sha "* ]] && continue
     rm -rf "$d"; log "removed release dir $sha"
   done
-  docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^turvio/(api|optimizer|osrm|geodb|dispatch|admin):[0-9a-f]{40}$' | while read -r img; do
+  docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^turvio/(api|optimizer|osrm|geodb|geodb-prepare|dispatch|admin):[0-9a-f]{40}$' | while read -r img; do
     [[ " ${keep[*]} " == *" ${img##*:} "* ]] || docker image rm "$img" >/dev/null 2>&1 || true
   done
   docker builder prune -f --filter until=168h >/dev/null 2>&1 || true

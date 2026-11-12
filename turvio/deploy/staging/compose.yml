@@ -190,10 +190,9 @@ services:
 
   # One-off: loads/refreshes the addresses.  deploy.sh --geodb-refresh
   geodb-prepare:
-    image: turvio/geodb:${TURVIO_RELEASE:?set by deploy.sh}
+    image: turvio/geodb-prepare:${TURVIO_RELEASE:?set by deploy.sh}
+    build: { context: ../.., dockerfile: deploy/docker/geodb-prepare.Dockerfile }
     profiles: ["tools"]
-    entrypoint: ["/opt/geodb/prepare.sh"]
-    user: "999:999"
     healthcheck: { disable: true }
     read_only: true
     cap_drop: [ALL]
