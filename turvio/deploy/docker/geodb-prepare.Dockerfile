@@ -19,5 +19,7 @@ RUN --mount=type=secret,id=build_ca,required=false,mode=0444 \
  && mkdir -p /work && chown geodb /work
 COPY deploy/geodb/prepare.py deploy/geodb/schema.sql /opt/geodb/
 COPY tools/osm_addresses.py /opt/geodb/osm_addresses.py
+RUN chmod 644 /opt/geodb/prepare.py /opt/geodb/schema.sql /opt/geodb/osm_addresses.py
+
 USER geodb
 ENTRYPOINT ["python3", "/opt/geodb/prepare.py"]
