@@ -7,7 +7,11 @@ import type { Db } from "./db";
 export const OrgParams = z.object({ orgId: z.string().min(1).max(64) });
 
 export function problem(reply: FastifyReply, status: number, code: string, message: string, extra: Record<string, unknown> = {}) {
-  return reply.status(status).send({ error: { code, message, ...extra } });
+  // The request id ties a user's screenshot to the server log line (support for the pilot). The
+  // code is logged too, so rejected requests (403 mfa_required, 409 conflicts…) are findable.
+  const requestId = reply.request?.id;
+  if (status >= 400) reply.request?.log?.info({ status, code }, "request rejected");
+  return reply.status(status).send({ error: { code, message, ...extra, ...(requestId ? { requestId } : {}) } });
 }
 
 /** Parse a body/query with zod or answer 400 with the issues. */

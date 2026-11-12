@@ -75,7 +75,11 @@ describe("tenant isolation and roles", () => {
     const unknown = await app.inject({ method: "POST", url: "/v1/orgs/org_nope/optimize", headers: auth, payload: optimizeBody });
     expect(other.statusCode).toBe(403);
     expect(unknown.statusCode).toBe(403);
-    expect(other.json()).toEqual(unknown.json());
+    // Identical apart from the per-request id (support reference, reveals nothing about the org).
+    const strip = (b: { error: Record<string, unknown> }) => ({ error: { ...b.error, requestId: undefined } });
+    expect(strip(other.json())).toEqual(strip(unknown.json()));
+    expect(other.json().error.requestId).toEqual(expect.any(String));
+    expect(other.json().error.requestId).not.toEqual(unknown.json().error.requestId);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 

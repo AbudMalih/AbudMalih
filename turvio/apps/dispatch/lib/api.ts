@@ -5,6 +5,8 @@ export class ApiCallError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
+    /** Server request id – quoted to support, it finds the matching log line. */
+    readonly requestId?: string,
   ) {
     super(message);
   }
@@ -36,16 +38,17 @@ export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELET
   if (res.status === 204) return undefined as T;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = (data as { error?: { code?: string; message?: string } }).error ?? {};
+    const err = (data as { error?: { code?: string; message?: string; requestId?: string } }).error ?? {};
     const code = err.code ?? "error";
     if (res.status === 403 && code === "mfa_required") {
       // Company administration needs two-step verification: go to the set-up page and come back.
       const here = window.location.pathname + window.location.search;
       window.location.assign(`/security?required=1&next=${encodeURIComponent(here)}`);
     }
-    throw new ApiCallError(res.status, code, FRIENDLY[code] ?? err.message ?? `Request failed (HTTP ${res.status})`);
+    throw new ApiCallError(res.status, code, FRIENDLY[code] ?? err.message ?? `Request failed (HTTP ${res.status})`, err.requestId);
   }
   return data as T;
 }
 
-export const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
+export const errorMessage = (e: unknown) =>
+  e instanceof ApiCallError && e.status >= 400 && e.requestId ? `${e.message} (HTTP ${e.status} · ${e.code} · Ref ${e.requestId})` : e instanceof Error ? e.message : String(e);
