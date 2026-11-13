@@ -8,9 +8,9 @@ export function Skeleton({ className }: { className?: string }) {
 export function EmptyState({ icon, title, description, action, className }: { icon: ReactNode; title: string; description?: string; action?: ReactNode; className?: string }) {
   return (
     <div className={cn("flex flex-col items-center justify-center px-6 py-14 text-center", className)}>
-      <div className="mb-4 inline-flex size-11 items-center justify-center rounded-xl border border-line bg-surface shadow-xs text-muted [&_svg]:size-5">{icon}</div>
-      <p className="text-sm font-semibold text-ink">{title}</p>
-      {description && <p className="mt-1 max-w-sm text-[13px] text-muted">{description}</p>}
+      <div className="mb-4 inline-flex size-[72px] items-center justify-center rounded-[22px] border border-line bg-[radial-gradient(circle_at_30%_20%,var(--violet-soft),transparent_70%),var(--surface-2)] text-nx-violet-text [&_svg]:size-7">{icon}</div>
+      <p className="text-[15px] font-bold text-ink">{title}</p>
+      {description && <p className="mt-1 max-w-sm text-[13px] text-ink-2">{description}</p>}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -19,7 +19,7 @@ export function EmptyState({ icon, title, description, action, className }: { ic
 /** Labels content that is not real production data. */
 export function DemoDataTag({ className, children = "Synthetic demo data" }: { className?: string; children?: ReactNode }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full border border-dashed border-amber-300 bg-warning-soft px-2 py-0.5 text-2xs font-medium text-warning-ink", className)}>
+    <span className={cn("inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full bg-warning-soft px-2.5 text-[11.5px] font-bold text-warning-ink", className)}>
       {children}
     </span>
   );

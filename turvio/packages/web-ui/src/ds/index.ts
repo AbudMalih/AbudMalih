@@ -1,6 +1,7 @@
 // TURVIO design system (web). Tokens: ./tokens.css. See docs/DESIGN_SYSTEM.md.
 export { cn } from "./cn";
-export { TurvioLockup, TurvioMark, Wordmark } from "./Wordmark";
+export { THEME_KEY, ThemeScript, ThemeSwitch, useTheme, type Theme } from "./Theme";
+export { TurvioLockup, TurvioMark, Wordmark, type LogoTone } from "./Wordmark";
 export { Button, Kbd, buttonVariants, type ButtonProps } from "./Button";
 export { Badge, badgeVariants, type BadgeTone } from "./Badge";
 export { Card, CardHeader, SectionLabel } from "./Card";
@@ -14,5 +15,5 @@ export { KpiCard, Sparkline, type Trend } from "./KpiCard";
 export { Sheet } from "./Sheet";
 export { Dialog } from "./Dialog";
 export { Toaster, toast } from "./Toaster";
-export { AppShell, PageHeader, type Crumb, type NavGroup, type NavItem, type ShellUser, type WorkspaceOption } from "./AppShell";
+export { AppShell, PageHeader, type Command, type Crumb, type IconComponent, type NavGroup, type NavItem, type ShellUser, type WorkspaceOption } from "./AppShell";
 export { AcceptInviteForm, AuthLayout, Field, FormAlert, ForgotPasswordForm, LoginForm, MfaSetupForm, ResetPasswordForm, groupKey } from "./Auth";

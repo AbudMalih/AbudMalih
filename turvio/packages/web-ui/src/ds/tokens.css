@@ -1,5 +1,13 @@
 /*
- * TURVIO design tokens (Tailwind CSS v4 theme).
+ * TURVIO NEXT design tokens (Tailwind CSS v4 theme) – approved 2026-11-11.
+ * Source of truth: design/next/dispatch/base.css (identical in the Admin prototype). Values below are
+ * copied from it unchanged; the semantic Tailwind names (canvas, surface, ink, brand…) map onto them,
+ * so every screen follows the active theme.
+ *
+ * Themes: dark (obsidian/charcoal) is the default; light (warm porcelain) applies when the system
+ * prefers light, or explicitly with <html data-theme="light">. data-theme="dark" forces dark.
+ * The choice is stored by ThemeScript/ThemeSwitch (localStorage "turvio-theme").
+ *
  * Mobile counterpart: packages/shared/src/theme.ts – keep values in sync.
  *
  * Usage in an app's globals.css:
@@ -9,67 +17,192 @@
  *   @source "<path>/packages/web-ui/src/ds";
  */
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------- raw NEXT palette: dark (default) ---------- */
+:root {
+  --bg: #090b11; --bg-2: #0d1018; --surface: #141821; --surface-2: #1a1f2b; --raised: #212736; --navy: #111b30;
+  --line: rgba(166, 180, 224, 0.09); --line-2: rgba(166, 180, 224, 0.17); --line-3: rgba(166, 180, 224, 0.28);
+  --text: #f1f3f9; --text-2: #b4bbcc; --text-3: #8a93a8;
+  --violet: #6f55ff; --violet-hi: #8c76ff; --violet-text: #aa9bff; --on-violet: #ffffff;
+  --cobalt: #3478ff; --cobalt-text: #7da8ff; --cyan: #18d9e8; --mint: #2ce6a6; --coral: #ff718b; --amber: #ffb85c;
+  --violet-soft: rgba(117, 91, 255, 0.15); --cobalt-soft: rgba(52, 120, 255, 0.14); --cyan-soft: rgba(24, 217, 232, 0.12);
+  --mint-soft: rgba(44, 230, 166, 0.12); --coral-soft: rgba(255, 113, 139, 0.13); --amber-soft: rgba(255, 184, 92, 0.13);
+  --chart-grid: rgba(166, 180, 224, 0.08); --chart-label: #7e879c;
+  --shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.035) inset, 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+  --hero-bg: radial-gradient(120% 140% at 100% 0%, rgba(117, 91, 255, 0.42) 0%, rgba(52, 120, 255, 0.16) 38%, rgba(17, 27, 48, 0) 70%), linear-gradient(160deg, #141b33 0%, #101629 45%, #0e121d 100%);
+  --hero-line: rgba(170, 155, 255, 0.28); --hero-text-2: #c3c9dc;
+  --sidebar: #0c0f16; --glow: 0 0 0 1px rgba(117, 91, 255, 0.35), 0 8px 30px -6px rgba(117, 91, 255, 0.55);
+  --avatar-bg: linear-gradient(135deg, #2b3550, #1a2032); --avatar-text: #e6e9f5;
+  --scrim: rgba(5, 7, 12, 0.55);
+  --seg-ind-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--line-2);
+  /* derived (not in the prototype palette): solid dark button and the third surface step */
+  --solid: #212736; --solid-hover: #2a3142; --surface-3: #212736;
+  --brand-100-mix: rgba(117, 91, 255, 0.24); --brand-200-mix: rgba(117, 91, 255, 0.4);
+  --map-attrib: rgba(20, 24, 33, 0.82);
+  color-scheme: dark;
+}
+
+/* ---------- light (warm porcelain) ---------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f4ef; --bg-2: #efece5; --surface: #ffffff; --surface-2: #faf8f4; --raised: #ffffff; --navy: #eef0f8;
+    --line: rgba(44, 40, 66, 0.085); --line-2: rgba(44, 40, 66, 0.15); --line-3: rgba(44, 40, 66, 0.26);
+    --text: #161922; --text-2: #454b5c; --text-3: #646a7c;
+    --violet: #5b44e8; --violet-hi: #6a55f0; --violet-text: #4a34d4; --on-violet: #ffffff;
+    --cobalt: #2563eb; --cobalt-text: #1d4fc4; --cyan: #0a8b99; --mint: #0b8a5f; --coral: #cf3558; --amber: #a35c00;
+    --violet-soft: rgba(91, 68, 232, 0.09); --cobalt-soft: rgba(37, 99, 235, 0.08); --cyan-soft: rgba(10, 139, 153, 0.09);
+    --mint-soft: rgba(11, 138, 95, 0.09); --coral-soft: rgba(207, 53, 88, 0.08); --amber-soft: rgba(163, 92, 0, 0.09);
+    --chart-grid: rgba(44, 40, 66, 0.07); --chart-label: #6e7385;
+    --shadow-sm: 0 1px 2px rgba(30, 26, 50, 0.05);
+    --shadow: 0 1px 2px rgba(30, 26, 50, 0.04), 0 10px 28px -10px rgba(30, 26, 50, 0.12);
+    --shadow-lg: 0 2px 6px rgba(30, 26, 50, 0.05), 0 28px 60px -18px rgba(30, 26, 50, 0.22);
+    --hero-bg: radial-gradient(120% 140% at 100% 0%, rgba(122, 98, 255, 0.3) 0%, rgba(80, 140, 255, 0.14) 40%, rgba(255, 255, 255, 0) 72%), linear-gradient(160deg, #ffffff 0%, #f4f2ff 55%, #eef3ff 100%);
+    --hero-line: rgba(91, 68, 232, 0.22); --hero-text-2: #4d5366;
+    --sidebar: #fbfaf7; --glow: 0 0 0 1px rgba(91, 68, 232, 0.25), 0 8px 24px -8px rgba(91, 68, 232, 0.45);
+    --avatar-bg: linear-gradient(135deg, #e4e1f7, #d9e3f8); --avatar-text: #2a2550;
+    --scrim: rgba(40, 36, 60, 0.22);
+    --seg-ind-shadow: 0 1px 3px rgba(30, 26, 50, 0.12), 0 0 0 1px var(--line);
+    --solid: #161922; --solid-hover: #2a2e3a; --surface-3: #efece5;
+    --brand-100-mix: rgba(91, 68, 232, 0.16); --brand-200-mix: rgba(91, 68, 232, 0.3);
+    --map-attrib: rgba(255, 255, 255, 0.85);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f6f4ef; --bg-2: #efece5; --surface: #ffffff; --surface-2: #faf8f4; --raised: #ffffff; --navy: #eef0f8;
+  --line: rgba(44, 40, 66, 0.085); --line-2: rgba(44, 40, 66, 0.15); --line-3: rgba(44, 40, 66, 0.26);
+  --text: #161922; --text-2: #454b5c; --text-3: #646a7c;
+  --violet: #5b44e8; --violet-hi: #6a55f0; --violet-text: #4a34d4; --on-violet: #ffffff;
+  --cobalt: #2563eb; --cobalt-text: #1d4fc4; --cyan: #0a8b99; --mint: #0b8a5f; --coral: #cf3558; --amber: #a35c00;
+  --violet-soft: rgba(91, 68, 232, 0.09); --cobalt-soft: rgba(37, 99, 235, 0.08); --cyan-soft: rgba(10, 139, 153, 0.09);
+  --mint-soft: rgba(11, 138, 95, 0.09); --coral-soft: rgba(207, 53, 88, 0.08); --amber-soft: rgba(163, 92, 0, 0.09);
+  --chart-grid: rgba(44, 40, 66, 0.07); --chart-label: #6e7385;
+  --shadow-sm: 0 1px 2px rgba(30, 26, 50, 0.05);
+  --shadow: 0 1px 2px rgba(30, 26, 50, 0.04), 0 10px 28px -10px rgba(30, 26, 50, 0.12);
+  --shadow-lg: 0 2px 6px rgba(30, 26, 50, 0.05), 0 28px 60px -18px rgba(30, 26, 50, 0.22);
+  --hero-bg: radial-gradient(120% 140% at 100% 0%, rgba(122, 98, 255, 0.3) 0%, rgba(80, 140, 255, 0.14) 40%, rgba(255, 255, 255, 0) 72%), linear-gradient(160deg, #ffffff 0%, #f4f2ff 55%, #eef3ff 100%);
+  --hero-line: rgba(91, 68, 232, 0.22); --hero-text-2: #4d5366;
+  --sidebar: #fbfaf7; --glow: 0 0 0 1px rgba(91, 68, 232, 0.25), 0 8px 24px -8px rgba(91, 68, 232, 0.45);
+  --avatar-bg: linear-gradient(135deg, #e4e1f7, #d9e3f8); --avatar-text: #2a2550;
+  --scrim: rgba(40, 36, 60, 0.22);
+  --seg-ind-shadow: 0 1px 3px rgba(30, 26, 50, 0.12), 0 0 0 1px var(--line);
+  --solid: #161922; --solid-hover: #2a2e3a; --surface-3: #efece5;
+  --brand-100-mix: rgba(91, 68, 232, 0.16); --brand-200-mix: rgba(91, 68, 232, 0.3);
+  --map-attrib: rgba(255, 255, 255, 0.85);
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 @theme {
-  /* Typography – Geist is loaded by each app via next/font (CSS variables). */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Noto Sans Arabic", sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+  /* Typography – Plus Jakarta Sans + IBM Plex Sans Arabic, self-hosted via next/font/local
+     (fonts in packages/web-ui/fonts, loaded in each app's app/fonts.ts). */
+  --font-sans: var(--font-jakarta), var(--font-plex-arabic), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-arabic: var(--font-plex-arabic), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Brand */
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-navy: #0f172a;
-  --color-navy-800: #1e293b;
+  /* Brand = NEXT violet */
+  --color-brand-50: var(--violet-soft);
+  --color-brand-100: var(--brand-100-mix);
+  --color-brand-200: var(--brand-200-mix);
+  --color-brand-500: var(--violet-hi);
+  --color-brand-600: var(--violet);
+  --color-brand-700: var(--violet-text);
+  --color-navy: var(--solid);
+  --color-navy-800: var(--solid-hover);
 
-  /* Neutrals / surfaces */
-  --color-canvas: #f8fafc;        /* app background */
-  --color-surface: #ffffff;       /* cards, panels */
-  --color-surface-2: #f1f5f9;     /* secondary surface, hovers */
-  --color-surface-3: #e9eef5;
-  --color-line: #e2e8f0;          /* borders */
-  --color-line-strong: #cbd5e1;
-  --color-ink: #0f172a;           /* primary text */
-  --color-ink-2: #334155;
-  --color-muted: #64748b;         /* secondary text */
-  --color-subtle: #94a3b8;
+  /* Surfaces, lines, text */
+  --color-canvas: var(--bg);
+  --color-canvas-2: var(--bg-2);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-raised: var(--raised);
+  --color-sidebar: var(--sidebar);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-2);
+  --color-line-3: var(--line-3);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-muted: var(--text-3);
+  --color-subtle: var(--chart-label);
+  --color-on-accent: var(--on-violet);
 
   /* Status */
-  --color-success: #10b981;
-  --color-success-ink: #047857;
-  --color-success-soft: #ecfdf5;
-  --color-warning: #f59e0b;
-  --color-warning-ink: #b45309;
-  --color-warning-soft: #fffbeb;
-  --color-danger: #ef4444;
-  --color-danger-ink: #b91c1c;
-  --color-danger-soft: #fef2f2;
-  --color-info-soft: #eff6ff;
+  --color-success: var(--mint);
+  --color-success-ink: var(--mint);
+  --color-success-soft: var(--mint-soft);
+  --color-warning: var(--amber);
+  --color-warning-ink: var(--amber);
+  --color-warning-soft: var(--amber-soft);
+  --color-danger: var(--coral);
+  --color-danger-ink: var(--coral);
+  --color-danger-soft: var(--coral-soft);
+  --color-info: var(--cobalt);
+  --color-info-ink: var(--cobalt-text);
+  --color-info-soft: var(--cobalt-soft);
+
+  /* NEXT accents (raw) */
+  --color-nx-violet: var(--violet);
+  --color-nx-violet-hi: var(--violet-hi);
+  --color-nx-violet-text: var(--violet-text);
+  --color-nx-violet-soft: var(--violet-soft);
+  --color-nx-cobalt: var(--cobalt);
+  --color-nx-cobalt-text: var(--cobalt-text);
+  --color-nx-cobalt-soft: var(--cobalt-soft);
+  --color-nx-cyan: var(--cyan);
+  --color-nx-cyan-soft: var(--cyan-soft);
+  --color-nx-mint: var(--mint);
+  --color-nx-mint-soft: var(--mint-soft);
+  --color-nx-coral: var(--coral);
+  --color-nx-coral-soft: var(--coral-soft);
+  --color-nx-amber: var(--amber);
+  --color-nx-amber-soft: var(--amber-soft);
 
   /* Type scale (size / line-height) */
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
 
-  /* Radii */
-  --radius-sm: 6px;
-  --radius-md: 8px;
+  /* Radii – prototype: r-sm 10, r 16, r-lg 22 */
+  --radius-sm: 8px;
+  --radius-md: 10px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+  --radius-2xl: 22px;
+  --radius-3xl: 26px;
 
-  /* Elevation – soft, layered, cool-tinted */
-  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
-  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.03);
-  --shadow-raised: 0 1px 2px 0 rgb(15 23 42 / 0.05), 0 4px 12px -2px rgb(15 23 42 / 0.06);
-  --shadow-overlay: 0 10px 38px -10px rgb(15 23 42 / 0.25), 0 10px 20px -15px rgb(15 23 42 / 0.15);
-  --shadow-focus: 0 0 0 3px rgb(37 99 235 / 0.18);
+  /* Elevation */
+  --shadow-xs: var(--shadow-sm);
+  --shadow-card: var(--shadow);
+  --shadow-raised: var(--shadow);
+  --shadow-overlay: var(--shadow-lg);
+  --shadow-glow: var(--glow);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--violet-hi) 35%, transparent);
+  --shadow-primary: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 8px 20px -8px rgba(117, 91, 255, 0.8);
+  --shadow-primary-hover: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 12px 28px -8px rgba(117, 91, 255, 0.95);
 
-  /* Motion */
-  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --duration-fast: 120ms;
-  --duration-base: 180ms;
-  --duration-slow: 260ms;
+  /* Motion – prototype easing */
+  --ease-out-quart: cubic-bezier(0.2, 0.75, 0.25, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 340ms;
+
+  --animate-nx-view: nx-view 0.45s cubic-bezier(0.2, 0.75, 0.25, 1);
+  --animate-nx-live: nx-live 2.4s infinite;
+  @keyframes nx-view {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes nx-live {
+    0% { box-shadow: 0 0 0 0 rgba(44, 230, 166, 0.55); }
+    70% { box-shadow: 0 0 0 8px rgba(44, 230, 166, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(44, 230, 166, 0); }
+  }
 }
 
 @layer base {
@@ -79,20 +212,31 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    background: var(--color-canvas);
-    color: var(--color-ink);
+    background: var(--bg);
+    color: var(--text);
     font-family: var(--font-sans);
-    font-feature-settings: "cv11", "ss01";
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  [dir="rtl"] body {
+    font-family: var(--font-arabic);
   }
   ::selection {
-    background: var(--color-brand-100);
+    background: var(--brand-200-mix);
   }
   :focus-visible {
-    outline: 2px solid var(--color-brand-600);
+    outline: 2px solid var(--violet-hi);
     outline-offset: 2px;
   }
   .tabular {
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  /* Native form controls follow the theme (date pickers, scrollbars). */
+  input,
+  select,
+  textarea {
+    color-scheme: inherit;
   }
 }
 

@@ -4,7 +4,7 @@ import { formatRelative, type ActivityEvent, type ActivityKind } from "../lib/pl
 
 const KIND: Record<ActivityKind, { icon: LucideIcon; tone: string; label: string }> = {
   registration: { icon: Building2, tone: "bg-brand-50 text-brand-600", label: "New company" },
-  plan_change: { icon: ArrowRightLeft, tone: "bg-violet-50 text-violet-600", label: "Subscription change" },
+  plan_change: { icon: ArrowRightLeft, tone: "bg-nx-violet-soft text-nx-violet-text", label: "Subscription change" },
   trial_ending: { icon: Hourglass, tone: "bg-warning-soft text-warning-ink", label: "Trial ending" },
   trial_expired: { icon: Hourglass, tone: "bg-danger-soft text-danger-ink", label: "Trial expired" },
   invitation: { icon: UserPlus, tone: "bg-success-soft text-success-ink", label: "Invitation" },

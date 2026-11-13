@@ -9,7 +9,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={cn(
-        "h-9 w-full rounded-md border border-line bg-surface px-3 text-sm text-ink shadow-xs placeholder:text-subtle transition-[border-color,box-shadow] duration-[var(--duration-fast)] focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none",
+        "h-10 w-full rounded-xl border border-line-strong bg-surface px-3 text-sm font-medium text-ink placeholder:font-normal placeholder:text-muted transition-[border-color,box-shadow] duration-[var(--duration-base)] hover:border-line-3 focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none",
         className,
       )}
       {...props}
@@ -32,7 +32,7 @@ export function SearchInput({
 }) {
   return (
     <div className={cn("relative", className)}>
-      <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-subtle" aria-hidden="true" />
+      <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
       <Input type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} className="ps-9 pe-8 [&::-webkit-search-cancel-button]:hidden" />
       {value && (
         <button

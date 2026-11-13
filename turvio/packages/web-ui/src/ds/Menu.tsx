@@ -16,7 +16,7 @@ export function MenuContent({ className, align = "end", sideOffset = 6, ...props
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-48 overflow-hidden rounded-lg border border-line bg-surface p-1 text-sm text-ink shadow-overlay",
+          "z-50 min-w-48 overflow-hidden rounded-xl border border-line-strong bg-raised p-1.5 text-[13px] font-semibold text-ink shadow-overlay",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98] data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1",
           className,
         )}
@@ -30,14 +30,14 @@ export function MenuItem({ className, icon, hint, children, ...props }: Componen
   return (
     <DropdownMenu.Item
       className={cn(
-        "relative flex cursor-default select-none items-center gap-2.5 rounded-md px-2 py-1.5 outline-none transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-2 data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted",
+        "relative flex min-h-[38px] cursor-default select-none items-center gap-2.5 rounded-[10px] px-2.5 py-1.5 outline-none transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-2 data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted",
         className,
       )}
       {...props}
     >
       {icon}
       <span className="flex-1">{children}</span>
-      {hint && <span className="text-2xs text-subtle">{hint}</span>}
+      {hint && <span className="text-[11.5px] font-medium text-muted">{hint}</span>}
     </DropdownMenu.Item>
   );
 }
@@ -46,7 +46,7 @@ export function MenuCheckboxItem({ className, children, ...props }: ComponentPro
   return (
     <DropdownMenu.CheckboxItem
       className={cn(
-        "relative flex cursor-default select-none items-center gap-2.5 rounded-md py-1.5 ps-8 pe-2 outline-none transition-colors data-[highlighted]:bg-surface-2",
+        "relative flex min-h-[38px] cursor-default select-none items-center gap-2.5 rounded-[10px] py-1.5 ps-8 pe-2.5 outline-none transition-colors data-[highlighted]:bg-surface-2",
         className,
       )}
       onSelect={(e) => e.preventDefault()}
@@ -54,7 +54,7 @@ export function MenuCheckboxItem({ className, children, ...props }: ComponentPro
     >
       <span className="absolute start-2 inline-flex size-4 items-center justify-center">
         <DropdownMenu.ItemIndicator>
-          <Check className="size-3.5 text-brand-600" strokeWidth={2.5} />
+          <Check className="size-3.5 text-brand-700" strokeWidth={2.5} />
         </DropdownMenu.ItemIndicator>
       </span>
       {children}
@@ -63,9 +63,9 @@ export function MenuCheckboxItem({ className, children, ...props }: ComponentPro
 }
 
 export function MenuLabel({ className, ...props }: ComponentProps<typeof DropdownMenu.Label>) {
-  return <DropdownMenu.Label className={cn("px-2 pb-1 pt-1.5 text-2xs font-semibold uppercase tracking-[0.08em] text-subtle", className)} {...props} />;
+  return <DropdownMenu.Label className={cn("px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted", className)} {...props} />;
 }
 
 export function MenuSeparator({ className }: { className?: string }) {
-  return <DropdownMenu.Separator className={cn("-mx-1 my-1 h-px bg-line", className)} />;
+  return <DropdownMenu.Separator className={cn("mx-1 my-1.5 h-px bg-line", className)} />;
 }
