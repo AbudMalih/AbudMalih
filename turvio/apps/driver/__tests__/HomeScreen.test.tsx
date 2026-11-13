@@ -17,7 +17,7 @@ describe("HomeScreen", () => {
     expect(screen.getByText("Scan parcels")).toBeTruthy();
     expect(screen.getByText("Optimize route")).toBeTruthy();
     expect(screen.getByText("Erfurt Zentrum A")).toBeTruthy();
-    expect(screen.getByTestId("progress-text").props.children.join("")).toContain("0 of 8 stops done");
+    expect([screen.getByTestId("progress-text").props.children].flat().join("")).toContain("0 of 8 stops done");
     expect(screen.getByText("Development mode – synthetic test data")).toBeTruthy();
     expect(screen.getAllByText("straight-line estimate").length).toBeGreaterThan(0);
     await fireEvent.press(screen.getByTestId("hero-scan"));

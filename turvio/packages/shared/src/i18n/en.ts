@@ -16,6 +16,8 @@ const core = {
   "tabs.stops": "Stops",
   "tabs.map": "Map",
   "tabs.settings": "Settings",
+  "tabs.more": "More",
+  "tabs.scan": "Scan",
 
   "home.greeting": "Hello, {name}",
   "home.todaysTour": "Today's tour",

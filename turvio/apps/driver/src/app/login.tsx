@@ -9,7 +9,7 @@ import { useT } from "../lib/i18n";
 import { apiBaseUrl } from "../lib/optimizer";
 import { buildServerUrl, canOverrideServerUrl, setServerUrlOverride } from "../lib/serverUrl";
 import { useTourStore } from "../store/tourStore";
-import { radii, space, type as ty, useTheme } from "../theme";
+import { fw, radii, space, type as ty, useTheme } from "../theme";
 
 export default function LoginScreen() {
   const t = useT();
@@ -88,13 +88,13 @@ export default function LoginScreen() {
           <Field label={t("login.password")} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} testID="login-password" />
           <Button label={t("login.submit")} size="lg" onPress={submit} loading={busy} disabled={!email || !password} testID="login-submit" />
           <Pressable onPress={forgot} accessibilityRole="button" style={{ alignSelf: "center", padding: space.sm }}>
-            <Text style={[ty.small, { color: c.primary, fontWeight: "700" }]}>{t("login.forgot")}</Text>
+            <Text style={[ty.small, { color: c.primary, ...fw("700") }]}>{t("login.forgot")}</Text>
           </Pressable>
         </View>
         {showServer && (
           <View style={{ backgroundColor: c.card, borderRadius: radii.xl, borderWidth: 1, borderColor: c.border, padding: space.lg, gap: space.sm }} testID="login-server">
             <Pressable onPress={() => setServerOpen((o) => !o)} accessibilityRole="button" testID="login-server-toggle">
-              <Text style={[ty.small, { color: c.textMuted, fontWeight: "700" }]}>{t("login.server")}</Text>
+              <Text style={[ty.small, { color: c.textMuted, ...fw("700") }]}>{t("login.server")}</Text>
               <Text style={[ty.small, { color: c.text }]} testID="login-server-active">
                 {apiBaseUrl()}
               </Text>

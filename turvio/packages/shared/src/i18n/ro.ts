@@ -18,6 +18,8 @@ export const ro: Messages = {
   "tabs.stops": "Opriri",
   "tabs.map": "Hartă",
   "tabs.settings": "Setări",
+  "tabs.more": "Mai mult",
+  "tabs.scan": "Scanează",
 
   "home.greeting": "Bună, {name}",
   "home.todaysTour": "Tura de azi",

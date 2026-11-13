@@ -7,7 +7,7 @@ import { feedback } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { useTourStore } from "../../store/tourStore";
 import { useStop } from "../../store/useMyTour";
-import { radii, space, type as ty, useTheme } from "../../theme";
+import { fw, radii, space, type as ty, useTheme } from "../../theme";
 
 const STATUS_ICON = { failed: "close-circle", attempted: "repeat", rescheduled: "calendar", returned: "return-down-back" } as const;
 
@@ -56,7 +56,7 @@ export default function OutcomeScreen() {
           </Pressable>
         ))}
       </Card>
-      <Text style={[ty.small, { color: c.textSecondary, fontWeight: "600" }]}>{needsNote ? t("outcome.noteRequired") : t("outcome.note")}</Text>
+      <Text style={[ty.small, { color: c.textSecondary, ...fw("600") }]}>{needsNote ? t("outcome.noteRequired") : t("outcome.note")}</Text>
       <TextInput
         value={note}
         onChangeText={setNote}

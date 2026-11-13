@@ -2,13 +2,14 @@ import "../lib/trackingSetup";
 import { Redirect, router, useSegments } from "expo-router";
 import { ShareIntentProvider, useShareIntentContext } from "expo-share-intent";
 import { Stack } from "expo-router/stack";
+import { useFonts } from "expo-font";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { applyLayoutDirection, useLocale, useT } from "../lib/i18n";
 import { loadServerUrlOverride, serverUrlLoaded } from "../lib/serverUrl";
 import { setPendingShare } from "../lib/share";
 import { isServerMode, useTourStore } from "../store/tourStore";
-import { useTheme } from "../theme";
+import { FONT_FILES, fw, useTheme } from "../theme";
 
 export default function RootLayout() {
   const locale = useLocale();
@@ -18,6 +19,8 @@ export default function RootLayout() {
   const segments = useSegments();
   // Test builds may point at another server (login screen); read it before the first API call.
   const [serverReady, setServerReady] = useState(serverUrlLoaded());
+  // TURVIO NEXT typography (bundled files: no network). A load error falls back to the system font.
+  const [fontsLoaded, fontError] = useFonts(FONT_FILES);
   const needsLogin = isServerMode() && !user && segments[0] !== "login";
 
   useEffect(() => {
@@ -27,7 +30,7 @@ export default function RootLayout() {
     if (!serverReady) void loadServerUrlOverride().finally(() => setServerReady(true));
   }, [serverReady]);
 
-  if (!serverReady) return null;
+  if (!serverReady || (!fontsLoaded && !fontError)) return null;
   if (needsLogin)
     return (
       <ShareIntentProvider options={{ resetOnBackground: false }}>
@@ -46,7 +49,7 @@ export default function RootLayout() {
           headerStyle: { backgroundColor: c.card },
           headerTintColor: c.text,
           headerShadowVisible: false,
-          headerTitleStyle: { fontWeight: "700", fontSize: 17 },
+          headerTitleStyle: { ...fw("700"), fontSize: 17 },
           contentStyle: { backgroundColor: c.bg },
           animation: "slide_from_right",
           animationDuration: 220,

@@ -23,7 +23,7 @@ export function markerTone(stop: Stop, current: boolean, c: Palette) {
   if (!isOpen(stop.status)) return isSuccess(stop.status) ? c.textSubtle : c.danger;
   if (current) return c.primary;
   if (stop.type === "pickup") return c.warning;
-  return "#1E3A8A";
+  return c.cyan;
 }
 
 

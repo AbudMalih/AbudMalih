@@ -1,29 +1,55 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { HeaderHeightContext } from "expo-router/react-navigation";
-import { useContext, type ComponentProps, type ReactNode } from "react";
+import { useContext, useId, type ComponentProps, type ReactNode } from "react";
 import { ActivityIndicator, I18nManager, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { radii, space, touch, type as ty, useTheme, type Palette } from "../theme";
+import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
+import { fw, radii, space, touch, type as ty, useTheme, type Palette } from "../theme";
 
 export type IconName = ComponentProps<typeof Ionicons>["name"];
 export { Ionicons };
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "success" | "dark";
 
-function variantColors(c: Palette, v: Variant) {
+/** TURVIO NEXT gradients (prototype .bb-nav / .bb-ok / scan button). */
+export const GRADIENTS = {
+  violet: ["#8C76FF", "#6F55FF", "#4F3BE0"],
+  mint: ["#4BF2BC", "#2CD9A0", "#22C98F"],
+  scan: ["#8C76FF", "#5F67FF", "#3478FF"],
+} as const;
+
+/** Diagonal (135°) gradient filling its parent; parent needs overflow "hidden" and a radius. */
+export function GradientFill({ colors, radius = 0 }: { colors: readonly string[]; radius?: number }) {
+  // Unique per instance: on the web, ids are document-wide and hidden screens stay mounted.
+  const id = `g${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  return (
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Defs>
+        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          {colors.map((col, i) => (
+            <Stop key={col + i} offset={colors.length === 1 ? 0 : i / (colors.length - 1)} stopColor={col} />
+          ))}
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" rx={radius} ry={radius} fill={`url(#${id})`} />
+    </Svg>
+  );
+}
+
+function variantColors(c: Palette, v: Variant): { bg: string; fg: string; border: string; gradient?: readonly string[]; glow?: string } {
   switch (v) {
     case "primary":
-      return { bg: c.primary, fg: "#FFFFFF", border: c.primary };
+      return { bg: c.primary, fg: "#FFFFFF", border: "transparent", gradient: GRADIENTS.violet, glow: "#6F55FF" };
     case "success":
-      return { bg: c.success, fg: "#FFFFFF", border: c.success };
+      return { bg: c.success, fg: "#04150D", border: "transparent", gradient: GRADIENTS.mint, glow: "#2CE6A6" };
     case "danger":
-      return { bg: c.dangerSoft, fg: c.dangerInk, border: c.dangerSoft };
+      return { bg: c.dangerSoft, fg: c.danger, border: c.dangerSoft };
     case "dark":
-      return { bg: c.ink === "#F8FAFC" ? c.surface2 : "#0F172A", fg: "#FFFFFF", border: "transparent" };
+      return { bg: c.surface2, fg: c.text, border: c.borderStrong };
     case "ghost":
-      return { bg: "transparent", fg: c.primary, border: "transparent" };
+      return { bg: "transparent", fg: c.primaryText, border: "transparent" };
     default:
-      return { bg: c.card, fg: c.text, border: c.border };
+      return { bg: c.surface2, fg: c.text, border: c.borderStrong };
   }
 }
 
@@ -54,16 +80,26 @@ export function Button(props: {
       onPress={props.onPress}
       style={({ pressed }) => [
         s.button,
-        { minHeight: height, paddingHorizontal: props.size === "sm" ? space.md : space.lg, backgroundColor: v.bg, borderColor: v.border, opacity: disabled ? 0.45 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+        {
+          minHeight: height,
+          borderRadius: props.size === "sm" ? 14 : 18,
+          paddingHorizontal: props.size === "sm" ? space.md : space.lg,
+          backgroundColor: v.gradient ? "transparent" : v.bg,
+          borderColor: v.border,
+          opacity: disabled ? 0.45 : 1,
+          transform: [{ scale: pressed ? 0.97 : 1 }],
+        },
+        v.glow && !disabled ? { shadowColor: v.glow, shadowOpacity: 0.55, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 6 } : null,
         props.style,
       ]}
     >
+      {v.gradient && <GradientFill colors={v.gradient} radius={props.size === "sm" ? 14 : 18} />}
       {props.loading ? (
         <ActivityIndicator color={v.fg} />
       ) : (
         <>
           {props.icon && <Ionicons name={props.icon} size={props.size === "sm" ? 16 : 18} color={v.fg} />}
-          <Text style={[props.size === "sm" ? ty.smallStrong : ty.bodyStrong, { color: v.fg }]} numberOfLines={1}>
+          <Text style={[props.size === "sm" ? ty.smallStrong : ty.bodyStrong, props.size === "lg" ? { fontSize: 16, ...fw("800") } : null, { color: v.fg }]} numberOfLines={1}>
             {props.label}
           </Text>
         </>
@@ -74,8 +110,9 @@ export function Button(props: {
 
 /** The two hero actions on the home screen. */
 export function HeroAction(props: { title: string; subtitle?: string; icon: IconName; onPress: () => void; tone: "primary" | "dark"; testID?: string; disabled?: boolean; loading?: boolean }) {
-  const { c, dark } = useTheme();
-  const bg = props.tone === "primary" ? c.primary : dark ? c.surface2 : "#0F172A";
+  const { c } = useTheme();
+  const primary = props.tone === "primary";
+  const bg = primary ? "transparent" : c.surface2;
   return (
     <Pressable
       accessibilityRole="button"
@@ -84,18 +121,25 @@ export function HeroAction(props: { title: string; subtitle?: string; icon: Icon
       testID={props.testID}
       disabled={props.disabled || props.loading}
       onPress={props.onPress}
-      style={({ pressed }) => [s.hero, { backgroundColor: bg, opacity: props.disabled ? 0.5 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+      style={({ pressed }) => [
+        s.hero,
+        { backgroundColor: bg, borderColor: primary ? "transparent" : c.borderStrong, opacity: props.disabled ? 0.5 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+        primary && !props.disabled ? { shadowColor: "#6F55FF", shadowOpacity: 0.6, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 } : null,
+      ]}
     >
-      <View style={s.heroIcon}>{props.loading ? <ActivityIndicator color="#FFFFFF" /> : <Ionicons name={props.icon} size={22} color="#FFFFFF" />}</View>
+      {primary && <GradientFill colors={GRADIENTS.violet} radius={20} />}
+      <View style={[s.heroIcon, !primary && { backgroundColor: c.primarySoft }]}>
+        {props.loading ? <ActivityIndicator color={primary ? "#FFFFFF" : c.primaryText} /> : <Ionicons name={props.icon} size={22} color={primary ? "#FFFFFF" : c.primaryText} />}
+      </View>
       <View style={{ flex: 1 }}>
-        <Text style={[ty.bodyStrong, { color: "#FFFFFF" }]} numberOfLines={1}>{props.title}</Text>
+        <Text style={[ty.bodyStrong, { fontSize: 16, ...fw("800"), color: primary ? "#FFFFFF" : c.text }]} numberOfLines={1}>{props.title}</Text>
         {props.subtitle ? (
-          <Text style={[ty.small, { color: "rgba(255,255,255,0.82)" }]} numberOfLines={1}>
+          <Text style={[ty.small, { color: primary ? "rgba(255,255,255,0.82)" : c.textMuted }]} numberOfLines={1}>
             {props.subtitle}
           </Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.85)" style={s.flipRtl} />
+      <Ionicons name="chevron-forward" size={18} color={primary ? "rgba(255,255,255,0.85)" : c.textMuted} style={s.flipRtl} />
     </Pressable>
   );
 }
@@ -115,7 +159,7 @@ export type Tone = "neutral" | "primary" | "success" | "danger" | "warning";
 export function toneColors(c: Palette, tone: Tone) {
   return {
     neutral: [c.surface2, c.textMuted],
-    primary: [c.primarySoft, c.primary],
+    primary: [c.primarySoft, c.primaryText],
     success: [c.successSoft, c.successInk],
     danger: [c.dangerSoft, c.dangerInk],
     warning: [c.warningSoft, c.warningInk],
@@ -142,7 +186,7 @@ export function Banner({ text, tone = "warning", icon, action }: { text: string;
       <Text style={[ty.smallStrong, { color: fg, flex: 1 }]}>{text}</Text>
       {action && (
         <Pressable onPress={action.onPress} hitSlop={10} accessibilityRole="button">
-          <Text style={[ty.small, { color: fg, fontWeight: "800" }]}>{action.label}</Text>
+          <Text style={[ty.small, { color: fg, ...fw("800") }]}>{action.label}</Text>
         </Pressable>
       )}
     </View>
@@ -153,7 +197,7 @@ export function ProgressBar({ value, tone = "success" }: { value: number; tone?:
   const { c } = useTheme();
   return (
     <View style={[s.track, { backgroundColor: c.surface2 }]} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }}>
-      <View style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, height: "100%", borderRadius: 4, backgroundColor: tone === "success" ? c.success : c.primary }} />
+      <View style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%`, height: "100%", borderRadius: 4, backgroundColor: tone === "success" ? c.success : c.primaryHi }} />
     </View>
   );
 }
@@ -178,7 +222,7 @@ export function IconButton({ icon, label, onPress, active, testID, size = touch.
       onPress={onPress}
       testID={testID}
       hitSlop={6}
-      style={({ pressed }) => [s.iconBtn, { width: size, height: size, backgroundColor: active ? c.primary : c.card, borderColor: active ? c.primary : c.border, opacity: pressed ? 0.8 : 1 }]}
+      style={({ pressed }) => [s.iconBtn, { width: size, height: size, backgroundColor: active ? c.primary : c.card, borderColor: active ? c.primary : c.borderStrong, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.93 : 1 }] }]}
     >
       <Ionicons name={icon} size={22} color={active ? "#FFFFFF" : c.text} />
     </Pressable>
@@ -190,13 +234,13 @@ export function Field(props: TextInputProps & { label: string; error?: string | 
   const { label, error, hint, right, style, ...input } = props;
   return (
     <View style={{ gap: 6, flex: (style as ViewStyle | undefined)?.flex, minWidth: 0, flexBasis: (style as ViewStyle | undefined)?.flex ? 0 : undefined }}>
-      <Text style={[ty.small, { color: c.textSecondary, fontWeight: "600" }]}>{label}</Text>
+      <Text style={[ty.small, { color: c.textSecondary, ...fw("600") }]}>{label}</Text>
       <View style={[s.row, { gap: 0 }]}>
         <TextInput
           placeholderTextColor={c.textSubtle}
           accessibilityLabel={label}
           {...input}
-          style={[s.input, { backgroundColor: c.card, color: c.text, borderColor: error ? c.danger : c.border, flex: 1, minWidth: 0 }, (style as ViewStyle | undefined)?.minHeight ? { minHeight: (style as ViewStyle).minHeight } : null]}
+          style={[s.input, { backgroundColor: c.card, color: c.text, borderColor: error ? c.danger : c.borderStrong, flex: 1, minWidth: 0, ...fw("500") }, (style as ViewStyle | undefined)?.minHeight ? { minHeight: (style as ViewStyle).minHeight } : null]}
         />
         {right}
       </View>
@@ -208,7 +252,7 @@ export function Field(props: TextInputProps & { label: string; error?: string | 
 export function Segmented<T extends string>({ value, options, onChange, testID }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; testID?: string }) {
   const { c } = useTheme();
   return (
-    <View style={[s.segment, { backgroundColor: c.surface2 }]} testID={testID} accessibilityRole="tablist">
+    <View style={[s.segment, { backgroundColor: c.card, borderColor: c.border }]} testID={testID} accessibilityRole="tablist">
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -217,9 +261,9 @@ export function Segmented<T extends string>({ value, options, onChange, testID }
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
             onPress={() => onChange(o.value)}
-            style={[s.segmentItem, on && { backgroundColor: c.card, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 }]}
+            style={[s.segmentItem, on && { backgroundColor: c.raised, borderColor: c.borderStrong, borderWidth: 1, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 6, elevation: 2 }]}
           >
-            <Text style={[ty.small, { fontWeight: "700", color: on ? c.text : c.textMuted, textAlign: "center" }]} numberOfLines={2}>
+            <Text style={[ty.small, { ...fw("700"), color: on ? c.text : c.textMuted, textAlign: "center" }]} numberOfLines={2}>
               {o.label}
             </Text>
           </Pressable>
@@ -238,7 +282,7 @@ export function Sheet({ visible, onClose, title, children, testID }: { visible: 
       <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }]} onPress={onClose} accessibilityLabel="Close" />
       {/* The sheet rides on top of the keyboard (paste/edit fields) on iOS and Android. */}
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.sheetHost} pointerEvents="box-none">
-        <View style={[s.sheet, { backgroundColor: c.card, paddingBottom: insets.bottom + space.lg }]} testID={testID}>
+        <View style={[s.sheet, { backgroundColor: c.card, borderColor: c.borderStrong, paddingBottom: insets.bottom + space.lg }]} testID={testID}>
           <View style={[s.grabber, { backgroundColor: c.borderStrong }]} />
           <Text style={[ty.h2, { color: c.text, marginBottom: space.md }]}>{title}</Text>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: space.md }}>
@@ -286,7 +330,7 @@ export function EmptyState({ icon, title, text, action }: { icon: IconName; titl
   return (
     <View style={{ alignItems: "center", paddingVertical: space.xl, paddingHorizontal: space.lg, gap: space.xs }}>
       <View style={[s.emptyIcon, { backgroundColor: c.primarySoft }]}>
-        <Ionicons name={icon} size={24} color={c.primary} />
+        <Ionicons name={icon} size={26} color={c.primaryText} />
       </View>
       <Text style={[ty.h2, { color: c.text, textAlign: "center" }]}>{title}</Text>
       {text ? <Text style={[ty.small, { color: c.textMuted, textAlign: "center" }]}>{text}</Text> : null}
@@ -306,7 +350,7 @@ export function Stat({ label, value, hint }: { label: string; value: string; hin
         {value}
       </Text>
       {hint ? (
-        <Text style={[ty.caption, { color: c.textSubtle, fontWeight: "400", letterSpacing: 0 }]} numberOfLines={2}>
+        <Text style={[ty.caption, { color: c.textSubtle, ...fw("400"), letterSpacing: 0 }]} numberOfLines={2}>
           {hint}
         </Text>
       ) : null}
@@ -374,7 +418,7 @@ export function ActionTile({ icon, label, onPress, disabled, testID, tone = "neu
       accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [s.tile, { backgroundColor: primary ? c.primarySoft : c.card, borderColor: primary ? c.primarySoft : c.border, opacity: disabled ? 0.4 : pressed ? 0.75 : 1 }]}
     >
-      <Ionicons name={icon} size={20} color={c.primary} />
+      <Ionicons name={icon} size={20} color={c.primaryText} />
       <Text style={[ty.caption, { color: c.text, letterSpacing: 0, textAlign: "center" }]} numberOfLines={2}>
         {label}
       </Text>
@@ -393,27 +437,27 @@ export function Checkbox({ checked, onChange, label, testID }: { checked: boolea
 }
 
 export const s = StyleSheet.create({
-  button: { borderRadius: radii.md, borderWidth: 1, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: space.sm },
-  hero: { minHeight: touch.hero, borderRadius: radii.lg, paddingHorizontal: space.md, paddingVertical: space.sm, flexDirection: "row", alignItems: "center", gap: space.md },
-  heroIcon: { width: 40, height: 40, borderRadius: radii.md, backgroundColor: "rgba(255,255,255,0.16)", alignItems: "center", justifyContent: "center" },
-  card: { borderRadius: radii.lg, padding: 14, borderWidth: 1, gap: space.sm },
+  button: { borderRadius: 18, borderWidth: 1, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 9, overflow: "hidden" },
+  hero: { minHeight: touch.hero, borderRadius: 20, borderWidth: 1, paddingHorizontal: space.md, paddingVertical: space.sm, flexDirection: "row", alignItems: "center", gap: space.md, overflow: "hidden" },
+  heroIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
+  card: { borderRadius: radii.xl, padding: space.lg, borderWidth: 1, gap: space.sm },
   bottomBar: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.xs },
-  tile: { flex: 1, minHeight: touch.tile, borderRadius: radii.lg, borderWidth: 1, alignItems: "center", justifyContent: "center", gap: space.xs, paddingHorizontal: space.xs, paddingVertical: space.sm },
+  tile: { flex: 1, minHeight: touch.tile, borderRadius: 18, borderWidth: 1, alignItems: "center", justifyContent: "center", gap: space.xs, paddingHorizontal: space.xs, paddingVertical: space.sm },
   checkbox: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, alignItems: "center", justifyContent: "center" },
-  pill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radii.pill, alignSelf: "flex-start" },
-  banner: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingHorizontal: space.md, paddingVertical: 10, borderRadius: radii.md },
-  track: { height: 8, borderRadius: 4, overflow: "hidden" },
+  pill: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 9, paddingVertical: 4, borderRadius: radii.pill, alignSelf: "flex-start" },
+  banner: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingHorizontal: space.md, paddingVertical: 12, borderRadius: radii.lg },
+  track: { height: 6, borderRadius: 3, overflow: "hidden" },
   row: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  iconBtn: { borderRadius: radii.md, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  input: { minHeight: touch.min, borderWidth: 1, borderRadius: radii.md, paddingHorizontal: space.md, fontSize: 16, textAlign: "auto" },
-  segment: { flexDirection: "row", padding: 3, borderRadius: radii.md, gap: 3 },
-  segmentItem: { flex: 1, minHeight: 44, borderRadius: radii.sm, alignItems: "center", justifyContent: "center", paddingHorizontal: space.sm },
+  iconBtn: { borderRadius: 16, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  input: { minHeight: touch.min, borderWidth: 1, borderRadius: 16, paddingHorizontal: space.md, fontSize: 16, textAlign: "auto" },
+  segment: { flexDirection: "row", padding: 3, borderRadius: 14, gap: 3, borderWidth: 1 },
+  segmentItem: { flex: 1, minHeight: 44, borderRadius: 11, alignItems: "center", justifyContent: "center", paddingHorizontal: space.sm },
   sheetHost: { flex: 1, justifyContent: "flex-end" },
-  sheet: { maxHeight: "88%", borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, padding: space.lg, paddingTop: space.sm },
+  sheet: { maxHeight: "88%", borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, borderBottomWidth: 0, padding: space.lg, paddingTop: space.sm },
   grabber: { width: 40, height: 5, borderRadius: 3, alignSelf: "center", marginBottom: space.md },
   listRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: touch.min + 4, paddingVertical: space.sm },
-  rowIcon: { width: 36, height: 36, borderRadius: radii.md, alignItems: "center", justifyContent: "center" },
-  emptyIcon: { width: 48, height: 48, borderRadius: radii.lg, alignItems: "center", justifyContent: "center", marginBottom: space.xs },
+  rowIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  emptyIcon: { width: 72, height: 72, borderRadius: 22, alignItems: "center", justifyContent: "center", marginBottom: space.sm },
   // Directional icons follow the layout direction (RTL takes effect after an app restart).
   flipRtl: { transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] },
 });

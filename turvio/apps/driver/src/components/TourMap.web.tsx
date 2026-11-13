@@ -38,7 +38,7 @@ export function TourMap({ depot, tour, stops, currentStopId, pendingPin, onMapPr
               <Line y1={0} y2={size.h} x1={(size.w / 8) * i} x2={(size.w / 8) * i} stroke={c.border} strokeWidth={1} />
             </G>
           ))}
-          {path.length > 1 && <Polyline points={path.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={c.primary} strokeWidth={3} strokeDasharray={roadGeometry ? undefined : "8 6"} />}
+          {path.length > 1 && <Polyline points={path.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={c.cyan} strokeWidth={3} strokeDasharray={roadGeometry ? undefined : "8 6"} />}
           {depot && (() => {
             const p = proj(depot.location);
             return (

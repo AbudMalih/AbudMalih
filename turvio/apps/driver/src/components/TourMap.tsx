@@ -5,7 +5,7 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE, Polyline, type MapPressEvent } from "react-native-maps";
 import { useT } from "../lib/i18n";
 import { Ionicons } from "./ui";
-import { useTheme, type Palette } from "../theme";
+import { fw, useTheme, type Palette } from "../theme";
 import { fallbackPath, initialMapPoints, markerTone, type TourMapProps } from "./TourMap.shared";
 export type { TourMapProps };
 
@@ -113,7 +113,7 @@ function NativeTourMap({ depot, tour, stops, currentStopId, showUserLocation, pe
     >
       {path.length > 1 && (
         // Road geometry is solid; the straight order preview is dashed (not a road route).
-        <Polyline coordinates={path} strokeColor={c.primary} strokeWidth={4} lineDashPattern={roadGeometry ? undefined : [10, 8]} />
+        <Polyline coordinates={path} strokeColor={c.cyan} strokeWidth={4} lineDashPattern={roadGeometry ? undefined : [10, 8]} />
       )}
       {depot && (
         <Marker coordinate={{ latitude: depot.location.lat, longitude: depot.location.lng }} title={depot.name} tracksViewChanges={false}>
@@ -160,8 +160,8 @@ function NativeTourMap({ depot, tour, stops, currentStopId, showUserLocation, pe
 const s = StyleSheet.create({
   pin: { minWidth: 30, height: 30, paddingHorizontal: 6, borderRadius: 15, borderWidth: 2, borderColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
   square: { borderRadius: 7 },
-  pinText: { color: "#FFFFFF", fontWeight: "800", fontSize: 13 },
+  pinText: { color: "#FFFFFF", ...fw("800"), fontSize: 13 },
   cluster: { minWidth: 38, height: 38, paddingHorizontal: 8, borderRadius: 19, borderWidth: 2, alignItems: "center", justifyContent: "center" },
-  clusterText: { fontWeight: "800", fontSize: 14 },
+  clusterText: { ...fw("800"), fontSize: 14 },
   unavailable: { alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
 });

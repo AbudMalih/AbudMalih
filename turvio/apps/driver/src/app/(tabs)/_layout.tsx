@@ -1,13 +1,14 @@
-import { Tabs } from "expo-router/js-tabs";
+import { router } from "expo-router";
+import { Tabs, type BottomTabBarProps } from "expo-router/js-tabs";
 import { useEffect } from "react";
-import { AppState, StyleSheet, View, type ColorValue } from "react-native";
+import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TrackingNoticeHost } from "../../components/Tracking";
-import { Ionicons, type IconName } from "../../components/ui";
+import { GRADIENTS, GradientFill, Ionicons, type IconName } from "../../components/ui";
 import { useTourTracking } from "../../lib/useTourTracking";
 import { useT } from "../../lib/i18n";
 import { isServerMode, useTourStore } from "../../store/tourStore";
-import { useTheme } from "../../theme";
+import { fw, useTheme } from "../../theme";
 
 /** Keeps routes in sync: on open, every 30 s and when the app returns to the foreground. */
 function useBackgroundSync() {
@@ -24,11 +25,68 @@ function useBackgroundSync() {
   }, [sync]);
 }
 
-function useIcon(name: IconName, active: IconName) {
-  const { c } = useTheme();
-  return ({ color, focused }: { color: ColorValue; focused: boolean }) => (
-    <View style={{ width: 48, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: focused ? c.primarySoft : "transparent" }}>
-      <Ionicons name={focused ? active : name} color={typeof color === "string" ? color : undefined} size={21} />
+const TAB_ICONS: Record<string, [IconName, IconName]> = {
+  index: ["home-outline", "home"],
+  map: ["map-outline", "map"],
+  stops: ["list-outline", "list"],
+  settings: ["ellipsis-horizontal", "ellipsis-horizontal"],
+};
+
+/**
+ * TURVIO NEXT tab bar (prototype .tabbar): floating rounded bar, violet active pill, raised
+ * gradient scan button between Stops and More. Same routes and test IDs as before.
+ */
+function NextTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
+  const { c, dark } = useTheme();
+  const t = useT();
+  const insets = useSafeAreaInsets();
+  const item = (route: (typeof state.routes)[number], index: number) => {
+    const { options } = descriptors[route.key]!;
+    const focused = state.index === index;
+    const [icon, active] = TAB_ICONS[route.name] ?? ["ellipse-outline", "ellipse"];
+    const label = typeof options.title === "string" ? options.title : route.name;
+    return (
+      <Pressable
+        key={route.key}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: focused }}
+        accessibilityLabel={label}
+        testID={options.tabBarButtonTestID}
+        onPress={() => {
+          const e = emitter.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+          if (!focused && !e.defaultPrevented) navigateToTab(route.key);
+        }}
+        style={({ pressed }) => [styles.tab, focused && { backgroundColor: c.primarySoft, borderColor: dark ? "rgba(117,91,255,0.3)" : "rgba(91,68,232,0.2)" }, { transform: [{ scale: pressed ? 0.94 : 1 }] }]}
+      >
+        <Ionicons name={focused ? active : icon} size={21} color={focused ? c.primaryText : c.textMuted} />
+        <Text style={[styles.label, { color: focused ? c.text : c.textMuted }]} numberOfLines={1}>
+          {label}
+        </Text>
+      </Pressable>
+    );
+  };
+  const items = state.routes.map(item);
+  const scan = (
+    <Pressable
+      key="scan"
+      accessibilityRole="button"
+      accessibilityLabel={t("tabs.scan")}
+      testID="tab-scan"
+      onPress={() => router.push("/scan")}
+      style={({ pressed }) => [styles.tab, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}
+    >
+      <View style={styles.scan}>
+        <GradientFill colors={GRADIENTS.scan} radius={17} />
+        <Ionicons name="scan" size={24} color="#FFFFFF" />
+      </View>
+    </Pressable>
+  );
+  items.splice(Math.max(0, items.length - 1), 0, scan);
+  return (
+    <View style={{ backgroundColor: c.bg, paddingHorizontal: 12, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 8) + 4 }}>
+      <View style={[styles.bar, { backgroundColor: c.tabBar, borderColor: c.borderStrong }]} accessibilityRole="tablist">
+        {items}
+      </View>
     </View>
   );
 }
@@ -36,36 +94,44 @@ function useIcon(name: IconName, active: IconName) {
 export default function TabLayout() {
   const t = useT();
   const { c } = useTheme();
-  // Edge-to-edge (Android) / home indicator (iOS): the bar's own height plus the system's
-  // bottom inset, so tabs never sit on the 3-button bar or the gesture handle.
-  const insets = useSafeAreaInsets();
-  const bottom = insets.bottom;
   useBackgroundSync();
   useTourTracking();
-  const today = useIcon("home-outline", "home");
-  const stops = useIcon("list-outline", "list");
-  const map = useIcon("map-outline", "map");
-  const settings = useIcon("person-circle-outline", "person-circle");
   return (
     <>
     <TrackingNoticeHost />
     <Tabs
+      tabBar={(props) => <NextTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: c.primary,
-        tabBarInactiveTintColor: c.textMuted,
-        tabBarStyle: { backgroundColor: c.card, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth, height: 68 + bottom, paddingBottom: bottom + 6, paddingTop: 6 },
-        tabBarItemStyle: { minHeight: 48 },
-        tabBarLabelStyle: { fontSize: 11, lineHeight: 14, fontWeight: "600", marginTop: 2 },
-        headerStyle: { backgroundColor: c.card },
+        headerStyle: { backgroundColor: c.bg },
         headerShadowVisible: false,
-        headerTitleStyle: { fontWeight: "700", color: c.text, fontSize: 17 },
+        headerTitleStyle: { ...fw("800"), color: c.text, fontSize: 18 },
+        sceneStyle: { backgroundColor: c.bg },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: t("tabs.today"), headerShown: false, tabBarIcon: today, tabBarButtonTestID: "tab-today" }} />
-      <Tabs.Screen name="stops" options={{ title: t("tabs.stops"), tabBarIcon: stops, tabBarButtonTestID: "tab-stops" }} />
-      <Tabs.Screen name="map" options={{ title: t("tabs.map"), headerShown: false, tabBarIcon: map, tabBarButtonTestID: "tab-map" }} />
-      <Tabs.Screen name="settings" options={{ title: t("tabs.settings"), tabBarIcon: settings, tabBarButtonTestID: "tab-settings" }} />
+      <Tabs.Screen name="index" options={{ title: t("tabs.today"), headerShown: false, tabBarButtonTestID: "tab-today" }} />
+      <Tabs.Screen name="map" options={{ title: t("tabs.map"), headerShown: false, tabBarButtonTestID: "tab-map" }} />
+      <Tabs.Screen name="stops" options={{ title: t("tabs.stops"), tabBarButtonTestID: "tab-stops" }} />
+      <Tabs.Screen name="settings" options={{ title: t("tabs.more"), tabBarButtonTestID: "tab-settings" }} />
     </Tabs>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  bar: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 26,
+    borderWidth: 1,
+    padding: 6,
+    gap: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
+  },
+  tab: { flex: 1, height: 56, borderRadius: 18, borderWidth: 1, borderColor: "transparent", alignItems: "center", justifyContent: "center", gap: 3 },
+  label: { fontSize: 11, lineHeight: 13, ...fw("700") },
+  scan: { width: 50, height: 50, borderRadius: 17, alignItems: "center", justifyContent: "center", overflow: "hidden", marginTop: -6, shadowColor: "#6F55FF", shadowOpacity: 0.7, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+});

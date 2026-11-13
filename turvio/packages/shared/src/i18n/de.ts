@@ -17,6 +17,8 @@ export const de: Messages = {
   "tabs.stops": "Stopps",
   "tabs.map": "Karte",
   "tabs.settings": "Einstellungen",
+  "tabs.more": "Mehr",
+  "tabs.scan": "Scannen",
 
   "home.greeting": "Hallo, {name}",
   "home.todaysTour": "Heutige Tour",

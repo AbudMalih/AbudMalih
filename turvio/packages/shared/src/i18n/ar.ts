@@ -18,6 +18,8 @@ export const ar: Messages = {
   "tabs.stops": "المحطات",
   "tabs.map": "الخريطة",
   "tabs.settings": "الإعدادات",
+  "tabs.more": "المزيد",
+  "tabs.scan": "مسح",
 
   "home.greeting": "مرحبًا، {name}",
   "home.todaysTour": "جولة اليوم",

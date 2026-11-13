@@ -4,7 +4,7 @@ import { addressLine, statusTone, windowText } from "../lib/format";
 import { useT } from "../lib/i18n";
 import { locationPill } from "../lib/locationCheck";
 import { useTourStore } from "../store/tourStore";
-import { radii, space, type as ty, useTheme } from "../theme";
+import { fw, radii, space, type as ty, useTheme } from "../theme";
 import { Ionicons, Pill, toneColors } from "./ui";
 
 /** Compact stop row: number, recipient, address, parcels and state at a glance. */
@@ -24,7 +24,9 @@ export function StopCard({ stop, index, current, onPress, right, testID }: { sto
   const { c } = useTheme();
   const t = useT();
   const open = isOpen(stop.status);
-  const [bg, fg] = open ? (stop.type === "pickup" ? [c.warningSoft, c.warningInk] : current ? [c.primary, "#FFFFFF"] : [c.primarySoft, c.primary]) : toneColors(c, statusTone(stop.status));
+  // NEXT: open stops get an outlined number tile (cyan; amber for pickups), the next stop a filled violet one.
+  const [bg, fg] = open ? (stop.type === "pickup" ? [c.warningSoft, c.warningInk] : current ? [c.primary, "#FFFFFF"] : ["transparent", c.text]) : toneColors(c, statusTone(stop.status));
+  const tileBorder = open && !current ? (stop.type === "pickup" ? c.warning : c.cyan) : "transparent";
   const parcels = stop.parcels.length;
   const loaded = stop.parcels.filter((p) => p.loadedAt).length;
   return (
@@ -38,17 +40,18 @@ export function StopCard({ stop, index, current, onPress, right, testID }: { sto
         alignItems: "center",
         gap: space.md,
         backgroundColor: c.card,
-        borderRadius: radii.lg,
-        borderWidth: current ? 2 : 1,
-        borderColor: current ? c.primary : c.border,
+        borderRadius: 18,
+        borderWidth: current ? 1.5 : 1,
+        borderColor: current ? c.primaryHi : c.border,
         paddingHorizontal: space.md,
-        paddingVertical: 10,
-        opacity: pressed ? 0.85 : open ? 1 : 0.72,
+        paddingVertical: 12,
+        opacity: open ? 1 : 0.62,
+        transform: [{ scale: pressed ? 0.985 : 1 }],
       })}
     >
-      <View style={{ width: 32, height: 32, borderRadius: radii.md, backgroundColor: bg, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: bg, borderWidth: 1.5, borderColor: tileBorder, alignItems: "center", justifyContent: "center" }}>
         {open ? (
-          <Text style={{ color: fg, fontWeight: "700", fontSize: 14, fontVariant: ["tabular-nums"] }}>{index + 1}</Text>
+          <Text style={{ color: fg, ...fw("700"), fontSize: 14, fontVariant: ["tabular-nums"] }}>{index + 1}</Text>
         ) : (
           <Ionicons name={statusTone(stop.status) === "success" ? "checkmark" : "close"} size={18} color={fg} />
         )}
