@@ -1,0 +1,9 @@
+
+/* official logo in the sidebar */
+.brand{position:relative;padding:6px 8px 20px;min-height:66px;display:block}
+.brand-full{display:flex;flex-direction:column;gap:7px}
+.brand-full .logo-lockup{height:27px}
+.brand-sub{padding-inline-start:2px}
+.brand-collapsed{position:absolute;top:10px;inset-inline-start:13px;height:26px;opacity:0;transform:scale(.8);transition:opacity .25s var(--ease),transform .35s var(--ease-spring);pointer-events:none}
+.app.collapsed .brand-collapsed{opacity:1;transform:none}
+@media (max-width:860px){.brand-collapsed{display:none}}
