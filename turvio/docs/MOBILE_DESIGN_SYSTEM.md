@@ -6,21 +6,21 @@ Scope: the driver app (`apps/driver`). The web dashboard follows `DESIGN_SYSTEM.
 ## Direction
 A driver looks at the phone for a few seconds between stops, often one-handed, outdoors, all day.
 - **Route first.** Today shows the active route (progress, remaining figures, next stop, one primary action) before anything else.
-- **One primary action per screen.** Filled blue = do this now; everything else is secondary (outlined/neutral) or a tile.
-- **Hierarchy from weight and colour, not size.** Largest text is 24 pt (greeting); figures are 18 pt tabular.
-- **Flat.** 1-px borders and two surface tones (`bg`, `card`) instead of shadows or gradients.
+- **One primary action per screen.** Violet gradient = do this now (mint gradient = confirm delivery); everything else is secondary (surface) or a tile.
+- **Hierarchy from weight and colour.** Plus Jakarta Sans 500–800; the hero shows done/total at 46 pt, figures are tabular.
+- **TURVIO NEXT surfaces** (approved prototype `design/next/driver`): obsidian `bg`, charcoal `card`, hairline borders, one gradient hero card per screen.
 - **Honest numbers.** A figure is labelled "road network" only when it comes from road routing (OSRM); otherwise "straight-line estimate". No figure is shown when there is no data.
 
 ## Tokens
 | Group | Values |
 |---|---|
 | Spacing (4-pt grid) | `xxs 2 · xs 4 · sm 8 · md 12 · lg 16 · xl 20 · xxl 24` – screen gutter `lg` |
-| Radii | `sm 8 · md 10 · lg 14 (cards, tiles) · xl 18 · pill` |
-| Touch | min **48 dp** for anything tapped; buttons 48 / large 52; tiles 64 |
-| Type | display 24/700 · title 20/700 · h2 17/600 · body 15/400 · bodyStrong 15/600 · small 13/400 · smallStrong 13/600 · caption 12/600 (uppercase labels) · metric 18/700 tabular |
-| Colour | TURVIO palette from `@turvio/shared` (light) + `DARK` in `theme.ts`. Status: primary (in progress), success (done), warning (needs decision / estimate), danger (failed / invalid). Text on soft backgrounds uses the `*Ink` tones (≥ 4.5:1). |
+| Radii | buttons 18 · cards 22 · hero 28 · stop rows 18 · tab bar 26 |
+| Touch | min **48 dp** for anything tapped; buttons 52 / large 58; tiles 64; tab items 56 |
+| Type | Plus Jakarta Sans (bundled TTF, one family per weight via `font.*` / `fw()` – never `fontWeight`): display 24/800 · title 21/800 · h2 17/700 · body 15/500 · bodyStrong 15/700 · small 13/500 · caption 12/700 · metric 18/800 tabular |
+| Colour | `DARK` / `LIGHT` in `theme.ts` (prototype values). Violet primary, cyan route/open stops, mint done, amber warning/estimate, coral failed. |
 
-Theme follows the system setting unless the driver picks light/dark in Settings.
+Theme follows the system (dark when unknown) unless the driver picks light/dark in Settings.
 
 ## Components
 - `Screen` – scroll container with keyboard avoidance and bottom safe-area padding; optional sticky `footer`.
@@ -29,7 +29,7 @@ Theme follows the system setting unless the driver picks light/dark in Settings.
 
 ## Safe areas
 - Expo Router provides the `SafeAreaProvider`; screens read `useSafeAreaInsets()`. No hard-coded system-bar padding.
-- Tab bar: `height = 68 + insets.bottom`, `paddingBottom = insets.bottom + 6` – covers Android edge-to-edge with gesture *and* 3-button navigation and the iOS home indicator.
+- Tab bar: floating NEXT bar (Today · Map · Stops · Scan · More) inside a container padded by `max(insets.bottom, 8) + 4` – covers Android edge-to-edge with gesture *and* 3-button navigation and the iOS home indicator.
 - Header-less screens (Today, Map, Login) pad `insets.top`; footers and the map pin-confirm button pad `insets.bottom`.
 - Forms: `KeyboardAvoidingView` (`padding` on iOS, `height` on Android).
 
