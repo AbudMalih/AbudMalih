@@ -71,6 +71,7 @@ services:
     build: { context: ../.., dockerfile: deploy/docker/api.Dockerfile }
     environment:
       NODE_ENV: production
+      TURVIO_RELEASE: ${TURVIO_RELEASE}    # shown in Admin → System status
       PORT: "4000"
       HOST: 0.0.0.0
       TRUST_PROXY: "1"                     # exactly one proxy hop: Caddy

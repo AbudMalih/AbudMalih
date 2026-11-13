@@ -4,6 +4,7 @@ import { z } from "zod";
 import { parse, problem, type RouteCtx } from "../http";
 import { newOpaqueToken } from "../auth/tokens";
 import { ApiError } from "../db";
+import { checkSystem } from "../system-status";
 
 /**
  * Platform administration (TURVIO operator staff). Platform admins see
@@ -58,6 +59,23 @@ export function registerPlatformRoutes(app: FastifyInstance, { deps, guards }: R
         }),
       };
     });
+  });
+
+  /** Live status of the platform's services (measured now) plus labelled configuration facts. No tenant data. */
+  app.get("/v1/platform/system", { preHandler: requirePlatformAdmin }, async () => {
+    return checkSystem(
+      { db, optimizerUrl: deps.optimizerUrl, fetchImpl: deps.fetchImpl ?? fetch, routing: deps.routing, geocoder: deps.geocoder },
+      deps.systemInfo ?? {
+        authProvider: "unknown",
+        adminMfaRequired: deps.requireAdminMfa ?? false,
+        mailer: deps.mailer ? "outbox" : "none",
+        proofStorage: deps.proofStore ? "local" : "none",
+        geocoder: deps.geocoder?.name ?? "none",
+        addressDataVersion: deps.locationDataVersions?.address ?? null,
+        roadDataVersion: deps.locationDataVersions?.road ?? null,
+        release: null,
+      },
+    );
   });
 
   app.get("/v1/platform/activity", { preHandler: requirePlatformAdmin }, async (req) => {

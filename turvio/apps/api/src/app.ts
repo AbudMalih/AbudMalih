@@ -19,6 +19,7 @@ import type { RoutingProvider } from "./routing";
 import { RateLimiter } from "./geocode";
 import { registerOrgRoutes } from "./routes/org";
 import { registerPlatformRoutes } from "./routes/platform";
+import type { SystemInfo } from "./system-status";
 import { registerTrackingRoutes } from "./routes/tracking";
 import { registerTourRoutes } from "./routes/tours";
 import type { TenancyRepository } from "./tenancy";
@@ -42,6 +43,8 @@ export interface AppDeps {
   routing?: RoutingProvider;
   /** Stop location checks (default: built from routing + geocoder). */
   locationChecker?: LocationChecker;
+  /** How this instance is configured – reported (labelled as configuration) by GET /v1/platform/system. */
+  systemInfo?: SystemInfo;
   /** Versions of the road / address data (stored checks of other versions are stale). */
   locationDataVersions?: { road: string | null; address: string | null };
   /** Requests per minute per client IP (default 600; 0 = off). */

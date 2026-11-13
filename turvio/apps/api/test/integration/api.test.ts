@@ -164,6 +164,26 @@ describe.runIf(available)("TURVIO API on PostgreSQL", () => {
       expect((await env.as(U.platformAdmin, "GET", `/v1/orgs/${jarbou()}/dispatch`)).statusCode).toBe(403);
       expect((await env.as(U.jarbouOwner, "GET", "/v1/platform/overview")).statusCode).toBe(403);
     });
+
+    it("system status is measured live, labels configuration and is for platform admins only", async () => {
+      const r = await env.as(U.platformAdmin, "GET", "/v1/platform/system");
+      expect(r.statusCode).toBe(200);
+      const body = r.json();
+      expect(Date.now() - new Date(body.checkedAt).getTime()).toBeLessThan(60_000);
+      const by = Object.fromEntries(body.services.map((x: { key: string }) => [x.key, x]));
+      // The database answered a real query through the API's pool.
+      expect(by.database).toMatchObject({ kind: "live", state: "operational" });
+      expect(by.database.latencyMs).toBeGreaterThanOrEqual(0);
+      // Live checks only ever claim what they measured; configuration facts are labelled as such.
+      for (const key of ["api", "database", "optimizer", "routing", "geocoding"]) expect(by[key].kind).toBe("live");
+      for (const key of ["auth", "mail", "storage", "billing", "carriers"]) expect(by[key].kind).toBe("config");
+      expect(by.billing.state).toBe("disabled");
+      expect(["operational", "down"]).toContain(by.optimizer.state);
+      // Nothing tenant-specific in the answer.
+      expect(JSON.stringify(body)).not.toMatch(/JARBOU|Hannover depot|recipient/i);
+      expect((await env.as(U.jarbouOwner, "GET", "/v1/platform/system")).statusCode).toBe(403);
+      expect((await env.as(U.driverHannover1, "GET", "/v1/platform/system")).statusCode).toBe(403);
+    });
   });
 
   describe("dispatcher → driver workflow (Hannover, 25 stops)", () => {

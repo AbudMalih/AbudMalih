@@ -72,6 +72,16 @@ if (config.AUTH_PROVIDER === "dev") {
     requireAdminMfa: config.requireAdminMfa,
     routing: config.OSRM_URL ? new OsrmRouting(config.OSRM_URL, { timeoutMs: config.OSRM_TIMEOUT_MS, maxSnapMeters: config.OSRM_MAX_SNAP_METERS }) : undefined,
     locationDataVersions: { road: config.ROUTING_DATA_VERSION ?? null, address: config.ADDRESS_DATA_VERSION ?? null },
+    systemInfo: {
+      authProvider: config.AUTH_PROVIDER,
+      adminMfaRequired: config.requireAdminMfa,
+      mailer: config.MAILER,
+      proofStorage: config.PROOF_STORAGE,
+      geocoder: config.GEOCODER,
+      addressDataVersion: config.ADDRESS_DATA_VERSION ?? null,
+      roadDataVersion: config.ROUTING_DATA_VERSION ?? null,
+      release: process.env.TURVIO_RELEASE ?? null,
+    },
   });
   // Background jobs: retention purge (hourly) and deletion of files of removed proofs.
   let jobs: NodeJS.Timeout | undefined;
