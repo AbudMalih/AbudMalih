@@ -67,7 +67,7 @@ export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; se
     <section className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3" aria-label="Live vehicle">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", state === "live" ? "bg-brand-600 text-white" : state === "delayed" ? "bg-amber-500 text-white" : "bg-surface-3 text-muted")}>
+          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", state === "live" ? "bg-brand-600 text-white" : state === "delayed" ? "bg-nx-amber text-white" : "bg-surface-3 text-muted")}>
             <Truck className="size-4" />
           </span>
           <div className="min-w-0">

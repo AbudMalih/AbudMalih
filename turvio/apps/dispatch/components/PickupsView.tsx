@@ -33,11 +33,11 @@ export function PickupsView() {
   const count = (f: Filter) => filterPickups(pickups, f, "").length;
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-[1600px] p-4 sm:p-6">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-5">
         <div className="mb-4 flex flex-col gap-1">
-          <h1 className="text-[20px] font-semibold tracking-tight text-ink">Pickups</h1>
-          <p className="text-sm text-muted">
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Pickups</h1>
+          <p className="mt-1 text-sm text-ink-2">
             Pickup schedule for {data.date} · deadlines relative to {formatClock(data.asOfMinute)} · no carrier integration
           </p>
         </div>
@@ -69,7 +69,7 @@ export function PickupsView() {
           ) : (
             <div className="relative overflow-x-auto">
               <table className="w-full min-w-[960px] text-[13px]">
-                <thead className="bg-surface-2/60 text-xs text-muted">
+                <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                   <tr className="border-b border-line">
                     <th className="h-10 ps-4 pe-3 text-start font-medium">Deadline</th>
                     <th className="h-10 px-3 text-start font-medium">Customer / location</th>
@@ -97,9 +97,9 @@ export function PickupsView() {
                         </td>
                         <td className="px-3 py-3">
                           <span className="flex items-center gap-1.5 font-medium text-ink">
-                            <ArrowUpFromLine className="size-3.5 text-violet-600" />
+                            <ArrowUpFromLine className="size-3.5 text-nx-violet-text" />
                             {r.stop.recipientName}
-                            {r.stop.priority && <Star className="size-3.5 fill-amber-400 text-amber-500" aria-label="Priority" />}
+                            {r.stop.priority && <Star className="size-3.5 fill-nx-amber text-nx-amber" aria-label="Priority" />}
                           </span>
                           <span className="block text-xs text-muted">
                             {formatAddress(r.stop)} · {scoped.depots.find((x) => x.id === r.depotId)?.name}

@@ -2,8 +2,8 @@
 
 import { formatClock } from "@turvio/shared";
 import { delayLabel } from "../lib/eta";
-import { Button, Sheet, Tooltip, cn } from "@turvio/web-ui/ds";
-import { AlertTriangle, ArrowUpFromLine, List, Map as MapIcon, MousePointerClick, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Button, PageHeader, Sheet, Tooltip, cn } from "@turvio/web-ui/ds";
+import { AlertTriangle, ArrowUpFromLine, List, Map as MapIcon, MousePointerClick, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { useLiveFleet, type LiveVehicle } from "../lib/live";
 import { routeKey, useRoadRoute } from "../lib/road";
 import { useDispatch } from "../lib/store";
 import { LiveFleetList, LiveVehiclePanel } from "./LiveFleet";
+import { OpsSummary } from "./OpsSummary";
 import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
 import { TourDetail } from "./TourDetail";
 import { TourList } from "./TourList";
@@ -40,20 +41,20 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
   const delayed = summaries.filter((s) => s.status === "delayed");
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-start gap-3 rounded-lg border border-dashed border-line-strong bg-surface-2/50 p-3 text-[13px] text-muted">
+      <div className="flex items-start gap-3 rounded-[14px] border border-line bg-surface-2 p-3 text-[13px] text-ink-2">
         <MousePointerClick className="mt-0.5 size-4 shrink-0 text-subtle" />
         Select a tour in the list or on the map to see its driver, vehicle, schedule and stops.
       </div>
       {live.allowed && <LiveFleetList vehicles={live.vehicles} serverNow={live.serverNow} onSelect={onSelectVehicle} />}
       {delayed.length > 0 && (
         <section>
-          <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
+          <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
             <AlertTriangle className="size-3.5 text-danger" /> Delayed tours
           </h3>
           <ul className="flex flex-col gap-1.5">
             {delayed.map((s) => (
               <li key={s.tour.id}>
-                <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-md border border-red-200 bg-danger-soft/60 px-3 py-2 text-start text-[13px] hover:bg-danger-soft">
+                <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-start text-[13px] shadow-[inset_4px_0_0_var(--coral)] transition-colors hover:bg-danger-soft">
                   <span className="font-semibold text-danger-ink">{s.tour.name}</span> <span className="text-muted">· {s.driver?.displayName ?? "no driver"}</span>
                   <span className="mt-0.5 block text-xs text-danger-ink/80">
                     {delayLabel(s.delayCertainty)} · {s.timeline.projection.delayReasons[0]?.text}
@@ -66,17 +67,17 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
       )}
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
+          <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
             <ArrowUpFromLine className="size-3.5" /> Pickups needing attention
           </h3>
-          <Link href="/pickups" className="text-xs font-medium text-brand-600 hover:underline">
+          <Link href="/pickups" className="text-xs font-bold text-nx-violet-text hover:underline">
             All pickups
           </Link>
         </div>
         {urgent.length === 0 ? (
           <p className="text-[13px] text-muted">All pickups are on schedule.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-surface">
+          <ul className="flex flex-col divide-y divide-line rounded-[14px] border border-line bg-surface-2">
             {urgent.map((p) => (
               <li key={p.stop.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                 <div className="min-w-0">
@@ -122,18 +123,41 @@ export function MapWorkspace() {
   const showLeft = isDesktop ? leftOpen : mobilePane === "tours";
   const showRight = isWide && rightOpen;
 
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const dayLabel = new Date(`${data.date}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const depotLabel = d.depotId ? (scoped.depots.find((x) => x.id === d.depotId)?.name ?? "") : scoped.depots.length === 1 ? scoped.depots[0]!.name : `${scoped.depots.length} depots`;
+  const panel = "overflow-hidden rounded-[18px] border border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] shadow-overlay backdrop-blur-[18px]";
+
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex flex-col gap-5">
+      <PageHeader
+        title={data.date === today ? "Today's dispatch" : "Dispatch"}
+        description={`${dayLabel} · ${depotLabel}`}
+        actions={
+          d.session.role !== "driver" && (
+            <Button variant="primary" asChild>
+              <Link href="/planning?new=1">
+                <Plus /> New tour
+              </Link>
+            </Button>
+          )
+        }
+      />
+      <OpsSummary />
+
       {/* Phone/tablet switch */}
-      <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface px-3 py-2 lg:hidden">
-        <div className="inline-flex rounded-md border border-line bg-surface-2 p-0.5" role="tablist" aria-label="Map workspace">
+      <div className="flex items-center gap-2 lg:hidden">
+        <div className="relative inline-flex rounded-xl border border-line bg-surface p-[3px]" role="tablist" aria-label="Map workspace">
           {(["tours", "map"] as const).map((p) => (
             <button
               key={p}
               role="tab"
               aria-selected={mobilePane === p}
               onClick={() => setMobilePane(p)}
-              className={cn("inline-flex h-8 items-center gap-1.5 rounded px-3 text-[13px] font-medium", mobilePane === p ? "bg-surface text-ink shadow-xs" : "text-muted")}
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-[9px] px-3 text-[12.5px] font-bold transition-colors",
+                mobilePane === p ? "bg-raised text-ink shadow-[var(--seg-ind-shadow)]" : "text-muted",
+              )}
             >
               {p === "tours" ? <List className="size-4" /> : <MapIcon className="size-4" />}
               {p === "tours" ? "Tours" : "Map"}
@@ -142,31 +166,14 @@ export function MapWorkspace() {
         </div>
         {selected && (
           <span className="truncate text-xs text-muted">
-            Selected: <span className="font-medium text-ink">{selected.tour.name}</span>
+            Selected: <span className="font-semibold text-ink">{selected.tour.name}</span>
           </span>
         )}
       </div>
 
-      <div className="relative flex min-h-0 flex-1">
-        <AnimatePresence initial={false}>
-          {showLeft && (
-            <motion.aside
-              key="left"
-              initial={isDesktop ? { width: 0, opacity: 0 } : false}
-              animate={{ width: isDesktop ? 340 : "100%", opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-              className="z-10 shrink-0 overflow-hidden border-e border-line bg-canvas"
-              aria-label="Tours and drivers"
-            >
-              <div className="h-full w-full lg:w-[340px]">
-                <TourList onPick={() => !isDesktop && setMobilePane("map")} />
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-
-        <div className={cn("relative min-w-0 flex-1", !isDesktop && mobilePane === "tours" && "hidden")}>
+      {/* Map card – the map fills it; tour list and details float above it (prototype overview). */}
+      <div className="relative h-[calc(100dvh-150px)] min-h-[560px] overflow-hidden rounded-[22px] border border-line bg-canvas-2 shadow-card lg:h-[calc(100dvh-120px)]">
+        <div className={cn("absolute inset-0", !isDesktop && mobilePane === "tours" && "hidden")}>
           <RouteMap
             depots={data.depots}
             summaries={summaries}
@@ -184,56 +191,75 @@ export function MapWorkspace() {
             onSelectVehicle={selectVehicle}
             focus={focus}
             locationChecks={d.locationChecks}
+            insetStart={isDesktop && showLeft ? 380 : 0}
+            insetEnd={showRight ? 432 : 0}
           />
-          {isDesktop && (
-            <div className="absolute start-3 top-3 z-[460] flex gap-1.5">
-              <Tooltip content={leftOpen ? "Hide tour list" : "Show tour list"} side="bottom">
-                <Button variant="secondary" size="icon" onClick={() => setLeftOpen((o) => !o)} aria-label={leftOpen ? "Hide tour list" : "Show tour list"} className="shadow-raised">
-                  {leftOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
+        </div>
+
+        <AnimatePresence initial={false}>
+          {showLeft && (
+            <motion.aside
+              key="left"
+              initial={isDesktop ? { opacity: 0, x: -16 } : false}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }}
+              transition={{ duration: 0.25, ease: [0.2, 0.75, 0.25, 1] }}
+              className={cn("absolute z-[470]", isDesktop ? cn("bottom-4 start-4 top-4 w-[360px]", panel) : "inset-0 bg-surface")}
+              aria-label="Tours and drivers"
+            >
+              <TourList onPick={() => !isDesktop && setMobilePane("map")} />
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {isDesktop && (
+          <div className="absolute top-4 z-[460] flex gap-1.5 transition-[inset-inline-start] duration-300" style={{ insetInlineStart: showLeft ? 392 : 16 }}>
+            <Tooltip content={leftOpen ? "Hide tour list" : "Show tour list"} side="bottom">
+              <Button variant="secondary" size="icon" onClick={() => setLeftOpen((o) => !o)} aria-label={leftOpen ? "Hide tour list" : "Show tour list"} className="bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] shadow-overlay backdrop-blur hover:translate-y-0">
+                {leftOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
+              </Button>
+            </Tooltip>
+            {isWide && (
+              <Tooltip content={rightOpen ? "Hide details" : "Show details"} side="bottom">
+                <Button variant="secondary" size="icon" onClick={() => setRightOpen((o) => !o)} aria-label={rightOpen ? "Hide details panel" : "Show details panel"} className="bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] shadow-overlay backdrop-blur hover:translate-y-0">
+                  {rightOpen ? <PanelRightClose /> : <PanelRightOpen />}
                 </Button>
               </Tooltip>
-              {isWide && (
-                <Tooltip content={rightOpen ? "Hide details" : "Show details"} side="bottom">
-                  <Button variant="secondary" size="icon" onClick={() => setRightOpen((o) => !o)} aria-label={rightOpen ? "Hide details panel" : "Show details panel"} className="shadow-raised">
-                    {rightOpen ? <PanelRightClose /> : <PanelRightOpen />}
-                  </Button>
-                </Tooltip>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         <AnimatePresence initial={false}>
           {showRight && (
             <motion.aside
               key="right"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 400, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.25, 1, 0.5, 1] }}
-              className="z-10 shrink-0 overflow-hidden border-s border-line bg-surface"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 16 }}
+              transition={{ duration: 0.25, ease: [0.2, 0.75, 0.25, 1] }}
+              className={cn("absolute bottom-4 end-4 top-4 z-[470] flex w-[400px] flex-col", panel)}
               aria-label="Details"
             >
-              <div className="flex h-full w-[400px] flex-col">
-                <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-                  <div className="min-w-0">
-                    <h2 className="truncate text-sm font-semibold text-ink">{selected ? `Tour ${selected.tour.name}` : "Operations overview"}</h2>
-                    <p className="truncate text-xs text-muted">{selected ? `${selected.depot.name} · ${selected.tour.date}` : `${data.date} · as of ${formatClock(data.asOfMinute)}`}</p>
-                  </div>
-                  {selected && (
-                    <Button variant="ghost" size="sm" onClick={() => selectTour(null)}>
-                      Clear
-                    </Button>
-                  )}
+              <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+                <div className="min-w-0">
+                  <h2 className="truncate text-[15.5px] font-bold tracking-[-0.01em] text-ink">{selected ? `Tour ${selected.tour.name}` : "Operations overview"}</h2>
+                  <p className="truncate text-[12.5px] text-muted">{selected ? `${selected.depot.name} · ${selected.tour.date}` : `${data.date} · as of ${formatClock(data.asOfMinute)}`}</p>
                 </div>
-                <div className="min-h-0 flex-1 overflow-y-auto p-4">{selected ? (
-                    <div className="flex flex-col gap-4">
-                      {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
-                      <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
-                    </div>
-                  ) : (
-                    <Overview live={live} onSelectVehicle={selectVehicle} />
-                  )}</div>
+                {selected && (
+                  <Button variant="ghost" size="sm" onClick={() => selectTour(null)}>
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                {selected ? (
+                  <div className="flex flex-col gap-4">
+                    {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
+                    <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
+                  </div>
+                ) : (
+                  <Overview live={live} onSelectVehicle={selectVehicle} />
+                )}
               </div>
             </motion.aside>
           )}

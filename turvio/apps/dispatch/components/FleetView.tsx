@@ -3,13 +3,15 @@
 import { can, type Depot, type Driver, type Vehicle } from "@turvio/shared";
 import { Avatar, Badge, Button, Card, Dialog, EmptyState, Menu, MenuContent, MenuItem, MenuTrigger, cn, toast } from "@turvio/web-ui/ds";
 import { Ellipsis, Loader2, Mail, Plus, Truck, UserPlus, Users, Warehouse } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { api, errorMessage } from "../lib/api";
 import { useDispatch } from "../lib/store";
 import { memberScopeLabel } from "../lib/helpers";
 
 type Tab = "drivers" | "vehicles" | "depots" | "team";
-const inputCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
+const TABS: readonly Tab[] = ["drivers", "vehicles", "depots", "team"];
+const inputCls = "h-10 w-full rounded-xl border border-line-strong bg-surface px-3 text-sm font-medium text-ink hover:border-line-3 focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
 
 function F({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
@@ -262,13 +264,13 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
             <fieldset className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2">
               <legend className="mb-1">Locations this dispatcher may see</legend>
               <label className="inline-flex items-center gap-1.5 font-normal">
-                <input type="checkbox" className="accent-[#2563EB]" checked={allLocations} onChange={(e) => setAllLocations(e.target.checked)} />
+                <input type="checkbox" className="accent-[var(--violet)]" checked={allLocations} onChange={(e) => setAllLocations(e.target.checked)} />
                 All locations (company-wide)
               </label>
               <div className="flex flex-wrap gap-2">
                 {!allLocations && depots.map((d) => (
                   <label key={d.id} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 font-normal">
-                    <input type="checkbox" className="accent-[#2563EB]" checked={scope.includes(d.id)} onChange={(e) => setScope(e.target.checked ? [...scope, d.id] : scope.filter((x) => x !== d.id))} />
+                    <input type="checkbox" className="accent-[var(--violet)]" checked={scope.includes(d.id)} onChange={(e) => setScope(e.target.checked ? [...scope, d.id] : scope.filter((x) => x !== d.id))} />
                     {d.name}
                   </label>
                 ))}
@@ -290,7 +292,13 @@ interface TeamData {
 
 export function FleetView() {
   const { scoped, session, reload } = useDispatch();
-  const [tab, setTab] = useState<Tab>("drivers");
+  // The section lives in the URL (?tab=), so the sidebar's Drivers/Vehicles/Locations/Team entries link to it.
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const fromUrl = params?.get("tab");
+  const tab: Tab = TABS.includes(fromUrl as Tab) ? (fromUrl as Tab) : "drivers";
+  const setTab = useCallback((t: Tab) => router.replace(`${pathname ?? "/fleet"}?tab=${t}`, { scroll: false }), [router, pathname]);
   const [vehicles, setVehicles] = useState<VehicleRow[] | null>(null);
   const [team, setTeam] = useState<TeamData | null>(null);
   const [dialog, setDialog] = useState<null | { kind: "driver" | "vehicle" | "depot" | "invite"; item?: unknown }>(null);
@@ -336,14 +344,14 @@ export function FleetView() {
     }
   };
 
-  const th = "h-10 px-4 text-start font-medium";
+  const th = "h-11 px-4 text-start font-bold";
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-4 p-4 sm:p-6">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[20px] font-semibold tracking-tight text-ink">Fleet & team</h1>
-            <p className="text-sm text-muted">{session.organizationName}{session.companyWide ? "" : " · your depots"}</p>
+            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Fleet & team</h1>
+            <p className="mt-1 text-sm text-ink-2">{session.organizationName}{session.companyWide ? "" : " · your depots"}</p>
           </div>
           <div className="flex gap-2">
             {tab === "drivers" && (
@@ -396,7 +404,7 @@ export function FleetView() {
             ) : (
               <div className="relative overflow-x-auto">
                 <table className="w-full min-w-[640px] text-[13px]">
-                  <thead className="bg-surface-2/60 text-xs text-muted">
+                  <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                     <tr className="border-b border-line">
                       <th className={th}>Driver</th>
                       <th className={th}>Depot</th>
@@ -452,7 +460,7 @@ export function FleetView() {
             ) : (
               <div className="relative overflow-x-auto">
                 <table className="w-full min-w-[600px] text-[13px]">
-                  <thead className="bg-surface-2/60 text-xs text-muted">
+                  <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                     <tr className="border-b border-line">
                       <th className={th}>Vehicle</th>
                       <th className={th}>Plate</th>

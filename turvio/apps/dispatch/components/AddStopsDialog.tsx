@@ -168,7 +168,7 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
             <input type="time" className={inputCls} value={f.to} onChange={(e) => set("to", e.target.value)} aria-invalid={windowInvalid} />
           </F>
           <label className="flex items-end gap-2 pb-2 text-[13px] font-medium text-ink-2 sm:col-span-2">
-            <input type="checkbox" checked={f.priority} onChange={(e) => set("priority", e.target.checked)} className="size-4 accent-[#2563EB]" /> Priority
+            <input type="checkbox" checked={f.priority} onChange={(e) => set("priority", e.target.checked)} className="size-4 accent-[var(--violet)]" /> Priority
           </label>
           <F label="Tracking numbers (comma or space separated)" className="col-span-2 sm:col-span-6">
             <input className={inputCls} value={f.tracking} onChange={(e) => set("tracking", e.target.value)} />
@@ -196,7 +196,7 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
             {parsed.length === 0 ? "No lines yet." : `${good.length} valid · ${bad.length} with errors`}
           </p>
           {bad.length > 0 && (
-            <ul className="max-h-28 overflow-y-auto rounded-md border border-red-200 bg-danger-soft px-3 py-2 text-xs text-danger-ink">
+            <ul className="max-h-28 overflow-y-auto rounded-md border border-nx-coral/30 bg-danger-soft px-3 py-2 text-xs text-danger-ink">
               {bad.slice(0, 20).map((b) => (
                 <li key={b.line}>
                   Line {b.line}: {b.error}

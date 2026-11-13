@@ -36,7 +36,13 @@ export interface RouteMapProps {
   focus?: { lat: number; lng: number; n: number } | null;
   /** Location checks per stop (P0-3.4): shown in the stop tooltip. */
   locationChecks?: Map<string, LocationReport>;
+  /** Width (px) covered by floating panels at the start/end edge: kept clear when fitting and for controls. */
+  insetStart?: number;
+  insetEnd?: number;
 }
+
+const MAPBTN =
+  "grid size-10 place-items-center rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] text-ink-2 shadow-overlay backdrop-blur transition-[color,border-color,transform] hover:border-line-3 hover:text-ink active:scale-[0.93]";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -74,6 +80,7 @@ export function RouteMap(props: RouteMapProps) {
         const tl = mod
           .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 19,
+            className: "turvio-tiles",
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
           })
           .on("tileload", () => {
@@ -128,7 +135,9 @@ export function RouteMap(props: RouteMapProps) {
   const fit = useCallback(
     (tourId: string | null) => {
       const b = boundsFor(tourId);
-      if (b && map.current) map.current.fitBounds(b, { padding: [36, 36], maxZoom: 15, animate: !prefersReducedMotion() });
+      const { insetStart = 0, insetEnd = 0 } = latest.current;
+      if (b && map.current)
+        map.current.fitBounds(b, { paddingTopLeft: [insetStart + 40, 64], paddingBottomRight: [insetEnd + 64, 40], maxZoom: 15, animate: !prefersReducedMotion() });
     },
     [boundsFor],
   );
@@ -146,7 +155,7 @@ export function RouteMap(props: RouteMapProps) {
       Lf.marker([d.location.lat, d.location.lng], {
         icon: Lf.divIcon({
           className: "turvio-marker",
-          html: `<div style="width:30px;height:30px;border-radius:8px;background:#0F172A;border:2px solid #fff;box-shadow:0 2px 6px rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"/><path d="M6 18h12"/><path d="M6 14h12"/></svg></div>`,
+          html: `<div style="width:30px;height:30px;border-radius:8px;background:var(--solid);border:2px solid rgba(255,255,255,.9);box-shadow:0 4px 12px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z"/><path d="M6 18h12"/><path d="M6 14h12"/></svg></div>`,
           iconSize: [30, 30],
           iconAnchor: [15, 15],
         }),
@@ -173,7 +182,7 @@ export function RouteMap(props: RouteMapProps) {
         Lf.marker([p.lat, p.lng], {
           icon: Lf.divIcon({
             className: "turvio-marker",
-            html: `<div style="width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid ${color};color:#0F172A;font:700 11px/16px system-ui;text-align:center">${letter}</div>`,
+            html: `<div style="width:22px;height:22px;border-radius:50%;background:var(--surface);border:3px solid ${color};color:var(--text);font:700 11px/16px var(--font-sans),system-ui;text-align:center">${letter}</div>`,
             iconSize: [22, 22],
             iconAnchor: [11, 11],
           }),
@@ -230,15 +239,16 @@ export function RouteMap(props: RouteMapProps) {
         const eta = s.timeline.projections.get(stop.id);
         const late = eta?.state === "deadline_missed" || eta?.state === "delivered_late" || (eta?.state === "projected_late" && s.timeline.projection.source === "road");
         const shape = stop.type === "pickup" ? "border-radius:7px" : "border-radius:999px";
-        const bg = failed ? "#fff" : done ? "#F1F5F9" : color;
-        const fg = failed ? "#B91C1C" : done ? "#64748B" : "#fff";
-        const border = failed ? "#EF4444" : late ? "#EF4444" : done ? "#CBD5E1" : "#fff";
+        // NEXT markers: outlined in the tour colour on the map surface; the selected stop is filled.
+        const bg = failed ? "var(--surface)" : done ? "var(--surface-2)" : isSel ? color : "var(--surface)";
+        const fg = failed ? "var(--coral)" : done ? "var(--text-3)" : isSel ? "#fff" : "var(--text)";
+        const border = failed || late ? "var(--coral)" : done ? "var(--line-3)" : color;
         const size = isSel ? 32 : 24;
         const label = failed ? "✕" : done ? "✓" : String(idx);
         Lf.marker([stop.location!.lat, stop.location!.lng], {
           icon: Lf.divIcon({
             className: "turvio-marker",
-            html: `<div style="width:${size}px;height:${size}px;${shape};background:${bg};color:${fg};border:2px solid ${border};box-shadow:${isSel ? "0 0 0 4px rgba(37,99,235,.25)," : ""}0 1px 4px rgba(15,23,42,.3);display:flex;align-items:center;justify-content:center;font:600 ${isSel ? 13 : 11}px var(--font-sans),system-ui">${label}</div>`,
+            html: `<div style="width:${size}px;height:${size}px;${shape};background:${bg};color:${fg};border:2px solid ${border};box-shadow:${isSel ? `0 0 0 5px ${color}40,` : ""}0 2px 6px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font:700 ${isSel ? 13 : 11}px var(--font-sans),system-ui">${label}</div>`,
             iconSize: [size, size],
             iconAnchor: [size / 2, size / 2],
           }),
@@ -254,7 +264,7 @@ export function RouteMap(props: RouteMapProps) {
     if (showUnassigned) {
       for (const u of unassigned) {
         if (!u.location) continue;
-        Lf.circleMarker([u.location.lat, u.location.lng], { radius: 5, color: "#64748B", weight: 1.5, dashArray: "2 2", fillColor: "#fff", fillOpacity: 1, opacity: selectedTourId ? 0.4 : 1 })
+        Lf.circleMarker([u.location.lat, u.location.lng], { radius: 5, color: "#8A93A8", weight: 1.5, dashArray: "2 2", fillColor: "#F1F3F9", fillOpacity: 1, opacity: selectedTourId ? 0.4 : 1 })
           .bindTooltip(`<strong>Unassigned ${u.type}</strong><br/>${esc(u.recipientName ?? "")}${u.timeWindow ? `<br/>window ${formatClock(u.timeWindow.start)}–${formatClock(u.timeWindow.end)}` : ""}`, { direction: "top" })
           .addTo(group);
       }
@@ -272,8 +282,8 @@ export function RouteMap(props: RouteMapProps) {
     for (const v of props.vehicles ?? []) {
       const { state: fresh, ageSeconds } = freshnessOf(v.recordedAt, now);
       const sel = v.driverId === props.selectedDriverId;
-      const color = fresh === "live" ? "#2563EB" : fresh === "delayed" ? "#D97706" : "#94A3B8";
-      const ring = fresh === "live" ? "#10B981" : "#fff";
+      const color = fresh === "live" ? "#3478FF" : fresh === "delayed" ? "#E8962E" : "#8A93A8";
+      const ring = fresh === "live" ? "#2CE6A6" : "#fff";
       const moving = fresh === "live" && (v.position.speedMps ?? 0) > 1 && v.position.headingDeg != null;
       const size = sel ? 40 : 34;
       const arrow = moving
@@ -286,7 +296,7 @@ export function RouteMap(props: RouteMapProps) {
       Lf.marker([v.position.lat, v.position.lng], {
         icon: Lf.divIcon({
           className: "turvio-marker",
-          html: `<div style="position:relative;width:${size}px;height:${size}px">${arrow}<div style="width:${size}px;height:${size}px;border-radius:999px;background:${fresh === "offline" ? "#F1F5F9" : color};border:3px solid ${ring};${fresh === "offline" ? "border-style:dashed;border-color:#94A3B8;" : ""}box-shadow:${sel ? "0 0 0 5px rgba(37,99,235,.25)," : ""}0 2px 8px rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;color:${fresh === "offline" ? "#64748B" : "#fff"};font:700 10px var(--font-sans),system-ui;opacity:${fresh === "offline" ? 0.75 : 1}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></div></div>`,
+          html: `<div style="position:relative;width:${size}px;height:${size}px">${arrow}<div style="width:${size}px;height:${size}px;border-radius:999px;background:${fresh === "offline" ? "#F1F5F9" : color};border:3px solid ${ring};${fresh === "offline" ? "border-style:dashed;border-color:#94A3B8;" : ""}box-shadow:${sel ? "0 0 0 5px rgba(117,91,255,.35)," : ""}0 4px 12px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:${fresh === "offline" ? "#64748B" : "#fff"};font:700 10px var(--font-sans),system-ui;opacity:${fresh === "offline" ? 0.75 : 1}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></div></div>`,
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2],
         }),
@@ -336,17 +346,17 @@ export function RouteMap(props: RouteMapProps) {
 
   return (
     // `isolate` keeps Leaflet's internal z-indexes (400–700) from covering drawers and menus.
-    <div className="relative isolate h-full w-full overflow-hidden bg-surface-2">
+    <div className="relative isolate h-full w-full overflow-hidden bg-canvas-2">
       <div ref={el} className="absolute inset-0" aria-label="Route map" role="region" />
 
       {state === "loading" && (
-        <div className="absolute inset-0 z-[500] flex flex-col gap-3 bg-surface-2 p-6" aria-busy="true" aria-label="Loading map">
-          <Skeleton className="h-full w-full rounded-lg bg-surface-3" />
+        <div className="absolute inset-0 z-[500] flex flex-col gap-3 bg-canvas-2 p-6" aria-busy="true" aria-label="Loading map">
+          <Skeleton className="h-full w-full rounded-2xl bg-surface" />
         </div>
       )}
       {state === "error" && (
-        <div className="absolute inset-0 z-[500] flex items-center justify-center bg-surface-2 p-6" role="alert">
-          <div className="max-w-sm rounded-lg border border-line bg-surface p-5 text-center shadow-card">
+        <div className="absolute inset-0 z-[500] flex items-center justify-center bg-canvas-2 p-6" role="alert">
+          <div className="max-w-sm rounded-2xl border border-line-strong bg-raised p-5 text-center shadow-overlay">
             <CircleAlert className="mx-auto size-6 text-danger" />
             <p className="mt-2 text-sm font-semibold text-ink">The map could not be loaded</p>
             <p className="mt-1 text-[13px] text-muted">Tours remain available in the list and in the detail panel.</p>
@@ -358,44 +368,45 @@ export function RouteMap(props: RouteMapProps) {
       )}
 
       {state === "ready" && tiles === "unavailable" && (
-        <div className="absolute inset-x-3 top-3 z-[450] mx-auto max-w-md rounded-md border border-amber-200 bg-warning-soft/95 px-3 py-2 text-xs text-warning-ink shadow-raised backdrop-blur" role="status">
+        <div className="absolute top-4 z-[450] mx-auto w-fit max-w-md rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-ink-2 shadow-overlay backdrop-blur" style={{ insetInlineStart: (props.insetStart ?? 0) + 120, insetInlineEnd: (props.insetEnd ?? 0) + 16 }} role="status">
+          <span className="me-2 inline-block size-2 rounded-full bg-nx-amber align-middle" aria-hidden="true" />
           Base map tiles are unavailable (network or tile provider). Stops, routes and depots are still shown at their positions.
         </div>
       )}
       {state === "ready" && empty && (
         <div className="absolute inset-0 z-[440] flex items-center justify-center">
-          <div className="rounded-lg border border-line bg-surface/95 px-4 py-3 text-[13px] text-muted shadow-raised">No tours or stops for this selection.</div>
+          <div className="rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-3 text-[13px] font-semibold text-ink-2 shadow-overlay backdrop-blur">No tours or stops for this selection.</div>
         </div>
       )}
 
       {state === "ready" && (
         <>
-          <div className="absolute end-3 top-3 z-[460] flex flex-col overflow-hidden rounded-md border border-line bg-surface shadow-raised">
+          <div className="absolute bottom-6 z-[460] flex flex-col gap-2 transition-[inset-inline-end] duration-300" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 16 }}>
             <Tooltip content="Zoom in" side="left">
-              <button className="flex size-9 items-center justify-center text-ink-2 hover:bg-surface-2" onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
+              <button className={MAPBTN} onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
                 <Plus className="size-4" />
               </button>
             </Tooltip>
             <Tooltip content="Zoom out" side="left">
-              <button className="flex size-9 items-center justify-center border-t border-line text-ink-2 hover:bg-surface-2" onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
+              <button className={MAPBTN} onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
                 <Minus className="size-4" />
               </button>
             </Tooltip>
             <Tooltip content={props.selectedTourId ? "Fit selected route" : "Fit all routes"} side="left">
-              <button className="flex size-9 items-center justify-center border-t border-line text-ink-2 hover:bg-surface-2" onClick={() => fit(props.selectedTourId)} aria-label={props.selectedTourId ? "Fit selected route" : "Fit all routes"}>
+              <button className={MAPBTN} onClick={() => fit(props.selectedTourId)} aria-label={props.selectedTourId ? "Fit selected route" : "Fit all routes"}>
                 <LocateFixed className="size-4" />
               </button>
             </Tooltip>
             {props.selectedTourId && (
               <Tooltip content="Show all routes" side="left">
-                <button className="flex size-9 items-center justify-center border-t border-line text-ink-2 hover:bg-surface-2" onClick={() => props.onSelectTour(null)} aria-label="Show all routes">
+                <button className={MAPBTN} onClick={() => props.onSelectTour(null)} aria-label="Show all routes">
                   <Maximize2 className="size-4" />
                 </button>
               </Tooltip>
             )}
             <Tooltip content="Map layers" side="left">
               <button
-                className={cn("flex size-9 items-center justify-center border-t border-line text-ink-2 hover:bg-surface-2", layersOpen && "bg-surface-2 text-brand-600")}
+                className={cn(MAPBTN, layersOpen && "border-brand-500 text-nx-violet-text")}
                 onClick={() => setLayersOpen((o) => !o)}
                 aria-label="Map layers"
                 aria-expanded={layersOpen}
@@ -405,33 +416,36 @@ export function RouteMap(props: RouteMapProps) {
             </Tooltip>
           </div>
           {layersOpen && (
-            <div className="absolute end-14 top-3 z-[460] w-56 rounded-md border border-line bg-surface p-3 text-[13px] shadow-overlay">
+            <div className="absolute bottom-6 z-[460] w-56 rounded-2xl border border-line-strong bg-raised p-3 text-[13px] font-semibold shadow-overlay" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 68 }}>
               <label className="flex items-center justify-between gap-2 py-1">
                 Completed stops
-                <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} className="size-4 accent-[#2563EB]" />
+                <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} className="size-4 accent-[var(--violet)]" />
               </label>
               <label className="flex items-center justify-between gap-2 py-1">
                 Unassigned stops
-                <input type="checkbox" checked={showUnassigned} onChange={(e) => setShowUnassigned(e.target.checked)} className="size-4 accent-[#2563EB]" />
+                <input type="checkbox" checked={showUnassigned} onChange={(e) => setShowUnassigned(e.target.checked)} className="size-4 accent-[var(--violet)]" />
               </label>
             </div>
           )}
-          <div className="pointer-events-none absolute bottom-6 start-3 z-[440] hidden rounded-md border border-line bg-surface/95 px-3 py-2 text-2xs text-muted shadow-raised backdrop-blur sm:block">
+          <div
+            className="pointer-events-none absolute bottom-4 z-[440] hidden max-w-[min(560px,calc(100%-32px))] rounded-[10px] border border-line bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-2.5 py-1.5 text-[11.5px] font-semibold text-ink-2 backdrop-blur sm:block"
+            style={{ insetInlineStart: (props.insetStart ?? 0) + 16 }}
+          >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-3 rounded-full bg-brand-600" /> Open stop
+                <span className="inline-block size-3 rounded-full border-2 border-nx-violet bg-surface" /> Open stop
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-3 rounded-[3px] border-2 border-brand-600 bg-white" /> Pickup
+                <span className="inline-block size-3 rounded-[3px] border-2 border-nx-violet bg-surface" /> Pickup
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block size-3 rounded-full border border-line-strong bg-surface-2" /> Done
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-3 rounded-[3px] bg-navy" /> Depot
+                <span className="inline-block size-3 rounded-[3px] border border-white/80 bg-navy" /> Depot
               </span>
             </div>
-            <div className="mt-1 text-subtle">
+            <div className="mt-1 font-medium text-muted">
               {props.road ? "Selected tour: road route (OSRM); other tours: stop order as straight lines" : "Lines show stop order, not road geometry"} ·{" "}
               {props.vehicles === undefined
                 ? "live positions not available for your role"

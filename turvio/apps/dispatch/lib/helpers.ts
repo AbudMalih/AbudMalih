@@ -27,7 +27,8 @@ export function tourMapPoints(tour: Tour, depot: { location: GeoPoint }, stops: 
 }
 
 /** Distinct, accessible route colours (blue first = brand). */
-export const ROUTE_COLORS = ["#2563EB", "#7C3AED", "#0D9488", "#D97706", "#DB2777", "#059669", "#EA580C", "#4F46E5", "#0891B2", "#BE123C", "#65A30D", "#9333EA"];
+// TURVIO NEXT route palette (design/next/dispatch: violet, cobalt, cyan, mint, amber, coral, …); readable on the dark and the light map.
+export const ROUTE_COLORS = ["#7C64FF", "#3478FF", "#13BDCE", "#1FBF8A", "#F0A23B", "#F0587C", "#B07CFF", "#5BA3FF", "#3DD6C4", "#9BCB3B", "#FF8A5B", "#D96BE0"];
 
 export function tourColor(data: Pick<DispatchDataset, "tours">, tourId: string): string {
   const i = data.tours.findIndex((t) => t.id === tourId);

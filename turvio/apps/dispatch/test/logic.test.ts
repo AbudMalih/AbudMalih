@@ -33,7 +33,7 @@ describe("availability helpers", () => {
     expect(vehicleBusy(base, t.vehicleId!)?.id).toBe(t.id);
   });
   it("gives each tour a stable colour", () => {
-    expect(tourColor(base, base.tours[0]!.id)).toBe("#2563EB");
+    expect(tourColor(base, base.tours[0]!.id)).toBe("#7C64FF");
     expect(tourColor(base, base.tours[1]!.id)).not.toBe(tourColor(base, base.tours[0]!.id));
   });
 });

@@ -18,10 +18,10 @@ export interface PickerMarker {
 }
 
 const STYLE: Record<PickerMarker["kind"], { color: string; fill: string; radius: number; dash?: string }> = {
-  current: { color: "#334155", fill: "#94A3B8", radius: 7 },
-  original: { color: "#7C3AED", fill: "#FFFFFF", radius: 7, dash: "3 3" },
-  suggestion: { color: "#059669", fill: "#A7F3D0", radius: 7 },
-  approach: { color: "#2563EB", fill: "#BFDBFE", radius: 7 },
+  current: { color: "#8A93A8", fill: "#B4BBCC", radius: 7 },
+  original: { color: "#8C76FF", fill: "#FFFFFF", radius: 7, dash: "3 3" },
+  suggestion: { color: "#1FBF8A", fill: "#A9F2D6", radius: 7 },
+  approach: { color: "#3478FF", fill: "#BBD3FF", radius: 7 },
 };
 
 /** Distance and permission of a picked point (pure – also used by the dialogs and tests). */
@@ -64,7 +64,7 @@ export function LocationPickerMap({
         if (cancelled || !el.current) return;
         L.current = mod;
         const m = mod.map(el.current, { zoomControl: true, attributionControl: true });
-        mod.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(m);
+        mod.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "turvio-tiles", attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(m);
         fixed.current = mod.layerGroup().addTo(m);
         // With an allowed area: show all of it; otherwise close in on the pin.
         if (limit) m.fitBounds(mod.latLng(center.lat, center.lng).toBounds(limit * 2.2));
@@ -91,7 +91,7 @@ export function LocationPickerMap({
     const Lf = L.current;
     if (state !== "ready" || !Lf || !fixed.current) return;
     fixed.current.clearLayers();
-    if (limit) Lf.circle([center.lat, center.lng], { radius: limit, color: "#2563EB", weight: 1, dashArray: "4 4", fillOpacity: 0.04 }).addTo(fixed.current);
+    if (limit) Lf.circle([center.lat, center.lng], { radius: limit, color: "#8C76FF", weight: 1, dashArray: "4 4", fillOpacity: 0.04 }).addTo(fixed.current);
     for (const mk of markers) {
       const st = STYLE[mk.kind];
       Lf.circleMarker([mk.point.lat, mk.point.lng], { radius: st.radius, color: st.color, fillColor: st.fill, fillOpacity: 1, weight: 2, dashArray: st.dash })
@@ -117,7 +117,7 @@ export function LocationPickerMap({
     if (!pick.current) {
       pick.current = Lf.marker([value.lat, value.lng], {
         draggable: true,
-        icon: Lf.divIcon({ className: "turvio-pick", html: '<div style="width:18px;height:18px;border-radius:999px;background:#2563EB;border:3px solid #fff;box-shadow:0 1px 4px rgba(15,23,42,.4)"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }),
+        icon: Lf.divIcon({ className: "turvio-pick", html: '<div style="width:18px;height:18px;border-radius:999px;background:#6F55FF;border:3px solid #fff;box-shadow:0 0 0 5px rgba(117,91,255,.3),0 2px 6px rgba(0,0,0,.4)"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }),
         title: "Chosen point – drag to adjust",
       })
         .on("dragend", () => {

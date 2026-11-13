@@ -5,7 +5,21 @@
 /* Let Tailwind see classes used inside the shared design-system package. */
 @source "../../../packages/web-ui/src/ds";
 
-/* Leaflet map chrome in TURVIO style */
-.leaflet-container { font-family: var(--font-sans); background: var(--color-surface-2); }
-.leaflet-control-attribution { font-size: 10px; background: rgb(255 255 255 / 0.8) !important; }
+/* Leaflet map chrome in TURVIO NEXT style */
+.leaflet-container.leaflet-container { font-family: var(--font-sans); background: var(--bg-2); }
+.leaflet-control-attribution { font-size: 10px; background: var(--map-attrib) !important; color: var(--text-3) !important; border-top-left-radius: 8px; }
+.leaflet-control-attribution a { color: var(--text-2) !important; }
 .turvio-marker { background: transparent; border: 0; }
+.leaflet-tooltip {
+  background: var(--raised); color: var(--text); border: 1px solid var(--line-2); border-radius: 12px;
+  box-shadow: var(--shadow-lg); font: 500 12.5px/1.45 var(--font-sans); padding: 8px 11px;
+}
+.leaflet-tooltip-top::before { border-top-color: var(--raised); }
+.leaflet-tooltip-bottom::before { border-bottom-color: var(--raised); }
+.leaflet-tooltip-left::before { border-left-color: var(--raised); }
+.leaflet-tooltip-right::before { border-right-color: var(--raised); }
+
+/* Base map tiles (OpenStreetMap) tuned to the NEXT themes: obsidian night map in dark mode, warm
+   porcelain in light mode – same tile source, styled client-side. */
+.turvio-tiles { filter: saturate(0.55) sepia(0.08) brightness(1.02) contrast(0.92); }
+[data-theme="dark"] .turvio-tiles { filter: invert(1) hue-rotate(195deg) brightness(0.78) contrast(0.92) saturate(0.45); }

@@ -93,8 +93,8 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
             <span className={cn("truncate text-[13px] font-medium", isOpen(stop.status) ? "text-ink" : "text-muted")}>{stop.recipientName ?? formatAddress(stop)}</span>
-            {stop.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-violet-600" aria-label="Pickup" />}
-            {stop.priority && <Star className="size-3.5 shrink-0 fill-amber-400 text-amber-500" aria-label="Priority" />}
+            {stop.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-nx-violet-text" aria-label="Pickup" />}
+            {stop.priority && <Star className="size-3.5 shrink-0 fill-nx-amber text-nx-amber" aria-label="Priority" />}
             {locBadge && isOpen(stop.status) && (
               <span className="shrink-0" data-testid="stop-location-badge">
                 <Badge tone={locBadge.tone} className="px-1.5 py-0 text-2xs">
@@ -182,7 +182,7 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
                       }
                     }}
                   >
-                    <Star className={cn(stop.priority && "fill-amber-400 text-amber-500")} />
+                    <Star className={cn(stop.priority && "fill-nx-amber text-nx-amber")} />
                     {stop.priority ? "Remove priority" : "Mark as priority"}
                   </Button>
                 </div>
@@ -340,7 +340,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         <div
           className={cn(
             "flex gap-2.5 rounded-md border px-3 py-2.5 text-[13px]",
-            s.delayCertainty === "estimated" ? "border-amber-200 bg-warning-soft text-warning-ink" : "border-red-200 bg-danger-soft text-danger-ink",
+            s.delayCertainty === "estimated" ? "border-nx-amber/30 bg-warning-soft text-warning-ink" : "border-nx-coral/30 bg-danger-soft text-danger-ink",
           )}
           role="alert"
           data-testid="delay-reasons"
@@ -357,7 +357,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         <button
           type="button"
           onClick={() => selectStop(locationReview[0]!.id, s.tour.id)}
-          className="rounded-md border border-amber-200 bg-warning-soft px-3 py-2 text-start text-xs text-warning-ink"
+          className="rounded-md border border-nx-amber/30 bg-warning-soft px-3 py-2 text-start text-xs text-warning-ink"
           data-testid="location-review-banner"
         >
           {locationReview.length} stop{locationReview.length > 1 ? "s need" : " needs"} a location review

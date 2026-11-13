@@ -1,8 +1,9 @@
 "use client";
 
-import { formatClock, parseMinuteOfDay, type Driver, type TourSummary, type Vehicle } from "@turvio/shared";
+import { can, formatClock, parseMinuteOfDay, type Driver, type TourSummary, type Vehicle } from "@turvio/shared";
 import { Avatar, Badge, Button, Card, CardHeader, Checkbox, Dialog, EmptyState, Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger, Tooltip, cn, toast } from "@turvio/web-ui/ds";
 import { ArrowUpFromLine, CalendarX2, ChevronDown, Loader2, MapPinned, PackagePlus, Plus, Send, Sparkles, Star, Truck, UserRound, Wand2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { errorMessage } from "../lib/api";
 import { driverBusy, tourColor, vehicleBusy } from "../lib/helpers";
@@ -38,7 +39,7 @@ function AssignMenu<T extends { id: string }>({
   return (
     <Menu>
       <MenuTrigger asChild disabled={disabled}>
-        <Button variant="secondary" size="sm" className={cn("w-full justify-start", !current && "border-amber-200 bg-warning-soft/50 text-warning-ink")} aria-label={`${label}: ${current ? render(current) : "not assigned"}`}>
+        <Button variant="secondary" size="sm" className={cn("w-full justify-start", !current && "border-nx-amber/30 bg-warning-soft/50 text-warning-ink")} aria-label={`${label}: ${current ? render(current) : "not assigned"}`}>
           {icon}
           <span className="truncate">{current ? render(current) : `Assign ${label.toLowerCase()}`}</span>
           <ChevronDown className="ms-auto text-subtle" />
@@ -286,7 +287,9 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
 export function PlanningView() {
   const { data, summaries, assignStops, setPriority, date, depotId, scoped, optimizePlan, session } = useDispatch();
-  const [newOpen, setNewOpen] = useState(false);
+  // /planning?new=1 (Overview → "New tour") opens the dialog directly.
+  const params = useSearchParams();
+  const [newOpen, setNewOpen] = useState(() => params?.get("new") === "1" && can(session.role, "tours.manage"));
   const [addOpen, setAddOpen] = useState(false);
   const [planBusy, setPlanBusy] = useState(false);
   const [assignBusy, setAssignBusy] = useState(false);
@@ -323,12 +326,12 @@ export function PlanningView() {
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-4 p-4 sm:p-6">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[20px] font-semibold tracking-tight text-ink">Planning</h1>
-            <p className="text-sm text-muted">
+            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Planning</h1>
+            <p className="mt-1 text-sm text-ink-2">
               {date} · {depot ? depot.name : `${data.depots.length} depots`} · {openTours.length} open tour{openTours.length === 1 ? "" : "s"}
             </p>
           </div>
@@ -450,7 +453,7 @@ export function PlanningView() {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="truncate text-[13px] font-medium text-ink">{u.recipientName ?? u.address.street}</span>
-                            {u.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-violet-600" aria-label="Pickup" />}
+                            {u.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-nx-violet-text" aria-label="Pickup" />}
                           </div>
                           <div className="truncate text-2xs text-muted">
                             {scoped.depots.find((x) => x.id === u.depotId)?.name} · {u.address.street} {u.address.houseNumber}
@@ -463,7 +466,7 @@ export function PlanningView() {
                           aria-label={u.priority ? `Remove priority from ${u.recipientName}` : `Mark ${u.recipientName} as priority`}
                           className="inline-flex size-8 items-center justify-center rounded-md hover:bg-surface-2"
                         >
-                          <Star className={cn("size-4", u.priority ? "fill-amber-400 text-amber-500" : "text-subtle")} />
+                          <Star className={cn("size-4", u.priority ? "fill-nx-amber text-nx-amber" : "text-subtle")} />
                         </button>
                       </li>
                     ))}

@@ -50,8 +50,8 @@ function Th({ label, k, sort, dir, onSort, className }: { label: string; k: List
   const active = sort === k;
   const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <th scope="col" aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"} className={cn("h-10 whitespace-nowrap px-3 text-start font-medium", className)}>
-      <button type="button" onClick={() => onSort(k)} className={cn("-mx-1.5 inline-flex items-center gap-1 rounded px-1.5 py-1 hover:bg-surface-2 hover:text-ink", active && "text-ink")}>
+    <th scope="col" aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"} className={cn("h-11 whitespace-nowrap px-3 text-start font-bold", className)}>
+      <button type="button" onClick={() => onSort(k)} className={cn("-mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 uppercase hover:bg-surface-2 hover:text-ink", active && "text-ink")}>
         {label}
         <Icon className={cn("size-3", active ? "text-brand-600" : "text-subtle")} />
       </button>
@@ -89,11 +89,11 @@ export function ListView() {
   };
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-[1600px] p-4 sm:p-6">
+    <div className="flex flex-col">
+      <div className="flex flex-col gap-5">
         <div className="mb-4 flex flex-col gap-1">
-          <h1 className="text-[20px] font-semibold tracking-tight text-ink">Tours</h1>
-          <p className="text-sm text-muted">
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Tours</h1>
+          <p className="mt-1 text-sm text-ink-2">
             {data.tours.length} tours on {data.date} · completion from road times
             {(() => {
               const est = summaries.filter((s) => s.tour.status !== "completed" && s.timeline.projection.source === "estimate").length;
@@ -148,7 +148,7 @@ export function ListView() {
           ) : (
             <div className="relative overflow-x-auto">
               <table className="w-full min-w-[980px] text-[13px]">
-                <thead className="bg-surface-2/60 text-xs text-muted">
+                <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                   <tr className="border-b border-line">
                     <Th label="Tour" k="name" sort={sort} dir={dir} onSort={onSort} className="ps-4" />
                     <Th label="Driver" k="driver" sort={sort} dir={dir} onSort={onSort} />
