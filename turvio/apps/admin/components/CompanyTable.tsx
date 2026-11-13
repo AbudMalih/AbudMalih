@@ -60,14 +60,14 @@ function SortHeader({ label, k, query, onSort, className }: { label: string; k: 
   const active = query.sort === k;
   const Icon = !active ? ArrowUpDown : query.dir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <th scope="col" aria-sort={active ? (query.dir === "asc" ? "ascending" : "descending") : "none"} className={cn("h-10 px-3 text-start font-medium", className)}>
+    <th scope="col" aria-sort={active ? (query.dir === "asc" ? "ascending" : "descending") : "none"} className={cn("h-11 px-3 text-start font-bold", className)}>
       <button
         type="button"
         onClick={() => onSort(k)}
-        className={cn("-mx-1.5 inline-flex items-center gap-1 rounded px-1.5 py-1 transition-colors hover:bg-surface-2 hover:text-ink", active && "text-ink")}
+        className={cn("-mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 uppercase transition-colors hover:bg-surface-2 hover:text-ink", active && "text-ink")}
       >
         {label}
-        <Icon className={cn("size-3", active ? "text-brand-600" : "text-subtle")} aria-hidden="true" />
+        <Icon className={cn("size-3", active ? "text-nx-violet-text" : "text-muted")} aria-hidden="true" />
       </button>
     </th>
   );
@@ -156,11 +156,11 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
   const to = Math.min(result.total, (result.page + 1) * query.pageSize);
 
   return (
-    <Card className="overflow-hidden" id="companies">
-      <div className="flex flex-col gap-3 border-b border-line px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+    <Card className="overflow-hidden rounded-[22px]" id="companies">
+      <div className="flex flex-col gap-3 px-4 pb-3 pt-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-sm font-semibold text-ink">Companies</h2>
-          <span className="text-[13px] text-muted tabular">{rows.length}</span>
+          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink">Companies</h2>
+          <span className="text-[13px] font-semibold text-muted tabular">{rows.length}</span>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <SearchInput value={query.search} onChange={(v) => update({ search: v })} placeholder="Search companies…" label="Search companies" className="sm:w-64" />
@@ -212,17 +212,17 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
         />
       ) : (
         <div className="relative overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-[13px]">
-            <thead className="bg-surface-2/60 text-xs text-muted">
+          <table className="w-full min-w-[640px] border-collapse text-[13.5px]">
+            <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
               <tr className="border-b border-line">
                 <th scope="col" className="h-10 w-10 ps-4 sm:ps-5">
                   <Checkbox checked={headerChecked} onCheckedChange={toggleAll} label="Select all companies on this page" />
                 </th>
                 <SortHeader label="Company" k="name" query={query} onSort={onSort} />
                 <SortHeader label="Plan" k="plan" query={query} onSort={onSort} />
-                <th scope="col" className="h-10 px-3 text-start font-medium">Status</th>
+                <th scope="col" className="h-11 px-3 text-start font-bold">Status</th>
                 <SortHeader label="Drivers" k="drivers" query={query} onSort={onSort} className="hidden md:table-cell" />
-                <th scope="col" className="hidden h-10 px-3 text-start font-medium xl:table-cell">Billing</th>
+                <th scope="col" className="hidden h-11 px-3 text-start font-bold xl:table-cell">Billing</th>
                 <SortHeader label="Renewal" k="renewsAt" query={query} onSort={onSort} className="hidden lg:table-cell" />
                 <th scope="col" className="h-10 w-12 pe-4 sm:pe-5">
                   <span className="sr-only">Actions</span>
@@ -239,7 +239,7 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
                   <tr
                     key={r.id}
                     data-state={isSel ? "selected" : undefined}
-                    className="group border-b border-line transition-colors last:border-0 hover:bg-surface-2/50 data-[state=selected]:bg-brand-50/40"
+                    className="group border-b border-line transition-colors last:border-0 hover:bg-surface-2 data-[state=selected]:bg-brand-50"
                   >
                     <td className="ps-4 sm:ps-5">
                       <Checkbox checked={isSel} onCheckedChange={(v) => toggle(r.id, v)} label={`Select ${r.name}`} />
@@ -248,7 +248,7 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
                       <button type="button" onClick={() => setDetail(r)} className="flex items-center gap-3 rounded text-start outline-none focus-visible:shadow-[var(--shadow-focus)]">
                         <Avatar name={r.name} square />
                         <span className="min-w-0">
-                          <span className="block max-w-[280px] truncate font-medium text-ink group-hover:text-brand-700">{r.name}</span>
+                          <span className="block max-w-[280px] truncate font-bold text-ink group-hover:text-brand-700">{r.name}</span>
                           <span className="block text-xs text-muted">
                             {r.slug} · {r.countryCode}
                           </span>

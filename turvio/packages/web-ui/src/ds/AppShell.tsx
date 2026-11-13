@@ -492,13 +492,11 @@ export function AppShell({
                 <ThemeSwitch />
               </div>
             </header>
-            <main
-              className={cn(
-                fullBleed ? "relative min-h-0 flex-1" : "flex w-full max-w-[1680px] flex-1 flex-col gap-5 px-4 pb-12 pt-5 sm:px-7 sm:pt-6",
-                "animate-nx-view",
-              )}
-            >
-              {children}
+            <main className={cn(fullBleed ? "relative min-h-0 flex-1" : "flex w-full max-w-[1680px] flex-1 flex-col px-4 pb-12 pt-5 sm:px-7 sm:pt-6")}>
+              {/* Keyed by route: the new page's content fades in (prototype .view); the shell stays put. */}
+              <div key={current.split("?")[0]} className={cn("animate-nx-view", fullBleed ? "h-full" : "flex flex-col gap-5")}>
+                {children}
+              </div>
             </main>
           </div>
         </div>

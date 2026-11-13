@@ -2,7 +2,6 @@ import { LimitName, PLAN_CATALOGUE, type Plan } from "@turvio/shared";
 import { Badge, Card, CardHeader, PageHeader, cn } from "@turvio/web-ui/ds";
 import { Building2, Check, Gauge, Minus, UserRound } from "lucide-react";
 import type { Metadata } from "next";
-import { AdminShell } from "../../../components/AdminShell";
 
 export const metadata: Metadata = { title: "Plans & limits" };
 
@@ -34,7 +33,7 @@ const ALL_FEATURES = Object.keys(FEATURE_LABEL);
 
 export default function PlansPage() {
   return (
-    <AdminShell crumbs={[{ label: "Platform", href: "/" }, { label: "Plans & limits" }]}>
+    <>
       <PageHeader
         title="Plans & limits"
         description="The plan catalogue enforced by the database and the API. Prices are intentionally not configured yet; payments are disabled."
@@ -111,6 +110,6 @@ export default function PlansPage() {
           </table>
         </div>
       </Card>
-    </AdminShell>
+    </>
   );
 }

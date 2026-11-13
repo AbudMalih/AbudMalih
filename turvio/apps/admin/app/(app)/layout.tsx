@@ -3,6 +3,7 @@ import { serverApi, type Me } from "@turvio/web-session";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { AdminShell } from "../../components/AdminShell";
 import { SignOutLink } from "../../components/SignOutLink";
 import { AdminSessionProvider } from "../../lib/session";
 
@@ -28,7 +29,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
   return (
     <AdminSessionProvider value={{ name: me.data.name ?? me.data.email ?? "Platform admin", email: me.data.email ?? "", environment: process.env.NEXT_PUBLIC_TURVIO_ENV ?? null }}>
-      {children}
+      {/* The shell is mounted once here and persists across pages; only the content area changes. */}
+      <AdminShell>{children}</AdminShell>
     </AdminSessionProvider>
   );
 }
