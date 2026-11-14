@@ -4,13 +4,16 @@
  * strength and shows it through transparent views – which produced violet blocks/extensions around
  * gradient buttons. All depth now goes through glow()/lift() in theme.ts.
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
 import { render, screen } from "@testing-library/react-native";
 import { Platform, StyleSheet } from "react-native";
 import { Button, HeroAction } from "../src/components/ui";
 import { glow, lift } from "../src/theme";
 
+// Node built-ins via jest's require (the app's tsconfig has no Node types).
+declare const require: (m: string) => any;
+declare const __dirname: string;
+const { readFileSync, readdirSync, statSync } = require("fs") as { readFileSync: (p: string, e: string) => string; readdirSync: (p: string) => string[]; statSync: (p: string) => { isDirectory(): boolean } };
+const { join } = require("path") as { join: (...p: string[]) => string };
 const SRC = join(__dirname, "..", "src");
 const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? files(join(dir, f)) : /\.tsx?$/.test(f) ? [join(dir, f)] : []));
 

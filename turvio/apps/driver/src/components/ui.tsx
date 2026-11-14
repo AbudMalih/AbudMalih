@@ -224,19 +224,19 @@ export function SectionTitle({ children, right }: { children: string; right?: Re
   );
 }
 
-export function IconButton({ icon, label, onPress, active, testID, size = touch.min }: { icon: IconName; label: string; onPress: () => void; active?: boolean; testID?: string; size?: number }) {
+export function IconButton({ icon, label, onPress, active, testID, size = touch.min, loading }: { icon: IconName; label: string; onPress: () => void; active?: boolean; testID?: string; size?: number; loading?: boolean }) {
   const { c } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ selected: !!active }}
+      accessibilityState={{ selected: !!active, busy: !!loading }}
       onPress={onPress}
       testID={testID}
       hitSlop={6}
       style={({ pressed }) => [s.iconBtn, { width: size, height: size, backgroundColor: active ? c.primary : c.card, borderColor: active ? c.primary : c.borderStrong, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.93 : 1 }] }]}
     >
-      <Ionicons name={icon} size={22} color={active ? "#FFFFFF" : c.text} />
+      {loading ? <ActivityIndicator color={active ? "#FFFFFF" : c.primaryText} /> : <Ionicons name={icon} size={22} color={active ? "#FFFFFF" : c.text} />}
     </Pressable>
   );
 }

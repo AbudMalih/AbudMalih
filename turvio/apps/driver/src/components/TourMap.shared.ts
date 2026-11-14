@@ -16,6 +16,10 @@ export interface TourMapProps {
   pendingPin?: GeoPoint | null;
   onMapPress?: (point: GeoPoint) => void;
   onStopPress?: (stop: Stop) => void;
+  /** Change `n` to animate the camera to this point at street level (My location). */
+  focus?: { lat: number; lng: number; n: number } | null;
+  /** The driver panned or zoomed the map by hand. */
+  onUserGesture?: () => void;
   style?: ViewStyle;
 }
 

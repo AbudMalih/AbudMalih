@@ -8,7 +8,8 @@ import { StopCard } from "../../components/StopCard";
 import { TourMap } from "../../components/TourMap";
 import { Banner, EmptyState, IconButton } from "../../components/ui";
 import { useT } from "../../lib/i18n";
-import { currentPosition, locationPermission } from "../../lib/location";
+import { locationPermission } from "../../lib/location";
+import { useMyLocation } from "../../lib/useMyLocation";
 import { useMyTour } from "../../store/useMyTour";
 import { lift, radii, space, type as ty, useTheme } from "../../theme";
 
@@ -17,35 +18,36 @@ export default function MapScreen() {
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
   const { tour, depot, stops, road } = useMyTour();
-  const [showMe, setShowMe] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const { showMe, setShowMe, locating, focus: focusMe, notice, locate, onUserGesture } = useMyLocation();
   const [selected, setSelected] = useState<string | null>(null);
   const next = stops.find((s) => isOpen(s.status));
   const focus = stops.find((s) => s.id === selected) ?? next;
-  // Already allowed (e.g. for optimizing from here): show the blue dot right away, never prompt here.
+  // Already allowed (e.g. for optimizing from here): show the position dot right away, never prompt here.
   useEffect(() => {
     void locationPermission().then((p) => p === "granted" && setShowMe(true));
   }, []);
 
   if (!tour) return <EmptyState icon="map-outline" title={t("home.noRoutes")} text={t("home.noRoutesText")} />;
 
-  const toggleMe = async () => {
-    if (showMe) return setShowMe(false);
-    const r = await currentPosition(true);
-    if (r.ok) {
-      setShowMe(true);
-      setNotice(t("map.locationExplain"));
-    } else setNotice(t("optimize.locationDenied"));
-  };
-
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TourMap depot={depot} tour={tour} stops={stops} roadGeometry={road?.geometry ?? null} currentStopId={focus?.id} showUserLocation={showMe} onStopPress={(s) => setSelected(s.id)} />
+      <TourMap
+        depot={depot}
+        tour={tour}
+        stops={stops}
+        roadGeometry={road?.geometry ?? null}
+        currentStopId={focus?.id}
+        showUserLocation={showMe}
+        onStopPress={(s) => setSelected(s.id)}
+        focus={focusMe}
+        onUserGesture={onUserGesture}
+      />
       <View style={{ position: "absolute", top: insets.top + space.sm, right: space.lg, gap: space.sm }}>
-        <IconButton icon={showMe ? "locate" : "locate-outline"} label={t("map.myLocation")} active={showMe} onPress={() => void toggleMe()} testID="map-locate" />
+        <IconButton icon={showMe ? "locate" : "locate-outline"} label={t("map.myLocation")} active={showMe} loading={locating} onPress={() => void locate()} testID="map-locate" />
       </View>
       <View style={{ position: "absolute", left: space.md, right: space.md, bottom: space.md, gap: space.sm }}>
-        {notice && <Banner text={notice} tone="neutral" icon="location-outline" />}
+        {notice && <Banner text={notice.text} tone={notice.tone} icon="location-outline" action={notice.action} />}
+        {locating && !notice && <Banner text={t("map.locating")} tone="neutral" icon="locate-outline" />}
         {focus && (
           <View style={{ backgroundColor: c.card, borderRadius: radii.xl, padding: space.md, gap: space.sm, borderWidth: 1, borderColor: c.border, ...lift(2, { opaque: true }) }}>
             <Text style={[ty.caption, { color: c.textMuted }]}>{focus.id === next?.id ? t("map.next").toUpperCase() : `#${stops.indexOf(focus) + 1}`}</Text>

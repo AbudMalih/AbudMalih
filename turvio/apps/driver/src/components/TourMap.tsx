@@ -55,7 +55,11 @@ function MapUnavailable({ style, text }: { style?: TourMapProps["style"]; text?:
   );
 }
 
-function NativeTourMap({ depot, tour, stops, currentStopId, showUserLocation, pendingPin, onMapPress, onStopPress, style, roadGeometry }: TourMapProps) {
+/** Street level for delivery drivers: Google Maps zoom 17; Apple Maps uses camera altitude (~17). */
+export const STREET_ZOOM = 17;
+const STREET_ALTITUDE_M = 650;
+
+function NativeTourMap({ depot, tour, stops, currentStopId, showUserLocation, pendingPin, onMapPress, onStopPress, style, roadGeometry, focus, onUserGesture }: TourMapProps) {
   const { c } = useTheme();
   const mapRef = useRef<MapView>(null);
   const located = useMemo(() => stops.filter((x): x is Located => x.location !== null), [stops]);
@@ -78,6 +82,13 @@ function NativeTourMap({ depot, tour, stops, currentStopId, showUserLocation, pe
       setRegion(initial);
     }
   }, [initial, ready]);
+  // My location: centre on the requested point at street level. Only on request (focus.n), so the
+  // map never snaps back while the driver pans or zooms.
+  useEffect(() => {
+    if (!focus || !ready) return;
+    mapRef.current?.animateCamera({ center: { latitude: focus.lat, longitude: focus.lng }, zoom: STREET_ZOOM, altitude: STREET_ALTITUDE_M, heading: 0, pitch: 0 }, { duration: 450 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.n, ready]);
   useEffect(() => {
     if (ready) return;
     const timer = setTimeout(() => setFailed(true), MAP_READY_TIMEOUT_MS);
@@ -103,7 +114,11 @@ function NativeTourMap({ depot, tour, stops, currentStopId, showUserLocation, pe
       }}
       style={StyleSheet.absoluteFill}
       initialRegion={initial ?? undefined}
-      onRegionChangeComplete={(r) => setRegion(r)}
+      onRegionChangeComplete={(r, details) => {
+        setRegion(r);
+        if (details?.isGesture) onUserGesture?.();
+      }}
+      onPanDrag={() => onUserGesture?.()}
       showsUserLocation={!!showUserLocation}
       showsMyLocationButton={false}
       toolbarEnabled={false}

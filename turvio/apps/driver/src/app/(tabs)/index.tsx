@@ -9,7 +9,7 @@ import { SyncPill } from "../../components/SyncPill";
 import { TrackingPill } from "../../components/Tracking";
 import { ActionTile, Banner, Button, Card, EmptyState, GRADIENTS, GradientFill, Ionicons, Pill, SectionTitle, gradientSurface, type IconName } from "../../components/ui";
 import Svg, { ClipPath, Defs, G, LinearGradient, Line, Rect, Stop as SvgStop } from "react-native-svg";
-import { duration, km } from "../../lib/format";
+import { km } from "../../lib/format";
 import { useLocale, useT } from "../../lib/i18n";
 import { isServerMode, useTourStore } from "../../store/tourStore";
 import { useMyTour } from "../../store/useMyTour";
@@ -107,7 +107,7 @@ export default function HomeScreen() {
                 <HeroStat value={String(progress.pending)} label={t("home.statOpen")} />
                 <HeroStat value={String(progress.parcels)} label={t("home.statParcels")} />
                 <HeroStat value={km(road?.metrics?.remainingMeters ?? metrics.remainingMeters)} label={t("home.statKmLeft")} />
-                <HeroStat value={duration(road?.metrics?.remainingDriveSeconds ?? metrics.remainingDriveSeconds)} label={t("home.statTimeLeft")} />
+                <HeroStat value={hoursMinutes(road?.metrics?.remainingDriveSeconds ?? metrics.remainingDriveSeconds)} label={t("home.statTimeLeft")} />
               </View>
             )}
             {metrics && progress.total > 0 && (
@@ -314,6 +314,12 @@ function ProgressTicks({ done, failed, total }: { done: number; failed: number; 
   );
 }
 
+/** Remaining time as h:mm (prototype tile "2:48") – fits the four tiles even at 360 dp. */
+function hoursMinutes(seconds: number) {
+  const m = Math.max(0, Math.round(seconds / 60));
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+}
+
 function HeroStat({ value, label }: { value: string; label: string }) {
   const { c } = useTheme();
   return (
@@ -322,7 +328,7 @@ function HeroStat({ value, label }: { value: string; label: string }) {
       <Text style={{ color: c.text, fontSize: 16, lineHeight: 20, letterSpacing: -0.3, ...fw("800"), fontVariant: ["tabular-nums"] }} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
-      <Text style={[ty.caption, { color: c.textMuted, letterSpacing: 0, fontSize: 11 }]} numberOfLines={1}>
+      <Text style={[ty.caption, { color: c.textMuted, letterSpacing: 0, fontSize: 11, lineHeight: 13 }]} numberOfLines={2}>
         {label}
       </Text>
     </View>
