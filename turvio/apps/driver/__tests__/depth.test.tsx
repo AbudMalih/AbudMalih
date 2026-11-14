@@ -9,6 +9,8 @@ import { Platform, StyleSheet } from "react-native";
 import { Button, HeroAction } from "../src/components/ui";
 import { glow, lift } from "../src/theme";
 
+jest.mock("expo-router", () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+
 // Node built-ins via jest's require (the app's tsconfig has no Node types).
 declare const require: (m: string) => any;
 declare const __dirname: string;
@@ -75,6 +77,60 @@ describe("depth effects", () => {
     await asPlatform("ios", async () => {
       await render(<HeroAction title="Scan" icon="scan" tone="primary" onPress={() => {}} testID="h2" />);
       expect(flat("h2").shadowColor).toBe("#6F55FF");
+    });
+  });
+});
+
+describe("Android: one solid background per surface (no SVG gradient layers)", () => {
+  // Lazy imports so the Platform override applies to module-level code too.
+  const json = (r: { toJSON: () => unknown }) => JSON.stringify(r.toJSON());
+  type Node = { type: string; props: Record<string, unknown>; children?: (Node | string)[] | null };
+  const walk = (n: Node | string | null | undefined, fn: (n: Node) => void) => {
+    if (!n || typeof n === "string") return;
+    fn(n);
+    for (const ch of n.children ?? []) walk(ch, fn);
+  };
+
+  it("GradientFill renders nothing on Android and the gradient on iOS", async () => {
+    const { GradientFill, GRADIENTS } = require("../src/components/ui");
+    await asPlatform("android", async () => {
+      const r = await render(<GradientFill colors={GRADIENTS.violet} radius={18} />);
+      expect(r.toJSON()).toBeNull();
+    });
+    await asPlatform("ios", async () => {
+      const r = await render(<GradientFill colors={GRADIENTS.violet} radius={18} />);
+      expect(json(r)).toMatch(/RNSVG/);
+    });
+  });
+
+  it.each(["primary", "success"] as const)("%s button on Android is a single solid view with no SVG", async (variant) => {
+    await asPlatform("android", async () => {
+      const r = await render(<Button label="Start tour" variant={variant} size="lg" onPress={() => {}} testID="b" />);
+      expect(json(r)).not.toMatch(/RNSVG/);
+      expect(flat("b").backgroundColor).toBe(variant === "primary" ? "#6F55FF" : "#2CD9A0");
+    });
+  });
+
+  it("Today on Android: route card, Start tour and Scan parcels have no SVG or overlay layers", async () => {
+    const { useTourStore } = require("../src/store/tourStore");
+    const { DARK, LIGHT } = require("../src/theme");
+    await asPlatform("android", async () => {
+      useTourStore.getState().resetData();
+      useTourStore.getState().setLocale("en");
+      const HomeScreen = require("../src/app/(tabs)/index").default;
+      const r = await render(<HomeScreen />);
+      expect(json(r)).not.toMatch(/RNSVG/);
+      const hero = StyleSheet.flatten(r.getByTestId("active-tour").props.style) as Record<string, unknown>;
+      expect([DARK.heroSolid, LIGHT.heroSolid]).toContain(hero.backgroundColor);
+      // No absolutely positioned layer anywhere on Today (each surface paints exactly one background).
+      walk(r.toJSON() as Node, (n) => {
+        const st = StyleSheet.flatten(n.props.style as never) as Record<string, unknown> | undefined;
+        expect({ testID: n.props.testID, position: st?.position }).not.toEqual(expect.objectContaining({ position: "absolute" }));
+      });
+      for (const tile of r.getAllByTestId("hero-stat")) {
+        const st = StyleSheet.flatten(tile.props.style) as Record<string, unknown>;
+        expect(st.backgroundColor).toMatch(/^#[0-9A-F]{6}$/i);
+      }
     });
   });
 });

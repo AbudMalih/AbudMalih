@@ -19,16 +19,39 @@ export const GRADIENTS = {
 } as const;
 
 /**
- * Base style for any view painted by a GradientFill: an opaque background (the gradient's middle
- * colour) so the view's own rounded shape matches what is painted, no border (a border insets the
- * fill and leaves a ring), and clipping to the radius. Use together with glow(), never elevation.
+ * Android draws every gradient surface as ONE solid background – no SVG layer.
+ *
+ * Why: react-native-svg's Android SvgView is a separate native view that renders its content into a
+ * cached bitmap sized to its own layout and blits it at (0,0). Stacked over a button's own rounded
+ * background it is a second layer whose size and clipping are independent of the button, which on
+ * Samsung devices showed as overlapping blue layers, extensions and broken corners. A single
+ * native background follows the rounded corners exactly. iOS (and the web build) keep the gradient.
  */
-export function gradientSurface(colors: readonly string[], radius: number): ViewStyle {
-  return { backgroundColor: colors[Math.floor(colors.length / 2)], borderRadius: radius, borderWidth: 0, overflow: "hidden" };
+export function solidSurfaces(): boolean {
+  return Platform.OS === "android";
 }
 
-/** Diagonal (135°) gradient filling its parent (style the parent with gradientSurface()). */
-export function GradientFill({ colors, radius = 0 }: { colors: readonly string[]; radius?: number }) {
+/** The solid colour of a gradient surface: its middle stop (electric violet / mint / violet-blue). */
+export function solidOf(colors: readonly string[]): string {
+  return colors[Math.floor(colors.length / 2)]!;
+}
+
+/**
+ * Base style for a gradient surface: one opaque rounded background (the solid colour on Android,
+ * the base under the gradient elsewhere), no border, clipped to the radius. Use with glow(), never
+ * elevation.
+ */
+export function gradientSurface(colors: readonly string[], radius: number): ViewStyle {
+  return { backgroundColor: solidOf(colors), borderRadius: radius, borderWidth: 0, overflow: "hidden" };
+}
+
+/** Diagonal (135°) gradient filling its parent (style the parent with gradientSurface()). Renders nothing on Android. */
+export function GradientFill(props: { colors: readonly string[]; radius?: number }) {
+  if (solidSurfaces()) return null;
+  return <GradientLayer {...props} />;
+}
+
+function GradientLayer({ colors, radius = 0 }: { colors: readonly string[]; radius?: number }) {
   // Unique per instance: on the web, ids are document-wide and hidden screens stay mounted.
   const id = `g${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   return (

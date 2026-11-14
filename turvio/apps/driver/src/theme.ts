@@ -48,6 +48,10 @@ export type Palette = {
   heroTo: string;
   heroGlow: string;
   heroLine: string;
+  /** Android route card: one solid violet-navy background (no gradient layer). */
+  heroSolid: string;
+  /** Figure tiles inside the route card (solid, no overlay). */
+  heroTile: string;
   /** Floating tab bar. */
   tabBar: string;
 };
@@ -89,6 +93,8 @@ export const DARK: Palette = {
   heroMid: "#171C38",
   heroTo: "#121730",
   heroGlow: "rgba(117,91,255,0.45)",
+  heroSolid: "#1D2047",
+  heroTile: "#151933",
   heroLine: "rgba(170,155,255,0.24)",
   tabBar: "rgba(20,24,33,0.94)",
 };
@@ -130,6 +136,8 @@ export const LIGHT: Palette = {
   heroMid: "#F5F3FF",
   heroTo: "#EEF0FF",
   heroGlow: "rgba(122,98,255,0.28)",
+  heroSolid: "#F0EDFF",
+  heroTile: "#FBFAFF",
   heroLine: "rgba(91,68,232,0.16)",
   tabBar: "rgba(255,255,255,0.95)",
 };

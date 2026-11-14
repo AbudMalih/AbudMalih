@@ -7,7 +7,7 @@ import { NavigateButton } from "../../components/NavigateButton";
 import { StopCard } from "../../components/StopCard";
 import { SyncPill } from "../../components/SyncPill";
 import { TrackingPill } from "../../components/Tracking";
-import { ActionTile, Banner, Button, Card, EmptyState, GRADIENTS, GradientFill, Ionicons, Pill, SectionTitle, gradientSurface, type IconName } from "../../components/ui";
+import { ActionTile, Banner, Button, Card, EmptyState, GRADIENTS, GradientFill, Ionicons, Pill, SectionTitle, gradientSurface, solidSurfaces, type IconName } from "../../components/ui";
 import Svg, { ClipPath, Defs, G, LinearGradient, Line, Rect, Stop as SvgStop } from "react-native-svg";
 import { km } from "../../lib/format";
 import { useLocale, useT } from "../../lib/i18n";
@@ -254,8 +254,16 @@ function HeroCard({ children, testID }: { children: React.ReactNode; testID?: st
   //   (Android does not reliably clip SVG children to a border radius);
   // - the glow is a linear gradient fading from the top-right corner. An elliptical RadialGradient
   //   is drawn as a circle by Android's shader, which ended abruptly and left a near-black band.
+  const card = { borderRadius: R, borderWidth: 1, borderColor: c.heroLine, overflow: "hidden" as const, padding: 18, gap: space.md, ...lift(2, { opaque: true }) };
+  // Android: one solid violet-navy background, no SVG layer (see solidSurfaces() in components/ui).
+  if (solidSurfaces())
+    return (
+      <View testID={testID} style={{ ...card, backgroundColor: c.heroSolid }}>
+        {children}
+      </View>
+    );
   return (
-    <View testID={testID} style={{ borderRadius: R, borderWidth: 1, borderColor: c.heroLine, backgroundColor: c.heroMid, overflow: "hidden", padding: 18, gap: space.md, ...lift(2, { opaque: true }) }}>
+    <View testID={testID} style={{ ...card, backgroundColor: c.heroMid }}>
       <Svg width="100%" height="100%" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="none">
         <Defs>
           <ClipPath id={`heroClip${uid}`}>
@@ -323,8 +331,8 @@ function hoursMinutes(seconds: number) {
 function HeroStat({ value, label }: { value: string; label: string }) {
   const { c } = useTheme();
   return (
-    <View style={{ flex: 1, minWidth: 0, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface + "00", paddingHorizontal: 10, paddingVertical: 9, gap: 2, overflow: "hidden" }}>
-      <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: c.card, opacity: 0.55 }} />
+    // One solid background (was a translucent overlay layer stacked inside the tile).
+    <View style={{ flex: 1, minWidth: 0, borderRadius: 14, borderWidth: 1, borderColor: c.border, backgroundColor: c.heroTile, paddingHorizontal: 10, paddingVertical: 9, gap: 2 }} testID="hero-stat">
       <Text style={{ color: c.text, fontSize: 16, lineHeight: 20, letterSpacing: -0.3, ...fw("800"), fontVariant: ["tabular-nums"] }} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
