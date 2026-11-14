@@ -134,3 +134,26 @@ describe("Android: one solid background per surface (no SVG gradient layers)", (
     });
   });
 });
+
+describe("app-wide guard: gradients only through the Android-safe path", () => {
+  const sources = files(SRC).map((f) => ({ f, code: readFileSync(f, "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "") }));
+
+  it("SVG gradients exist only in the shared GradientLayer and the iOS branch of the route card", () => {
+    const using = sources.filter((s) => /\bLinearGradient\b|\bRadialGradient\b/.test(s.code)).map((s) => s.f.replace(SRC, "src"));
+    expect(using.sort()).toEqual(["src/app/(tabs)/index.tsx", "src/components/ui.tsx"]);
+    const index = sources.find((s) => s.f.endsWith("(tabs)/index.tsx"))!.code;
+    // The route card returns its solid Android version before any SVG is created.
+    expect(index.indexOf("if (solidSurfaces())")).toBeGreaterThan(-1);
+    expect(index.indexOf("if (solidSurfaces())")).toBeLessThan(index.indexOf("<Svg"));
+  });
+
+  it("every view that hosts a GradientFill also takes the solid gradientSurface() background", () => {
+    for (const s of sources) {
+      const fills = (s.code.match(/<GradientFill\b/g) ?? []).length;
+      if (!fills || s.f.endsWith("components/ui.tsx")) continue;
+      expect({ f: s.f, surfaces: (s.code.match(/gradientSurface\(/g) ?? []).length >= fills }).toEqual({ f: s.f, surfaces: true });
+    }
+    const ui = sources.find((s) => s.f.endsWith("components/ui.tsx"))!.code;
+    expect((ui.match(/<GradientFill\b/g) ?? []).length).toBe((ui.match(/gradientSurface\(v\.gradient|gradientSurface\(GRADIENTS/g) ?? []).length);
+  });
+});
