@@ -4,11 +4,11 @@ import { useEffect } from "react";
 import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TrackingNoticeHost } from "../../components/Tracking";
-import { GRADIENTS, GradientFill, Ionicons, type IconName } from "../../components/ui";
+import { GRADIENTS, GradientFill, Ionicons, gradientSurface, type IconName } from "../../components/ui";
 import { useTourTracking } from "../../lib/useTourTracking";
 import { useT } from "../../lib/i18n";
 import { isServerMode, useTourStore } from "../../store/tourStore";
-import { fw, useTheme } from "../../theme";
+import { fw, glow, lift, useTheme } from "../../theme";
 
 /** Keeps routes in sync: on open, every 30 s and when the app returns to the foreground. */
 function useBackgroundSync() {
@@ -75,7 +75,7 @@ function NextTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBar
       onPress={() => router.push("/scan")}
       style={({ pressed }) => [styles.tab, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}
     >
-      <View style={styles.scan}>
+      <View style={[styles.scan, gradientSurface(GRADIENTS.scan, 17), glow("#6F55FF")]}>
         <GradientFill colors={GRADIENTS.scan} radius={17} />
         <Ionicons name="scan" size={24} color="#FFFFFF" />
       </View>
@@ -84,7 +84,7 @@ function NextTabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBar
   items.splice(Math.max(0, items.length - 1), 0, scan);
   return (
     <View style={{ backgroundColor: c.bg, paddingHorizontal: 12, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 8) + 4 }}>
-      <View style={[styles.bar, { backgroundColor: c.tabBar, borderColor: c.borderStrong }]} accessibilityRole="tablist">
+      <View style={[styles.bar, { backgroundColor: c.card, borderColor: c.borderStrong }, lift(3, { opaque: true })]} accessibilityRole="tablist">
         {items}
       </View>
     </View>
@@ -125,13 +125,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 6,
     gap: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 12,
   },
   tab: { flex: 1, height: 56, borderRadius: 18, borderWidth: 1, borderColor: "transparent", alignItems: "center", justifyContent: "center", gap: 3 },
   label: { fontSize: 11, lineHeight: 13, ...fw("700") },
-  scan: { width: 50, height: 50, borderRadius: 17, alignItems: "center", justifyContent: "center", overflow: "hidden", marginTop: -6, shadowColor: "#6F55FF", shadowOpacity: 0.7, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  scan: { width: 50, height: 50, alignItems: "center", justifyContent: "center", marginTop: -6 },
 });

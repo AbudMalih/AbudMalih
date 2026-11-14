@@ -7,13 +7,13 @@ import { NavigateButton } from "../../components/NavigateButton";
 import { StopCard } from "../../components/StopCard";
 import { SyncPill } from "../../components/SyncPill";
 import { TrackingPill } from "../../components/Tracking";
-import { ActionTile, Banner, Button, Card, EmptyState, GRADIENTS, GradientFill, Ionicons, Pill, SectionTitle, type IconName } from "../../components/ui";
-import Svg, { Defs, LinearGradient, Line, RadialGradient, Rect, Stop as SvgStop } from "react-native-svg";
+import { ActionTile, Banner, Button, Card, EmptyState, GRADIENTS, GradientFill, Ionicons, Pill, SectionTitle, gradientSurface, type IconName } from "../../components/ui";
+import Svg, { ClipPath, Defs, G, LinearGradient, Line, Rect, Stop as SvgStop } from "react-native-svg";
 import { duration, km } from "../../lib/format";
 import { useLocale, useT } from "../../lib/i18n";
 import { isServerMode, useTourStore } from "../../store/tourStore";
 import { useMyTour } from "../../store/useMyTour";
-import { fw, radii, space, type as ty, useTheme } from "../../theme";
+import { fw, lift, radii, space, type as ty, useTheme } from "../../theme";
 
 /**
  * Today: the route first (progress, road figures, next stop, one primary action), then the two
@@ -218,24 +218,25 @@ function ToolCard({ icon, title, subtitle, onPress, disabled, testID, primary }:
       accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => ({
         flex: 1,
-        minHeight: 84,
+        minHeight: 92,
         borderRadius: radius,
         borderWidth: 1,
-        borderColor: primary ? "transparent" : c.border,
-        backgroundColor: primary ? "transparent" : c.card,
+        borderColor: c.border,
+        backgroundColor: c.card,
         overflow: "hidden",
         padding: space.md,
         gap: space.xs,
         opacity: disabled ? 0.45 : 1,
         transform: [{ scale: pressed ? 0.97 : 1 }],
+        ...(primary ? gradientSurface(GRADIENTS.scan, radius) : null),
       })}
     >
       {primary && <GradientFill colors={GRADIENTS.scan} radius={radius} />}
       <Ionicons name={icon} size={20} color={primary ? "#FFFFFF" : c.primaryText} />
-      <Text style={[ty.bodyStrong, { color: fg }]} numberOfLines={1}>
+      <Text style={[ty.bodyStrong, { color: fg, lineHeight: 20 }]} numberOfLines={2}>
         {title}
       </Text>
-      <Text style={[ty.caption, { color: primary ? "rgba(255,255,255,0.85)" : c.textMuted, ...fw("400"), letterSpacing: 0 }]} numberOfLines={1}>
+      <Text style={[ty.caption, { color: primary ? "rgba(255,255,255,0.88)" : c.textMuted, ...fw("500"), letterSpacing: 0, lineHeight: 15 }]} numberOfLines={2}>
         {subtitle}
       </Text>
     </Pressable>
@@ -246,28 +247,42 @@ function ToolCard({ icon, title, subtitle, onPress, disabled, testID, primary }:
 function HeroCard({ children, testID }: { children: React.ReactNode; testID?: string }) {
   const { c } = useTheme();
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const R = 28;
+  // Rendering is identical on Android, iOS and web:
+  // - the card has an opaque base colour (its own rounded background; no shadow shows through);
+  // - every SVG layer is clipped by a rounded ClipPath inside the SVG, not by the parent view
+  //   (Android does not reliably clip SVG children to a border radius);
+  // - the glow is a linear gradient fading from the top-right corner. An elliptical RadialGradient
+  //   is drawn as a circle by Android's shader, which ended abruptly and left a near-black band.
   return (
-    <View testID={testID} style={{ borderRadius: 28, borderWidth: 1, borderColor: c.heroLine, overflow: "hidden", padding: 18, gap: space.md, shadowColor: "#000", shadowOpacity: 0.35, shadowRadius: 24, shadowOffset: { width: 0, height: 14 }, elevation: 6 }}>
+    <View testID={testID} style={{ borderRadius: R, borderWidth: 1, borderColor: c.heroLine, backgroundColor: c.heroMid, overflow: "hidden", padding: 18, gap: space.md, ...lift(2, { opaque: true }) }}>
       <Svg width="100%" height="100%" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} pointerEvents="none">
         <Defs>
+          <ClipPath id={`heroClip${uid}`}>
+            <Rect width="100%" height="100%" rx={R - 1} ry={R - 1} />
+          </ClipPath>
           <LinearGradient id={`heroBg${uid}`} x1="0" y1="0" x2="1" y2="1">
             <SvgStop offset="0" stopColor={c.heroFrom} />
+            <SvgStop offset="0.5" stopColor={c.heroMid} />
             <SvgStop offset="1" stopColor={c.heroTo} />
           </LinearGradient>
-          <RadialGradient id={`heroGlow${uid}`} cx="100%" cy="0%" rx="85%" ry="95%">
+          <LinearGradient id={`heroGlow${uid}`} x1="1" y1="0" x2="0.15" y2="1">
             <SvgStop offset="0" stopColor={c.heroGlow} stopOpacity="1" />
+            <SvgStop offset="0.45" stopColor={c.heroGlow} stopOpacity="0.45" />
             <SvgStop offset="1" stopColor={c.heroGlow} stopOpacity="0" />
-          </RadialGradient>
+          </LinearGradient>
         </Defs>
-        <Rect width="100%" height="100%" fill={`url(#heroBg${uid})`} />
-        <Rect width="100%" height="100%" fill={`url(#heroGlow${uid})`} />
-        {/* Fine grid fading out from the top corner (prototype .hero-t::before). */}
-        {Array.from({ length: 6 }, (_, i) => (
-          <Line key={`v${i}`} x1={`${100 - i * 9}%`} y1="0" x2={`${100 - i * 9}%`} y2="40%" stroke={c.heroLine} strokeWidth={1} opacity={0.32 - i * 0.05} />
-        ))}
-        {Array.from({ length: 4 }, (_, i) => (
-          <Line key={`h${i}`} x1="52%" y1={`${4 + i * 10}%`} x2="100%" y2={`${4 + i * 10}%`} stroke={c.heroLine} strokeWidth={1} opacity={0.28 - i * 0.06} />
-        ))}
+        <G clipPath={`url(#heroClip${uid})`}>
+          <Rect width="100%" height="100%" fill={`url(#heroBg${uid})`} />
+          <Rect width="100%" height="100%" fill={`url(#heroGlow${uid})`} />
+          {/* Fine grid fading out from the top corner (prototype .hero-t::before). */}
+          {Array.from({ length: 6 }, (_, i) => (
+            <Line key={`v${i}`} x1={`${100 - i * 9}%`} y1="0" x2={`${100 - i * 9}%`} y2="40%" stroke={c.heroLine} strokeWidth={1} opacity={0.32 - i * 0.05} />
+          ))}
+          {Array.from({ length: 4 }, (_, i) => (
+            <Line key={`h${i}`} x1="52%" y1={`${4 + i * 10}%`} x2="100%" y2={`${4 + i * 10}%`} stroke={c.heroLine} strokeWidth={1} opacity={0.28 - i * 0.06} />
+          ))}
+        </G>
       </Svg>
       {children}
     </View>

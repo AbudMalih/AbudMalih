@@ -10,7 +10,7 @@ import { Banner, EmptyState, IconButton } from "../../components/ui";
 import { useT } from "../../lib/i18n";
 import { currentPosition, locationPermission } from "../../lib/location";
 import { useMyTour } from "../../store/useMyTour";
-import { radii, space, type as ty, useTheme } from "../../theme";
+import { lift, radii, space, type as ty, useTheme } from "../../theme";
 
 export default function MapScreen() {
   const t = useT();
@@ -47,7 +47,7 @@ export default function MapScreen() {
       <View style={{ position: "absolute", left: space.md, right: space.md, bottom: space.md, gap: space.sm }}>
         {notice && <Banner text={notice} tone="neutral" icon="location-outline" />}
         {focus && (
-          <View style={{ backgroundColor: c.card, borderRadius: radii.xl, padding: space.md, gap: space.sm, borderWidth: 1, borderColor: c.border, shadowColor: "#000", shadowOpacity: 0.12, shadowRadius: 12, elevation: 6 }}>
+          <View style={{ backgroundColor: c.card, borderRadius: radii.xl, padding: space.md, gap: space.sm, borderWidth: 1, borderColor: c.border, ...lift(2, { opaque: true }) }}>
             <Text style={[ty.caption, { color: c.textMuted }]}>{focus.id === next?.id ? t("map.next").toUpperCase() : `#${stops.indexOf(focus) + 1}`}</Text>
             <StopCard stop={focus} index={stops.indexOf(focus)} current={focus.id === next?.id} onPress={() => router.push(`/stop/${focus.id}`)} />
             <View style={{ flexDirection: "row", gap: space.sm }}>

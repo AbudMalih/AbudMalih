@@ -4,7 +4,7 @@ import { FlatList, PanResponder, Text, View } from "react-native";
 import { addressLine } from "../lib/format";
 import { feedback } from "../lib/haptics";
 import { useT } from "../lib/i18n";
-import { radii, space, type as ty, useTheme } from "../theme";
+import { lift, radii, space, type as ty, useTheme } from "../theme";
 import { IconButton, Ionicons } from "./ui";
 
 export const ROW = 68;
@@ -61,10 +61,7 @@ const Row = memo(function Row(props: {
         backgroundColor: c.card,
         transform: [{ translateY: props.offset }],
         zIndex: props.dragging ? 10 : 0,
-        elevation: props.dragging ? 8 : 0,
-        shadowColor: "#000",
-        shadowOpacity: props.dragging ? 0.18 : 0,
-        shadowRadius: 10,
+        ...(props.dragging ? lift(3, { opaque: true }) : null),
       }}
       testID={`reorder-row-${index}`}
     >

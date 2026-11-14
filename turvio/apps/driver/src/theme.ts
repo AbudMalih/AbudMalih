@@ -1,4 +1,4 @@
-import { useColorScheme } from "react-native";
+import { Platform, useColorScheme, type ViewStyle } from "react-native";
 import { useTourStore } from "./store/tourStore";
 
 /*
@@ -42,8 +42,9 @@ export type Palette = {
   cobalt: string;
   cyan: string;
   cyanSoft: string;
-  /** Hero card gradient (top-left → bottom-right) and its grid/outline line. */
+  /** Hero card gradient (top-left → middle → bottom-right), glow and grid/outline line. */
   heroFrom: string;
+  heroMid: string;
   heroTo: string;
   heroGlow: string;
   heroLine: string;
@@ -84,8 +85,9 @@ export const DARK: Palette = {
   cobalt: "#3478FF",
   cyan: "#18D9E8",
   cyanSoft: "rgba(24,217,232,0.13)",
-  heroFrom: "#1B1E3D",
-  heroTo: "#0F1320",
+  heroFrom: "#1E2148",
+  heroMid: "#171C38",
+  heroTo: "#121730",
   heroGlow: "rgba(117,91,255,0.45)",
   heroLine: "rgba(170,155,255,0.24)",
   tabBar: "rgba(20,24,33,0.94)",
@@ -125,6 +127,7 @@ export const LIGHT: Palette = {
   cyan: "#0A8B99",
   cyanSoft: "rgba(10,139,153,0.1)",
   heroFrom: "#FFFFFF",
+  heroMid: "#F5F3FF",
   heroTo: "#EEF0FF",
   heroGlow: "rgba(122,98,255,0.28)",
   heroLine: "rgba(91,68,232,0.16)",
@@ -184,4 +187,32 @@ export const type = {
 /** Family for an explicit weight (replaces inline fontWeight). */
 export function fw(weight: "400" | "500" | "600" | "700" | "800") {
   return { "400": font.regular, "500": font.medium, "600": font.semibold, "700": font.bold, "800": font.extrabold }[weight];
+}
+
+/*
+ * Depth effects – the only place shadows/elevation are defined (enforced by __tests__/depth.test.ts).
+ *
+ * Why: iOS (and the web build) draw a shadow from the layer's painted content and honour
+ * shadowOpacity/Radius/Offset. Android does not: `elevation` draws an outline-based shadow in
+ * `shadowColor` at full strength and ignores opacity/radius/offset, and it shows through any
+ * transparent or translucent background. On our gradient buttons (transparent view + SVG gradient)
+ * that produced the solid blue/purple block and the rectangular extensions around buttons.
+ */
+
+/** Coloured glow under a gradient action (violet/mint). iOS and web only – none on Android. */
+export function glow(color: string, size: "md" | "lg" = "md"): ViewStyle {
+  if (Platform.OS === "android") return {};
+  return size === "lg"
+    ? { shadowColor: color, shadowOpacity: 0.55, shadowRadius: 18, shadowOffset: { width: 0, height: 10 } }
+    : { shadowColor: color, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 6 } };
+}
+
+/**
+ * Neutral lift for cards, sheets and floating bars. On Android `elevation` is only used for
+ * surfaces with an opaque background (pass opaque: false for transparent/translucent ones).
+ */
+export function lift(level: 1 | 2 | 3, opts: { opaque: boolean }): ViewStyle {
+  if (Platform.OS === "android") return opts.opaque ? { elevation: level * 2 } : {};
+  const t = { 1: [0.18, 6, 2], 2: [0.25, 14, 6], 3: [0.32, 22, 10] }[level];
+  return { shadowColor: "#000", shadowOpacity: t[0], shadowRadius: t[1], shadowOffset: { width: 0, height: t[2] } };
 }

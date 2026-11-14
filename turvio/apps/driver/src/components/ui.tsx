@@ -4,7 +4,7 @@ import { useContext, useId, type ComponentProps, type ReactNode } from "react";
 import { ActivityIndicator, I18nManager, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps, type ViewStyle } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
-import { fw, radii, space, touch, type as ty, useTheme, type Palette } from "../theme";
+import { fw, glow, lift, radii, space, touch, type as ty, useTheme, type Palette } from "../theme";
 
 export type IconName = ComponentProps<typeof Ionicons>["name"];
 export { Ionicons };
@@ -18,7 +18,16 @@ export const GRADIENTS = {
   scan: ["#8C76FF", "#5F67FF", "#3478FF"],
 } as const;
 
-/** Diagonal (135°) gradient filling its parent; parent needs overflow "hidden" and a radius. */
+/**
+ * Base style for any view painted by a GradientFill: an opaque background (the gradient's middle
+ * colour) so the view's own rounded shape matches what is painted, no border (a border insets the
+ * fill and leaves a ring), and clipping to the radius. Use together with glow(), never elevation.
+ */
+export function gradientSurface(colors: readonly string[], radius: number): ViewStyle {
+  return { backgroundColor: colors[Math.floor(colors.length / 2)], borderRadius: radius, borderWidth: 0, overflow: "hidden" };
+}
+
+/** Diagonal (135°) gradient filling its parent (style the parent with gradientSurface()). */
 export function GradientFill({ colors, radius = 0 }: { colors: readonly string[]; radius?: number }) {
   // Unique per instance: on the web, ids are document-wide and hidden screens stay mounted.
   const id = `g${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -69,6 +78,7 @@ export function Button(props: {
   const { c } = useTheme();
   const v = variantColors(c, props.variant ?? "primary");
   const disabled = props.disabled || props.loading;
+  const radius = props.size === "sm" ? 14 : 18;
   return (
     <Pressable
       accessibilityRole="button"
@@ -82,18 +92,19 @@ export function Button(props: {
         s.button,
         {
           minHeight: height,
-          borderRadius: props.size === "sm" ? 14 : 18,
+          borderRadius: radius,
           paddingHorizontal: props.size === "sm" ? space.md : space.lg,
-          backgroundColor: v.gradient ? "transparent" : v.bg,
+          backgroundColor: v.bg,
           borderColor: v.border,
           opacity: disabled ? 0.45 : 1,
           transform: [{ scale: pressed ? 0.97 : 1 }],
         },
-        v.glow && !disabled ? { shadowColor: v.glow, shadowOpacity: 0.55, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 6 } : null,
+        v.gradient ? gradientSurface(v.gradient, radius) : null,
+        v.glow && !disabled ? glow(v.glow) : null,
         props.style,
       ]}
     >
-      {v.gradient && <GradientFill colors={v.gradient} radius={props.size === "sm" ? 14 : 18} />}
+      {v.gradient && <GradientFill colors={v.gradient} radius={radius} />}
       {props.loading ? (
         <ActivityIndicator color={v.fg} />
       ) : (
@@ -112,7 +123,7 @@ export function Button(props: {
 export function HeroAction(props: { title: string; subtitle?: string; icon: IconName; onPress: () => void; tone: "primary" | "dark"; testID?: string; disabled?: boolean; loading?: boolean }) {
   const { c } = useTheme();
   const primary = props.tone === "primary";
-  const bg = primary ? "transparent" : c.surface2;
+  const bg = c.surface2;
   return (
     <Pressable
       accessibilityRole="button"
@@ -123,8 +134,9 @@ export function HeroAction(props: { title: string; subtitle?: string; icon: Icon
       onPress={props.onPress}
       style={({ pressed }) => [
         s.hero,
-        { backgroundColor: bg, borderColor: primary ? "transparent" : c.borderStrong, opacity: props.disabled ? 0.5 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-        primary && !props.disabled ? { shadowColor: "#6F55FF", shadowOpacity: 0.6, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 8 } : null,
+        { backgroundColor: bg, borderColor: c.borderStrong, opacity: props.disabled ? 0.5 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
+        primary ? gradientSurface(GRADIENTS.violet, 20) : null,
+        primary && !props.disabled ? glow("#6F55FF", "lg") : null,
       ]}
     >
       {primary && <GradientFill colors={GRADIENTS.violet} radius={20} />}
@@ -261,7 +273,7 @@ export function Segmented<T extends string>({ value, options, onChange, testID }
             accessibilityRole="tab"
             accessibilityState={{ selected: on }}
             onPress={() => onChange(o.value)}
-            style={[s.segmentItem, on && { backgroundColor: c.raised, borderColor: c.borderStrong, borderWidth: 1, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 6, elevation: 2 }]}
+            style={[s.segmentItem, on && { backgroundColor: c.raised, borderColor: c.borderStrong, borderWidth: 1, ...lift(1, { opaque: true }) }]}
           >
             <Text style={[ty.small, { ...fw("700"), color: on ? c.text : c.textMuted, textAlign: "center" }]} numberOfLines={2}>
               {o.label}
