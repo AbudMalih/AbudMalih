@@ -22,7 +22,7 @@ export const PILOT_MAX = 20;
 
 const OrgDefaults = z.object({
   defaultDepotId: Uuid.nullable().optional(),
-  toursView: z.enum(["list", "board", "map"]).optional(),
+  toursView: z.enum(["day", "all", "archived"]).optional(),
 });
 
 const Preferences = z.object({

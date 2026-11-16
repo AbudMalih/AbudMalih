@@ -14,10 +14,11 @@ import {
   type Command,
   type NavGroup,
 } from "@turvio/web-ui/ds";
-import { Archive, CalendarDays, Check, ChevronDown, ClipboardCheck, LayoutGrid, MapPinned, PackageCheck, Route, ShieldCheck, Truck, Warehouse } from "lucide-react";
+import { Archive, BarChart3, CalendarDays, Check, Settings, ChevronDown, ClipboardCheck, LayoutGrid, MapPinned, PackageCheck, Route, ShieldCheck, Truck, Warehouse } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, type ReactNode } from "react";
+import { can } from "@turvio/shared";
 import { useDispatch } from "../lib/store";
 import { Steering } from "./icons";
 import { signOut } from "./SignOutButton";
@@ -119,6 +120,7 @@ function ShellInner({ children }: { children: ReactNode }) {
   }, [pathname, router]);
 
   const isAdmin = session.role === "owner" || session.role === "admin";
+  const canReports = can(session.role, "reports.view");
   const drafts = scoped.tours.filter((t) => t.status === "planned").length;
   const groups: NavGroup[] = [
     {
@@ -128,6 +130,7 @@ function ShellInner({ children }: { children: ReactNode }) {
         { href: "/planning", label: "Planning", icon: ClipboardCheck, shortcut: "2", badge: drafts ? String(drafts) : undefined },
         { href: "/list", label: "Tours", icon: Route, shortcut: "3" },
         { href: "/list?view=archived", label: "Archive", icon: Archive },
+        ...(canReports ? [{ href: "/analytics", label: "Analytics", icon: BarChart3 }] : []),
         { href: "/pickups", label: "Pickups", icon: PackageCheck, shortcut: "4", badge: kpis.pickupConflicts ? String(kpis.pickupConflicts) : undefined, badgeAlert: true },
       ],
     },
@@ -139,6 +142,10 @@ function ShellInner({ children }: { children: ReactNode }) {
         { href: "/fleet?tab=depots", label: "Locations", icon: MapPinned },
         ...(isAdmin ? [{ href: "/fleet?tab=team", label: "Team", icon: ShieldCheck }] : []),
       ],
+    },
+    {
+      label: "Workspace",
+      items: [{ href: "/settings", label: "Settings", icon: Settings }],
     },
   ];
 

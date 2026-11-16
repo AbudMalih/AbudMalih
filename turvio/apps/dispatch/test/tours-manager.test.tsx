@@ -164,6 +164,22 @@ describe("Tours manager", () => {
     expect(pv.body.selection.filter).toMatchObject({ status: ["planned"], empty: true, published: false, archived: "exclude" });
   });
 
+  it("export downloads the filtered list (CSV and Excel)", async () => {
+    const user = userEvent.setup();
+    const clicked: string[] = [];
+    const spy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      clicked.push(this.getAttribute("href")!);
+    });
+    wrap(<ToursManager archived="only" />);
+    await screen.findAllByText("HAN-01");
+    await user.click(screen.getByRole("button", { name: /Export/ }));
+    await user.click(await screen.findByRole("menuitem", { name: "CSV (Excel, semicolon)" }));
+    spy.mockRestore();
+    const p = new URL(clicked[0]!, "http://x");
+    expect(p.pathname).toBe("/api/turvio/v1/orgs/org_jarbou/tours/export");
+    expect([p.searchParams.get("archived"), p.searchParams.get("format")]).toEqual(["only", "csv"]);
+  });
+
   it("the calendar shows per-day counts and jumps to the picked day", async () => {
     const user = userEvent.setup();
     wrap(<ToursManager archived="exclude" />);

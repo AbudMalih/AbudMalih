@@ -2,6 +2,7 @@
 
 import { cn } from "@turvio/web-ui/ds";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDispatch } from "../lib/store";
 import { ListView } from "./ListView";
 import { ToursManager } from "./ToursManager";
 
@@ -17,12 +18,12 @@ export function ToursPage() {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const raw = params?.get("view");
+  const { orgDefaults } = useDispatch();
+  const raw = params?.get("view") ?? orgDefaults?.toursView ?? null;
   const view: View = raw === "all" || raw === "archived" ? raw : "day";
   const setView = (v: View) => {
     const p = new URLSearchParams(params?.toString() ?? "");
-    if (v === "day") p.delete("view");
-    else p.set("view", v);
+    p.set("view", v);
     router.replace(`${pathname ?? "/list"}${p.size ? `?${p}` : ""}`);
   };
   const current = VIEWS.find((v) => v.key === view)!;

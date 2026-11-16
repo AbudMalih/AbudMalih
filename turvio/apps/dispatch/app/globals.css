@@ -23,3 +23,8 @@
    porcelain in light mode – same tile source, styled client-side. */
 .turvio-tiles { filter: saturate(0.55) sepia(0.08) brightness(1.02) contrast(0.92); }
 [data-theme="dark"] .turvio-tiles { filter: invert(1) hue-rotate(195deg) brightness(0.78) contrast(0.92) saturate(0.45); }
+
+/* Analytics chart series (validated: lightness band, chroma, CVD and contrast on the card surface,
+   light #ffffff and dark #141821). Text never uses these colours. */
+:root { --viz-1: #2a78d6; --viz-2: #eb6834; --viz-grid: rgba(44, 40, 66, 0.1); }
+[data-theme="dark"] { --viz-1: #3987e5; --viz-2: #d95926; --viz-grid: rgba(166, 180, 224, 0.12); }

@@ -13,6 +13,7 @@ import { useLiveFleet, type LiveVehicle } from "../lib/live";
 import { routeKey, useRoadRoute } from "../lib/road";
 import { useDispatch } from "../lib/store";
 import { LiveFleetList, LiveVehiclePanel } from "./LiveFleet";
+import { TrackingStatusPanel } from "./TrackingStatusPanel";
 import { OpsSummary } from "./OpsSummary";
 import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
 import { TourDetail } from "./TourDetail";
@@ -46,6 +47,7 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
         Select a tour in the list or on the map to see its driver, vehicle, schedule and stops.
       </div>
       {live.allowed && <LiveFleetList vehicles={live.vehicles} serverNow={live.serverNow} onSelect={onSelectVehicle} />}
+      <TrackingStatusPanel />
       {delayed.length > 0 && (
         <section>
           <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">

@@ -19,7 +19,7 @@ const FRIENDLY: Record<string, string> = {
   active_tour_confirmation_required: "This tour is being driven. Review the new order and confirm it first.",
 };
 
-export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, body?: unknown): Promise<T> {
+export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`/api/turvio${path}`, {

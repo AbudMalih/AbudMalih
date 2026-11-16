@@ -119,6 +119,8 @@ interface DispatchState {
   /** New order of a tour's open stops. */
   reorderStops: (tourId: string, openStopIds: string[]) => Promise<void>;
   switchWorkspace: (orgId: string) => void;
+  /** This user's saved defaults for this company (null until loaded / unavailable). */
+  orgDefaults: { defaultDepotId?: string | null; toursView?: "day" | "all" | "archived" } | null;
   /** Switch the day view to a tour's date and select it (Tours manager → day view). */
   openTour: (date: string, tourId: string) => Promise<void>;
 }
@@ -138,6 +140,24 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
   // Live GPS: bumps on every "position" event; the fleet layer refetches positions only.
   const [positionTick, setPositionTick] = useState(0);
   const [lastLoadedAt, setLastLoadedAt] = useState(() => Date.now());
+  const [orgDefaults, setOrgDefaults] = useState<DispatchState["orgDefaults"]>(null);
+  // Personal defaults (Settings → My preferences): the default location applies once, at start.
+  useEffect(() => {
+    let alive = true;
+    api<{ orgDefaults: Record<string, NonNullable<DispatchState["orgDefaults"]>> }>("GET", "/v1/me/preferences").then(
+      (p) => {
+        if (!alive) return;
+        const d = p.orgDefaults?.[org] ?? {};
+        setOrgDefaults(d);
+        if (d.defaultDepotId && initial.depots.some((x) => x.id === d.defaultDepotId)) setDepotIdState((cur) => cur ?? d.defaultDepotId!);
+      },
+      () => alive && setOrgDefaults({}),
+    );
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [org]);
   const dateRef = useRef(date);
   dateRef.current = date;
 
@@ -345,6 +365,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     stopLocation: (stopId) => api<StopLocationDetail>("GET", `/v1/orgs/${org}/stops/${stopId}/location`),
     stopLocationHistory: async (stopId) => (await api<{ events: LocationEvent[] }>("GET", `/v1/orgs/${org}/stops/${stopId}/location/history`)).events,
     reorderStops: (tourId, ids) => run(() => api<void>("POST", `/v1/me/tours/${tourId}/sequence`, { stopIds: ids })),
+    orgDefaults,
     openTour: async (d, tourId) => {
       dateRef.current = d;
       setDateState(d);

@@ -42,9 +42,9 @@ describe.runIf(available)("settings API", () => {
   describe("personal preferences", () => {
     it("default, update, per-user isolation", async () => {
       expect((await env.as(U.dispatcherHannover, "GET", `/v1/me/preferences`)).json()).toMatchObject({ language: null, theme: "system", dateFormat: "dmy", orgDefaults: {} });
-      const put = await env.as(U.dispatcherHannover, "PUT", `/v1/me/preferences`, { language: "ar", theme: "dark", orgDefaults: { [org()]: { defaultDepotId: env.data.depots.hannover, toursView: "list" } } });
+      const put = await env.as(U.dispatcherHannover, "PUT", `/v1/me/preferences`, { language: "ar", theme: "dark", orgDefaults: { [org()]: { defaultDepotId: env.data.depots.hannover, toursView: "all" } } });
       expect(put.statusCode).toBe(200);
-      expect(put.json()).toMatchObject({ language: "ar", theme: "dark", orgDefaults: { [org()]: { defaultDepotId: env.data.depots.hannover, toursView: "list" } } });
+      expect(put.json()).toMatchObject({ language: "ar", theme: "dark", orgDefaults: { [org()]: { defaultDepotId: env.data.depots.hannover, toursView: "all" } } });
       // Partial update keeps the rest.
       expect((await env.as(U.dispatcherHannover, "PUT", `/v1/me/preferences`, { theme: "light" })).json()).toMatchObject({ language: "ar", theme: "light" });
       expect((await env.as(U.dispatcherBremen, "GET", `/v1/me/preferences`)).json()).toMatchObject({ language: null, theme: "system" });
@@ -56,7 +56,7 @@ describe.runIf(available)("settings API", () => {
     it("defaults only for own companies and accessible locations", async () => {
       const bremen = await env.as(U.dispatcherHannover, "PUT", `/v1/me/preferences`, { orgDefaults: { [org()]: { defaultDepotId: env.data.depots.bremen } } });
       expect(bremen.statusCode).toBe(422);
-      const foreign = await env.as(U.dispatcherHannover, "PUT", `/v1/me/preferences`, { orgDefaults: { [env.data.orgs.muster]: { toursView: "map" } } });
+      const foreign = await env.as(U.dispatcherHannover, "PUT", `/v1/me/preferences`, { orgDefaults: { [env.data.orgs.muster]: { toursView: "archived" } } });
       expect(foreign.statusCode).toBe(422);
       expect((await env.as(U.dispatcherHannover, "PUT", `/v1/me/preferences`, { language: "xx" })).statusCode).toBe(400);
     });

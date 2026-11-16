@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { errorMessage } from "../lib/api";
+import { download } from "../lib/download";
 import { fieldCls } from "../lib/helpers";
 import { STATUS_LABEL, bulkFilter, lifecycleApi, type ArchivedFilter, type BulkAction, type BulkSelection, type CalendarDay, type LifecycleStatus, type ListedTour, type TourListFilter } from "../lib/lifecycle";
 import { useDispatch } from "../lib/store";
@@ -210,16 +211,8 @@ export function ToursManager({ archived }: { archived: ArchivedFilter }) {
                 </MenuTrigger>
                 <MenuContent align="end">
                   <MenuLabel>{total} tour(s) · {periodLabel}</MenuLabel>
-                  <MenuItem asChild>
-                    <a href={api.exportUrl(filter, "csv")} download>
-                      CSV (Excel, semicolon)
-                    </a>
-                  </MenuItem>
-                  <MenuItem asChild>
-                    <a href={api.exportUrl(filter, "xlsx")} download>
-                      Excel (.xlsx)
-                    </a>
-                  </MenuItem>
+                  <MenuItem onSelect={() => download(api.exportUrl(filter, "csv"))}>CSV (Excel, semicolon)</MenuItem>
+                  <MenuItem onSelect={() => download(api.exportUrl(filter, "xlsx"))}>Excel (.xlsx)</MenuItem>
                 </MenuContent>
               </Menu>
             )}
