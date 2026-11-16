@@ -119,6 +119,8 @@ interface DispatchState {
   /** New order of a tour's open stops. */
   reorderStops: (tourId: string, openStopIds: string[]) => Promise<void>;
   switchWorkspace: (orgId: string) => void;
+  /** Switch the day view to a tour's date and select it (Tours manager → day view). */
+  openTour: (date: string, tourId: string) => Promise<void>;
 }
 
 const Ctx = createContext<DispatchState | null>(null);
@@ -343,6 +345,13 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     stopLocation: (stopId) => api<StopLocationDetail>("GET", `/v1/orgs/${org}/stops/${stopId}/location`),
     stopLocationHistory: async (stopId) => (await api<{ events: LocationEvent[] }>("GET", `/v1/orgs/${org}/stops/${stopId}/location/history`)).events,
     reorderStops: (tourId, ids) => run(() => api<void>("POST", `/v1/me/tours/${tourId}/sequence`, { stopIds: ids })),
+    openTour: async (d, tourId) => {
+      dateRef.current = d;
+      setDateState(d);
+      await reload().catch(() => undefined);
+      setSelectedTourId(tourId);
+      setSelectedStopId(null);
+    },
     switchWorkspace: (orgId) => {
       document.cookie = `tv_org=${encodeURIComponent(orgId)}; path=/; samesite=lax; max-age=31536000`;
       window.location.assign("/map");

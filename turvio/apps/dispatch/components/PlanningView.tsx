@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { can, formatClock, parseMinuteOfDay, type Driver, type TourSummary, type Vehicle } from "@turvio/shared";
 import { Avatar, Badge, Button, Card, CardHeader, Checkbox, Dialog, EmptyState, Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger, Tooltip, cn, toast } from "@turvio/web-ui/ds";
 import { ArrowUpFromLine, CalendarX2, ChevronDown, Loader2, MapPinned, PackagePlus, Plus, Send, Sparkles, Star, Truck, UserRound, Wand2 } from "lucide-react";
@@ -11,6 +12,8 @@ import { optimizeNotes, optimizeProblems } from "../lib/optimize";
 import { useDispatch } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { TourActionsMenu } from "./TourActions";
+import { UnassignedStopActions } from "./UnassignedStopActions";
 import { TourStatusBadge } from "./StatusBadge";
 import { TourEndsDialog, tourEndsSummary } from "./TourEndsDialog";
 import { TourDetailSheet } from "./TourDetail";
@@ -125,7 +128,10 @@ function TourCard({ s }: { s: TourSummary }) {
           {endsOpen && <TourEndsDialog tour={s.tour} depot={s.depot} open={endsOpen} onOpenChange={setEndsOpen} />}
         </div>
         <div className="flex flex-col items-end gap-1">
-          <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
+          <div className="flex items-center gap-1">
+            <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
+            <TourActionsMenu item={{ tour: s.tour, depotName: s.depot.name, driverName: s.driver?.displayName ?? null, stopCount: s.total, openStops: s.remaining }} onOpen={() => selectTour(s.tour.id)} />
+          </div>
           {s.tour.publishedAt ? <Badge tone="success">Published</Badge> : <Badge tone="outline">Not published</Badge>}
         </div>
       </div>
@@ -387,7 +393,10 @@ export function PlanningView() {
               )}
               {doneTours.length > 0 && (
                 <p className="text-xs text-muted">
-                  {doneTours.length} completed tour{doneTours.length > 1 ? "s" : ""} hidden ({doneTours.map((s) => s.tour.name).join(", ")}).
+                  {doneTours.length} completed tour{doneTours.length > 1 ? "s" : ""} hidden ({doneTours.map((s) => s.tour.name).join(", ")}).{" "}
+                  <Link href="/list?view=all" className="font-semibold text-brand-700 hover:underline">
+                    Manage, archive or clean up in Tours
+                  </Link>
                 </p>
               )}
             </section>
@@ -398,6 +407,8 @@ export function PlanningView() {
                   title={`Unassigned stops · ${data.unassigned.length}`}
                   description="Select stops of one depot, then assign them to a tour."
                   actions={
+                    <div className="flex items-center gap-1.5">
+                    <UnassignedStopActions ids={[...selected]} onDone={() => setSelected(new Set())} />
                     <Menu>
                       <MenuTrigger asChild disabled={selected.size === 0 || targetTours.length === 0 || assignBusy}>
                         <Button size="sm" variant="primary">
@@ -428,6 +439,7 @@ export function PlanningView() {
                         ))}
                       </MenuContent>
                     </Menu>
+                    </div>
                   }
                 />
                 {selected.size > 0 && selectedDepots.size > 1 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">Selected stops belong to different depots – assign them separately.</p>}

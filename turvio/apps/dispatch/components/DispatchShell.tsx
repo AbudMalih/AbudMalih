@@ -14,7 +14,7 @@ import {
   type Command,
   type NavGroup,
 } from "@turvio/web-ui/ds";
-import { CalendarDays, Check, ChevronDown, ClipboardCheck, LayoutGrid, MapPinned, PackageCheck, Route, ShieldCheck, Truck, Warehouse } from "lucide-react";
+import { Archive, CalendarDays, Check, ChevronDown, ClipboardCheck, LayoutGrid, MapPinned, PackageCheck, Route, ShieldCheck, Truck, Warehouse } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, type ReactNode } from "react";
@@ -103,7 +103,8 @@ function ShellInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { session, switchWorkspace, kpis, summaries, selectTour, scoped } = useDispatch();
   const tab = params?.get("tab");
-  const current = pathname === "/fleet" ? `/fleet?tab=${tab ?? "drivers"}` : pathname;
+  const view = params?.get("view");
+  const current = pathname === "/fleet" ? `/fleet?tab=${tab ?? "drivers"}` : pathname === "/list" && view === "archived" ? "/list?view=archived" : pathname;
 
   // Keyboard: 1–5 switch workspaces (ignored while typing or with modifiers).
   useEffect(() => {
@@ -126,6 +127,7 @@ function ShellInner({ children }: { children: ReactNode }) {
         { href: "/map", label: "Overview", icon: LayoutGrid, shortcut: "1" },
         { href: "/planning", label: "Planning", icon: ClipboardCheck, shortcut: "2", badge: drafts ? String(drafts) : undefined },
         { href: "/list", label: "Tours", icon: Route, shortcut: "3" },
+        { href: "/list?view=archived", label: "Archive", icon: Archive },
         { href: "/pickups", label: "Pickups", icon: PackageCheck, shortcut: "4", badge: kpis.pickupConflicts ? String(kpis.pickupConflicts) : undefined, badgeAlert: true },
       ],
     },

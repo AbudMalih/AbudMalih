@@ -353,6 +353,24 @@ describe.runIf(available)("tour lifecycle", () => {
     });
   });
 
+  describe("remove a stop from its tour", () => {
+    it("an arrived stop goes back to the unassigned list as open; stops of an archived tour stay", async () => {
+      const t = await makeTour({ driverId: mihai(), stops: 2, publish: true, date: plusDays(today(), 25) });
+      await env.as(U.driverHannover2, "POST", `/v1/orgs/${org()}/tours/${t.tour.id}/status`, { status: "in_progress" });
+      await env.as(U.driverHannover2, "POST", `/v1/orgs/${org()}/stops/${t.stops[0]!.id}/status`, { status: "in_progress", occurredAt: new Date().toISOString() });
+      const r = await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/stops/assign`, { stopIds: [t.stops[0]!.id], tourId: null });
+      expect(r.statusCode).toBe(204);
+      const row = (await env.superuser.query(`select tour_id, status, arrived_at, depot_id from stops where id = $1`, [t.stops[0]!.id])).rows[0];
+      expect(row).toMatchObject({ tour_id: null, status: "pending", arrived_at: null, depot_id: env.data.depots.hannover });
+
+      const d = await makeTour({ stops: 1, date: plusDays(today(), 26) });
+      await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/tours/${d.tour.id}/archive`, { expectedVersion: d.tour.version });
+      const blocked = await env.as(U.dispatcherHannover, "POST", `/v1/orgs/${org()}/stops/assign`, { stopIds: [d.stops[0]!.id], tourId: null });
+      expect(blocked.statusCode).toBe(409);
+      expect(blocked.json().error.code).toBe("tour_archived");
+    });
+  });
+
   // ------------------------------------------------------------ bulk
   describe("bulk actions", () => {
     it("delete preview counts selected / eligible / protected / affected stops / unchanged exactly; execution matches", async () => {

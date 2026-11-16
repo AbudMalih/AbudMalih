@@ -602,15 +602,24 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
         next = (await tx.query<{ n: number }>(`select coalesce(max(sequence) + 1, 0)::int as n from stops where tour_id = $1`, [b.tourId])).rows[0]!.n;
       }
       for (const sid of b.stopIds) {
-        const cur = (await tx.query<{ tour_id: string | null; depot_id: string | null; status: string; tour_depot: string | null }>(
-          `select s.tour_id, s.depot_id, s.status, t.depot_id as tour_depot from stops s left join tours t on t.id = s.tour_id where s.id = $1 and s.organization_id = $2`,
+        const cur = (await tx.query<{ tour_id: string | null; depot_id: string | null; status: string; tour_depot: string | null; tour_archived: boolean | null }>(
+          `select s.tour_id, s.depot_id, s.status, t.depot_id as tour_depot, t.archived_at is not null as tour_archived
+             from stops s left join tours t on t.id = s.tour_id where s.id = $1 and s.organization_id = $2`,
           [sid, orgId],
         )).rows[0];
         if (!cur) throw new ApiError(404, "not_found", "Stop not found");
         if (cur.status !== "pending" && cur.status !== "in_progress") throw new ApiError(422, "invalid_operation", "Only open stops can be moved");
         const fromDepot = cur.tour_depot ?? cur.depot_id;
         if (b.tourId && fromDepot && fromDepot !== depotId) throw new ApiError(422, "invalid_operation", "Stops can only be assigned to tours of the same depot");
-        const upd = await tx.query(`update stops set tour_id = $2, depot_id = $3, sequence = $4 where id = $1`, [sid, b.tourId, b.tourId ? null : fromDepot, b.tourId ? next++ : 0]);
+        if (cur.tour_archived) throw new ApiError(409, "tour_archived", "The stop's tour is archived – restore it first");
+        // Back to the unassigned list: an arrived stop becomes open again (unassigned stops are pending).
+        const upd = await tx.query(
+          `update stops set tour_id = $2, depot_id = $3, sequence = $4,
+                  status = case when $2::uuid is null then 'pending'::stop_status else status end,
+                  arrived_at = case when $2::uuid is null then null else arrived_at end
+            where id = $1`,
+          [sid, b.tourId, b.tourId ? null : fromDepot, b.tourId ? next++ : 0],
+        );
         if (!upd.rowCount) throw new ApiError(403, "forbidden", "You are not allowed to change this stop");
       }
     });

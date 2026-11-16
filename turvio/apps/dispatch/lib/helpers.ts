@@ -91,3 +91,7 @@ export function memberScopeLabel(m: { role: string; depotIds: string[] | null; a
   if (m.role === "owner" || m.role === "admin" || m.allLocations) return "All locations";
   return m.depotIds?.length ? m.depotIds.map(depotName).join(", ") : "No locations – no access";
 }
+
+/** Native select / input styling used in Dispatch dialogs (no Select primitive in the design system). */
+export const fieldCls =
+  "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none disabled:opacity-60";

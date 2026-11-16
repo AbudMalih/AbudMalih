@@ -21,7 +21,7 @@ import {
   Send,
   Sparkles,
   Star,
-  Trash2,
+  MoreHorizontal,
   Truck,
   Warehouse,
   X,
@@ -36,6 +36,7 @@ import { optimizeNotes, optimizeProblems } from "../lib/optimize";
 import { useDispatch, type OptimizeMeta } from "../lib/store";
 import { AddStopsDialog } from "./AddStopsDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { TourActionsMenu } from "./TourActions";
 import { ProofList } from "./ProofViewer";
 import { StopEditActions } from "./StopEditActions";
 import { LocationReview } from "./LocationReview";
@@ -273,9 +274,9 @@ function Activity({ tourId, version, stopsDone }: { tourId: string; version?: nu
 }
 
 export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: () => void }) {
-  const { selectedStopId, selectStop, scoped, optimizeTour, publishTour, unpublishTour, deleteTour, selectTour, session, locationChecks } = useDispatch();
+  const { selectedStopId, selectStop, scoped, optimizeTour, publishTour, unpublishTour, selectTour, session, locationChecks } = useDispatch();
   const [busy, setBusy] = useState<null | "optimize">(null);
-  const [confirm, setConfirm] = useState<null | "publish" | "withdraw" | "delete">(null);
+  const [confirm, setConfirm] = useState<null | "publish" | "withdraw">(null);
   const [adding, setAdding] = useState(false);
   const s = summary;
   const t = s.timeline;
@@ -536,11 +537,21 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
               <Crosshair /> Fit on map
             </Button>
           )}
-          {s.tour.status === "planned" && !s.tour.publishedAt && (
-            <Button variant="ghost" className="text-danger-ink" onClick={() => setConfirm("delete")}>
-              <Trash2 /> Delete
-            </Button>
-          )}
+        </div>
+      )}
+
+      {canManage && (
+        <div className="flex items-center justify-between rounded-xl border border-line bg-surface-2 px-3 py-2 text-[13px]">
+          <span className="text-ink-2">Edit, move, duplicate, finish, cancel, archive or delete</span>
+          <TourActionsMenu
+            item={{ tour: s.tour, depotName: s.depot.name, driverName: s.driver?.displayName ?? null, stopCount: s.total, openStops: s.remaining }}
+            onDeleted={() => selectTour(null)}
+            trigger={
+              <Button variant="secondary" size="sm">
+                <MoreHorizontal /> More actions
+              </Button>
+            }
+          />
         </div>
       )}
 
@@ -594,26 +605,6 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
             () => toast.success(`${s.tour.name} withdrawn`),
             (e) => {
               toast.error("Could not withdraw", { description: errorMessage(e) });
-              throw e;
-            },
-          )
-        }
-      />
-      <ConfirmDialog
-        open={confirm === "delete"}
-        onOpenChange={(o) => !o && setConfirm(null)}
-        title={`Delete ${s.tour.name}?`}
-        description={`The tour is deleted. Its ${s.total} stop(s) go back to the unassigned list of ${s.depot.name}.`}
-        confirmLabel="Delete tour"
-        tone="danger"
-        onConfirm={() =>
-          deleteTour(s.tour).then(
-            () => {
-              selectTour(null);
-              toast.success(`${s.tour.name} deleted`);
-            },
-            (e) => {
-              toast.error("Could not delete", { description: errorMessage(e) });
               throw e;
             },
           )
