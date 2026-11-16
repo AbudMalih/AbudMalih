@@ -1,6 +1,6 @@
 "use client";
 
-import { formatClock, type TourSummary } from "@turvio/shared";
+import { formatClock, type DispatchTourStatus, type TourSummary } from "@turvio/shared";
 import { Avatar, Button, Card, EmptyState, Menu, MenuCheckboxItem, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, SearchInput, cn } from "@turvio/web-ui/ds";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, ListFilter, SearchX } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -8,7 +8,8 @@ import { useMemo, useState } from "react";
 import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
 import { finishShort, finishValue, projectionNote, scheduledFinishLabel } from "../lib/eta";
-import { TOUR_STATUS, TourStatusBadge } from "./StatusBadge";
+import { TOUR_STATUS, TourStatusBadge, tourStatusLabel } from "./StatusBadge";
+import { useI18n } from "../lib/i18n/client";
 import { TourDetailSheet } from "./TourDetail";
 
 export type ListSort = "name" | "driver" | "depot" | "total" | "completed" | "remaining" | "pickups" | "eta" | "status";
@@ -63,6 +64,9 @@ const PAGE = 8;
 
 export function ListView() {
   const { summaries, scoped, selectTour, data } = useDispatch();
+  const { t, locale } = useI18n();
+  // English shows the finish wording in lower case mid-sentence; German nouns keep their capital, Arabic has no case.
+  const lower = (x: string) => (locale === "en" ? x.toLowerCase() : x);
   const params = useSearchParams();
   const initialStatus = params?.get("status");
   const [query, setQuery] = useState("");
@@ -92,12 +96,12 @@ export function ListView() {
     <div className="flex flex-col">
       <div className="flex flex-col gap-5">
         <div className="mb-4 flex flex-col gap-1">
-          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Tours</h1>
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("map.list.title")}</h1>
           <p className="mt-1 text-sm text-ink-2">
-            {data.tours.length} tours on {data.date} · completion from road times
+            {t("map.list.subtitle", { count: data.tours.length, date: data.date })}
             {(() => {
               const est = summaries.filter((s) => s.tour.status !== "completed" && s.timeline.projection.source === "estimate").length;
-              return est ? ` · ${est} marked “est.” use straight-line estimates (no road times)` : "";
+              return est ? t("map.list.estNote", { count: est }) : "";
             })()}
           </p>
         </div>
@@ -109,20 +113,20 @@ export function ListView() {
                 setQuery(v);
                 setPage(0);
               }}
-              placeholder="Search tour, driver, depot, vehicle…"
-              label="Search tours"
+              placeholder={t("map.list.searchPlaceholder")}
+              label={t("map.list.searchLabel")}
               className="sm:w-80"
             />
             <Menu>
               <MenuTrigger asChild>
                 <Button variant="secondary" className={cn(statuses.length > 0 && "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-50")}>
-                  <ListFilter /> Status
+                  <ListFilter /> {t("map.list.status")}
                   {statuses.length > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-2xs font-semibold leading-4 text-white">{statuses.length}</span>}
                 </Button>
               </MenuTrigger>
               <MenuContent className="w-52">
-                <MenuLabel>Status</MenuLabel>
-                {Object.entries(TOUR_STATUS).map(([k, v]) => (
+                <MenuLabel>{t("map.list.status")}</MenuLabel>
+                {(Object.keys(TOUR_STATUS) as DispatchTourStatus[]).map((k) => (
                   <MenuCheckboxItem
                     key={k}
                     checked={statuses.includes(k)}
@@ -131,35 +135,35 @@ export function ListView() {
                       setPage(0);
                     }}
                   >
-                    {v.label}
+                    {tourStatusLabel(k, t)}
                   </MenuCheckboxItem>
                 ))}
                 {statuses.length > 0 && (
                   <>
                     <MenuSeparator />
-                    <MenuItem onSelect={() => setStatuses([])}>Clear filter</MenuItem>
+                    <MenuItem onSelect={() => setStatuses([])}>{t("map.list.clearFilter")}</MenuItem>
                   </>
                 )}
               </MenuContent>
             </Menu>
           </div>
           {filtered.length === 0 ? (
-            <EmptyState icon={<SearchX />} title="No tours match" description={data.tours.length ? "Adjust the search or status filter." : "No tours are planned for this date."} />
+            <EmptyState icon={<SearchX />} title={t("map.list.noMatch")} description={data.tours.length ? t("map.list.adjust") : t("map.list.noneForDate")} />
           ) : (
             <div className="relative overflow-x-auto">
               <table className="w-full min-w-[980px] text-[13px]">
                 <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                   <tr className="border-b border-line">
-                    <Th label="Tour" k="name" sort={sort} dir={dir} onSort={onSort} className="ps-4" />
-                    <Th label="Driver" k="driver" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label="Depot" k="depot" sort={sort} dir={dir} onSort={onSort} />
-                    <th scope="col" className="h-10 px-3 text-start font-medium">Vehicle</th>
-                    <Th label="Stops" k="total" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label="Done" k="completed" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label="Left" k="remaining" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label="Pickups" k="pickups" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label="Status" k="status" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label="Finish" k="eta" sort={sort} dir={dir} onSort={onSort} className="pe-4" />
+                    <Th label={t("map.list.col.tour")} k="name" sort={sort} dir={dir} onSort={onSort} className="ps-4" />
+                    <Th label={t("map.list.col.driver")} k="driver" sort={sort} dir={dir} onSort={onSort} />
+                    <Th label={t("map.list.col.depot")} k="depot" sort={sort} dir={dir} onSort={onSort} />
+                    <th scope="col" className="h-10 px-3 text-start font-medium">{t("map.list.col.vehicle")}</th>
+                    <Th label={t("map.list.col.stops")} k="total" sort={sort} dir={dir} onSort={onSort} />
+                    <Th label={t("map.list.col.done")} k="completed" sort={sort} dir={dir} onSort={onSort} />
+                    <Th label={t("map.list.col.left")} k="remaining" sort={sort} dir={dir} onSort={onSort} />
+                    <Th label={t("map.list.col.pickups")} k="pickups" sort={sort} dir={dir} onSort={onSort} />
+                    <Th label={t("map.list.col.status")} k="status" sort={sort} dir={dir} onSort={onSort} />
+                    <Th label={t("map.list.col.finish")} k="eta" sort={sort} dir={dir} onSort={onSort} className="pe-4" />
                   </tr>
                 </thead>
                 <tbody>
@@ -186,7 +190,7 @@ export function ListView() {
                             {s.driver.displayName}
                           </span>
                         ) : (
-                          <span className="text-warning-ink">Unassigned</span>
+                          <span className="text-warning-ink">{t("map.list.unassigned")}</span>
                         )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-3 text-ink-2">{s.depot.name}</td>
@@ -197,27 +201,27 @@ export function ListView() {
                       <td className="px-3 py-3 tabular">{s.total}</td>
                       <td className="px-3 py-3 tabular">
                         {s.completed}
-                        {s.failed > 0 && <span className="block text-2xs text-danger-ink">{s.failed} failed</span>}
+                        {s.failed > 0 && <span className="block text-2xs text-danger-ink">{t("map.list.failed", { n: s.failed })}</span>}
                       </td>
                       <td className="px-3 py-3 tabular">{s.remaining}</td>
                       <td className="px-3 py-3 tabular">
                         {s.pickups}
-                        {s.pickupsRemaining > 0 && <span className="block text-2xs text-muted">{s.pickupsRemaining} open</span>}
+                        {s.pickupsRemaining > 0 && <span className="block text-2xs text-muted">{t("map.list.open", { n: s.pickupsRemaining })}</span>}
                       </td>
                       <td className="whitespace-nowrap px-3 py-3">
                         <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
                       </td>
                       <td className="whitespace-nowrap py-3 pe-4 ps-3 tabular">
-                        <span className={cn(s.status === "delayed" ? (s.delayCertainty === "estimated" ? "font-medium text-warning-ink" : "font-medium text-danger-ink") : "text-ink-2")} title={s.status === "completed" ? undefined : projectionNote(s.timeline.projection)}>
+                        <span className={cn(s.status === "delayed" ? (s.delayCertainty === "estimated" ? "font-medium text-warning-ink" : "font-medium text-danger-ink") : "text-ink-2")} title={s.status === "completed" ? undefined : projectionNote(s.timeline.projection, t)}>
                           {s.status === "completed" ? formatClock(s.timeline.projectedEndMinute) : finishValue(s.timeline.projection)}
-                          {s.status !== "completed" && s.timeline.projection.source === "estimate" ? " (est.)" : ""}
+                          {s.status !== "completed" && s.timeline.projection.source === "estimate" ? t("map.list.est") : ""}
                         </span>
                         <span className="block text-2xs text-muted">
                           {s.status === "completed"
-                            ? "finished"
-                            : scheduledFinishLabel(s.timeline.projection)
-                              ? `if departing now · ${scheduledFinishLabel(s.timeline.projection)}`
-                              : `${finishShort(s.tour, s.timeline.projection).toLowerCase()} · shift until ${formatClock(s.timeline.shiftEndMinute)}`}
+                            ? t("map.list.finished")
+                            : scheduledFinishLabel(s.timeline.projection, t)
+                              ? t("map.list.departingNow", { scheduled: scheduledFinishLabel(s.timeline.projection, t)! })
+                              : t("map.list.shiftUntil", { finish: lower(finishShort(s.tour, s.timeline.projection, t)), time: formatClock(s.timeline.shiftEndMinute) })}
                         </span>
                       </td>
                     </tr>
@@ -229,14 +233,14 @@ export function ListView() {
           {filtered.length > 0 && (
             <div className="flex items-center justify-between border-t border-line px-4 py-3 text-[13px] text-muted">
               <span className="tabular">
-                {p * PAGE + 1}–{Math.min(filtered.length, (p + 1) * PAGE)} of {filtered.length}
+                {t("map.list.pageRange", { from: p * PAGE + 1, to: Math.min(filtered.length, (p + 1) * PAGE), total: filtered.length })}
               </span>
               <div className="flex gap-1.5">
-                <Button variant="secondary" size="icon-sm" aria-label="Previous page" disabled={p === 0} onClick={() => setPage(p - 1)}>
-                  <ChevronLeft />
+                <Button variant="secondary" size="icon-sm" aria-label={t("map.list.prevPage")} disabled={p === 0} onClick={() => setPage(p - 1)}>
+                  <ChevronLeft className="rtl:-scale-x-100" />
                 </Button>
-                <Button variant="secondary" size="icon-sm" aria-label="Next page" disabled={p >= pageCount - 1} onClick={() => setPage(p + 1)}>
-                  <ChevronRight />
+                <Button variant="secondary" size="icon-sm" aria-label={t("map.list.nextPage")} disabled={p >= pageCount - 1} onClick={() => setPage(p + 1)}>
+                  <ChevronRight className="rtl:-scale-x-100" />
                 </Button>
               </div>
             </div>

@@ -9,7 +9,9 @@ import { CircleAlert, Layers, LocateFixed, Maximize2, Minus, Plus, RefreshCw } f
 import { useCallback, useEffect, useRef, useState } from "react";
 import type * as Leaflet from "leaflet";
 import { tourMapPoints } from "../lib/helpers";
-import { ageLabel, freshnessOf, FRESHNESS_LABEL, type LiveVehicle } from "../lib/live";
+import { freshnessOf, type LiveVehicle } from "../lib/live";
+import type { TFunction } from "../lib/i18n";
+import { useI18n } from "../lib/i18n/client";
 
 type MapState = "loading" | "ready" | "error";
 
@@ -46,6 +48,13 @@ const MAPBTN =
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+/** "12 s ago" / "4 min ago" / "1 h 5 min ago" (same steps as the live list) in the current language. */
+function liveAge(seconds: number, t: TFunction): string {
+  const text =
+    seconds < 60 ? t("common.sec", { n: seconds }) : seconds < 3600 ? t("common.min", { n: Math.floor(seconds / 60) }) : t("common.hMin", { h: Math.floor(seconds / 3600), m: Math.floor((seconds % 3600) / 60) });
+  return t("common.agoMinutes", { text });
+}
+
 function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
@@ -62,8 +71,12 @@ export function RouteMap(props: RouteMapProps) {
   const [showCompleted, setShowCompleted] = useState(true);
   const [showUnassigned, setShowUnassigned] = useState(true);
   const [layersOpen, setLayersOpen] = useState(false);
-  const latest = useRef(props);
-  latest.current = props;
+  const { t, dir } = useI18n();
+  const rtl = dir === "rtl";
+  const latest = useRef({ ...props, t, rtl });
+  latest.current = { ...props, t, rtl };
+  // Leaflet tooltips live inside the LTR map container: give their text the page's direction.
+  const tipHtml = (html: string) => `<div dir="${dir}">${html}</div>`;
 
   // Initialise Leaflet (client only).
   useEffect(() => {
@@ -135,9 +148,10 @@ export function RouteMap(props: RouteMapProps) {
   const fit = useCallback(
     (tourId: string | null) => {
       const b = boundsFor(tourId);
-      const { insetStart = 0, insetEnd = 0 } = latest.current;
-      if (b && map.current)
-        map.current.fitBounds(b, { paddingTopLeft: [insetStart + 40, 64], paddingBottomRight: [insetEnd + 64, 40], maxZoom: 15, animate: !prefersReducedMotion() });
+      const { insetStart = 0, insetEnd = 0, rtl } = latest.current;
+      // The map itself is LTR: in right-to-left layouts the start panel covers the right edge and the controls sit on the left.
+      const [left, right] = rtl ? [insetEnd + 64, insetStart + 40] : [insetStart + 40, insetEnd + 64];
+      if (b && map.current) map.current.fitBounds(b, { paddingTopLeft: [left, 64], paddingBottomRight: [right, 40], maxZoom: 15, animate: !prefersReducedMotion() });
     },
     [boundsFor],
   );
@@ -162,7 +176,7 @@ export function RouteMap(props: RouteMapProps) {
         zIndexOffset: 1000,
         keyboard: false,
       })
-        .bindTooltip(`<strong>Depot ${esc(d.name)}</strong>`, { direction: "top", offset: [0, -14] })
+        .bindTooltip(tipHtml(`<strong>${esc(t("map.rm.depotTip", { name: d.name }))}</strong>`), { direction: "top", offset: [0, -14] })
         .addTo(group);
     }
 
@@ -175,8 +189,8 @@ export function RouteMap(props: RouteMapProps) {
       const path: [number, number][] = ends.path.map((p) => [p.lat, p.lng] as [number, number]);
       // An own start/end address gets its own small marker (the depot marker stays where it is).
       for (const [p, letter, what] of [
-        [ends.customStart, "S", "Start"],
-        [ends.customEnd, "E", "End"],
+        [ends.customStart, "S", "start"],
+        [ends.customEnd, "E", "end"],
       ] as const) {
         if (!p || (dim && !selected)) continue;
         Lf.marker([p.lat, p.lng], {
@@ -188,7 +202,12 @@ export function RouteMap(props: RouteMapProps) {
           }),
           keyboard: false,
         })
-          .bindTooltip(`<strong>${esc(s.tour.name)}</strong> · ${what}${what === "Start" && s.tour.startLabel ? `: ${esc(s.tour.startLabel)}` : what === "End" && s.tour.endLabel ? `: ${esc(s.tour.endLabel)}` : ""}`, { direction: "top", offset: [0, -10] })
+          .bindTooltip(
+            tipHtml(
+              `<strong>${esc(s.tour.name)}</strong> · ${esc(t(what === "start" ? "map.rm.start" : "map.rm.end"))}${what === "start" && s.tour.startLabel ? `: ${esc(s.tour.startLabel)}` : what === "end" && s.tour.endLabel ? `: ${esc(s.tour.endLabel)}` : ""}`,
+            ),
+            { direction: "top", offset: [0, -10] },
+          )
           .addTo(group);
       }
       const doneCount = located.filter((x) => !isOpen(x.status)).length;
@@ -199,7 +218,7 @@ export function RouteMap(props: RouteMapProps) {
       const remaining = path.slice(doneCount);
       if (props.road && props.road.tourId === s.tour.id && props.road.geometry.length > 1) {
         Lf.polyline(props.road.geometry, { color, weight: selected ? 5 : 3, opacity: dim ? 0.18 : 0.95 })
-          .bindTooltip(`<strong>${esc(s.tour.name)}</strong> · road route (OSRM)`, { sticky: true })
+          .bindTooltip(tipHtml(`<strong>${esc(s.tour.name)}</strong> · ${esc(t("map.rm.roadRoute"))}`), { sticky: true })
           .addTo(group);
       } else if (remaining.length > 1) {
         Lf.polyline(remaining, { color, weight: selected ? 5 : 3, opacity: dim ? 0.18 : selected ? 0.95 : 0.7 })
@@ -207,7 +226,7 @@ export function RouteMap(props: RouteMapProps) {
             Lf.DomEvent.stopPropagation(e);
             latest.current.onSelectTour(s.tour.id);
           })
-          .bindTooltip(`<strong>${esc(s.tour.name)}</strong> · ${esc(s.driver?.displayName ?? "no driver")}`, { sticky: true })
+          .bindTooltip(tipHtml(`<strong>${esc(s.tour.name)}</strong> · ${esc(s.driver?.displayName ?? t("map.noDriver"))}`), { sticky: true })
           .addTo(group);
       }
 
@@ -215,7 +234,7 @@ export function RouteMap(props: RouteMapProps) {
         const done = !isOpen(stop.status);
         if (done && !showCompleted) return;
         const idx = s.stops.indexOf(stop) + 1;
-        const tip = stopTooltipHtml(s, stop, idx, locationBadge(latest.current.locationChecks?.get(stop.id)));
+        const tip = tipHtml(stopTooltipHtml(s, stop, idx, locationBadge(latest.current.locationChecks?.get(stop.id), t), t));
         const onClick = (e: Leaflet.LeafletEvent) => {
           Lf.DomEvent.stopPropagation(e as Leaflet.LeafletMouseEvent);
           latest.current.onSelectStop(stop.id, s.tour.id);
@@ -265,12 +284,17 @@ export function RouteMap(props: RouteMapProps) {
       for (const u of unassigned) {
         if (!u.location) continue;
         Lf.circleMarker([u.location.lat, u.location.lng], { radius: 5, color: "#8A93A8", weight: 1.5, dashArray: "2 2", fillColor: "#F1F3F9", fillOpacity: 1, opacity: selectedTourId ? 0.4 : 1 })
-          .bindTooltip(`<strong>Unassigned ${u.type}</strong><br/>${esc(u.recipientName ?? "")}${u.timeWindow ? `<br/>window ${formatClock(u.timeWindow.start)}–${formatClock(u.timeWindow.end)}` : ""}`, { direction: "top" })
+          .bindTooltip(
+            tipHtml(
+              `<strong>${esc(t(u.type === "pickup" ? "map.rm.unassignedPickup" : "map.rm.unassignedDelivery"))}</strong><br/>${esc(u.recipientName ?? "")}${u.timeWindow ? `<br/>${esc(t("common.window", { range: `${formatClock(u.timeWindow.start)}–${formatClock(u.timeWindow.end)}` }))}` : ""}`,
+            ),
+            { direction: "top" },
+          )
           .addTo(group);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, props.summaries, props.depots, props.unassigned, props.selectedTourId, props.selectedStopId, showCompleted, showUnassigned, props.road, props.locationChecks]);
+  }, [state, props.summaries, props.depots, props.unassigned, props.selectedTourId, props.selectedStopId, showCompleted, showUnassigned, props.road, props.locationChecks, t]);
 
   // Live vehicles: own layer, redrawn on every position update / clock tick only.
   useEffect(() => {
@@ -301,22 +325,24 @@ export function RouteMap(props: RouteMapProps) {
           iconAnchor: [size / 2, size / 2],
         }),
         zIndexOffset: 2000 + (sel ? 500 : 0),
-        title: `${v.driverName} – ${FRESHNESS_LABEL[fresh]}`,
+        title: `${v.driverName} – ${t(`map.rm.fresh.${fresh}`)}`,
       })
         .on("click", (e) => {
           Lf.DomEvent.stopPropagation(e);
           latest.current.onSelectVehicle?.(v);
         })
         .bindTooltip(
-          `<strong>${esc(v.driverName)}</strong>${v.vehicle ? ` · ${esc(v.vehicle.label ?? "")} ${esc(v.vehicle.licensePlate ?? "")}` : ""}<br/>${esc(v.tourName)} · ${v.progress.done}/${v.progress.done + v.progress.remaining} stops<br/>${
-            fresh === "live" ? `Live · updated ${ageLabel(ageSeconds)}` : fresh === "delayed" ? `Delayed · last position ${ageLabel(ageSeconds)}` : `No signal · last known position ${ageLabel(ageSeconds)} – not live`
-          }${v.position.accuracyMeters != null ? ` · ±${Math.round(v.position.accuracyMeters)} m` : ""}<br/><span style="opacity:.7">${label}</span>`,
+          tipHtml(
+            `<strong>${esc(v.driverName)}</strong>${v.vehicle ? ` · ${esc(v.vehicle.label ?? "")} ${esc(v.vehicle.licensePlate ?? "")}` : ""}<br/>${esc(v.tourName)} · ${esc(t("map.rm.vehicleStops", { done: v.progress.done, total: v.progress.done + v.progress.remaining }))}<br/>${esc(
+              t(fresh === "live" ? "map.rm.liveUpdated" : fresh === "delayed" ? "map.rm.liveDelayed" : "map.rm.liveOffline", { age: liveAge(ageSeconds, t) }),
+            )}${v.position.accuracyMeters != null ? ` · ±${Math.round(v.position.accuracyMeters)} m` : ""}<br/><span style="opacity:.7">${label}</span>`,
+          ),
           { direction: "top", offset: [0, -size / 2] },
         )
         .addTo(group);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, props.vehicles, props.serverNow, props.selectedDriverId]);
+  }, [state, props.vehicles, props.serverNow, props.selectedDriverId, t]);
 
   useEffect(() => {
     if (state !== "ready" || !props.focus || !map.current) return;
@@ -343,14 +369,17 @@ export function RouteMap(props: RouteMapProps) {
   }, [state, props.selectedTourId, props.fitRequest, props.summaries.length, fit]);
 
   const empty = props.summaries.length === 0 && props.unassigned.length === 0;
+  // Controls sit at the inline end: their tooltips open towards the map.
+  const tipSide = rtl ? "right" : "left";
 
   return (
     // `isolate` keeps Leaflet's internal z-indexes (400–700) from covering drawers and menus.
     <div className="relative isolate h-full w-full overflow-hidden bg-canvas-2">
-      <div ref={el} className="absolute inset-0" aria-label="Route map" role="region" />
+      {/* Leaflet assumes a left-to-right container (controls, tiles, panning); the overlays below follow the page direction. */}
+      <div ref={el} className="absolute inset-0" dir="ltr" aria-label={t("map.rm.region")} role="region" />
 
       {state === "loading" && (
-        <div className="absolute inset-0 z-[500] flex flex-col gap-3 bg-canvas-2 p-6" aria-busy="true" aria-label="Loading map">
+        <div className="absolute inset-0 z-[500] flex flex-col gap-3 bg-canvas-2 p-6" aria-busy="true" aria-label={t("map.loadingMap")}>
           <Skeleton className="h-full w-full rounded-2xl bg-surface" />
         </div>
       )}
@@ -358,10 +387,10 @@ export function RouteMap(props: RouteMapProps) {
         <div className="absolute inset-0 z-[500] flex items-center justify-center bg-canvas-2 p-6" role="alert">
           <div className="max-w-sm rounded-2xl border border-line-strong bg-raised p-5 text-center shadow-overlay">
             <CircleAlert className="mx-auto size-6 text-danger" />
-            <p className="mt-2 text-sm font-semibold text-ink">The map could not be loaded</p>
-            <p className="mt-1 text-[13px] text-muted">Tours remain available in the list and in the detail panel.</p>
+            <p className="mt-2 text-sm font-semibold text-ink">{t("map.rm.errorTitle")}</p>
+            <p className="mt-1 text-[13px] text-muted">{t("map.rm.errorText")}</p>
             <Button className="mt-4" onClick={() => setAttempt((a) => a + 1)}>
-              <RefreshCw /> Try again
+              <RefreshCw /> {t("common.retry")}
             </Button>
           </div>
         </div>
@@ -370,45 +399,45 @@ export function RouteMap(props: RouteMapProps) {
       {state === "ready" && tiles === "unavailable" && (
         <div className="absolute top-4 z-[450] mx-auto w-fit max-w-md rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-ink-2 shadow-overlay backdrop-blur" style={{ insetInlineStart: (props.insetStart ?? 0) + 120, insetInlineEnd: (props.insetEnd ?? 0) + 16 }} role="status">
           <span className="me-2 inline-block size-2 rounded-full bg-nx-amber align-middle" aria-hidden="true" />
-          Base map tiles are unavailable (network or tile provider). Stops, routes and depots are still shown at their positions.
+          {t("map.rm.tilesUnavailable")}
         </div>
       )}
       {state === "ready" && empty && (
         <div className="absolute inset-0 z-[440] flex items-center justify-center">
-          <div className="rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-3 text-[13px] font-semibold text-ink-2 shadow-overlay backdrop-blur">No tours or stops for this selection.</div>
+          <div className="rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-3 text-[13px] font-semibold text-ink-2 shadow-overlay backdrop-blur">{t("map.rm.empty")}</div>
         </div>
       )}
 
       {state === "ready" && (
         <>
           <div className="absolute bottom-6 z-[460] flex flex-col gap-2 transition-[inset-inline-end] duration-300" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 16 }}>
-            <Tooltip content="Zoom in" side="left">
-              <button className={MAPBTN} onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
+            <Tooltip content={t("map.rm.zoomIn")} side={tipSide}>
+              <button className={MAPBTN} onClick={() => map.current?.zoomIn()} aria-label={t("map.rm.zoomIn")}>
                 <Plus className="size-4" />
               </button>
             </Tooltip>
-            <Tooltip content="Zoom out" side="left">
-              <button className={MAPBTN} onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
+            <Tooltip content={t("map.rm.zoomOut")} side={tipSide}>
+              <button className={MAPBTN} onClick={() => map.current?.zoomOut()} aria-label={t("map.rm.zoomOut")}>
                 <Minus className="size-4" />
               </button>
             </Tooltip>
-            <Tooltip content={props.selectedTourId ? "Fit selected route" : "Fit all routes"} side="left">
-              <button className={MAPBTN} onClick={() => fit(props.selectedTourId)} aria-label={props.selectedTourId ? "Fit selected route" : "Fit all routes"}>
+            <Tooltip content={props.selectedTourId ? t("map.rm.fitSelected") : t("map.rm.fitAll")} side={tipSide}>
+              <button className={MAPBTN} onClick={() => fit(props.selectedTourId)} aria-label={props.selectedTourId ? t("map.rm.fitSelected") : t("map.rm.fitAll")}>
                 <LocateFixed className="size-4" />
               </button>
             </Tooltip>
             {props.selectedTourId && (
-              <Tooltip content="Show all routes" side="left">
-                <button className={MAPBTN} onClick={() => props.onSelectTour(null)} aria-label="Show all routes">
+              <Tooltip content={t("map.rm.showAll")} side={tipSide}>
+                <button className={MAPBTN} onClick={() => props.onSelectTour(null)} aria-label={t("map.rm.showAll")}>
                   <Maximize2 className="size-4" />
                 </button>
               </Tooltip>
             )}
-            <Tooltip content="Map layers" side="left">
+            <Tooltip content={t("map.rm.layers")} side={tipSide}>
               <button
                 className={cn(MAPBTN, layersOpen && "border-brand-500 text-nx-violet-text")}
                 onClick={() => setLayersOpen((o) => !o)}
-                aria-label="Map layers"
+                aria-label={t("map.rm.layers")}
                 aria-expanded={layersOpen}
               >
                 <Layers className="size-4" />
@@ -418,11 +447,11 @@ export function RouteMap(props: RouteMapProps) {
           {layersOpen && (
             <div className="absolute bottom-6 z-[460] w-56 rounded-2xl border border-line-strong bg-raised p-3 text-[13px] font-semibold shadow-overlay" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 68 }}>
               <label className="flex items-center justify-between gap-2 py-1">
-                Completed stops
+                {t("map.rm.completedStops")}
                 <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} className="size-4 accent-[var(--violet)]" />
               </label>
               <label className="flex items-center justify-between gap-2 py-1">
-                Unassigned stops
+                {t("map.rm.unassignedStops")}
                 <input type="checkbox" checked={showUnassigned} onChange={(e) => setShowUnassigned(e.target.checked)} className="size-4 accent-[var(--violet)]" />
               </label>
             </div>
@@ -433,25 +462,25 @@ export function RouteMap(props: RouteMapProps) {
           >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-3 rounded-full border-2 border-nx-violet bg-surface" /> Open stop
+                <span className="inline-block size-3 rounded-full border-2 border-nx-violet bg-surface" /> {t("map.rm.legendOpen")}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-3 rounded-[3px] border-2 border-nx-violet bg-surface" /> Pickup
+                <span className="inline-block size-3 rounded-[3px] border-2 border-nx-violet bg-surface" /> {t("map.rm.legendPickup")}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-3 rounded-full border border-line-strong bg-surface-2" /> Done
+                <span className="inline-block size-3 rounded-full border border-line-strong bg-surface-2" /> {t("map.rm.legendDone")}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-3 rounded-[3px] border border-white/80 bg-navy" /> Depot
+                <span className="inline-block size-3 rounded-[3px] border border-white/80 bg-navy" /> {t("map.rm.legendDepot")}
               </span>
             </div>
             <div className="mt-1 font-medium text-muted">
-              {props.road ? "Selected tour: road route (OSRM); other tours: stop order as straight lines" : "Lines show stop order, not road geometry"} ·{" "}
+              {props.road ? t("map.rm.linesRoad") : t("map.rm.linesStraight")} ·{" "}
               {props.vehicles === undefined
-                ? "live positions not available for your role"
+                ? t("map.rm.liveNotAllowed")
                 : props.vehicles.length
-                  ? `${props.vehicles.length} vehicle(s) with live GPS (blue = live, amber = delayed, grey = no signal)`
-                  : "no live GPS positions (tracking off or no tour on the road)"}
+                  ? t("map.rm.liveCount", { count: props.vehicles.length })
+                  : t("map.rm.liveNone")}
             </div>
           </div>
         </>

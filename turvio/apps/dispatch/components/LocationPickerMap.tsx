@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { haversineMeters, type GeoPoint } from "@turvio/shared";
 import type * as Leaflet from "leaflet";
 import { useEffect, useRef, useState } from "react";
+import { useT } from "../lib/i18n/client";
 
 /**
  * Small map for choosing one point (P0-3.6): a new pin position or a navigation approach point.
@@ -55,6 +56,9 @@ export function LocationPickerMap({
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const latest = useRef(onPick);
   latest.current = onPick;
+  const t = useT();
+  const chosenTitle = useRef("");
+  chosenTitle.current = t("map.picker.chosen");
 
   useEffect(() => {
     let cancelled = false;
@@ -118,7 +122,7 @@ export function LocationPickerMap({
       pick.current = Lf.marker([value.lat, value.lng], {
         draggable: true,
         icon: Lf.divIcon({ className: "turvio-pick", html: '<div style="width:18px;height:18px;border-radius:999px;background:#6F55FF;border:3px solid #fff;box-shadow:0 0 0 5px rgba(117,91,255,.3),0 2px 6px rgba(0,0,0,.4)"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }),
-        title: "Chosen point – drag to adjust",
+        title: chosenTitle.current,
       })
         .on("dragend", () => {
           const p = pick.current!.getLatLng();
@@ -130,9 +134,10 @@ export function LocationPickerMap({
 
   return (
     <div className="relative overflow-hidden rounded-md border border-line" style={{ height }} data-testid="location-picker-map">
-      <div ref={el} className="h-full w-full" />
+      {/* Leaflet assumes a left-to-right container (controls, tiles). */}
+      <div ref={el} className="h-full w-full" dir="ltr" />
       {state !== "ready" && (
-        <div className="absolute inset-0 flex items-center justify-center bg-surface-2 text-xs text-muted">{state === "loading" ? "Loading map…" : "Map unavailable – use the address search or type coordinates."}</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-surface-2 text-xs text-muted">{state === "loading" ? t("map.picker.loading") : t("map.picker.unavailable")}</div>
       )}
     </div>
   );

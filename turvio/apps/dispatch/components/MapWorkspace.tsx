@@ -16,12 +16,18 @@ import { LiveFleetList, LiveVehiclePanel } from "./LiveFleet";
 import { TrackingStatusPanel } from "./TrackingStatusPanel";
 import { OpsSummary } from "./OpsSummary";
 import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
+import { useI18n, useT } from "../lib/i18n/client";
 import { TourDetail } from "./TourDetail";
 import { TourList } from "./TourList";
 
+function MapLoading() {
+  const t = useT();
+  return <div className="h-full w-full animate-pulse bg-surface-2" aria-label={t("map.loadingMap")} />;
+}
+
 const RouteMap = dynamic(() => import("./RouteMap").then((m) => m.RouteMap), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse bg-surface-2" aria-label="Loading map" />,
+  loading: () => <MapLoading />,
 });
 
 function useMediaQuery(q: string) {
@@ -38,28 +44,29 @@ function useMediaQuery(q: string) {
 
 function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFleet>; onSelectVehicle: (v: LiveVehicle) => void }) {
   const { pickups, summaries, data, selectTour } = useDispatch();
+  const t = useT();
   const urgent = pickups.filter((p) => p.state === "late" || p.state === "at_risk" || p.state === "unassigned").slice(0, 6);
   const delayed = summaries.filter((s) => s.status === "delayed");
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-start gap-3 rounded-[14px] border border-line bg-surface-2 p-3 text-[13px] text-ink-2">
         <MousePointerClick className="mt-0.5 size-4 shrink-0 text-subtle" />
-        Select a tour in the list or on the map to see its driver, vehicle, schedule and stops.
+        {t("map.overviewHint")}
       </div>
       {live.allowed && <LiveFleetList vehicles={live.vehicles} serverNow={live.serverNow} onSelect={onSelectVehicle} />}
       <TrackingStatusPanel />
       {delayed.length > 0 && (
         <section>
           <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-            <AlertTriangle className="size-3.5 text-danger" /> Delayed tours
+            <AlertTriangle className="size-3.5 text-danger" /> {t("map.delayedTours")}
           </h3>
           <ul className="flex flex-col gap-1.5">
             {delayed.map((s) => (
               <li key={s.tour.id}>
-                <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-start text-[13px] shadow-[inset_4px_0_0_var(--coral)] transition-colors hover:bg-danger-soft">
-                  <span className="font-semibold text-danger-ink">{s.tour.name}</span> <span className="text-muted">· {s.driver?.displayName ?? "no driver"}</span>
+                <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-start text-[13px] shadow-[inset_4px_0_0_var(--coral)] transition-colors rtl:shadow-[inset_-4px_0_0_var(--coral)] hover:bg-danger-soft">
+                  <span className="font-semibold text-danger-ink">{s.tour.name}</span> <span className="text-muted">· {s.driver?.displayName ?? t("map.noDriver")}</span>
                   <span className="mt-0.5 block text-xs text-danger-ink/80">
-                    {delayLabel(s.delayCertainty)} · {s.timeline.projection.delayReasons[0]?.text}
+                    {delayLabel(s.delayCertainty, t)} · {s.timeline.projection.delayReasons[0]?.text}
                   </span>
                 </button>
               </li>
@@ -70,14 +77,14 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-            <ArrowUpFromLine className="size-3.5" /> Pickups needing attention
+            <ArrowUpFromLine className="size-3.5" /> {t("map.pickupsAttention")}
           </h3>
           <Link href="/pickups" className="text-xs font-bold text-nx-violet-text hover:underline">
-            All pickups
+            {t("map.allPickups")}
           </Link>
         </div>
         {urgent.length === 0 ? (
-          <p className="text-[13px] text-muted">All pickups are on schedule.</p>
+          <p className="text-[13px] text-muted">{t("map.pickupsOnSchedule")}</p>
         ) : (
           <ul className="flex flex-col divide-y divide-line rounded-[14px] border border-line bg-surface-2">
             {urgent.map((p) => (
@@ -85,7 +92,7 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
                 <div className="min-w-0">
                   <div className="truncate text-[13px] font-medium text-ink">{p.stop.recipientName}</div>
                   <div className="truncate text-2xs text-muted">
-                    {p.tourName ?? "No tour"} · {p.stop.timeWindow ? `${formatClock(p.stop.timeWindow.start)}–${formatClock(p.stop.timeWindow.end)}` : ""} · closes {deadlineLabel(p.minutesToDeadline)}
+                    {p.tourName ?? t("map.noTour")} · {p.stop.timeWindow ? `${formatClock(p.stop.timeWindow.start)}–${formatClock(p.stop.timeWindow.end)}` : ""} · {t("map.pickupCloses", { deadline: deadlineLabel(p.minutesToDeadline, t) })}
                   </div>
                 </div>
                 <PickupStateBadge state={p.state} estimated={p.estimated} />
@@ -95,7 +102,7 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
         )}
       </section>
       <p className="text-2xs text-subtle">
-        {data.tours.length} tours · {data.depots.length} depot{data.depots.length === 1 ? "" : "s"} in view
+        {t("map.inView", { tours: t("common.tours", { count: data.tours.length }), depots: t("map.depots", { count: data.depots.length }) })}
       </p>
     </div>
   );
@@ -103,6 +110,9 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
 
 export function MapWorkspace() {
   const d = useDispatch();
+  const { t, tr, fmt, dir } = useI18n();
+  // Panels slide in from their own edge (start/end), mirrored in right-to-left layouts.
+  const sx = dir === "rtl" ? -1 : 1;
   const { summaries, data, selectedTourId, selectedStopId, selectTour, selectStop, scoped } = d;
   const selectedSummary = summaries.find((x) => x.tour.id === selectedTourId);
   const road = useRoadRoute(d.session.organizationId, selectedTourId, selectedSummary ? routeKey(selectedSummary.stops) : "");
@@ -126,20 +136,20 @@ export function MapWorkspace() {
   const showRight = isWide && rightOpen;
 
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-  const dayLabel = new Date(`${data.date}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
-  const depotLabel = d.depotId ? (scoped.depots.find((x) => x.id === d.depotId)?.name ?? "") : scoped.depots.length === 1 ? scoped.depots[0]!.name : `${scoped.depots.length} depots`;
+  const dayLabel = fmt.date(new Date(`${data.date}T12:00:00Z`), { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const depotLabel = d.depotId ? (scoped.depots.find((x) => x.id === d.depotId)?.name ?? "") : scoped.depots.length === 1 ? scoped.depots[0]!.name : t("map.depots", { count: scoped.depots.length });
   const panel = "overflow-hidden rounded-[18px] border border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] shadow-overlay backdrop-blur-[18px]";
 
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        title={data.date === today ? "Today's dispatch" : "Dispatch"}
+        title={data.date === today ? t("map.titleToday") : t("map.title")}
         description={`${dayLabel} · ${depotLabel}`}
         actions={
           d.session.role !== "driver" && (
             <Button variant="primary" asChild>
               <Link href="/planning?new=1">
-                <Plus /> New tour
+                <Plus /> {t("map.newTour")}
               </Link>
             </Button>
           )
@@ -149,7 +159,7 @@ export function MapWorkspace() {
 
       {/* Phone/tablet switch */}
       <div className="flex items-center gap-2 lg:hidden">
-        <div className="relative inline-flex rounded-xl border border-line bg-surface p-[3px]" role="tablist" aria-label="Map workspace">
+        <div className="relative inline-flex rounded-xl border border-line bg-surface p-[3px]" role="tablist" aria-label={t("map.workspaceTabs")}>
           {(["tours", "map"] as const).map((p) => (
             <button
               key={p}
@@ -162,13 +172,13 @@ export function MapWorkspace() {
               )}
             >
               {p === "tours" ? <List className="size-4" /> : <MapIcon className="size-4" />}
-              {p === "tours" ? "Tours" : "Map"}
+              {p === "tours" ? t("map.tabTours") : t("map.tabMap")}
             </button>
           ))}
         </div>
         {selected && (
           <span className="truncate text-xs text-muted">
-            Selected: <span className="font-semibold text-ink">{selected.tour.name}</span>
+            {tr("map.selected", { name: <span className="font-semibold text-ink">{selected.tour.name}</span> })}
           </span>
         )}
       </div>
@@ -202,12 +212,12 @@ export function MapWorkspace() {
           {showLeft && (
             <motion.aside
               key="left"
-              initial={isDesktop ? { opacity: 0, x: -16 } : false}
+              initial={isDesktop ? { opacity: 0, x: -16 * sx } : false}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
+              exit={{ opacity: 0, x: -16 * sx }}
               transition={{ duration: 0.25, ease: [0.2, 0.75, 0.25, 1] }}
               className={cn("absolute z-[470]", isDesktop ? cn("bottom-4 start-4 top-4 w-[360px]", panel) : "inset-0 bg-surface")}
-              aria-label="Tours and drivers"
+              aria-label={t("map.toursAndDrivers")}
             >
               <TourList onPick={() => !isDesktop && setMobilePane("map")} />
             </motion.aside>
@@ -216,15 +226,15 @@ export function MapWorkspace() {
 
         {isDesktop && (
           <div className="absolute top-4 z-[460] flex gap-1.5 transition-[inset-inline-start] duration-300" style={{ insetInlineStart: showLeft ? 392 : 16 }}>
-            <Tooltip content={leftOpen ? "Hide tour list" : "Show tour list"} side="bottom">
-              <Button variant="secondary" size="icon" onClick={() => setLeftOpen((o) => !o)} aria-label={leftOpen ? "Hide tour list" : "Show tour list"} className="bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] shadow-overlay backdrop-blur hover:translate-y-0">
-                {leftOpen ? <PanelLeftClose /> : <PanelLeftOpen />}
+            <Tooltip content={leftOpen ? t("map.hideTourList") : t("map.showTourList")} side="bottom">
+              <Button variant="secondary" size="icon" onClick={() => setLeftOpen((o) => !o)} aria-label={leftOpen ? t("map.hideTourList") : t("map.showTourList")} className="bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] shadow-overlay backdrop-blur hover:translate-y-0">
+                {leftOpen ? <PanelLeftClose className="rtl:-scale-x-100" /> : <PanelLeftOpen className="rtl:-scale-x-100" />}
               </Button>
             </Tooltip>
             {isWide && (
-              <Tooltip content={rightOpen ? "Hide details" : "Show details"} side="bottom">
-                <Button variant="secondary" size="icon" onClick={() => setRightOpen((o) => !o)} aria-label={rightOpen ? "Hide details panel" : "Show details panel"} className="bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] shadow-overlay backdrop-blur hover:translate-y-0">
-                  {rightOpen ? <PanelRightClose /> : <PanelRightOpen />}
+              <Tooltip content={rightOpen ? t("map.hideDetails") : t("map.showDetails")} side="bottom">
+                <Button variant="secondary" size="icon" onClick={() => setRightOpen((o) => !o)} aria-label={rightOpen ? t("map.hideDetailsPanel") : t("map.showDetailsPanel")} className="bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] shadow-overlay backdrop-blur hover:translate-y-0">
+                  {rightOpen ? <PanelRightClose className="rtl:-scale-x-100" /> : <PanelRightOpen className="rtl:-scale-x-100" />}
                 </Button>
               </Tooltip>
             )}
@@ -235,21 +245,21 @@ export function MapWorkspace() {
           {showRight && (
             <motion.aside
               key="right"
-              initial={{ opacity: 0, x: 16 }}
+              initial={{ opacity: 0, x: 16 * sx }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 16 }}
+              exit={{ opacity: 0, x: 16 * sx }}
               transition={{ duration: 0.25, ease: [0.2, 0.75, 0.25, 1] }}
               className={cn("absolute bottom-4 end-4 top-4 z-[470] flex w-[400px] flex-col", panel)}
-              aria-label="Details"
+              aria-label={t("common.details")}
             >
               <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
                 <div className="min-w-0">
-                  <h2 className="truncate text-[15.5px] font-bold tracking-[-0.01em] text-ink">{selected ? `Tour ${selected.tour.name}` : "Operations overview"}</h2>
-                  <p className="truncate text-[12.5px] text-muted">{selected ? `${selected.depot.name} · ${selected.tour.date}` : `${data.date} · as of ${formatClock(data.asOfMinute)}`}</p>
+                  <h2 className="truncate text-[15.5px] font-bold tracking-[-0.01em] text-ink">{selected ? t("map.tourTitle", { name: selected.tour.name }) : t("map.opsOverview")}</h2>
+                  <p className="truncate text-[12.5px] text-muted">{selected ? `${selected.depot.name} · ${selected.tour.date}` : t("map.asOf", { date: data.date, time: formatClock(data.asOfMinute) })}</p>
                 </div>
                 {selected && (
                   <Button variant="ghost" size="sm" onClick={() => selectTour(null)}>
-                    Clear
+                    {t("map.clear")}
                   </Button>
                 )}
               </div>
@@ -273,7 +283,7 @@ export function MapWorkspace() {
         <Sheet
           open={!!selected}
           onOpenChange={(o) => !o && selectTour(null)}
-          title={selected ? `Tour ${selected.tour.name}` : ""}
+          title={selected ? t("map.tourTitle", { name: selected.tour.name }) : ""}
           description={selected ? `${selected.depot.name} · ${selected.tour.date}` : undefined}
           className="max-w-lg"
         >

@@ -5,6 +5,7 @@ import { AlertTriangle, CircleCheck, PackageCheck, PackageOpen, Route, Steering 
 import { motion } from "motion/react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 
 type Accent = "violet" | "cobalt" | "mint" | "cyan" | "amber" | "coral";
@@ -49,47 +50,59 @@ function Kpi({ icon, label, value, foot, footTone, progress, accent, href }: { i
 /** KPI row of the Overview (prototype: Active tours · Drivers · Stops completed · Remaining · Delayed · Pickups). */
 export function OpsSummary() {
   const { kpis, data } = useDispatch();
+  const t = useT();
   const hasData = data.tours.length > 0 || data.unassigned.length > 0;
   const remainingShare = kpis.totalStops ? kpis.remainingDeliveries / Math.max(kpis.totalStops, kpis.remainingDeliveries) : 0;
-  const delayedSub = [kpis.delayedConfirmed && `${kpis.delayedConfirmed} confirmed`, kpis.delayedProjected && `${kpis.delayedProjected} projected`, kpis.delayedEstimated && `${kpis.delayedEstimated} estimate`]
+  const delayedSub = [
+    kpis.delayedConfirmed && t("map.ops.confirmed", { n: kpis.delayedConfirmed }),
+    kpis.delayedProjected && t("map.ops.projected", { n: kpis.delayedProjected }),
+    kpis.delayedEstimated && t("map.ops.estimate", { n: kpis.delayedEstimated }),
+  ]
     .filter(Boolean)
     .join(" · ");
   const totalTours = kpis.activeTours + kpis.plannedTours;
   return (
-    <section aria-label="Operations summary" className="grid grid-cols-2 gap-[18px] md:grid-cols-3 xl:grid-cols-6">
-      <Kpi accent="violet" icon={<Route />} label="Active tours" value={kpis.activeTours} progress={totalTours ? kpis.activeTours / totalTours : 0} foot={kpis.plannedTours ? `+${kpis.plannedTours} planned` : hasData ? "all tours started" : "no tours"} />
-      <Kpi accent="cobalt" icon={<Steering />} label="Drivers on the road" value={kpis.activeDrivers} foot={`${kpis.availableVehicles} of ${kpis.totalVehicles} vehicles available`} />
+    <section aria-label={t("map.ops.aria")} className="grid grid-cols-2 gap-[18px] md:grid-cols-3 xl:grid-cols-6">
+      <Kpi
+        accent="violet"
+        icon={<Route />}
+        label={t("map.ops.activeTours")}
+        value={kpis.activeTours}
+        progress={totalTours ? kpis.activeTours / totalTours : 0}
+        foot={kpis.plannedTours ? t("map.ops.plannedMore", { n: kpis.plannedTours }) : hasData ? t("map.ops.allStarted") : t("map.ops.noTours")}
+      />
+      <Kpi accent="cobalt" icon={<Steering />} label={t("map.ops.drivers")} value={kpis.activeDrivers} foot={t("map.ops.vehiclesAvailable", { a: kpis.availableVehicles, b: kpis.totalVehicles })} />
       <Kpi
         accent="mint"
         icon={<CircleCheck />}
-        label="Stops completed"
+        label={t("map.ops.stopsCompleted")}
         value={kpis.completedStops}
         progress={kpis.completion}
-        foot={hasData ? `${Math.round(kpis.completion * 100)} % · ${kpis.totalStops} stops` : "–"}
+        foot={hasData ? t("map.ops.completionFoot", { pct: Math.round(kpis.completion * 100), count: kpis.totalStops }) : "–"}
       />
       <Kpi
         accent="cyan"
         icon={<PackageOpen />}
-        label="Deliveries remaining"
+        label={t("map.ops.deliveriesRemaining")}
         value={kpis.remainingDeliveries}
         progress={remainingShare}
-        foot={kpis.unassignedDeliveries ? `${kpis.unassignedDeliveries} unassigned` : hasData ? "all assigned" : "–"}
+        foot={kpis.unassignedDeliveries ? t("map.ops.unassigned", { n: kpis.unassignedDeliveries }) : hasData ? t("map.ops.allAssigned") : "–"}
       />
       <Kpi
         accent="amber"
         icon={<AlertTriangle />}
-        label="Delayed tours"
+        label={t("map.delayedTours")}
         value={kpis.delayedTours}
-        foot={delayedSub || "none"}
+        foot={delayedSub || t("map.ops.none")}
         footTone={kpis.delayedConfirmed || kpis.delayedProjected ? "coral" : undefined}
         href="/list?status=delayed"
       />
       <Kpi
         accent="coral"
         icon={<PackageCheck />}
-        label="Pickups"
+        label={t("map.ops.pickups")}
         value={kpis.scheduledPickups}
-        foot={kpis.pickupConflicts ? `${kpis.pickupConflicts} need attention` : "on schedule"}
+        foot={kpis.pickupConflicts ? t("map.ops.needAttention", { n: kpis.pickupConflicts }) : t("map.ops.onSchedule")}
         footTone={kpis.pickupConflicts ? "coral" : undefined}
         href="/pickups"
       />
