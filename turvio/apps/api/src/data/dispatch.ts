@@ -88,6 +88,11 @@ export interface TourRow {
   optimized_at: Date | null;
   optimization: Tour["optimization"];
   origin?: "dispatch" | "driver";
+  /** Added in 20261119000200_tour_lifecycle. */
+  closed_at?: Date | null;
+  closed_remotely?: boolean;
+  close_reason?: string | null;
+  archived_at?: Date | null;
 }
 export const toTour = (r: TourRow): Tour => ({
   id: r.id,
@@ -111,6 +116,10 @@ export const toTour = (r: TourRow): Tour => ({
   optimizedAt: r.optimized_at ? r.optimized_at.toISOString() : null,
   optimization: r.optimization ?? null,
   origin: r.origin ?? "dispatch",
+  closedAt: r.closed_at ? r.closed_at.toISOString() : r.status === "completed" && r.finished_at ? r.finished_at.toISOString() : null,
+  closedRemotely: r.closed_remotely ?? false,
+  closeReason: r.close_reason ?? null,
+  archivedAt: r.archived_at ? r.archived_at.toISOString() : null,
 });
 
 export interface StopRow {
@@ -135,6 +144,10 @@ export interface StopRow {
   notes: string | null;
   status: Stop["status"];
   completed_at: Date | null;
+  /** Added in 20261119000200_tour_lifecycle. */
+  cancel_reason?: string | null;
+  cancelled_at?: Date | null;
+  returned_from_tour_id?: string | null;
   failure_reason?: string | null;
   driver_notes?: string | null;
   locked?: boolean;
@@ -169,6 +182,7 @@ function stopBase(r: StopRow) {
     })),
     status: r.status,
     completedAt: iso(r.completed_at),
+    ...(r.status === "cancelled" ? { cancelReason: r.cancel_reason ?? undefined, cancelledAt: iso(r.cancelled_at) } : {}),
     failureReason: r.failure_reason ?? undefined,
     driverNotes: r.driver_notes ?? undefined,
     locked: r.locked ?? false,
@@ -208,7 +222,11 @@ export async function orgTimeZone(tx: Tx, orgId: string): Promise<string> {
 }
 
 /** Everything Dispatch needs for one operating day, already scoped by RLS. */
-export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | undefined): Promise<DispatchDataset> {
+/**
+ * `lifecycle`: include cancelled and archived tours and cancelled stops. Off by default so clients
+ * built before the tour lifecycle (they do not know these states) keep working unchanged.
+ */
+export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | undefined, opts: { lifecycle?: boolean } = {}): Promise<DispatchDataset> {
   const timeZone = await orgTimeZone(tx, orgId);
   const clock = operatingClock(date, timeZone);
   const day = clock.date;
@@ -216,7 +234,11 @@ export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | 
     tx.query<DepotRow>(`select * from public.depots where organization_id = $1 order by name`, [orgId]),
     tx.query<DriverRow>(`select * from public.drivers where organization_id = $1 order by display_name`, [orgId]),
     tx.query<VehicleRow>(`select * from public.vehicles where organization_id = $1 and active order by label`, [orgId]),
-    tx.query<TourRow>(`select * from public.tours where organization_id = $1 and tour_date = $2 order by name`, [orgId, day]),
+    tx.query<TourRow>(
+      `select * from public.tours where organization_id = $1 and tour_date = $2
+          and ($3 or (status <> 'cancelled' and archived_at is null)) order by name`,
+      [orgId, day, !!opts.lifecycle],
+    ),
   ]);
   const tourIds = tours.rows.map((t) => t.id);
   const stops = await tx.query<StopRow>(
@@ -233,8 +255,9 @@ export async function loadDispatchDataset(tx: Tx, orgId: string, date: string | 
     drivers: drivers.rows.map(toDriver),
     vehicles: vehicles.rows.map(toVehicle),
     tours: tours.rows.map(toTour),
-    stops: stops.rows.filter((s) => s.tour_id).map(toStop),
-    unassigned: stops.rows.filter((s) => !s.tour_id).map(toUnassigned),
+    stops: stops.rows.filter((s) => s.tour_id && (opts.lifecycle || s.status !== "cancelled")).map(toStop),
+    // Cancelled pool stops are records, not work to plan.
+    unassigned: stops.rows.filter((s) => !s.tour_id && s.status !== "cancelled").map(toUnassigned),
   };
 }
 

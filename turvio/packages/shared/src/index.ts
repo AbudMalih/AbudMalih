@@ -11,3 +11,4 @@ export * from "./dispatch";
 export * from "./stopStatus";
 export * from "./capture";
 export * from "./location";
+export * from "./tabular";

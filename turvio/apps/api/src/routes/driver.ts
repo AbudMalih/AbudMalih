@@ -24,6 +24,9 @@ export function registerDriverRoutes(app: FastifyInstance, { deps, guards }: Rou
              join organizations o on o.id = t.organization_id
              left join vehicles v on v.id = t.vehicle_id
             where t.published_at is not null
+              -- Cancelled and archived tours leave the driver's list (installed apps do not know
+              -- these states; a vanished tour stops tracking there).
+              and t.status <> 'cancelled' and t.archived_at is null
               and t.tour_date = coalesce($1::date, (now() at time zone o.time_zone)::date)
             order by t.planned_start_minute`,
           [q.date ?? null],
@@ -35,7 +38,7 @@ export function registerDriverRoutes(app: FastifyInstance, { deps, guards }: Rou
         if (!settingsByOrg.has(t.organization_id)) settingsByOrg.set(t.organization_id, await driverSettingsOf(tx, t.organization_id));
         const settings = settingsByOrg.get(t.organization_id)!;
         const depot = (await tx.query<DepotRow>(`select * from depots where id = $1`, [t.depot_id])).rows[0];
-        const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 order by s.sequence`, [t.id])).rows
+        const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 and s.status <> 'cancelled' order by s.sequence`, [t.id])).rows
           .map(toStop)
           // Recipient phone numbers only when the company shares them with drivers.
           .map((st) => (settings.showRecipientPhone ? st : { ...st, recipientPhone: undefined }));

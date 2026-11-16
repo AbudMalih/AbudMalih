@@ -33,6 +33,10 @@ const CreateTour = z.object({
 
 const UpdateTour = z.object({
   expectedVersion: z.number().int().min(1),
+  /** Reschedule (tour not started yet). */
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  /** Move to another depot the caller may access (tour not started yet). */
+  depotId: Uuid.optional(),
   name: z.string().trim().min(1).max(120).optional(),
   plannedStartMinute: Minute.optional(),
   driverId: Uuid.nullable().optional(),
@@ -119,14 +123,14 @@ const precisionOf = (s: z.infer<typeof NewStopInput>): string =>
 async function assertAvailable(tx: Tx, tourId: string | null, date: string, driverId?: string | null, vehicleId?: string | null) {
   if (driverId) {
     const { rows } = await tx.query<{ name: string }>(
-      `select name from tours where driver_id = $1 and tour_date = $2 and status <> 'completed' and id is distinct from $3 limit 1`,
+      `select name from tours where driver_id = $1 and tour_date = $2 and status not in ('completed', 'cancelled') and archived_at is null and id is distinct from $3 limit 1`,
       [driverId, date, tourId],
     );
     if (rows[0]) throw new ApiError(409, "driver_busy", `This driver is already assigned to ${rows[0].name}`);
   }
   if (vehicleId) {
     const { rows } = await tx.query<{ name: string }>(
-      `select name from tours where vehicle_id = $1 and tour_date = $2 and status <> 'completed' and id is distinct from $3 limit 1`,
+      `select name from tours where vehicle_id = $1 and tour_date = $2 and status not in ('completed', 'cancelled') and archived_at is null and id is distinct from $3 limit 1`,
       [vehicleId, date, tourId],
     );
     if (rows[0]) throw new ApiError(409, "vehicle_busy", `This vehicle is already assigned to ${rows[0].name}`);
@@ -137,6 +141,13 @@ async function loadTour(tx: Tx, orgId: string, id: string): Promise<TourRow> {
   const { rows } = await tx.query<TourRow>(`select * from tours where id = $1 and organization_id = $2`, [id, orgId]);
   if (!rows[0]) throw new ApiError(404, "not_found", "Tour not found");
   return rows[0];
+}
+
+/** Refuses work on a closed (completed / cancelled) or archived tour. */
+export function assertWorkable(t: Pick<TourRow, "status" | "archived_at" | "name">, what = "changed") {
+  if (t.status === "completed" || t.status === "cancelled")
+    throw new ApiError(409, "tour_closed", `${t.name} is ${t.status} and cannot be ${what}`);
+  if (t.archived_at) throw new ApiError(409, "tour_archived", `${t.name} is archived – restore it first`);
 }
 
 async function tourWithStops(tx: Tx, orgId: string, id: string) {
@@ -190,7 +201,7 @@ async function insertStops(tx: Tx, orgId: string, target: { tourId?: string; dep
   const newStops: { id: string; s: z.infer<typeof NewStopInput>; sequence: number }[] = [];
   let next = 0;
   if (target.tourId) {
-    await loadTour(tx, orgId, target.tourId);
+    assertWorkable(await loadTour(tx, orgId, target.tourId), "given new stops");
     next = (await tx.query<{ n: number }>(`select coalesce(max(sequence) + 1, 0)::int as n from stops where tour_id = $1`, [target.tourId])).rows[0]!.n;
   }
   const ids: string[] = [];
@@ -372,9 +383,19 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     if (!b) return;
     const row = await db.asUser(claims(req), async (tx) => {
       const cur = await loadTour(tx, orgId, id);
-      if (cur.status === "completed") throw new ApiError(422, "invalid_operation", "Completed tours cannot be changed");
-      await assertAvailable(tx, id, cur.tour_date, b.driverId, b.vehicleId);
-      await assertPlaces(tx, orgId, cur.depot_id, [{ what: "start", p: b.start }, { what: "end", p: b.end?.mode === "address" ? b.end : null }]);
+      assertWorkable(cur);
+      const moving = (b.date !== undefined && b.date !== cur.tour_date) || (b.depotId !== undefined && b.depotId !== cur.depot_id);
+      if (moving && cur.status !== "planned") throw new ApiError(422, "invalid_operation", "Only tours that have not started can be moved to another day or location");
+      if (b.depotId !== undefined && b.depotId !== cur.depot_id) {
+        // RLS: the caller must see (= may work in) the target location.
+        const ok = (await tx.query(`select 1 from depots where id = $1 and organization_id = $2 and app.can_access_depot(organization_id, id)`, [b.depotId, orgId])).rowCount;
+        if (!ok) throw new ApiError(404, "not_found", "Location not found");
+      }
+      const date = b.date ?? cur.tour_date;
+      const depotId = b.depotId ?? cur.depot_id;
+      // Moving to another day re-checks the driver and vehicle already on the tour.
+      await assertAvailable(tx, id, date, b.driverId !== undefined ? b.driverId : moving ? cur.driver_id : undefined, b.vehicleId !== undefined ? b.vehicleId : moving ? cur.vehicle_id : undefined);
+      await assertPlaces(tx, orgId, depotId, [{ what: "start", p: b.start }, { what: "end", p: b.end?.mode === "address" ? b.end : null }]);
       const end = b.end ? endColumns(b.end) : null;
       const { rows } = await tx.query<TourRow>(
         `update tours set
@@ -388,12 +409,15 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
            end_mode = coalesce($14::text, end_mode),
            end_lat = case when $14::text is not null then $15::float8 else end_lat end,
            end_lng = case when $14::text is not null then $16::float8 else end_lng end,
-           end_label = case when $14::text is not null then $17::text else end_label end
+           end_label = case when $14::text is not null then $17::text else end_label end,
+           tour_date = $18::date,
+           depot_id = $19::uuid
          where id = $1 and organization_id = $2 and version = $3 returning *`,
         [
           id, orgId, b.expectedVersion, b.name ?? null, b.plannedStartMinute ?? null, b.driverId !== undefined, b.driverId ?? null, b.vehicleId !== undefined, b.vehicleId ?? null,
           b.start !== undefined, b.start?.lat ?? null, b.start?.lng ?? null, b.start?.label ?? null,
           end?.mode ?? null, end?.lat ?? null, end?.lng ?? null, end?.label ?? null,
+          date, depotId,
         ],
       );
       if (!rows[0]) throw new ApiError(409, "version_conflict", "The tour was changed by someone else. Reload and try again.");
@@ -402,17 +426,17 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     return toTour(row);
   });
 
-  app.delete("/v1/orgs/:orgId/tours/:id", { preHandler: guards.requireTenant("tours.manage") }, async (req, reply) => {
+  /**
+   * Permanent delete – only tours without protected history (decided by the database, see
+   * tour_delete_eligibility). Stops go back to the unassigned pool unless deleteStops=true.
+   */
+  app.delete("/v1/orgs/:orgId/tours/:id", { preHandler: guards.requireTenant("tours.delete") }, async (req, reply) => {
     const { orgId, id } = IdParams.parse(req.params);
-    const q = parse(z.object({ expectedVersion: z.coerce.number().int().min(1) }), req.query, reply);
+    const q = parse(z.object({ expectedVersion: z.coerce.number().int().min(1), deleteStops: z.enum(["true", "false"]).default("false") }), req.query, reply);
     if (!q) return;
     await db.asUser(claims(req), async (tx) => {
-      const cur = await loadTour(tx, orgId, id);
-      if (cur.version !== q.expectedVersion) throw new ApiError(409, "version_conflict", "The tour was changed by someone else. Reload and try again.");
-      if (cur.status !== "planned" || cur.published_at) throw new ApiError(422, "invalid_operation", "Only unpublished, planned tours can be deleted");
-      // Stops go back to the depot's unassigned list instead of being lost.
-      await tx.query(`update stops set tour_id = null, depot_id = $2, sequence = 0 where tour_id = $1`, [id, cur.depot_id]);
-      await tx.query(`delete from tours where id = $1`, [id]);
+      await loadTour(tx, orgId, id);
+      await tx.query(`select delete_tour($1, $2, $3)`, [id, q.expectedVersion, q.deleteStops === "true"]);
     });
     return reply.status(204).send();
   });
@@ -505,6 +529,10 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     const b = parse(UpdateStop, req.body, reply);
     if (!b) return;
     const row = await db.asUser(claims(req), async (tx) => {
+      // Stops of a closed or archived tour are records now.
+      const owner = (await tx.query<Pick<TourRow, "status" | "archived_at" | "name">>(
+        `select t.status, t.archived_at, t.name from stops s join tours t on t.id = s.tour_id where s.id = $1 and s.organization_id = $2`, [id, orgId])).rows[0];
+      if (owner) assertWorkable(owner);
       const sets: string[] = [];
       const vals: unknown[] = [id, orgId];
       const add = (sql: string, v: unknown) => {
@@ -549,7 +577,12 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
 
   app.delete("/v1/orgs/:orgId/stops/:id", { preHandler: guards.requireTenant("stops.manage") }, async (req, reply) => {
     const { orgId, id } = IdParams.parse(req.params);
-    const n = await db.asUser(claims(req), async (tx) => (await tx.query(`delete from stops where id = $1 and organization_id = $2 and status = 'pending'`, [id, orgId])).rowCount);
+    // Draft / test stops only (no outcome, events, proofs or scans): see delete_draft_stop.
+    const n = await db.asUser(claims(req), async (tx) => {
+      const visible = (await tx.query(`select 1 from stops where id = $1 and organization_id = $2`, [id, orgId])).rowCount;
+      if (visible) await tx.query(`select delete_draft_stop($1)`, [id]);
+      return visible;
+    });
     if (!n) return problem(reply, 404, "not_found", "Open stop not found");
     return reply.status(204).send();
   });
@@ -564,7 +597,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       let next = 0;
       if (b.tourId) {
         const t = await loadTour(tx, orgId, b.tourId);
-        if (t.status === "completed") throw new ApiError(422, "invalid_operation", "Cannot add stops to a completed tour");
+        assertWorkable(t, "given new stops");
         depotId = t.depot_id;
         next = (await tx.query<{ n: number }>(`select coalesce(max(sequence) + 1, 0)::int as n from stops where tour_id = $1`, [b.tourId])).rows[0]!.n;
       }
@@ -639,7 +672,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
     const isDriver = req.membership!.role === "driver";
     const input = await db.asUser(claims(req), async (tx) => {
       const tour = await loadTour(tx, orgId, id);
-      if (tour.status === "completed") throw new ApiError(422, "invalid_operation", "Completed tours cannot be optimized");
+      assertWorkable(tour, "optimized");
       if (opts.expectedVersion != null && tour.version !== opts.expectedVersion)
         throw new ApiError(409, "version_conflict", "The tour was changed by someone else. Reload and try again.");
       // The assigned driver pressing Optimize is the confirmation; anyone else must confirm explicitly.
@@ -745,7 +778,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
       const tours = [];
       for (const tid of b.tourIds) {
         const t = await loadTour(tx, orgId, tid);
-        if (t.status === "completed") throw new ApiError(422, "invalid_operation", `${t.name} is completed`);
+        assertWorkable(t, "optimized");
         tours.push(await vehicleFor(tx, t, minute));
       }
       const depots = new Set(tours.map((t) => t.tour.depot_id));

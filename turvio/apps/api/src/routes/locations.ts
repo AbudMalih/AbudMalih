@@ -100,7 +100,7 @@ export function registerLocationRoutes(app: FastifyInstance, { deps, guards }: R
     const depots = new Map(data.depots.map((d) => [d.id, d]));
     const groups: CheckGroup[] = [];
     for (const t of data.tours) {
-      if ((q.tourId && t.id !== q.tourId) || t.status === "completed") continue;
+      if ((q.tourId && t.id !== q.tourId) || t.status === "completed" || t.status === "cancelled") continue;
       const depot = depots.get(t.depotId);
       const stops = data.stops.filter((s) => s.tourId === t.id && isOpen(s.status));
       if (stops.length) groups.push({ origin: depot ? tourStartPoint(t, depot.location) : null, stops: stops.map(toCheck) });

@@ -96,6 +96,8 @@ export const StopStatus = z.enum([
   "rescheduled",
   "returned",
   "skipped",
+  /** Dispatch decided not to serve the stop (with a reason). Never sent to the driver app. */
+  "cancelled",
 ]);
 export type StopStatus = z.infer<typeof StopStatus>;
 
@@ -173,10 +175,19 @@ export const Stop = z.object({
    * address. Routing and navigation use it instead of `location`; it is never set automatically.
    */
   approach: StopApproach.optional(),
+  /** Set when Dispatch cancelled the stop. */
+  cancelReason: z.string().max(500).optional(),
+  cancelledAt: z.iso.datetime().optional(),
 });
 export type Stop = z.infer<typeof Stop>;
 
-export const TourStatus = z.enum(["planned", "in_progress", "paused", "completed"]);
+/**
+ * `cancelled`: stopped by Dispatch before it was done (distinct from `completed`, and from
+ * withdrawing = unpublishing a tour that has not started). Never sent to the driver app.
+ */
+export const TourStatus = z.enum(["planned", "in_progress", "paused", "completed", "cancelled"]);
+/** A closed tour accepts no further updates (only offline events from before the close). */
+export const isClosedTourStatus = (s: TourStatus) => s === "completed" || s === "cancelled";
 export type TourStatus = z.infer<typeof TourStatus>;
 
 export const Depot = z.object({
@@ -252,6 +263,12 @@ export const Tour = z.object({
   optimizedAt: z.iso.datetime().nullable().optional(),
   /** "driver" = personal route created in the driver app. */
   origin: z.enum(["dispatch", "driver"]).optional(),
+  /** When the tour became completed / cancelled; who closed it and why (Dispatch closes are "remote"). */
+  closedAt: z.iso.datetime().nullable().optional(),
+  closedRemotely: z.boolean().optional(),
+  closeReason: z.string().max(500).nullable().optional(),
+  /** Hidden from default views, everything kept. Not a status. */
+  archivedAt: z.iso.datetime().nullable().optional(),
   optimization: z
     .object({ engine: z.string(), matrixSource: z.string(), unassignedStopIds: z.array(z.string()).optional() })
     .nullable()

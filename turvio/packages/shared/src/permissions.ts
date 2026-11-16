@@ -18,6 +18,12 @@ export const PERMISSIONS = [
   "tours.view_own",
   "tours.manage",
   "tours.optimize",
+  /** Finish or cancel a tour from Dispatch ("remote"), with a reason. */
+  "tours.close",
+  /** Archive / restore (hide, keep everything). */
+  "tours.archive",
+  /** Permanently delete tours without protected history (the database decides eligibility). */
+  "tours.delete",
   "stops.add_own",
   "stops.update_status_own",
   "stops.manage",
@@ -26,6 +32,8 @@ export const PERMISSIONS = [
   "reports.view",
   "reports.export",
   "audit.view",
+  /** Read the company profile and settings overview (company-admin sections are org.settings.manage). */
+  "settings.view_company",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -38,6 +46,9 @@ const DISPATCHER: readonly Permission[] = [
   "tours.view_own",
   "tours.manage",
   "tours.optimize",
+  "tours.close",
+  "tours.archive",
+  "tours.delete",
   "stops.add_own",
   "stops.update_status_own",
   "stops.manage",
@@ -45,6 +56,7 @@ const DISPATCHER: readonly Permission[] = [
   "tracking.view_live",
   "reports.view",
   "reports.export",
+  "settings.view_company",
 ];
 
 const ADMIN: readonly Permission[] = [

@@ -132,6 +132,27 @@ export function mapPgError(e: unknown): unknown {
       return new ApiError(422, /plan limit/.test(msg) ? "plan_limit_reached" : /subscription inactive/.test(msg) ? "subscription_inactive" : "rejected", msg);
     case "22P02":
       return new ApiError(400, "invalid_input", "Invalid identifier or value");
+    case "55000": {
+      // Lifecycle refusals raised by the database (20261119000200_tour_lifecycle): stable codes.
+      const LIFECYCLE: Record<string, string> = {
+        tour_closed: "The tour is closed (completed or cancelled) and accepts no further changes",
+        tour_archived: "The tour is archived – restore it first",
+        tour_protected: "The tour has protected history (deliveries, proofs, scans, tracking or execution) and cannot be deleted – archive it instead",
+        stop_protected: "The stop has history (outcome, events, proofs or scans) and cannot be deleted – cancel it instead",
+        stop_cancelled: "Dispatch cancelled this stop",
+      };
+      if (LIFECYCLE[msg]) {
+        let detail: unknown;
+        try {
+          const raw = (e as unknown as { detail?: string }).detail;
+          detail = raw ? JSON.parse(raw) : undefined;
+        } catch {
+          detail = undefined;
+        }
+        return new ApiError(409, msg, LIFECYCLE[msg]!, detail && typeof detail === "object" ? (detail as Record<string, unknown>) : {});
+      }
+      return e;
+    }
     default:
       return e;
   }

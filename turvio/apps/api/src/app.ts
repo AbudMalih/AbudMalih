@@ -22,6 +22,9 @@ import { registerPlatformRoutes } from "./routes/platform";
 import type { SystemInfo } from "./system-status";
 import { registerTrackingRoutes } from "./routes/tracking";
 import { registerTourRoutes } from "./routes/tours";
+import { registerLifecycleRoutes } from "./routes/lifecycle";
+import { registerAnalyticsRoutes } from "./routes/analytics";
+import { registerSettingsRoutes } from "./routes/settings";
 import type { TenancyRepository } from "./tenancy";
 
 export interface AppDeps {
@@ -220,6 +223,9 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     if (deps.auth) registerAuthRoutes(app, { ...ctx, auth: deps.auth });
     registerOrgRoutes(app, ctx);
     registerTourRoutes(app, ctx);
+    registerLifecycleRoutes(app, ctx);
+    registerAnalyticsRoutes(app, ctx);
+    registerSettingsRoutes(app, ctx);
     registerDriverRoutes(app, ctx);
     registerExecutionRoutes(app, ctx, { proofStore: deps.proofStore, geocoder: deps.geocoder, routing: deps.routing });
     registerPlatformRoutes(app, ctx);

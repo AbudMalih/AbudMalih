@@ -27,7 +27,7 @@ describe("system status", () => {
     const routing: RoutingProvider = {
       name: "osrm",
       route: async () => {
-        throw new RoutingOutOfCoverage("outside");
+        throw new RoutingOutOfCoverage("outside", []);
       },
     };
     const s = await checkSystem({ db: fakeDb(true), optimizerUrl: "http://opt", fetchImpl: failFetch, routing }, { ...info, geocoder: "none" });

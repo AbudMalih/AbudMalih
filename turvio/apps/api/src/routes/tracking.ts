@@ -163,7 +163,7 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
         )
       ).rows;
       const events = (
-        await tx.query<{ kind: string; created_at: Date }>(`select kind, created_at from tour_events where tour_id = $1 and kind in ('started', 'paused', 'resumed', 'completed') order by created_at`, [id])
+        await tx.query<{ kind: string; created_at: Date }>(`select kind, created_at from tour_events where tour_id = $1 and kind in ('started', 'paused', 'resumed', 'completed', 'cancelled') order by created_at`, [id])
       ).rows;
       const stops = (
         await tx.query<{ id: string; status: string; completed_at: Date | null }>(`select id, status, completed_at from stops where tour_id = $1 and completed_at is not null order by completed_at`, [id])

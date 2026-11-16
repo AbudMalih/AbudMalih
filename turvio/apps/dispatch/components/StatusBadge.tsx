@@ -8,6 +8,7 @@ export const TOUR_STATUS: Record<DispatchTourStatus, { label: string; tone: Badg
   paused: { label: "Paused", tone: "warning" },
   planned: { label: "Planned", tone: "neutral" },
   completed: { label: "Completed", tone: "success" },
+  cancelled: { label: "Cancelled", tone: "danger" },
 };
 
 export const PICKUP_STATE: Record<PickupState, { label: string; tone: BadgeTone }> = {
@@ -30,6 +31,7 @@ export const STOP_STATUS: Record<StopStatus, { label: string; tone: BadgeTone }>
   rescheduled: { label: "Rescheduled", tone: "warning" },
   returned: { label: "Returned", tone: "danger" },
   skipped: { label: "Skipped", tone: "warning" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
 };
 
 /** Labels for the default failure-reason codes (companies may define their own labels). */

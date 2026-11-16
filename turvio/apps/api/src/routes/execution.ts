@@ -192,8 +192,11 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
       if (existing) {
         if (existing.stop_id !== stopId || existing.sha256 !== hash) throw new ApiError(409, "conflict", "A different proof with this id already exists");
       } else {
-        const visible = (await tx.query(`select 1 from stops where id = $1 and organization_id = $2`, [stopId, orgId])).rowCount;
-        if (!visible) throw new ApiError(404, "not_found", "Stop not found");
+        // Same rule as the insert policy: driver of the (published) tour or depot staff; on a closed
+        // tour only proofs captured before the close (an offline phone uploading late).
+        const target = (await tx.query<{ r: string }>(`select app.proof_target($1, $2, least($3::timestamptz, now())) as r`, [stopId, orgId, b.capturedAt])).rows[0]!.r;
+        if (target === "not_found") throw new ApiError(404, "not_found", "Stop not found");
+        if (target === "tour_closed") throw new ApiError(409, "tour_closed", "The tour was closed before this proof was captured");
         await tx.query(
           `insert into proofs (id, organization_id, stop_id, kind, storage_path, recipient_name, notes, captured_at, lat, lng, content_type, size_bytes, sha256)
            values ($1,$2,$3,$4,$5,$6,$7,least($8::timestamptz, now()),$9,$10,$11,$12,$13)`,
@@ -258,7 +261,8 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
       const tour = (await tx.query<TourRow>(`select * from tours where id = $1 and organization_id = $2`, [id, orgId])).rows[0];
       if (!tour) throw new ApiError(404, "not_found", "Tour not found");
       const depot = (await tx.query<{ lat: number; lng: number }>(`select lat, lng from depots where id = $1`, [tour.depot_id])).rows[0]!;
-      const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 order by s.sequence`, [id])).rows.map(toStop);
+      // Cancelled stops are not driven to (and installed driver apps do not know that status).
+      const stops = (await tx.query<StopRow>(`${STOP_SELECT} where s.tour_id = $1 and s.status <> 'cancelled' order by s.sequence`, [id])).rows.map(toStop);
       const tz = await orgTimeZone(tx, orgId);
       return { tour, depot, stops, now: nowInZone(tz).minute };
     });

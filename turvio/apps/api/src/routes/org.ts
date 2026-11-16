@@ -43,11 +43,12 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
   // ---------------------------------------------------------------- dispatch day
   app.get("/v1/orgs/:orgId/dispatch", { preHandler: guards.requireTenant("tours.view_all") }, async (req, reply) => {
     const { orgId } = OrgParams.parse(req.params);
-    const q = parse(DateQuery, req.query, reply);
+    // lifecycle=1: also cancelled / archived tours and cancelled stops (clients that know these states).
+    const q = parse(DateQuery.extend({ lifecycle: z.enum(["0", "1"]).default("0") }), req.query, reply);
     if (!q) return;
     const seesLive = can(req.membership!.role, "tracking.view_live");
     const { data, positions } = await db.asUser(guards.claims(req), async (tx) => {
-      const data = await loadDispatchDataset(tx, orgId, q.date);
+      const data = await loadDispatchDataset(tx, orgId, q.date, { lifecycle: q.lifecycle === "1" });
       const open = data.tours.filter((t) => t.status === "in_progress" || t.status === "paused").map((t) => t.id);
       return { data, positions: seesLive && data.isToday ? await loadTourPositions(tx, orgId, open) : new Map() };
     });
