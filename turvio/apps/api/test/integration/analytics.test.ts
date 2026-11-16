@@ -157,4 +157,18 @@ describe.runIf(available)("analytics", () => {
     expect(log).toEqual(["drivers:2026-06-10..2026-06-10", "drivers:2026-06-10..2026-06-10"]);
     expect((await env.as(U.driverHannover1, "GET", `/v1/orgs/${org()}/analytics/export?date=${D}&view=drivers`)).statusCode).toBe(403);
   });
+
+  it("export in German / Arabic: only the headings are translated, the values are identical", async () => {
+    const get = async (lang: string) =>
+      (await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/analytics/export?date=${D}&view=drivers&format=csv&lang=${lang}`)).body.replace(/^\uFEFF/, "").trim().split("\r\n");
+    const [en, de, ar] = [await get("en"), await get("de"), await get("ar")];
+    expect(de[0]!.split(";").slice(0, 3)).toEqual(["Fahrer", "Stopps", "Zugestellt"]);
+    expect(ar[0]!.split(";").slice(0, 3)).toEqual(["السائق", "المحطات", "تم التسليم"]);
+    // Values identical; only the "(no driver)" label row name is translated.
+    const norm = (rows: string[]) => rows.slice(1).map((r) => r.replace(/^\((no driver|kein Fahrer|بدون سائق)\)/, "(none)"));
+    expect(norm(de)).toEqual(norm(en));
+    expect(norm(ar)).toEqual(norm(en));
+    expect(de.at(-1)).toMatch(/^\(kein Fahrer\);/);
+    expect((await env.as(U.dispatcherHannover, "GET", `/v1/orgs/${org()}/analytics/export?date=${D}&view=drivers&lang=fr`)).statusCode).toBe(400);
+  });
 });
