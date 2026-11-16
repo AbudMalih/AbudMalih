@@ -144,10 +144,10 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
   // Personal defaults (Settings → My preferences): the default location applies once, at start.
   useEffect(() => {
     let alive = true;
-    api<{ orgDefaults: Record<string, NonNullable<DispatchState["orgDefaults"]>> }>("GET", "/v1/me/preferences").then(
+    api<{ orgDefaults: Record<string, NonNullable<DispatchState["orgDefaults"]>> } | undefined>("GET", "/v1/me/preferences").then(
       (p) => {
         if (!alive) return;
-        const d = p.orgDefaults?.[org] ?? {};
+        const d = p?.orgDefaults?.[org] ?? {};
         setOrgDefaults(d);
         if (d.defaultDepotId && initial.depots.some((x) => x.id === d.defaultDepotId)) setDepotIdState((cur) => cur ?? d.defaultDepotId!);
       },
