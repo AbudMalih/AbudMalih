@@ -609,7 +609,7 @@ function DriverRow({ d, admin, noticeVersion, selected, onSelect, onPilot }: { d
         )}
       </td>
       <td className="px-3">
-        <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-2xs font-bold", toneCls)} title={st.explain}>
+        <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-bold", toneCls)} title={st.explain}>
           {d.state === "live" && <span className="size-1.5 animate-pulse rounded-full bg-current" aria-hidden="true" />}
           {st.label}
         </span>
