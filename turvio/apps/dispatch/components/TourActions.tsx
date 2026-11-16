@@ -546,7 +546,11 @@ export function DeleteTourDialog({ item, onClose, onChanged, onDeleted }: { item
                   {protectedRecords.map(([k, label]) => `${e[k] as number} ${label}`).join(" · ")}
                 </p>
               )}
-              <p className="text-ink-2">Archive the tour to hide it – everything stays available.</p>
+              <p className="text-ink-2">
+                {e.tour.status === "planned" && e.reasons.length === 1 && e.reasons[0] === "published"
+                  ? "Withdraw it from the driver first, then it can be deleted."
+                  : "Archive the tour to hide it – everything stays available."}
+              </p>
             </div>
           )}
         </div>

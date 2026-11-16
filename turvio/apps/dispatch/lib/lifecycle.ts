@@ -188,7 +188,7 @@ export const REASON_TEXT: Record<string, string> = {
   status_completed: "is completed",
   status_cancelled: "is cancelled",
   started: "was started",
-  published: "is published to the driver (withdraw it first)",
+  published: "is published to the driver",
   processed_stops: "has stops with an outcome",
   stop_history: "has stop history",
   proofs: "has proofs of delivery",
