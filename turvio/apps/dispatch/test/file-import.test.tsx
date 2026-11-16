@@ -178,7 +178,7 @@ describe("Dispatch file import", () => {
     const dialog = await open(user);
     await map(user, dialog, ["tracking", "recipientName", "street", "postalCode", "city"]);
     const region = await within(dialog).findByRole("region", { name: "Already in TURVIO" });
-    expect(within(region).getByText(/TVO1000001 · HAN-02 \(2026-11-05\) · pending/)).toBeTruthy();
+    expect(within(region).getByText(/TVO1000001 · HAN-02 \(2026-11-05\) · Open/)).toBeTruthy();
     expect(within(dialog).getByText(/1 parcel\(s\) had an earlier attempt that ended/)).toBeTruthy();
     await user.click(within(dialog).getByRole("checkbox", { name: /Also import stops without location/ })); // no geocoding in this test
     await user.click(within(dialog).getByRole("checkbox", { name: /Also import stops without location/ }));

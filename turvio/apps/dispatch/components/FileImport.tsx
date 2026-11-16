@@ -544,7 +544,8 @@ export function FileImport({
               {t("import.tooManyAddresses", { count: plan.blockingGroups, max: MAX_PARCELS_PER_STOP })}
             </p>
           )}
-          {existing.state === "error" && <p className="text-xs text-danger" role="alert">
+          {existing.state === "error" && (
+            <p className="text-xs text-danger" role="alert">
               {t("import.trackingCheckError", { error: existing.error ?? "" })}
             </p>
           )}
