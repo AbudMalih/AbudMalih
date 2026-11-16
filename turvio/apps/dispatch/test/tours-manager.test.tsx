@@ -127,7 +127,7 @@ describe("Tours manager", () => {
     expect(within(preview).getByText(/HAN-02.*running/)).toBeTruthy();
     const pv = calls.find((c) => c.url.endsWith("/tours/bulk/preview"))!;
     expect(pv.body).toEqual({ action: "archive", selection: { tourIds: ["t_done", "t_run"] } });
-    await user.click(screen.getByRole("button", { name: "Archive 1 tour(s)" }));
+    await user.click(screen.getByRole("button", { name: "Archive 1 tour" }));
     await screen.findByTestId("bulk-result");
     const run = calls.find((c) => c.method === "POST" && c.url.endsWith("/tours/bulk"))!;
     expect(run.body).toEqual({ action: "archive", selection: { tourIds: ["t_done", "t_run"] }, versions: { t_done: 3, t_run: 3 } });
@@ -142,7 +142,7 @@ describe("Tours manager", () => {
     expect(screen.getByTestId("selection-count").textContent).toMatch(/60 selected \(all matching/);
     await user.click(screen.getByRole("button", { name: /Finish…/ }));
     await screen.findByTestId("bulk-preview");
-    const go = screen.getByRole("button", { name: "Finish 1 tour(s)" }) as HTMLButtonElement;
+    const go = screen.getByRole("button", { name: "Finish 1 tour" }) as HTMLButtonElement;
     expect(go.disabled).toBe(true);
     await user.type(screen.getByRole("textbox", { name: "Reason" }), "Schicht beendet");
     await user.click(go);
