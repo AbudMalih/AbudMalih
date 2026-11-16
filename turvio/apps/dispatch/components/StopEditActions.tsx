@@ -7,6 +7,7 @@ import { useState } from "react";
 import { errorMessage } from "../lib/api";
 import { fieldCls } from "../lib/helpers";
 import { lifecycleApi } from "../lib/lifecycle";
+import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -17,6 +18,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
  */
 export function StopEditActions({ summary, stop }: { summary: TourSummary; stop: Stop }) {
   const { editStopAddress, reorderStops, assignStops, deleteStop, summaries, session, reload } = useDispatch();
+  const tr = useT();
   const [editing, setEditing] = useState(false);
   const [moving, setMoving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -38,52 +40,52 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
       await fn();
       toast.success(label);
     } catch (e) {
-      toast.error("Not saved", { description: errorMessage(e) });
+      toast.error(tr("tours.a.notSaved"), { description: errorMessage(e) });
     }
   };
   const move = (delta: number) => {
     const ids = open.map((s) => s.id);
     const [m] = ids.splice(idx, 1);
     ids.splice(idx + delta, 0, m!);
-    return attempt("Order saved", () => reorderStops(summary.tour.id, ids));
+    return attempt(tr("tours.se.orderSaved"), () => reorderStops(summary.tour.id, ids));
   };
 
   if (!isOpen(stop.status)) return null;
   return (
     <div className="flex flex-wrap gap-1.5" data-testid="stop-edit-actions">
-      <Button size="sm" variant="secondary" disabled={idx <= 0} onClick={() => void move(-1)} aria-label="Move up">
+      <Button size="sm" variant="secondary" disabled={idx <= 0} onClick={() => void move(-1)} aria-label={tr("tours.se.moveUp")}>
         <ArrowUp />
       </Button>
-      <Button size="sm" variant="secondary" disabled={idx < 0 || idx >= open.length - 1} onClick={() => void move(1)} aria-label="Move down">
+      <Button size="sm" variant="secondary" disabled={idx < 0 || idx >= open.length - 1} onClick={() => void move(1)} aria-label={tr("tours.se.moveDown")}>
         <ArrowDown />
       </Button>
       <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
-        <Pencil /> Edit address
+        <Pencil /> {tr("tours.se.editAddress")}
       </Button>
       {targets.length > 0 && (
         <Button size="sm" variant="secondary" onClick={() => setMoving(true)}>
-          <MoveRight /> Move to tour
+          <MoveRight className="rtl:-scale-x-100" /> {tr("tours.se.moveToTour")}
         </Button>
       )}
       <Button size="sm" variant="secondary" onClick={() => setRemoving(true)}>
-        <CornerUpLeft /> Remove
+        <CornerUpLeft className="rtl:-scale-x-100" /> {tr("common.remove")}
       </Button>
       <Button size="sm" variant="secondary" onClick={() => setCancelling(true)}>
-        <Ban /> Cancel stop
+        <Ban /> {tr("tours.se.cancelStop")}
       </Button>
       <Button size="sm" variant="ghost" className="text-danger-ink" onClick={() => setDeleting(true)}>
-        <Trash2 /> Delete
+        <Trash2 /> {tr("common.delete")}
       </Button>
 
       <Dialog
         open={editing}
         onOpenChange={setEditing}
-        title="Edit address"
-        description="If the address changes, the old map position is removed until a new one is set. The original address stays in the history."
+        title={tr("tours.se.editAddress")}
+        description={tr("tours.se.editDesc")}
         footer={
           <Button
             onClick={async () => {
-              await attempt("Address saved", () =>
+              await attempt(tr("tours.se.addressSaved"), () =>
                 editStopAddress(stop.id, { street: form.street, houseNumber: form.houseNumber || null, postalCode: form.postalCode, city: form.city }, form.recipientName || null, {
                   reason: reason.trim() || undefined,
                   expectedAddressVersion: stop.addressVersion,
@@ -94,35 +96,35 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
             }}
             disabled={!form.street || !form.postalCode || !form.city || (published && addressChanged && !reason.trim())}
           >
-            <MapPinned /> Save
+            <MapPinned /> {tr("common.save")}
           </Button>
         }
       >
         <div className="grid grid-cols-6 gap-2 text-[13px]">
           {(
             [
-              ["recipientName", "Recipient", "col-span-6"],
-              ["street", "Street", "col-span-4"],
-              ["houseNumber", "No.", "col-span-2"],
-              ["postalCode", "Postal code", "col-span-2"],
-              ["city", "City", "col-span-4"],
+              ["recipientName", tr("tours.se.recipient"), "col-span-6"],
+              ["street", tr("tours.se.street"), "col-span-4"],
+              ["houseNumber", tr("tours.se.houseNumber"), "col-span-2"],
+              ["postalCode", tr("tours.se.postalCode"), "col-span-2"],
+              ["city", tr("tours.se.city"), "col-span-4"],
             ] as const
           ).map(([k, label, cls]) => (
             <label key={k} className={`flex flex-col gap-1 ${cls}`}>
               <span className="font-medium text-ink-2">{label}</span>
-              <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label} />
+              <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label} dir={k === "postalCode" ? "ltr" : undefined} />
             </label>
           ))}
           {addressChanged && (
             <label className="col-span-6 flex flex-col gap-1">
-              <span className="font-medium text-ink-2">Reason{published ? " (required – the tour is published)" : " (optional)"}</span>
-              <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason for the change" maxLength={500} />
+              <span className="font-medium text-ink-2">{published ? tr("tours.se.reasonRequired") : tr("tours.se.reasonOptional")}</span>
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label={tr("tours.se.reasonChangeAria")} maxLength={500} />
             </label>
           )}
         </div>
       </Dialog>
 
-      <Dialog open={moving} onOpenChange={setMoving} title="Move stop to another tour" description="Only open tours of the same depot. The driver's app follows on the next sync.">
+      <Dialog open={moving} onOpenChange={setMoving} title={tr("tours.se.moveTitle")} description={tr("tours.se.moveDesc")}>
         <div className="flex flex-col gap-1.5">
           {targets.map((t) => (
             <Button
@@ -130,11 +132,11 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
               variant="secondary"
               className="justify-start"
               onClick={async () => {
-                await attempt(`Moved to ${t.tour.name}`, () => assignStops([stop.id], t.tour.id));
+                await attempt(tr("tours.se.movedTo", { name: t.tour.name }), () => assignStops([stop.id], t.tour.id));
                 setMoving(false);
               }}
             >
-              {t.tour.name} · {t.driver?.displayName ?? "no driver"} · {t.remaining} open
+              {tr("tours.se.moveRow", { name: t.tour.name, driver: t.driver?.displayName ?? tr("tours.se.noDriver"), count: t.remaining })}
             </Button>
           ))}
         </div>
@@ -143,15 +145,15 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
       <ConfirmDialog
         open={removing}
         onOpenChange={setRemoving}
-        title="Remove stop from the tour?"
-        description={`${stop.recipientName ?? stop.address.street} goes back to the unassigned list of ${summary.depot.name} and can be planned on another tour. Nothing is deleted.${summary.tour.publishedAt ? " The driver's app drops it at the next sync." : ""}`}
-        confirmLabel="Remove from tour"
+        title={tr("tours.se.removeTitle")}
+        description={tr(summary.tour.publishedAt ? "tours.se.removeDescPublished" : "tours.se.removeDesc", { name: stop.recipientName ?? stop.address.street, depot: summary.depot.name })}
+        confirmLabel={tr("tours.se.removeConfirm")}
         onConfirm={async () => {
           try {
             await assignStops([stop.id], null);
-            toast.success("Stop back in the unassigned list");
+            toast.success(tr("tours.se.removed"));
           } catch (e) {
-            toast.error("Not removed", { description: errorMessage(e) });
+            toast.error(tr("tours.se.notRemoved"), { description: errorMessage(e) });
             throw e;
           }
         }}
@@ -160,8 +162,8 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
       <Dialog
         open={cancelling}
         onOpenChange={(o) => (setCancelling(o), o || setCancelReason(""))}
-        title="Cancel this stop?"
-        description="The stop stays on the tour as cancelled, with your reason, name and the time. It is not delivered and disappears from the driver's app at the next sync."
+        title={tr("tours.se.cancelTitle")}
+        description={tr("tours.se.cancelDesc")}
         footer={
           <Button
             variant="danger"
@@ -169,39 +171,39 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
             onClick={async () => {
               try {
                 await lifecycleApi(session.organizationId).cancelStop(stop.id, cancelReason.trim());
-                toast.success("Stop cancelled");
+                toast.success(tr("tours.se.cancelled"));
                 setCancelling(false);
                 setCancelReason("");
               } catch (e) {
-                toast.error("Not cancelled", { description: errorMessage(e) });
+                toast.error(tr("tours.se.notCancelled"), { description: errorMessage(e) });
               } finally {
                 void reload().catch(() => undefined);
               }
             }}
           >
-            <Ban /> Cancel stop
+            <Ban /> {tr("tours.se.cancelStop")}
           </Button>
         }
       >
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-          Reason
-          <textarea className={`${fieldCls} h-20 py-2`} value={cancelReason} maxLength={500} onChange={(e) => setCancelReason(e.target.value)} aria-label="Reason for cancelling the stop" />
+          {tr("tours.se.reason")}
+          <textarea className={`${fieldCls} h-20 py-2`} value={cancelReason} maxLength={500} onChange={(e) => setCancelReason(e.target.value)} aria-label={tr("tours.se.cancelReasonAria")} />
         </label>
       </Dialog>
 
       <ConfirmDialog
         open={deleting}
         onOpenChange={setDeleting}
-        title="Delete stop permanently?"
-        description={`Only for draft or test stops without any history. ${stop.recipientName ?? stop.address.street} and its ${stop.parcels.length} parcel(s) are deleted. A stop with history (arrival, outcome, proof, scan) cannot be deleted – cancel it instead.`}
-        confirmLabel="Delete stop"
+        title={tr("tours.se.deleteTitle")}
+        description={tr("tours.se.deleteDesc", { name: stop.recipientName ?? stop.address.street, count: stop.parcels.length })}
+        confirmLabel={tr("tours.se.deleteConfirm")}
         tone="danger"
         onConfirm={async () => {
           try {
             await deleteStop(stop.id);
-            toast.success("Stop deleted");
+            toast.success(tr("tours.se.deleted"));
           } catch (e) {
-            toast.error("Not deleted", { description: errorMessage(e) });
+            toast.error(tr("tours.se.notDeleted"), { description: errorMessage(e) });
             throw e;
           }
         }}

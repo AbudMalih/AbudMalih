@@ -5,8 +5,9 @@ import { Button, Card, EmptyState, Menu, MenuContent, MenuItem, MenuLabel, MenuT
 import { AlertTriangle, ArrowUpFromLine, PackagePlus, SearchX, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { errorMessage } from "../lib/api";
+import { useI18n } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
-import { PICKUP_STATE, PickupStateBadge, deadlineLabel } from "./StatusBadge";
+import { PickupStateBadge, deadlineLabel, pickupStateLabel } from "./StatusBadge";
 import { TourDetailSheet } from "./TourDetail";
 
 type Filter = "attention" | "all" | PickupState;
@@ -22,13 +23,14 @@ export function filterPickups(rows: PickupRow[], filter: Filter, query: string):
 
 export function PickupsView() {
   const { pickups, data, summaries, assignStops, selectTour, scoped } = useDispatch();
+  const { t, fmt } = useI18n();
   const [filter, setFilter] = useState<Filter>("attention");
   const [query, setQuery] = useState("");
   const rows = useMemo(() => filterPickups(pickups, filter, query), [pickups, filter, query]);
   const chips: { key: Filter; label: string }[] = [
-    { key: "attention", label: "Needs attention" },
-    { key: "all", label: "All" },
-    ...(["missed", "late", "at_risk", "unassigned", "scheduled", "completed"] as PickupState[]).map((k) => ({ key: k as Filter, label: PICKUP_STATE[k].label })),
+    { key: "attention", label: t("pickups.attention") },
+    { key: "all", label: t("common.all") },
+    ...(["missed", "late", "at_risk", "unassigned", "scheduled", "completed"] as PickupState[]).map((k) => ({ key: k as Filter, label: pickupStateLabel(k, t) })),
   ];
   const count = (f: Filter) => filterPickups(pickups, f, "").length;
 
@@ -36,16 +38,14 @@ export function PickupsView() {
     <div className="flex flex-col">
       <div className="flex flex-col gap-5">
         <div className="mb-4 flex flex-col gap-1">
-          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Pickups</h1>
-          <p className="mt-1 text-sm text-ink-2">
-            Pickup schedule for {data.date} · deadlines relative to {formatClock(data.asOfMinute)} · no carrier integration
-          </p>
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("pickups.title")}</h1>
+          <p className="mt-1 text-sm text-ink-2">{t("pickups.subtitle", { date: fmt.day(data.date), time: formatClock(data.asOfMinute) })}</p>
         </div>
 
         <Card className="overflow-hidden">
           <div className="flex flex-col gap-3 border-b border-line px-4 py-3">
-            <SearchInput value={query} onChange={setQuery} placeholder="Search customer, address, tour, driver…" label="Search pickups" className="sm:w-96" />
-            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1" role="tablist" aria-label="Filter pickups">
+            <SearchInput value={query} onChange={setQuery} placeholder={t("pickups.searchPlaceholder")} label={t("pickups.searchLabel")} className="sm:w-96" />
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1" role="tablist" aria-label={t("pickups.filterLabel")}>
               {chips.map((c) => (
                 <button
                   key={c.key}
@@ -65,20 +65,24 @@ export function PickupsView() {
             </div>
           </div>
           {rows.length === 0 ? (
-            <EmptyState icon={<SearchX />} title={filter === "attention" ? "No pickups need attention" : "No pickups match"} description={pickups.length ? "Everything in this filter is on schedule." : "No pickups for this date."} />
+            <EmptyState
+              icon={<SearchX />}
+              title={filter === "attention" ? t("pickups.noAttention") : t("pickups.noMatch")}
+              description={pickups.length ? t("pickups.onSchedule") : t("pickups.noneForDate")}
+            />
           ) : (
             <div className="relative overflow-x-auto">
               <table className="w-full min-w-[960px] text-[13px]">
                 <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                   <tr className="border-b border-line">
-                    <th className="h-10 ps-4 pe-3 text-start font-medium">Deadline</th>
-                    <th className="h-10 px-3 text-start font-medium">Customer / location</th>
-                    <th className="h-10 px-3 text-start font-medium">Window</th>
-                    <th className="h-10 px-3 text-start font-medium">Tour · driver</th>
-                    <th className="h-10 px-3 text-start font-medium">ETA</th>
-                    <th className="h-10 px-3 text-start font-medium">Status</th>
+                    <th className="h-10 ps-4 pe-3 text-start font-medium">{t("pickups.th.deadline")}</th>
+                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.customer")}</th>
+                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.window")}</th>
+                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.tourDriver")}</th>
+                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.eta")}</th>
+                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.status")}</th>
                     <th className="h-10 pe-4 ps-3 text-end font-medium">
-                      <span className="sr-only">Actions</span>
+                      <span className="sr-only">{t("pickups.th.actions")}</span>
                     </th>
                   </tr>
                 </thead>
@@ -93,13 +97,13 @@ export function PickupsView() {
                           <span className={cn("font-semibold tabular", !open ? "text-muted" : (r.minutesToDeadline ?? 999) < 60 ? "text-danger-ink" : (r.minutesToDeadline ?? 999) < 150 ? "text-warning-ink" : "text-ink")}>
                             {r.stop.timeWindow ? formatClock(r.stop.timeWindow.end) : "–"}
                           </span>
-                          <span className="block text-2xs text-muted">{open ? `closes ${deadlineLabel(r.minutesToDeadline)}` : "closed"}</span>
+                          <span className="block text-2xs text-muted">{open ? t("pickups.closes", { when: deadlineLabel(r.minutesToDeadline, t) }) : t("pickups.closed")}</span>
                         </td>
                         <td className="px-3 py-3">
                           <span className="flex items-center gap-1.5 font-medium text-ink">
                             <ArrowUpFromLine className="size-3.5 text-nx-violet-text" />
                             {r.stop.recipientName}
-                            {r.stop.priority && <Star className="size-3.5 fill-nx-amber text-nx-amber" aria-label="Priority" />}
+                            {r.stop.priority && <Star className="size-3.5 fill-nx-amber text-nx-amber" aria-label={t("pickups.priority")} />}
                           </span>
                           <span className="block text-xs text-muted">
                             {formatAddress(r.stop)} · {scoped.depots.find((x) => x.id === r.depotId)?.name}
@@ -110,14 +114,14 @@ export function PickupsView() {
                           {r.tourId ? (
                             <button onClick={() => selectTour(r.tourId)} className="text-start font-medium text-ink hover:text-brand-700">
                               {r.tourName}
-                              <span className="block text-xs font-normal text-muted">{r.driverName ?? "no driver"}</span>
+                              <span className="block text-xs font-normal text-muted">{r.driverName ?? t("pickups.noDriver")}</span>
                             </button>
                           ) : (
-                            <span className="text-warning-ink">Not on a tour</span>
+                            <span className="text-warning-ink">{t("pickups.notOnTour")}</span>
                           )}
                         </td>
                         <td className={cn("whitespace-nowrap px-3 py-3 tabular", r.state === "missed" || (r.state === "late" && !r.estimated) ? "font-medium text-danger-ink" : r.state === "late" ? "text-warning-ink" : "text-ink-2")}>
-                          {r.etaMinute !== null ? `${formatClock(r.etaMinute)}${r.estimated ? " (est.)" : ""}` : "–"}
+                          {r.etaMinute !== null ? (r.estimated ? t("pickups.etaEst", { time: formatClock(r.etaMinute) }) : formatClock(r.etaMinute)) : "–"}
                         </td>
                         <td className="whitespace-nowrap px-3 py-3">
                           <PickupStateBadge state={r.state} estimated={r.estimated} />
@@ -127,19 +131,19 @@ export function PickupsView() {
                             <Menu>
                               <MenuTrigger asChild>
                                 <Button size="sm" variant="secondary" disabled={tours.length === 0}>
-                                  <PackagePlus /> Assign
+                                  <PackagePlus /> {t("pickups.assign")}
                                 </Button>
                               </MenuTrigger>
                               <MenuContent className="w-56">
-                                <MenuLabel>Add to tour</MenuLabel>
+                                <MenuLabel>{t("pickups.addToTour")}</MenuLabel>
                                 {tours.map((s) => (
                                   <MenuItem
                                     key={s.tour.id}
                                     hint={s.driver?.displayName.split(" ")[0]}
                                     onSelect={() => {
                                       assignStops([r.stop.id], s.tour.id)
-                                        .then(() => toast.success(`Pickup added to ${s.tour.name}`, { description: "Saved. Re-optimize the tour to place it in the route." }))
-                                        .catch((e) => toast.error("Could not assign the pickup", { description: errorMessage(e) }));
+                                        .then(() => toast.success(t("pickups.added", { tour: s.tour.name }), { description: t("pickups.addedDesc") }))
+                                        .catch((e) => toast.error(t("pickups.assignFailed"), { description: errorMessage(e) }));
                                     }}
                                   >
                                     {s.tour.name}
@@ -149,7 +153,7 @@ export function PickupsView() {
                             </Menu>
                           ) : r.tourId ? (
                             <Button size="sm" variant="ghost" onClick={() => selectTour(r.tourId)}>
-                              View tour
+                              {t("pickups.viewTour")}
                             </Button>
                           ) : null}
                         </td>

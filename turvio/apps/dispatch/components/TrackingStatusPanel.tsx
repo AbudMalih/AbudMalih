@@ -5,8 +5,10 @@ import { cn } from "@turvio/web-ui/ds";
 import { Radio, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EN_T, type TFunction } from "../lib/i18n";
+import { useT } from "../lib/i18n/client";
 import { ageLabel, freshnessOf } from "../lib/live";
-import { MODE_LABEL, settingsApi, type DriverTracking, type TrackingDrivers } from "../lib/settings";
+import { modeLabel, settingsApi, type DriverTracking, type TrackingDrivers } from "../lib/settings";
 import { useDispatch } from "../lib/store";
 
 /**
@@ -16,16 +18,19 @@ import { useDispatch } from "../lib/store";
  */
 export type FleetState = "live" | "stale" | "no_signal" | "awaiting_acknowledgement" | "disabled" | "no_app_login" | "tour_paused" | "no_active_tour";
 
-export const FLEET_STATE: Record<FleetState, { label: string; dot: string; text: string; explain: string }> = {
-  live: { label: "Live", dot: "bg-success", text: "text-success-ink", explain: "Position from the last 90 seconds." },
-  stale: { label: "Stale", dot: "bg-nx-amber", text: "text-warning-ink", explain: "Last position 1.5–5 minutes old – shown as the last received position, not live." },
-  no_signal: { label: "No signal", dot: "bg-muted", text: "text-muted", explain: "No position for over 5 minutes, or none yet on this tour." },
-  awaiting_acknowledgement: { label: "Awaiting acknowledgement", dot: "bg-nx-amber", text: "text-warning-ink", explain: "The driver has not confirmed the tracking notice – nothing is recorded." },
-  disabled: { label: "Not tracked", dot: "bg-surface-3", text: "text-muted", explain: "Tracking is off for the company, or this driver is not in the pilot." },
-  no_app_login: { label: "No app login", dot: "bg-surface-3", text: "text-muted", explain: "This driver has no TURVIO Driver account." },
-  tour_paused: { label: "Paused", dot: "bg-surface-3", text: "text-muted", explain: "No positions are recorded while the tour is paused." },
-  no_active_tour: { label: "No active tour", dot: "bg-surface-3", text: "text-muted", explain: "Tracking only runs while a tour is driven." },
+/** Colours per state; texts come from `fleetStateLabel` / `fleetStateExplain`. */
+export const FLEET_STATE: Record<FleetState, { dot: string; text: string }> = {
+  live: { dot: "bg-success", text: "text-success-ink" },
+  stale: { dot: "bg-nx-amber", text: "text-warning-ink" },
+  no_signal: { dot: "bg-muted", text: "text-muted" },
+  awaiting_acknowledgement: { dot: "bg-nx-amber", text: "text-warning-ink" },
+  disabled: { dot: "bg-surface-3", text: "text-muted" },
+  no_app_login: { dot: "bg-surface-3", text: "text-muted" },
+  tour_paused: { dot: "bg-surface-3", text: "text-muted" },
+  no_active_tour: { dot: "bg-surface-3", text: "text-muted" },
 };
+export const fleetStateLabel = (s: FleetState, t: TFunction = EN_T) => t(`fleet.state.${s}`);
+export const fleetStateExplain = (s: FleetState, t: TFunction = EN_T) => t(`fleet.explain.${s}`);
 
 /** Map-consistent state of one driver (positions: 90 s live, 5 min stale). */
 export function fleetStateOf(d: DriverTracking, serverNowMs: number): FleetState {
@@ -50,6 +55,7 @@ const ORDER: FleetState[] = ["live", "stale", "no_signal", "awaiting_acknowledge
 
 export function TrackingStatusPanel() {
   const { session, positionTick } = useDispatch();
+  const t = useT();
   const allowed = can(session.role, "tracking.view_live");
   const [data, setData] = useState<TrackingDrivers | null>(null);
   const [failed, setFailed] = useState(false);
@@ -92,29 +98,29 @@ export function TrackingStatusPanel() {
   const notLive = rows.filter((r) => r.state !== "live");
   const admin = can(session.role, "org.settings.manage");
   return (
-    <section aria-label="Tracking status">
+    <section aria-label={t("fleet.trackingStatus")}>
       <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
-        <Radio className="size-3.5" /> Tracking on active tours
-        {data && <span className="ms-auto font-medium normal-case tracking-normal text-muted">Mode: {MODE_LABEL[data.mode]}</span>}
+        <Radio className="size-3.5" /> {t("fleet.trackingOnActiveTours")}
+        {data && <span className="ms-auto font-medium normal-case tracking-normal text-muted">{t("fleet.modeValue", { mode: modeLabel(data.mode, t) })}</span>}
       </h3>
       {!data ? null : data.mode === "off" ? (
         <p className="rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-2">
-          Live tracking is switched off for the company – the map shows no vehicles.{" "}
+          {t("fleet.trackingOffNote")}{" "}
           {admin && (
             <Link href="/settings?section=tracking" className="font-semibold text-brand-700 hover:underline">
-              Manage tracking
+              {t("fleet.manageTracking")}
             </Link>
           )}
         </p>
       ) : rows.length === 0 ? (
-        <p className="rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-muted">No tour is being driven right now.</p>
+        <p className="rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-muted">{t("fleet.noTourDriven")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-1.5" data-testid="tracking-counts">
             {ORDER.filter((s) => counts.get(s)).map((s) => (
-              <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2 py-0.5 text-2xs font-semibold text-ink-2" title={FLEET_STATE[s].explain}>
+              <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2 py-0.5 text-2xs font-semibold text-ink-2" title={fleetStateExplain(s, t)}>
                 <span className={cn("size-2 rounded-full", FLEET_STATE[s].dot)} aria-hidden="true" />
-                {counts.get(s)} {FLEET_STATE[s].label}
+                {t("fleet.stateCount", { count: counts.get(s), label: fleetStateLabel(s, t) })}
               </span>
             ))}
           </div>
@@ -125,12 +131,12 @@ export function TrackingStatusPanel() {
                   <span className="min-w-0">
                     <span className="block truncate font-medium text-ink">{d.name}</span>
                     <span className="block truncate text-2xs text-muted">
-                      {d.currentTour!.name} · {FLEET_STATE[state].explain}
+                      {d.currentTour!.name} · {fleetStateExplain(state, t)}
                     </span>
                   </span>
                   <span className={cn("shrink-0 text-2xs font-bold", FLEET_STATE[state].text)}>
-                    {FLEET_STATE[state].label}
-                    {age !== null && state !== "live" ? ` · ${ageLabel(age)}` : ""}
+                    {fleetStateLabel(state, t)}
+                    {age !== null && state !== "live" ? ` · ${ageLabel(age, t)}` : ""}
                   </span>
                 </li>
               ))}
@@ -138,7 +144,7 @@ export function TrackingStatusPanel() {
           )}
           {admin && (
             <Link href="/settings?section=tracking" className="inline-flex items-center gap-1 text-2xs font-semibold text-brand-700 hover:underline">
-              <Settings2 className="size-3.5" /> Manage tracking and pilots
+              <Settings2 className="size-3.5" /> {t("fleet.manageTrackingPilots")}
             </Link>
           )}
         </div>

@@ -3,6 +3,7 @@
 import { can } from "@turvio/shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api";
+import { EN_T, type TFunction } from "./i18n";
 import { useDispatch } from "./store";
 
 /** One driver on the road, as GET /fleet/live returns it. */
@@ -35,13 +36,15 @@ export function freshnessOf(recordedAt: string, nowMs: number): { state: Freshne
   return { state: ageSeconds <= LIVE_MAX_SECONDS ? "live" : ageSeconds <= DELAYED_MAX_SECONDS ? "delayed" : "offline", ageSeconds };
 }
 
-export function ageLabel(seconds: number): string {
-  if (seconds < 60) return `${seconds} s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
-  return `${Math.floor(seconds / 3600)} h ${Math.floor((seconds % 3600) / 60)} min ago`;
+export function ageLabel(seconds: number, t: TFunction = EN_T): string {
+  if (seconds < 60) return t("fleet.age.s", { n: seconds });
+  if (seconds < 3600) return t("fleet.age.min", { n: Math.floor(seconds / 60) });
+  return t("fleet.age.h", { h: Math.floor(seconds / 3600), m: Math.floor((seconds % 3600) / 60) });
 }
 
-export const FRESHNESS_LABEL: Record<Freshness, string> = { live: "Live", delayed: "Delayed", offline: "No signal" };
+export const freshnessLabel = (f: Freshness, t: TFunction = EN_T) => t(`fleet.freshness.${f}`);
+/** English labels (kept for callers without a translator; prefer `freshnessLabel(f, t)`). */
+export const FRESHNESS_LABEL: Record<Freshness, string> = { live: freshnessLabel("live"), delayed: freshnessLabel("delayed"), offline: freshnessLabel("offline") };
 
 /**
  * Live positions for the dispatcher's scope. Refetches on server-sent "position" events

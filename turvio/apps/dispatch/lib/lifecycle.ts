@@ -1,5 +1,6 @@
 import type { Stop, Tour } from "@turvio/shared";
 import { api } from "./api";
+import { EN_T, type TFunction } from "./i18n";
 
 /*
  * Tour lifecycle API (Phase B): list with filters, calendar, finish / cancel, archive / restore,
@@ -181,32 +182,39 @@ export const lifecycleApi = (org: string) => ({
     api<BulkResult>("POST", `/v1/orgs/${org}/tours/bulk`, body),
 });
 
-/** Plain-language explanation of a refusal / protection code from the server. */
-export const REASON_TEXT: Record<string, string> = {
-  status_in_progress: "is being driven",
-  status_paused: "is paused (running)",
-  status_completed: "is completed",
-  status_cancelled: "is cancelled",
-  started: "was started",
-  published: "is published to the driver",
-  processed_stops: "has stops with an outcome",
-  stop_history: "has stop history",
-  proofs: "has proofs of delivery",
-  scans: "has scanned parcels",
-  tracking: "has GPS tracking records",
-  returned_stops: "returned open stops to the pool when it was closed",
-  execution_history: "has execution history",
-  not_found: "is not visible to you (other location or deleted)",
-  active: "is running – finish or cancel it first",
-  archived: "is archived – restore it first",
-  not_started: "has not started (cancel or withdraw it instead)",
-  version_conflict: "was changed by someone else meanwhile",
-  tour_closed: "is closed",
-  tour_archived: "is archived",
-  tour_protected: "has protected history",
-};
-export const reasonText = (code: string) => REASON_TEXT[code] ?? code.replace(/_/g, " ");
+/** Refusal / protection codes the server sends (delete / archive eligibility, bulk previews and runs). */
+export const REASON_CODES = [
+  "status_in_progress",
+  "status_paused",
+  "status_completed",
+  "status_cancelled",
+  "started",
+  "published",
+  "processed_stops",
+  "stop_history",
+  "proofs",
+  "scans",
+  "tracking",
+  "returned_stops",
+  "execution_history",
+  "not_found",
+  "active",
+  "archived",
+  "not_started",
+  "version_conflict",
+  "tour_closed",
+  "tour_archived",
+  "tour_protected",
+] as const;
+export type ReasonCode = (typeof REASON_CODES)[number];
+const KNOWN_REASONS = new Set<string>(REASON_CODES);
 
+/** Plain-language explanation of a refusal / protection code (completes "This tour …"), in English. */
+export const REASON_TEXT: Record<string, string> = Object.fromEntries(REASON_CODES.map((c) => [c, EN_T(`tours.reason.${c}`)]));
+/** The explanation of a code in the given language; an unknown code is shown readable as it is. */
+export const reasonText = (code: string, t: TFunction = EN_T) => (KNOWN_REASONS.has(code) ? t(`tours.reason.${code as ReasonCode}`) : code.replace(/_/g, " "));
+
+/** English status labels (kept for callers without a translator); use `statusLabel` for display. */
 export const STATUS_LABEL: Record<LifecycleStatus, string> = {
   planned: "Planned",
   in_progress: "On route",
@@ -214,6 +222,7 @@ export const STATUS_LABEL: Record<LifecycleStatus, string> = {
   completed: "Completed",
   cancelled: "Cancelled",
 };
+export const statusLabel = (s: LifecycleStatus, t: TFunction = EN_T) => t(`common.tourStatus.${s}`);
 
 /** Which lifecycle actions apply to a tour in its current state (the server re-checks). */
 export function availableActions(t: Pick<Tour, "status" | "publishedAt" | "archivedAt" | "driverId">, stopCount: number) {

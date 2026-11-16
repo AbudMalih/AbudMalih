@@ -5,6 +5,7 @@ import { Button, Dialog, toast } from "@turvio/web-ui/ds";
 import { Camera, PenLine, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { api, errorMessage } from "../lib/api";
+import { useI18n } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 
 /**
@@ -13,6 +14,7 @@ import { useDispatch } from "../lib/store";
  */
 export function ProofList({ stop }: { stop: Stop }) {
   const { session, reload } = useDispatch();
+  const { t, fmt } = useI18n();
   const [open, setOpen] = useState<string | null>(null);
   const canDelete = session.role === "owner" || session.role === "admin";
   const proofs = stop.proofs ?? [];
@@ -20,7 +22,7 @@ export function ProofList({ stop }: { stop: Stop }) {
   const url = (id: string) => `/api/turvio/v1/orgs/${session.organizationId}/proofs/${id}/file`;
   return (
     <div className="flex flex-col gap-1.5" data-testid="proofs">
-      <span className="text-2xs font-semibold uppercase tracking-[0.06em] text-subtle">Proof of delivery</span>
+      <span className="text-2xs font-semibold uppercase tracking-[0.06em] text-subtle">{t("pickups.proof.heading")}</span>
       <div className="flex flex-wrap gap-1.5">
         {proofs.map((p) => (
           <button
@@ -31,40 +33,43 @@ export function ProofList({ stop }: { stop: Stop }) {
             data-testid={`proof-${p.kind}`}
           >
             {p.kind === "photo" ? <Camera className="size-3.5" /> : <PenLine className="size-3.5" />}
-            {p.kind === "photo" ? "Photo" : "Signature"}
-            {p.recipientName ? ` · ${p.recipientName}` : ""} · {new Date(p.capturedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+            {p.kind === "photo" ? t("pickups.proof.photo") : t("pickups.proof.signature")}
+            {p.recipientName ? ` · ${p.recipientName}` : ""} · {fmt.time(p.capturedAt)}
           </button>
         ))}
       </div>
       <Dialog
         open={!!current}
         onOpenChange={(v) => !v && setOpen(null)}
-        title={current?.kind === "photo" ? "Delivery photo" : "Signature"}
-        description={`${stop.recipientName ?? ""} · captured ${current ? new Date(current.capturedAt).toLocaleString("de-DE") : ""}${current?.hasLocation ? " · with position" : ""}`}
+        title={current?.kind === "photo" ? t("pickups.proof.deliveryPhoto") : t("pickups.proof.signature")}
+        description={t(current?.hasLocation ? "pickups.proof.capturedWithPosition" : "pickups.proof.captured", {
+          name: stop.recipientName ?? "",
+          time: current ? fmt.dateTime(current.capturedAt) : "",
+        })}
       >
         {current && (
           <div className="flex flex-col gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url(current.id)} alt={current.kind === "photo" ? "Delivery photo" : "Recipient signature"} className="max-h-[60vh] w-full rounded-md border border-line bg-white object-contain" data-testid="proof-image" />
+            <img src={url(current.id)} alt={current.kind === "photo" ? t("pickups.proof.deliveryPhoto") : t("pickups.proof.recipientSignature")} className="max-h-[60vh] w-full rounded-md border border-line bg-white object-contain" data-testid="proof-image" />
             {current.notes && <p className="text-xs text-muted">{current.notes}</p>}
-            <p className="text-2xs text-subtle">Personal data – visible only to your company. Retention follows the company setting.</p>
+            <p className="text-2xs text-subtle">{t("pickups.proof.privacy")}</p>
             {canDelete && (
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={async () => {
-                  if (!window.confirm("Delete this proof of delivery permanently?")) return;
+                  if (!window.confirm(t("pickups.proof.confirmDelete"))) return;
                   try {
                     await api("DELETE", `/v1/orgs/${session.organizationId}/proofs/${current.id}`);
                     setOpen(null);
-                    toast.success("Proof deleted");
+                    toast.success(t("pickups.proof.deleted"));
                     await reload();
                   } catch (e) {
-                    toast.error("Could not delete", { description: errorMessage(e) });
+                    toast.error(t("pickups.proof.deleteFailed"), { description: errorMessage(e) });
                   }
                 }}
               >
-                <Trash2 /> Delete proof
+                <Trash2 /> {t("pickups.proof.delete")}
               </Button>
             )}
           </div>

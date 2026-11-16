@@ -10,9 +10,10 @@ import { errorMessage } from "../lib/api";
 import { fieldCls } from "../lib/helpers";
 import { LOCALE_NAMES, LOCALES, type Locale } from "../lib/i18n";
 import { useI18n } from "../lib/i18n/client";
-import { MODE_LABEL, TRACKING_STATE, settingsApi, type CompanySettings, type DriverTracking, type Preferences, type TrackingDrivers, type TrackingMode } from "../lib/settings";
+import { TRACKING_STATE, modeLabel, settingsApi, trackingStateExplain, trackingStateLabel, type CompanySettings, type DriverTracking, type Preferences, type TrackingDrivers, type TrackingMode } from "../lib/settings";
 import { ageLabel } from "../lib/live";
 import { useDispatch } from "../lib/store";
+import { roleLabel } from "./DispatchShell";
 
 type Section = "preferences" | "company" | "driver-rules" | "tracking" | "team";
 
@@ -22,6 +23,7 @@ type Section = "preferences" | "company" | "driver-rules" | "tracking" | "team";
  */
 export function SettingsView() {
   const { session } = useDispatch();
+  const { t, tr } = useI18n();
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -42,11 +44,11 @@ export function SettingsView() {
 
   const seesTracking = can(session.role, "tracking.view_live");
   const sections: { key: Section; label: string; icon: ReactNode; show: boolean }[] = [
-    { key: "preferences", label: "My preferences", icon: <UserRound />, show: true },
-    { key: "company", label: "Company", icon: <Building2 />, show: true },
-    { key: "driver-rules", label: "Driver app rules", icon: <Smartphone />, show: true },
-    { key: "tracking", label: "Live tracking", icon: <Radio />, show: seesTracking },
-    { key: "team", label: "Team & roles", icon: <ShieldCheck />, show: true },
+    { key: "preferences", label: t("settings.section.preferences"), icon: <UserRound />, show: true },
+    { key: "company", label: t("settings.section.company"), icon: <Building2 />, show: true },
+    { key: "driver-rules", label: t("settings.section.driverRules"), icon: <Smartphone />, show: true },
+    { key: "tracking", label: t("settings.section.tracking"), icon: <Radio />, show: seesTracking },
+    { key: "team", label: t("settings.section.team"), icon: <ShieldCheck />, show: true },
   ];
   const visible = sections.filter((s) => s.show);
   const raw = params?.get("section") as Section | null;
@@ -56,14 +58,14 @@ export function SettingsView() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Settings</h1>
+        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("shell.title.settings")}</h1>
         <p className="text-sm text-ink-2">
-          Your own preferences, and {session.organizationName}&apos;s settings.{" "}
-          {overview && !overview.canEdit.company && <span className="text-muted">Company settings are shown read-only – company administrators change them.</span>}
+          {tr("settings.intro", { org: session.organizationName })}{" "}
+          {overview && !overview.canEdit.company && <span className="text-muted">{t("settings.readOnlyCompany")}</span>}
         </p>
       </div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_1fr]">
-        <nav aria-label="Settings sections" className="flex gap-1 overflow-x-auto lg:flex-col">
+        <nav aria-label={t("settings.nav")} className="flex gap-1 overflow-x-auto lg:flex-col">
           {visible.map((s) => (
             <button
               key={s.key}
@@ -99,9 +101,10 @@ export function SettingsView() {
 }
 
 function ReadOnlyNote() {
+  const { t } = useI18n();
   return (
     <p className="flex items-center gap-1.5 text-2xs text-muted">
-      <Lock className="size-3.5" /> Read-only for your role.
+      <Lock className="size-3.5" /> {t("settings.readOnly")}
     </p>
   );
 }
@@ -143,19 +146,19 @@ function PreferencesSection() {
         setDepot(d?.defaultDepotId ?? "");
         setToursView(d?.toursView ?? "day");
       },
-      (e) => toast.error("Preferences not loaded", { description: errorMessage(e) }),
+      (e) => toast.error(t("settings.prefsNotLoaded"), { description: errorMessage(e) }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.organizationId]);
-  const applyTheme = (t: Preferences["theme"]) => {
-    if (t === "system") {
+  const applyTheme = (th: Preferences["theme"]) => {
+    if (th === "system") {
       try {
         localStorage.removeItem(THEME_KEY);
       } catch {
         /* private mode */
       }
       document.documentElement.dataset.theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-    } else setTheme(t);
+    } else setTheme(th);
   };
   const save = async () => {
     setBusy(true);
@@ -164,9 +167,9 @@ function PreferencesSection() {
       setPrefs(p);
       applyTheme(theme);
       if (depot) setDepotId(depot);
-      toast.success("Preferences saved", { description: "Stored with your account – they apply on every computer you sign in on." });
+      toast.success(t("settings.prefsSaved"), { description: t("settings.prefsSavedDesc") });
     } catch (e) {
-      toast.error("Not saved", { description: errorMessage(e) });
+      toast.error(t("settings.notSaved"), { description: errorMessage(e) });
     } finally {
       setBusy(false);
     }
@@ -174,7 +177,7 @@ function PreferencesSection() {
   if (!prefs) return <Skeleton className="h-64" />;
   return (
     <Card className="flex flex-col gap-5 p-5">
-      <CardHeader className="-mx-5 -mt-5" title="My preferences" description="Personal – they never change anything for your colleagues." />
+      <CardHeader className="-mx-5 -mt-5" title={t("settings.section.preferences")} description={t("settings.prefsDesc")} />
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-[13px] font-semibold text-ink">{t("shell.language")}</legend>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("shell.language")} data-testid="language-choice">
@@ -197,52 +200,52 @@ function PreferencesSection() {
         <span className="text-2xs text-muted">{t("shell.languageHint")}</span>
       </fieldset>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-[13px] font-semibold text-ink">Appearance</legend>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Appearance">
-          {(["system", "light", "dark"] as const).map((t) => (
+        <legend className="mb-1 text-[13px] font-semibold text-ink">{t("settings.appearance")}</legend>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("settings.appearance")}>
+          {(["system", "light", "dark"] as const).map((th) => (
             <button
-              key={t}
+              key={th}
               type="button"
               role="radio"
-              aria-checked={theme === t}
+              aria-checked={theme === th}
               onClick={() => {
-                setThemeChoice(t);
-                applyTheme(t);
+                setThemeChoice(th);
+                applyTheme(th);
               }}
-              className={cn("h-10 rounded-xl border border-line px-4 text-[13px] font-semibold text-ink-2 hover:border-line-strong", theme === t && "border-brand-500 bg-brand-50 text-brand-700")}
+              className={cn("h-10 rounded-xl border border-line px-4 text-[13px] font-semibold text-ink-2 hover:border-line-strong", theme === th && "border-brand-500 bg-brand-50 text-brand-700")}
             >
-              {t === "system" ? "Follow system" : t === "light" ? "Light" : "Dark"}
+              {t(`settings.theme.${th}`)}
             </button>
           ))}
         </div>
-        <span className="text-2xs text-muted">The switch in the top bar changes it for this browser too.</span>
+        <span className="text-2xs text-muted">{t("settings.appearanceHint")}</span>
       </fieldset>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-          Default location
-          <select className={fieldCls} value={depot} onChange={(e) => setDepot(e.target.value)} aria-label="Default location">
-            <option value="">All my locations</option>
+          {t("settings.defaultLocation")}
+          <select className={fieldCls} value={depot} onChange={(e) => setDepot(e.target.value)} aria-label={t("settings.defaultLocation")}>
+            <option value="">{t("settings.allMyLocations")}</option>
             {scoped.depots.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}
               </option>
             ))}
           </select>
-          <span className="text-2xs font-normal text-muted">Selected when Dispatch opens.</span>
+          <span className="text-2xs font-normal text-muted">{t("settings.defaultLocationHint")}</span>
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-          Tours page opens with
-          <select className={fieldCls} value={toursView} onChange={(e) => setToursView(e.target.value as typeof toursView)} aria-label="Tours page opens with">
-            <option value="day">Day board</option>
-            <option value="all">All tours</option>
-            <option value="archived">Archive</option>
+          {t("settings.toursOpensWith")}
+          <select className={fieldCls} value={toursView} onChange={(e) => setToursView(e.target.value as typeof toursView)} aria-label={t("settings.toursOpensWith")}>
+            <option value="day">{t("settings.toursView.day")}</option>
+            <option value="all">{t("settings.toursView.all")}</option>
+            <option value="archived">{t("settings.toursView.archived")}</option>
           </select>
         </label>
       </div>
       <div>
         <Button variant="primary" onClick={() => void save()} disabled={busy}>
           {busy && <Loader2 className="animate-spin" />}
-          Save preferences
+          {t("settings.savePreferences")}
         </Button>
       </div>
     </Card>
@@ -252,6 +255,7 @@ function PreferencesSection() {
 // ---------------------------------------------------------------- company
 function CompanySection({ data, onSaved }: { data: CompanySettings; onSaved: () => void }) {
   const { session } = useDispatch();
+  const { t } = useI18n();
   const c = data.company;
   const editable = data.canEdit.company;
   const [form, setForm] = useState({
@@ -280,54 +284,54 @@ function CompanySection({ data, onSaved }: { data: CompanySettings; onSaved: () 
     setBusy(true);
     try {
       await settingsApi(session.organizationId).saveCompany(changed);
-      toast.success("Company details saved", { description: "The change is recorded in the audit log." });
+      toast.success(t("settings.companySaved"), { description: t("settings.auditLogged") });
       onSaved();
     } catch (e) {
-      toast.error("Not saved", { description: errorMessage(e) });
+      toast.error(t("settings.notSaved"), { description: errorMessage(e) });
     } finally {
       setBusy(false);
     }
   };
-  const field = (k: keyof typeof form, label: string, props: { type?: string; placeholder?: string; className?: string; maxLength?: number } = {}) => (
+  const field = (k: keyof typeof form, label: string, props: { type?: string; placeholder?: string; className?: string; maxLength?: number; ltr?: boolean } = {}) => (
     <label className={cn("flex flex-col gap-1.5 text-[13px] font-medium text-ink-2", props.className)}>
       {label}
-      <Input value={form[k]} disabled={!editable} type={props.type} placeholder={props.placeholder} maxLength={props.maxLength} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label} />
+      <Input value={form[k]} disabled={!editable} dir={props.ltr ? "ltr" : undefined} type={props.type} placeholder={props.placeholder} maxLength={props.maxLength} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label} />
     </label>
   );
   return (
     <Card className="flex flex-col gap-5 p-5">
-      <CardHeader className="-mx-5 -mt-5" title="Company" description="Shown to your own staff. Changes are recorded with your name." />
+      <CardHeader className="-mx-5 -mt-5" title={t("settings.section.company")} description={t("settings.companyDesc")} />
       {!editable && <ReadOnlyNote />}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {field("name", "Company name", { className: "sm:col-span-2", maxLength: 160 })}
-        {field("contactEmail", "Contact e-mail", { type: "email" })}
-        {field("contactPhone", "Contact phone", { placeholder: "+49 …" })}
-        {field("addressStreet", "Street and number", { className: "sm:col-span-2" })}
-        {field("addressPostalCode", "Postal code")}
-        {field("addressCity", "City")}
-        {field("addressCountry", "Country (ISO code)", { maxLength: 2 })}
-        {field("website", "Website", { placeholder: "https://" })}
+        {field("name", t("settings.field.name"), { className: "sm:col-span-2", maxLength: 160 })}
+        {field("contactEmail", t("settings.field.contactEmail"), { type: "email", ltr: true })}
+        {field("contactPhone", t("settings.field.contactPhone"), { placeholder: "+49 …", ltr: true })}
+        {field("addressStreet", t("settings.field.street"), { className: "sm:col-span-2" })}
+        {field("addressPostalCode", t("settings.field.postalCode"), { ltr: true })}
+        {field("addressCity", t("settings.field.city"))}
+        {field("addressCountry", t("settings.field.country"), { maxLength: 2, ltr: true })}
+        {field("website", t("settings.field.website"), { placeholder: "https://", ltr: true })}
       </div>
       <dl className="grid grid-cols-1 gap-3 rounded-xl border border-line bg-surface-2 p-4 text-[13px] sm:grid-cols-3">
         <div>
-          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Time zone</dt>
+          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.timeZone")}</dt>
           <dd className="font-semibold text-ink">{c.timeZone}</dd>
-          <dd className="text-2xs text-muted">Sets the company day for tours and reports.</dd>
+          <dd className="text-2xs text-muted">{t("settings.timeZoneHint")}</dd>
         </div>
         <div>
-          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Proof-of-delivery retention</dt>
-          <dd className="font-semibold text-ink">{data.proofRetentionDays} days</dd>
+          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.podRetention")}</dt>
+          <dd className="font-semibold text-ink">{t("settings.days", { count: data.proofRetentionDays })}</dd>
         </div>
         <div>
-          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Plan</dt>
-          <dd className="font-semibold text-ink">{data.subscription ? `${data.subscription.plan} · ${data.subscription.status}` : "Visible to company administrators"}</dd>
+          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.plan")}</dt>
+          <dd className="font-semibold text-ink">{data.subscription ? `${data.subscription.plan} · ${data.subscription.status}` : t("settings.planHidden")}</dd>
         </div>
       </dl>
       {editable && (
         <div>
           <Button variant="primary" onClick={() => void save()} disabled={busy || Object.keys(changed).length === 0 || !form.name.trim()}>
             {busy && <Loader2 className="animate-spin" />}
-            Save company details
+            {t("settings.saveCompany")}
           </Button>
         </div>
       )}
@@ -351,6 +355,7 @@ const slug = (s: string) =>
 
 function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved: () => void }) {
   const { session } = useDispatch();
+  const { t } = useI18n();
   const editable = data.canEdit.driverRules;
   const r = data.driverRules;
   const [reasons, setReasons] = useState(r.failureReasons.map((x) => ({ ...x, label: x.label ?? "" })));
@@ -368,48 +373,49 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
         showRecipientPhone: phone,
         podLocation,
       });
-      toast.success("Driver app rules saved", { description: "Drivers get them with their next sync." });
+      toast.success(t("settings.rulesSaved"), { description: t("settings.rulesSavedDesc") });
       onSaved();
     } catch (e) {
-      toast.error("Not saved", { description: errorMessage(e) });
+      toast.error(t("settings.notSaved"), { description: errorMessage(e) });
     } finally {
       setBusy(false);
     }
   };
   return (
     <Card className="flex flex-col gap-5 p-5">
-      <CardHeader className="-mx-5 -mt-5" title="Driver app rules" description="What the TURVIO Driver app asks for and shows. Drivers receive changes with their next sync." />
+      <CardHeader className="-mx-5 -mt-5" title={t("settings.section.driverRules")} description={t("settings.rulesDesc")} />
       {!editable && <ReadOnlyNote />}
       <div className="flex flex-col gap-3">
         <label className="flex items-start gap-3 text-[13px]">
-          <Checkbox checked={phone} onCheckedChange={(c) => editable && setPhone(c === true)} label="Show recipient phone numbers to drivers" />
+          <Checkbox checked={phone} onCheckedChange={(c) => editable && setPhone(c === true)} label={t("settings.showPhone")} />
           <span>
-            <span className="font-semibold text-ink">Show recipient phone numbers to drivers</span>
-            <span className="block text-2xs text-muted">Only when your contract with the sender allows passing them on.</span>
+            <span className="font-semibold text-ink">{t("settings.showPhone")}</span>
+            <span className="block text-2xs text-muted">{t("settings.showPhoneHint")}</span>
           </span>
         </label>
         <label className="flex items-start gap-3 text-[13px]">
-          <Checkbox checked={podLocation} onCheckedChange={(c) => editable && setPodLocation(c === true)} label="Store the device position with proofs of delivery" />
+          <Checkbox checked={podLocation} onCheckedChange={(c) => editable && setPodLocation(c === true)} label={t("settings.podLocation")} />
           <span>
-            <span className="font-semibold text-ink">Store the device position with proofs of delivery</span>
-            <span className="block text-2xs text-muted">Personal data of your drivers: switch on only with a privacy impact assessment and, where one exists, the works council&apos;s agreement.</span>
+            <span className="font-semibold text-ink">{t("settings.podLocation")}</span>
+            <span className="block text-2xs text-muted">{t("settings.podLocationHint")}</span>
           </span>
         </label>
       </div>
-      <section aria-label="Failure reasons" className="flex flex-col gap-2">
-        <h3 className="text-[13px] font-semibold text-ink">Reasons a delivery did not happen</h3>
+      <section aria-label={t("settings.failureReasons")} className="flex flex-col gap-2">
+        <h3 className="text-[13px] font-semibold text-ink">{t("settings.reasonsTitle")}</h3>
         <p className="text-2xs text-muted">
-          {r.customFailureReasons ? "Your company's own list." : "TURVIO's standard list – saving makes it your own."} Existing reasons cannot be removed: phones that were
-          offline may still report them, and those reports must not be refused.
+          {r.customFailureReasons ? t("settings.reasonsOwn") : t("settings.reasonsStandard")} {t("settings.reasonsNoRemove")}
         </p>
         <ul className="flex flex-col divide-y divide-line rounded-xl border border-line">
           {reasons.map((x, i) => (
             <li key={x.code} className="grid grid-cols-1 items-center gap-2 px-3 py-2 sm:grid-cols-[180px_1fr_auto]">
-              <code className="text-2xs text-muted">{x.code}</code>
-              <Input value={x.label} disabled={!editable} placeholder="Label shown to drivers (optional)" maxLength={80} onChange={(e) => setReasons(reasons.map((y, j) => (j === i ? { ...y, label: e.target.value } : y)))} aria-label={`Label for ${x.code}`} />
+              <code className="text-2xs text-muted" dir="ltr">
+                {x.code}
+              </code>
+              <Input value={x.label} disabled={!editable} placeholder={t("settings.labelPlaceholder")} maxLength={80} onChange={(e) => setReasons(reasons.map((y, j) => (j === i ? { ...y, label: e.target.value } : y)))} aria-label={t("settings.labelFor", { code: x.code })} />
               <label className="flex items-center gap-2 text-2xs text-ink-2">
-                <Checkbox checked={!!x.requiresNote} onCheckedChange={(c) => editable && setReasons(reasons.map((y, j) => (j === i ? { ...y, requiresNote: c === true } : y)))} label={`Note required for ${x.code}`} />
-                Note required
+                <Checkbox checked={!!x.requiresNote} onCheckedChange={(c) => editable && setReasons(reasons.map((y, j) => (j === i ? { ...y, requiresNote: c === true } : y)))} label={t("settings.noteRequiredFor", { code: x.code })} />
+                {t("settings.noteRequired")}
               </label>
             </li>
           ))}
@@ -417,8 +423,8 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
         {editable && reasons.length < 30 && (
           <div className="flex flex-wrap items-end gap-2">
             <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-              New reason
-              <Input value={newLabel} maxLength={80} onChange={(e) => setNewLabel(e.target.value)} placeholder="e.g. Parcel damaged" aria-label="New reason" className="w-64" />
+              {t("settings.newReason")}
+              <Input value={newLabel} maxLength={80} onChange={(e) => setNewLabel(e.target.value)} placeholder={t("settings.newReasonPlaceholder")} aria-label={t("settings.newReason")} className="w-64" />
             </label>
             <Button
               variant="secondary"
@@ -428,9 +434,9 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
                 setNewLabel("");
               }}
             >
-              <Plus /> Add reason
+              <Plus /> {t("settings.addReason")}
             </Button>
-            {newCode.length >= 2 && <span className="pb-2 text-2xs text-muted">code: {newCode}</span>}
+            {newCode.length >= 2 && <span className="pb-2 text-2xs text-muted">{t("settings.codeValue", { code: newCode })}</span>}
           </div>
         )}
       </section>
@@ -438,9 +444,9 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
         <div className="flex items-center gap-3">
           <Button variant="primary" onClick={() => void save()} disabled={busy}>
             {busy && <Loader2 className="animate-spin" />}
-            Save driver app rules
+            {t("settings.saveRules")}
           </Button>
-          {reasons.some((x) => !known.has(x.code)) && <span className="text-2xs text-muted">{reasons.filter((x) => !known.has(x.code)).length} new reason(s) not saved yet</span>}
+          {reasons.some((x) => !known.has(x.code)) && <span className="text-2xs text-muted">{t("settings.newReasonsUnsaved", { count: reasons.filter((x) => !known.has(x.code)).length })}</span>}
         </div>
       )}
     </Card>
@@ -450,6 +456,7 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
 // ---------------------------------------------------------------- live tracking administration
 function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged: () => void }) {
   const { session } = useDispatch();
+  const { t, locale } = useI18n();
   const api = settingsApi(session.organizationId);
   const admin = data.canEdit.tracking;
   const [list, setList] = useState<TrackingDrivers | null>(null);
@@ -469,15 +476,15 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
   }, [session.organizationId]);
   useEffect(() => {
     void load();
-    const t = setInterval(() => void load(), 30_000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => void load(), 30_000);
+    return () => clearInterval(timer);
   }, [load]);
   const refreshAll = () => {
     void load();
     onChanged();
   };
-  const t = data.tracking;
-  const mode = list?.mode ?? t.mode;
+  const tk = data.tracking;
+  const mode = list?.mode ?? tk.mode;
   const toggle = (id: string) => {
     const s = new Set(selected);
     if (s.has(id)) s.delete(id);
@@ -489,16 +496,16 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
       <Card className="flex flex-col gap-4 p-5">
         <CardHeader
           className="-mx-5 -mt-5"
-          title="Live tracking"
-          description="Where drivers' phones send positions while a tour is driven. Positions are only recorded after the driver acknowledged the tracking notice."
+          title={t("settings.section.tracking")}
+          description={t("settings.trackingDesc")}
           actions={
-            <Button variant="secondary" size="icon-sm" onClick={() => void load()} aria-label="Refresh">
+            <Button variant="secondary" size="icon-sm" onClick={() => void load()} aria-label={t("settings.refresh")}>
               <RefreshCw />
             </Button>
           }
         />
         {!admin && <ReadOnlyNote />}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Tracking mode">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t("settings.trackingMode")}>
           {(["off", "pilot", "active_tours"] as const).map((m) => (
             <button
               key={m}
@@ -512,38 +519,34 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
                 mode === m && "border-brand-500 bg-brand-50",
               )}
             >
-              <span className={cn("text-[14px] font-bold text-ink", mode === m && "text-brand-700")}>{MODE_LABEL[m]}</span>
-              <span className="text-2xs text-muted">
-                {m === "off" ? "Nobody is tracked." : m === "pilot" ? `Only named pilot drivers (max. ${t.pilotLimit}) who agreed to test it.` : "Every driver who acknowledged the notice, while driving a tour."}
-              </span>
-              {mode === m && <Badge tone="brand">Current</Badge>}
+              <span className={cn("text-[14px] font-bold text-ink", mode === m && "text-brand-700")}>{modeLabel(m, t)}</span>
+              <span className="text-2xs text-muted">{t(`settings.modeDesc.${m}`, { limit: tk.pilotLimit })}</span>
+              {mode === m && <Badge tone="brand">{t("settings.current")}</Badge>}
             </button>
           ))}
         </div>
         <dl className="grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-4">
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Notice version</dt>
-            <dd className="font-semibold text-ink tabular">{t.noticeVersion}</dd>
+            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.noticeVersion")}</dt>
+            <dd className="font-semibold text-ink tabular">{tk.noticeVersion}</dd>
           </div>
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Acknowledged</dt>
-            <dd className="font-semibold text-ink tabular">
-              {t.acknowledgedCurrentNotice} of {t.activeDrivers} drivers
-            </dd>
+            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.acknowledged")}</dt>
+            <dd className="font-semibold text-ink tabular">{t("settings.acknowledgedValue", { ack: tk.acknowledgedCurrentNotice, count: tk.activeDrivers })}</dd>
           </div>
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Position interval</dt>
-            <dd className="font-semibold text-ink tabular">{t.intervalSeconds} s</dd>
+            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.positionInterval")}</dt>
+            <dd className="font-semibold text-ink tabular">{t("common.sec", { n: tk.intervalSeconds })}</dd>
           </div>
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">History kept</dt>
-            <dd className="font-semibold text-ink tabular">{t.retentionDays} days</dd>
+            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.historyKept")}</dt>
+            <dd className="font-semibold text-ink tabular">{t("settings.days", { count: tk.retentionDays })}</dd>
           </div>
         </dl>
         {admin && (
           <div>
             <Button variant="secondary" size="sm" onClick={() => setNoticeDialog(true)}>
-              Require a new acknowledgement…
+              {t("settings.requireNewAck")}
             </Button>
           </div>
         )}
@@ -551,22 +554,26 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-          <h3 className="text-[15px] font-bold text-ink">Drivers</h3>
+          <h3 className="text-[15px] font-bold text-ink">{t("settings.drivers")}</h3>
           {list && (
             <span className="text-2xs text-muted">
               {Object.entries(list.summary)
-                .map(([k, n]) => `${n} ${TRACKING_STATE[k as keyof typeof TRACKING_STATE].label.toLowerCase()}`)
+                .map(([k, n]) => {
+                  const label = trackingStateLabel(k as keyof typeof TRACKING_STATE, t);
+                  // English lists states in lower case ("2 live"); German nouns keep their capital.
+                  return t("settings.summaryItem", { count: n, label: locale === "en" ? label.toLowerCase() : label });
+                })
                 .join(" · ")}{" "}
-              · a position older than {Math.round(list.staleAfterSeconds / 60)} min is not current
+              · {t("settings.staleNote", { n: Math.round(list.staleAfterSeconds / 60) })}
             </span>
           )}
           {admin && selected.size > 0 && (
             <div className="ms-auto flex gap-1.5">
               <Button size="sm" variant="secondary" onClick={() => setPilotDialog({ ids: [...selected], enabled: true })}>
-                Add {selected.size} to pilot
+                {t("settings.addToPilotN", { count: selected.size })}
               </Button>
               <Button size="sm" variant="secondary" onClick={() => setPilotDialog({ ids: [...selected], enabled: false })}>
-                Remove {selected.size} from pilot
+                {t("settings.removeFromPilotN", { count: selected.size })}
               </Button>
             </div>
           )}
@@ -575,17 +582,17 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
         {!list && !error && <Skeleton className="m-4 h-40" />}
         {list && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-[13px]" aria-label="Driver tracking status">
+            <table className="w-full min-w-[860px] text-[13px]" aria-label={t("settings.tableLabel")}>
               <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                 <tr className="border-b border-line">
-                  {admin && <th className="h-10 w-10 ps-4" aria-label="Select" />}
-                  <th className="px-3 text-start">Driver</th>
-                  <th className="px-3 text-start">Location</th>
-                  <th className="px-3 text-start">Pilot</th>
-                  <th className="px-3 text-start">Status</th>
-                  <th className="px-3 text-start">Notice</th>
-                  <th className="px-3 text-start">Active tour</th>
-                  <th className="pe-4 ps-3 text-start">Last position</th>
+                  {admin && <th className="h-10 w-10 ps-4" aria-label={t("settings.select")} />}
+                  <th className="px-3 text-start">{t("settings.col.driver")}</th>
+                  <th className="px-3 text-start">{t("settings.col.location")}</th>
+                  <th className="px-3 text-start">{t("settings.col.pilot")}</th>
+                  <th className="px-3 text-start">{t("settings.col.status")}</th>
+                  <th className="px-3 text-start">{t("settings.col.notice")}</th>
+                  <th className="px-3 text-start">{t("settings.col.activeTour")}</th>
+                  <th className="pe-4 ps-3 text-start">{t("settings.col.lastPosition")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -597,22 +604,21 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
           </div>
         )}
         <p className="border-t border-line px-4 py-2.5 text-2xs text-muted">
-          This list never shows where a driver is. Positions are visible only on the live map, for tours being driven. The phone&apos;s location permission is shown once the next
-          driver app version reports it.
+          {t("settings.privacyFooter")}
         </p>
       </Card>
 
-      {modeDialog && <ModeDialog to={modeDialog} drivers={list?.drivers ?? []} pilotLimit={t.pilotLimit} onClose={() => setModeDialog(null)} onDone={refreshAll} />}
+      {modeDialog && <ModeDialog to={modeDialog} drivers={list?.drivers ?? []} pilotLimit={tk.pilotLimit} onClose={() => setModeDialog(null)} onDone={refreshAll} />}
       {pilotDialog && <PilotDialog {...pilotDialog} names={(list?.drivers ?? []).filter((d) => pilotDialog.ids.includes(d.driverId)).map((d) => d.name)} onClose={() => setPilotDialog(null)} onDone={() => (setSelected(new Set()), refreshAll())} />}
       {noticeDialog && (
         <SimpleConfirm
-          title="Require a new acknowledgement?"
-          body="Use this when the tracking notice text changed. Every driver must read and confirm the notice again; until then their phone records no positions."
-          label="Require new acknowledgement"
+          title={t("settings.noticeTitle")}
+          body={t("settings.noticeBody")}
+          label={t("settings.noticeLabel")}
           onClose={() => setNoticeDialog(false)}
           run={async () => {
             await api.setTracking({ newNoticeVersion: true });
-            toast.success("New notice version – drivers confirm it at their next app start");
+            toast.success(t("settings.noticeToast"));
             refreshAll();
           }}
         />
@@ -622,13 +628,14 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
 }
 
 function DriverRow({ d, admin, noticeVersion, selected, onSelect, onPilot }: { d: DriverTracking; admin: boolean; noticeVersion: number; selected: boolean; onSelect: () => void; onPilot: (on: boolean) => void }) {
+  const { t, fmt } = useI18n();
   const st = TRACKING_STATE[d.state];
   const toneCls = { success: "bg-success-soft text-success-ink", warning: "bg-warning-soft text-warning-ink", danger: "bg-danger-soft text-danger-ink", neutral: "bg-surface-2 text-muted", info: "bg-info-soft text-info-ink" }[st.tone];
   return (
     <tr className="border-b border-line last:border-0">
       {admin && (
         <td className="ps-4">
-          <Checkbox checked={selected} onCheckedChange={onSelect} label={`Select ${d.name}`} />
+          <Checkbox checked={selected} onCheckedChange={onSelect} label={t("settings.selectName", { name: d.name })} />
         </td>
       )}
       <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-ink">{d.name}</td>
@@ -639,38 +646,39 @@ function DriverRow({ d, admin, noticeVersion, selected, onSelect, onPilot }: { d
             type="button"
             role="switch"
             aria-checked={d.pilot}
-            aria-label={`Pilot tracking for ${d.name}`}
+            aria-label={t("settings.pilotFor", { name: d.name })}
             onClick={() => onPilot(!d.pilot)}
             className={cn("relative inline-flex h-6 w-10 items-center rounded-full transition-colors", d.pilot ? "bg-brand-600" : "bg-surface-3")}
           >
-            <span className={cn("inline-block size-5 rounded-full bg-white shadow-xs transition-transform", d.pilot ? "translate-x-[18px]" : "translate-x-0.5")} />
+            <span className={cn("inline-block size-5 rounded-full bg-white shadow-xs transition-transform", d.pilot ? "translate-x-[18px] rtl:-translate-x-[18px]" : "translate-x-0.5 rtl:-translate-x-0.5")} />
           </button>
         ) : (
-          <span className="text-ink-2">{d.pilot ? "Yes" : "No"}</span>
+          <span className="text-ink-2">{d.pilot ? t("common.yes") : t("common.no")}</span>
         )}
       </td>
       <td className="px-3">
-        <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-bold", toneCls)} title={st.explain}>
+        <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-bold", toneCls)} title={trackingStateExplain(d.state, t)}>
           {d.state === "live" && <span className="size-1.5 animate-pulse rounded-full bg-current" aria-hidden="true" />}
-          {st.label}
+          {trackingStateLabel(d.state, t)}
         </span>
       </td>
       <td className="whitespace-nowrap px-3 text-2xs">
         {d.acknowledgedCurrent ? (
-          <span className="text-success-ink">v{d.acknowledgedVersion} · {new Date(d.acknowledgedAt!).toLocaleDateString("de-DE")}</span>
+          <span className="text-success-ink">{t("settings.ackCurrent", { version: d.acknowledgedVersion, date: fmt.date(d.acknowledgedAt!, { dateStyle: "short" }) })}</span>
         ) : d.acknowledgedVersion ? (
-          <span className="text-warning-ink">v{d.acknowledgedVersion} – v{noticeVersion} pending</span>
+          <span className="text-warning-ink">{t("settings.ackPending", { from: d.acknowledgedVersion, to: noticeVersion })}</span>
         ) : (
-          <span className="text-muted">Not acknowledged</span>
+          <span className="text-muted">{t("settings.notAcknowledged")}</span>
         )}
       </td>
-      <td className="whitespace-nowrap px-3 text-ink-2">{d.currentTour ? `${d.currentTour.name}${d.currentTour.status === "paused" ? " (paused)" : ""}` : "–"}</td>
-      <td className="whitespace-nowrap pe-4 ps-3 text-ink-2 tabular">{d.positionAgeSeconds !== null ? ageLabel(d.positionAgeSeconds) : "–"}</td>
+      <td className="whitespace-nowrap px-3 text-ink-2">{d.currentTour ? (d.currentTour.status === "paused" ? t("settings.tourPaused", { name: d.currentTour.name }) : d.currentTour.name) : "–"}</td>
+      <td className="whitespace-nowrap pe-4 ps-3 text-ink-2 tabular">{d.positionAgeSeconds !== null ? ageLabel(d.positionAgeSeconds, t) : "–"}</td>
     </tr>
   );
 }
 
 function SimpleConfirm({ title, body, label, onClose, run, disabled, children }: { title: string; body: ReactNode; label: string; onClose: () => void; run: () => Promise<void>; disabled?: boolean; children?: ReactNode }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   return (
     <Dialog
@@ -680,7 +688,7 @@ function SimpleConfirm({ title, body, label, onClose, run, disabled, children }:
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={busy}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="primary"
@@ -691,7 +699,7 @@ function SimpleConfirm({ title, body, label, onClose, run, disabled, children }:
                 await run();
                 onClose();
               } catch (e) {
-                toast.error("Not changed", { description: errorMessage(e) });
+                toast.error(t("settings.notChanged"), { description: errorMessage(e) });
               } finally {
                 setBusy(false);
               }
@@ -714,28 +722,27 @@ function SimpleConfirm({ title, body, label, onClose, run, disabled, children }:
 function ModeDialog({ to, drivers, pilotLimit, onClose, onDone }: { to: TrackingMode; drivers: DriverTracking[]; pilotLimit: number; onClose: () => void; onDone: () => void }) {
   const { session } = useDispatch();
   const api = settingsApi(session.organizationId);
+  const { t } = useI18n();
   const pilots = drivers.filter((d) => d.pilot);
   const [confirmed, setConfirmed] = useState(false);
   const body =
     to === "off" ? (
-      <p>Drivers&apos; phones stop sending positions. Recorded history stays until its retention ends.</p>
+      <p>{t("settings.offBody")}</p>
     ) : to === "pilot" ? (
       pilots.length === 0 ? (
-        <p className="text-warning-ink">No pilot drivers yet. Switch on pilot tracking for the drivers who agreed to test it in the list below first.</p>
+        <p className="text-warning-ink">{t("settings.noPilots")}</p>
       ) : (
-        <p>
-          Only these {pilots.length} pilot driver(s) are tracked (after acknowledging the notice): {pilots.map((p) => p.name).join(", ")}. Max. {pilotLimit}.
-        </p>
+        <p>{t("settings.pilotBody", { count: pilots.length, names: pilots.map((p) => p.name).join(", "), limit: pilotLimit })}</p>
       )
     ) : (
-      <p>Every driver who acknowledged the tracking notice is tracked while driving a tour. Drivers who have not acknowledged it are not tracked.</p>
+      <p>{t("settings.activeBody")}</p>
     );
-  const needs = to === "pilot" ? "Each pilot driver agreed to be tracked for testing and has read the notice." : to === "active_tours" ? "The privacy impact assessment is done, the works council agreed (§ 87 (1) no. 6 BetrVG) where one exists, and all drivers were informed." : null;
+  const needs = to === "pilot" ? t("settings.needsPilot") : to === "active_tours" ? t("settings.needsActive") : null;
   return (
     <SimpleConfirm
-      title={`Switch live tracking to “${MODE_LABEL[to]}”?`}
+      title={t("settings.switchTitle", { mode: modeLabel(to, t) })}
       body={body}
-      label="Switch"
+      label={t("settings.switch")}
       onClose={onClose}
       disabled={(needs !== null && !confirmed) || (to === "pilot" && pilots.length === 0)}
       run={async () => {
@@ -746,41 +753,42 @@ function ModeDialog({ to, drivers, pilotLimit, onClose, onDone }: { to: Tracking
               ? { mode: "pilot", pilotDriverIds: pilots.map((p) => p.driverId), confirmPilotConsent: true }
               : { mode: "active_tours", confirmPrerequisites: true },
         );
-        toast.success(`Live tracking: ${MODE_LABEL[to]}`, { description: "Recorded with your name and the time." });
+        toast.success(t("settings.switchedToast", { mode: modeLabel(to, t) }), { description: t("settings.recordedWithName") });
         onDone();
       }}
     >
       {needs && (
         <label className="flex items-start gap-2">
-          <Checkbox checked={confirmed} onCheckedChange={(c) => setConfirmed(c === true)} label="I confirm the prerequisites" />
+          <Checkbox checked={confirmed} onCheckedChange={(c) => setConfirmed(c === true)} label={t("settings.confirmPrereq")} />
           <span>{needs}</span>
         </label>
       )}
-      <p className="text-2xs text-muted">Acknowledging the notice informs drivers; it does not replace any consent or employment-law process your company needs.</p>
+      <p className="text-2xs text-muted">{t("settings.ackNotConsent")}</p>
     </SimpleConfirm>
   );
 }
 
 function PilotDialog({ ids, enabled, names, onClose, onDone }: { ids: string[]; enabled: boolean; names: string[]; onClose: () => void; onDone: () => void }) {
   const { session } = useDispatch();
+  const { t } = useI18n();
   const [confirmed, setConfirmed] = useState(!enabled);
   return (
     <SimpleConfirm
-      title={enabled ? `Add ${ids.length} driver(s) to pilot tracking?` : `Remove ${ids.length} driver(s) from pilot tracking?`}
+      title={t(enabled ? "settings.addPilotTitle" : "settings.removePilotTitle", { count: ids.length })}
       body={<p>{names.join(", ")}</p>}
-      label={enabled ? "Add to pilot" : "Remove from pilot"}
+      label={enabled ? t("settings.addToPilot") : t("settings.removeFromPilot")}
       onClose={onClose}
       disabled={!confirmed}
       run={async () => {
         const r = await settingsApi(session.organizationId).setPilots(ids, enabled);
-        toast.success(`${r.changed} driver(s) changed · ${r.pilots} pilot(s) now`);
+        toast.success(t("settings.pilotChanged", { count: r.changed, pilots: r.pilots }));
         onDone();
       }}
     >
       {enabled && (
         <label className="flex items-start gap-2">
-          <Checkbox checked={confirmed} onCheckedChange={(c) => setConfirmed(c === true)} label="Each driver agreed" />
-          <span>Each of them agreed to be tracked for testing and has read the tracking notice. In pilot mode they are tracked only after acknowledging it in the app.</span>
+          <Checkbox checked={confirmed} onCheckedChange={(c) => setConfirmed(c === true)} label={t("settings.eachAgreed")} />
+          <span>{t("settings.eachAgreedText")}</span>
         </label>
       )}
     </SimpleConfirm>
@@ -788,65 +796,66 @@ function PilotDialog({ ids, enabled, names, onClose, onDone }: { ids: string[]; 
 }
 
 // ---------------------------------------------------------------- team & roles
-const KEY_PERMISSIONS: [string, string][] = [
-  ["tours.manage", "Plan and edit tours"],
-  ["tours.close", "Finish / cancel tours"],
-  ["tours.archive", "Archive / restore"],
-  ["tours.delete", "Delete eligible tours"],
-  ["tracking.view_live", "See the live map"],
-  ["reports.view", "Analytics"],
-  ["reports.export", "Export reports"],
-  ["org.members.manage", "Manage the team"],
-  ["org.settings.manage", "Company settings and live tracking"],
-];
+const KEY_PERMISSIONS = [
+  "tours.manage",
+  "tours.close",
+  "tours.archive",
+  "tours.delete",
+  "tracking.view_live",
+  "reports.view",
+  "reports.export",
+  "org.members.manage",
+  "org.settings.manage",
+] as const;
 
 function TeamSection({ data }: { data: CompanySettings }) {
+  const { t } = useI18n();
   const roles = ["owner", "admin", "dispatcher", "driver"].filter((r) => data.roles[r]);
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Card className="flex flex-col gap-2 p-5">
           <ShieldCheck className="size-5 text-brand-600" />
-          <h3 className="text-[15px] font-bold text-ink">Team</h3>
-          <p className="text-[13px] text-ink-2">Invite colleagues, change roles and the locations each one may work in.</p>
+          <h3 className="text-[15px] font-bold text-ink">{t("settings.team")}</h3>
+          <p className="text-[13px] text-ink-2">{t("settings.teamDesc")}</p>
           {data.canEdit.team ? (
             <Link href="/fleet?tab=team" className="inline-flex items-center gap-1 text-[13px] font-bold text-brand-700 hover:underline">
-              Open Team <ExternalLink className="size-3.5" />
+              {t("settings.openTeam")} <ExternalLink className="size-3.5 rtl:-scale-x-100" />
             </Link>
           ) : (
-            <span className="text-2xs text-muted">Managed by company administrators.</span>
+            <span className="text-2xs text-muted">{t("settings.managedByAdmins")}</span>
           )}
         </Card>
         <Card className="flex flex-col gap-2 p-5">
           <MapPinned className="size-5 text-brand-600" />
-          <h3 className="text-[15px] font-bold text-ink">Locations</h3>
-          <p className="text-[13px] text-ink-2">Depot addresses and opening hours used for planning and routing.</p>
+          <h3 className="text-[15px] font-bold text-ink">{t("settings.locations")}</h3>
+          <p className="text-[13px] text-ink-2">{t("settings.locationsDesc")}</p>
           <Link href="/fleet?tab=depots" className="inline-flex items-center gap-1 text-[13px] font-bold text-brand-700 hover:underline">
-            Open Locations <ExternalLink className="size-3.5" />
+            {t("settings.openLocations")} <ExternalLink className="size-3.5 rtl:-scale-x-100" />
           </Link>
         </Card>
       </div>
       <Card className="overflow-hidden">
-        <CardHeader title="What each role may do" description={`Your role: ${data.yourRole}. Dispatchers and managers work only in the locations assigned to them.`} />
+        <CardHeader title={t("settings.rolesTitle")} description={t("settings.rolesDesc", { role: roleLabel(data.yourRole, t) })} />
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[560px] text-[13px]" aria-label="Role permissions">
+          <table className="w-full min-w-[560px] text-[13px]" aria-label={t("settings.rolesTable")}>
             <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
               <tr className="border-b border-line">
-                <th className="h-10 ps-5 text-start">Permission</th>
+                <th className="h-10 ps-5 text-start">{t("settings.permission")}</th>
                 {roles.map((r) => (
-                  <th key={r} className="px-3 text-center capitalize">
-                    {r}
+                  <th key={r} className="px-3 text-center">
+                    {roleLabel(r, t)}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {KEY_PERMISSIONS.map(([p, label]) => (
+              {KEY_PERMISSIONS.map((p) => (
                 <tr key={p} className="border-b border-line last:border-0">
-                  <td className="py-2 ps-5 text-ink-2">{label}</td>
+                  <td className="py-2 ps-5 text-ink-2">{t(`settings.perm.${p}`)}</td>
                   {roles.map((r) => (
                     <td key={r} className="px-3 text-center">
-                      {data.roles[r]!.includes(p) ? <span className="font-bold text-success-ink" aria-label="yes">✓</span> : <span className="text-subtle" aria-label="no">–</span>}
+                      {data.roles[r]!.includes(p) ? <span className="font-bold text-success-ink" aria-label={t("settings.ariaYes")}>✓</span> : <span className="text-subtle" aria-label={t("settings.ariaNo")}>–</span>}
                     </td>
                   ))}
                 </tr>
@@ -856,7 +865,7 @@ function TeamSection({ data }: { data: CompanySettings }) {
         </div>
       </Card>
       <p className="flex items-center gap-1.5 text-2xs text-muted">
-        <Settings2 className="size-3.5" /> Roles are enforced by the server and the database, not only by what Dispatch shows.
+        <Settings2 className="size-3.5" /> {t("settings.rolesEnforced")}
       </p>
     </div>
   );

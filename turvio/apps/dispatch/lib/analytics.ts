@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { Format, Locale } from "./i18n";
 
 /* Analytics (Phase B endpoints). Every figure comes from stored records; definitions come with it. */
 
@@ -94,10 +95,12 @@ export const analyticsApi = (org: string) => ({
   drivers: (q: AnalyticsQuery) => api<{ drivers: DriverRow[] }>("GET", `/v1/orgs/${org}/analytics/drivers?${qs(q)}`),
   depots: (q: AnalyticsQuery) => api<{ depots: DepotRow[] }>("GET", `/v1/orgs/${org}/analytics/depots?${qs(q)}`),
   tours: (q: AnalyticsQuery) => api<{ tours: TourRow[] }>("GET", `/v1/orgs/${org}/analytics/tours?${qs(q)}`),
-  exportUrl: (q: AnalyticsQuery, view: "drivers" | "depots" | "tours" | "trend", format: "csv" | "xlsx") => {
+  /** `lang`: language of the export's column headings and labels (the figures are the same in every language). */
+  exportUrl: (q: AnalyticsQuery, view: "drivers" | "depots" | "tours" | "trend", format: "csv" | "xlsx", lang?: Locale) => {
     const p = qs(q);
     p.set("view", view);
     p.set("format", format);
+    if (lang) p.set("lang", lang);
     return `/api/turvio/v1/orgs/${org}/analytics/export?${p}`;
   },
 });
@@ -134,5 +137,8 @@ export function presetRange(preset: "today" | "yesterday" | "week" | "last_week"
   return { from: `${y}-${String(m).padStart(2, "0")}-01`, to: today };
 }
 
-export const pct = (v: number | null, digits = 1) => (v === null ? "–" : `${(v * 100).toFixed(digits)} %`);
-export const num = (v: number | null, digits = 0) => (v === null ? "–" : v.toLocaleString("de-DE", { maximumFractionDigits: digits, minimumFractionDigits: digits }));
+/** "88.9 %". With `fmt` (from useI18n) the number follows the user's language; without it the output is unchanged. */
+export const pct = (v: number | null, digits = 1, fmt?: Format) => (v === null ? "–" : fmt ? `${fmt.number(v * 100, digits)} %` : `${(v * 100).toFixed(digits)} %`);
+/** Grouped number. With `fmt` in the user's language; without it German grouping as before. */
+export const num = (v: number | null, digits = 0, fmt?: Format) =>
+  v === null ? "–" : fmt ? fmt.number(v, digits) : v.toLocaleString("de-DE", { maximumFractionDigits: digits, minimumFractionDigits: digits });

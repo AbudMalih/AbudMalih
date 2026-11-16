@@ -8,25 +8,26 @@ import { errorMessage } from "../lib/api";
 import { analyticsApi, delivered, notDelivered, num, pct, presetRange, type AnalyticsQuery, type DepotRow, type DriverRow, type Summary, type TourRow } from "../lib/analytics";
 import { download } from "../lib/download";
 import { fieldCls } from "../lib/helpers";
+import { EN_T, type MessageKey, type TFunction } from "../lib/i18n";
+import { useI18n } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 import { OutcomeBars, ReasonBars, SuccessLine } from "./AnalyticsCharts";
-import { FAILURE_REASON } from "./StatusBadge";
+import { failureReasonLabel, tourStatusLabel } from "./StatusBadge";
 
 type Preset = "today" | "yesterday" | "week" | "last_week" | "month" | "last_month" | "last_30" | "custom";
-const PRESETS: [Preset, string][] = [
-  ["today", "Today"],
-  ["yesterday", "Yesterday"],
-  ["week", "This week"],
-  ["last_week", "Last week"],
-  ["month", "This month"],
-  ["last_month", "Last month"],
-  ["last_30", "Last 30 days"],
-  ["custom", "Custom"],
-];
+const PRESETS: Preset[] = ["today", "yesterday", "week", "last_week", "month", "last_month", "last_30", "custom"];
+
+/** KPI definitions the API sends (English); translated by key, unknown keys keep the server text. */
+const DEF_KEYS = new Set([
+  "stops", "delivered", "pickedUp", "failed", "attempted", "rescheduled", "returned", "skipped", "cancelled", "open", "processed", "successRate", "tours",
+  "toursStarted", "completionRate", "onTimeStartRate", "avgTourMinutes", "activeHours", "stopsPerTour", "stopsPerActiveHour", "avgIntervalMinutes", "plannedDistanceKm", "plannedMinutes",
+]);
+const TOUR_STATUSES = new Set(["in_progress", "delayed", "paused", "planned", "completed", "cancelled"]);
 
 /** Operational analytics from recorded data only. Planned (optimizer) figures are always labelled as such. */
 export function AnalyticsView() {
   const { session, scoped, depotId, today } = useDispatch();
+  const { t, fmt, locale } = useI18n();
   const api = useMemo(() => analyticsApi(session.organizationId), [session.organizationId]);
   const [preset, setPreset] = useState<Preset>("week");
   const [custom, setCustom] = useState(() => presetRange("last_30", today));
@@ -69,24 +70,35 @@ export function AnalyticsView() {
   }, [key]);
 
   const mayExport = can(session.role, "reports.export");
-  const def = (k: string) => data?.definitions[k] ?? "";
+  const def = (k: string) => {
+    const server = data?.definitions[k] ?? "";
+    if (!server || locale === "en" || !DEF_KEYS.has(k)) return server;
+    return t(`analytics.def.${k}` as MessageKey, { tolerance: data?.onTimeToleranceMinutes ?? 15 });
+  };
   const cur = data?.current;
   const prev = data?.previous;
   const drivers = scoped.drivers.filter((d) => !depot || d.depotId === depot);
-  const reasonLabel = (code: string | null) => (code ? (FAILURE_REASON[code] ?? code.replace(/_/g, " ")) : "No reason recorded");
+  const reasonLabel = (code: string | null) => {
+    if (!code) return t("analytics.noReason");
+    const l = failureReasonLabel(code, t);
+    return l === code ? code.replace(/_/g, " ") : l;
+  };
+  const P = (v: number | null, digits?: number) => pct(v, digits, fmt);
+  const N = (v: number | null, digits?: number) => num(v, digits, fmt);
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Analytics</h1>
+        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("analytics.title")}</h1>
         <p className="text-sm text-ink-2">
-          Recorded outcomes only – nothing estimated or invented.{data && ` ${data.range.from} – ${data.range.to} · company time (${data.timeZone}) · archived tours included.`}
+          {t("analytics.intro")}
+          {data && ` ${t("analytics.rangeNote", { from: fmt.day(data.range.from), to: fmt.day(data.range.to), tz: data.timeZone })}`}
         </p>
       </div>
 
       <Card className="flex flex-col gap-3 p-4">
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Period">
-          {PRESETS.map(([k, label]) => (
+        <div className="flex flex-wrap gap-1" role="tablist" aria-label={t("analytics.period")}>
+          {PRESETS.map((k) => (
             <button
               key={k}
               type="button"
@@ -95,41 +107,41 @@ export function AnalyticsView() {
               onClick={() => setPreset(k)}
               className={cn("h-8 rounded-[10px] px-3 text-[13px] font-semibold text-muted hover:bg-surface-2 hover:text-ink", preset === k && "bg-brand-50 text-brand-700 hover:bg-brand-50")}
             >
-              {label}
+              {t(`analytics.preset.${k}`)}
             </button>
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {preset === "custom" && (
             <>
-              <input type="date" className={cn(fieldCls, "w-40")} value={custom.from} max={custom.to} onChange={(e) => e.target.value && setCustom({ ...custom, from: e.target.value })} aria-label="From" />
+              <input type="date" className={cn(fieldCls, "w-40")} value={custom.from} max={custom.to} onChange={(e) => e.target.value && setCustom({ ...custom, from: e.target.value })} aria-label={t("analytics.from")} />
               <span className="text-muted">–</span>
-              <input type="date" className={cn(fieldCls, "w-40")} value={custom.to} min={custom.from} onChange={(e) => e.target.value && setCustom({ ...custom, to: e.target.value })} aria-label="To" />
+              <input type="date" className={cn(fieldCls, "w-40")} value={custom.to} min={custom.from} onChange={(e) => e.target.value && setCustom({ ...custom, to: e.target.value })} aria-label={t("analytics.to")} />
             </>
           )}
-          <select className={cn(fieldCls, "w-44")} value={depot} onChange={(e) => (setDepot(e.target.value), setDriver(""))} aria-label="Location">
-            <option value="">All my locations</option>
+          <select className={cn(fieldCls, "w-44")} value={depot} onChange={(e) => (setDepot(e.target.value), setDriver(""))} aria-label={t("analytics.location")}>
+            <option value="">{t("analytics.allLocations")}</option>
             {scoped.depots.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}
               </option>
             ))}
           </select>
-          <select className={cn(fieldCls, "w-48")} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label="Driver">
-            <option value="">All drivers</option>
+          <select className={cn(fieldCls, "w-48")} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label={t("analytics.driver")}>
+            <option value="">{t("analytics.allDrivers")}</option>
             {drivers.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.displayName}
               </option>
             ))}
           </select>
-          <select className={cn(fieldCls, "w-40")} value={granularity} onChange={(e) => setGranularity(e.target.value as typeof granularity)} aria-label="Group by">
-            <option value="">Group: automatic</option>
-            <option value="day">Group by day</option>
-            <option value="week">Group by week</option>
-            <option value="month">Group by month</option>
+          <select className={cn(fieldCls, "w-40")} value={granularity} onChange={(e) => setGranularity(e.target.value as typeof granularity)} aria-label={t("analytics.groupBy")}>
+            <option value="">{t("analytics.group.auto")}</option>
+            <option value="day">{t("analytics.group.day")}</option>
+            <option value="week">{t("analytics.group.week")}</option>
+            <option value="month">{t("analytics.group.month")}</option>
           </select>
-          {loading && <span className="text-2xs text-muted">Updating…</span>}
+          {loading && <span className="text-2xs text-muted">{t("analytics.updating")}</span>}
         </div>
       </Card>
 
@@ -142,30 +154,32 @@ export function AnalyticsView() {
 
       {cur && prev && data && (
         <>
-          <section aria-label="Key figures" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Kpi label="Success rate" value={pct(cur.stops.successRate)} prev={pct(prev.stops.successRate)} info={def("successRate")} />
-            <Kpi label="Delivered / picked up" value={num(delivered(cur.stops))} prev={num(delivered(prev.stops))} info={`${def("delivered")} ${def("pickedUp")}`} />
-            <Kpi label="Not delivered" value={num(notDelivered(cur.stops))} prev={num(notDelivered(prev.stops))} info="Failed, attempted, rescheduled, returned or skipped." />
-            <Kpi label="Open stops" value={num(cur.stops.open)} prev={num(prev.stops.open)} info={def("open")} />
-            <Kpi label="Tours completed" value={`${num(cur.tours.byStatus.completed)} / ${num(cur.tours.tours)}`} prev={`${num(prev.tours.byStatus.completed)} / ${num(prev.tours.tours)}`} info={def("tours")} />
-            <Kpi label="Completion rate" value={pct(cur.tours.completionRate)} prev={pct(prev.tours.completionRate)} info={def("completionRate")} />
-            <Kpi label="On-time starts" value={pct(cur.tours.onTimeStartRate)} prev={pct(prev.tours.onTimeStartRate)} info={def("onTimeStartRate")} />
-            <Kpi label="Stops per active hour" value={num(cur.tours.stopsPerActiveHour, 1)} prev={num(prev.tours.stopsPerActiveHour, 1)} info={def("stopsPerActiveHour")} />
+          <section aria-label={t("analytics.keyFigures")} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Kpi labelKey="analytics.kpi.successRate" value={P(cur.stops.successRate)} prev={P(prev.stops.successRate)} info={def("successRate")} />
+            <Kpi labelKey="analytics.kpi.delivered" value={N(delivered(cur.stops))} prev={N(delivered(prev.stops))} info={`${def("delivered")} ${def("pickedUp")}`} />
+            <Kpi labelKey="analytics.kpi.notDelivered" value={N(notDelivered(cur.stops))} prev={N(notDelivered(prev.stops))} info={t("analytics.notDeliveredInfo")} />
+            <Kpi labelKey="analytics.kpi.open" value={N(cur.stops.open)} prev={N(prev.stops.open)} info={def("open")} />
+            <Kpi labelKey="analytics.kpi.toursCompleted" value={`${N(cur.tours.byStatus.completed)} / ${N(cur.tours.tours)}`} prev={`${N(prev.tours.byStatus.completed)} / ${N(prev.tours.tours)}`} info={def("tours")} />
+            <Kpi labelKey="analytics.kpi.completionRate" value={P(cur.tours.completionRate)} prev={P(prev.tours.completionRate)} info={def("completionRate")} />
+            <Kpi labelKey="analytics.kpi.onTimeStarts" value={P(cur.tours.onTimeStartRate)} prev={P(prev.tours.onTimeStartRate)} info={def("onTimeStartRate")} />
+            <Kpi labelKey="analytics.kpi.stopsPerActiveHour" value={N(cur.tours.stopsPerActiveHour, 1)} prev={N(prev.tours.stopsPerActiveHour, 1)} info={def("stopsPerActiveHour")} />
           </section>
           <p className="-mt-2 text-2xs text-muted">
-            “prev.” = the {data.previousRange.from === data.previousRange.to ? "previous day" : `previous period ${data.previousRange.from} – ${data.previousRange.to}`} (same length).
-            Cancelled stops ({num(cur.stops.cancelled)}) are not counted as processed.
+            {data.previousRange.from === data.previousRange.to
+              ? t("analytics.prevNoteDay")
+              : t("analytics.prevNotePeriod", { from: fmt.day(data.previousRange.from), to: fmt.day(data.previousRange.to) })}{" "}
+            {t("analytics.cancelledNote", { n: N(cur.stops.cancelled) })}
           </p>
 
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr]">
             <Card className="overflow-hidden">
               <CardHeader
-                title="Outcomes over time"
-                description={`Processed stops per ${data.granularity} · hover for exact values`}
+                title={t("analytics.outcomesTitle")}
+                description={t(`analytics.outcomesDesc.${data.granularity}`)}
                 actions={
                   <div className="flex gap-1.5">
                     <Button variant="secondary" size="sm" onClick={() => setTable(!table)} aria-pressed={table}>
-                      {table ? <BarChart3 /> : <Table2 />} {table ? "Chart" : "Table"}
+                      {table ? <BarChart3 /> : <Table2 />} {table ? t("analytics.chart") : t("analytics.table")}
                     </Button>
                     {mayExport && <ExportMenu api={api} query={query} view="trend" />}
                   </div>
@@ -173,14 +187,14 @@ export function AnalyticsView() {
               />
               <div className="p-5">
                 {data.trend.length === 0 ? (
-                  <EmptyState icon={<BarChart3 />} title="No tours in this period" description="Nothing was planned or driven in the selected period and scope." />
+                  <EmptyState icon={<BarChart3 />} title={t("analytics.noTours")} description={t("analytics.noToursDesc")} />
                 ) : table ? (
                   <TrendTable data={data} />
                 ) : (
                   <div className="flex flex-col gap-5">
                     <OutcomeBars trend={data.trend} granularity={data.granularity} />
                     <div>
-                      <h4 className="mb-1 text-[12.5px] font-bold text-ink">Success rate</h4>
+                      <h4 className="mb-1 text-[12.5px] font-bold text-ink">{t("analytics.kpi.successRate")}</h4>
                       <SuccessLine trend={data.trend} granularity={data.granularity} />
                     </div>
                   </div>
@@ -189,34 +203,49 @@ export function AnalyticsView() {
             </Card>
             <div className="flex flex-col gap-4">
               <Card className="overflow-hidden">
-                <CardHeader title="Why stops were not delivered" description="Reason the driver recorded" />
+                <CardHeader title={t("analytics.reasonsTitle")} description={t("analytics.reasonsDesc")} />
                 <div className="p-5">
                   <ReasonBars rows={data.failureReasons} label={reasonLabel} />
                 </div>
               </Card>
               <Card className="overflow-hidden">
-                <CardHeader title="Actual and planned" description="Actual = recorded by the driver app · planned = route optimizer" />
+                <CardHeader title={t("analytics.actualPlannedTitle")} description={t("analytics.actualPlannedDesc")} />
                 <dl className="grid grid-cols-2 gap-4 p-5 text-[13px]">
-                  <Figure label="Actual tour duration" value={cur.tours.avgTourMinutes === null ? "–" : `${num(cur.tours.avgTourMinutes)} min`} sub="Average, start → finish, pauses included" info={def("avgTourMinutes")} />
-                  <Figure label="Actual active hours" value={`${num(cur.tours.activeHours, 1)} h`} sub={`${num(cur.tours.toursStarted)} tour(s) started`} info={def("activeHours")} />
                   <Figure
-                    label="Planned distance"
-                    value={cur.tours.planned.plannedDistanceKm === null ? "–" : `${num(cur.tours.planned.plannedDistanceKm)} km`}
-                    sub={`Optimizer · ${cur.tours.planned.coveredTours} of ${cur.tours.tours} tours`}
+                    label={t("analytics.fig.avgTour")}
+                    value={cur.tours.avgTourMinutes === null ? "–" : t("common.min", { n: N(cur.tours.avgTourMinutes) })}
+                    sub={t("analytics.fig.avgTourSub")}
+                    info={def("avgTourMinutes")}
+                  />
+                  <Figure
+                    label={t("analytics.fig.activeHours")}
+                    value={t("analytics.fig.hours", { n: N(cur.tours.activeHours, 1) })}
+                    sub={t("analytics.fig.toursStarted", { count: cur.tours.toursStarted })}
+                    info={def("activeHours")}
+                  />
+                  <Figure
+                    label={t("analytics.fig.plannedDistance")}
+                    value={cur.tours.planned.plannedDistanceKm === null ? "–" : t("common.km", { n: N(cur.tours.planned.plannedDistanceKm) })}
+                    sub={t("analytics.fig.optimizerCoverage", { covered: cur.tours.planned.coveredTours, total: cur.tours.tours })}
                     info={def("plannedDistanceKm")}
                     planned
                   />
                   <Figure
-                    label="Planned driving + service"
-                    value={cur.tours.planned.plannedMinutes === null ? "–" : `${num(cur.tours.planned.plannedMinutes)} min`}
-                    sub={`Optimizer · ${cur.tours.planned.coveredTours} tours`}
+                    label={t("analytics.fig.plannedMinutes")}
+                    value={cur.tours.planned.plannedMinutes === null ? "–" : t("common.min", { n: N(cur.tours.planned.plannedMinutes) })}
+                    sub={t("analytics.fig.optimizerTours", { covered: cur.tours.planned.coveredTours })}
                     info={def("plannedMinutes")}
                     planned
                   />
-                  <Figure label="Interval between outcomes" value={cur.avgIntervalMinutes === null ? "–" : `${num(cur.avgIntervalMinutes, 1)} min`} sub="Not the time spent at a stop" info={def("avgIntervalMinutes")} />
-                  <Figure label="Stops per tour" value={num(cur.tours.stopsPerTour, 1)} sub="Processed stops ÷ tours with stops" info={def("stopsPerTour")} />
+                  <Figure
+                    label={t("analytics.fig.interval")}
+                    value={cur.avgIntervalMinutes === null ? "–" : t("common.min", { n: N(cur.avgIntervalMinutes, 1) })}
+                    sub={t("analytics.fig.intervalSub")}
+                    info={def("avgIntervalMinutes")}
+                  />
+                  <Figure label={t("analytics.fig.stopsPerTour")} value={N(cur.tours.stopsPerTour, 1)} sub={t("analytics.fig.stopsPerTourSub")} info={def("stopsPerTour")} />
                 </dl>
-                <p className="border-t border-line px-5 py-2.5 text-2xs text-muted">Actual driven distance is not recorded for every driver and is therefore not shown.</p>
+                <p className="border-t border-line px-5 py-2.5 text-2xs text-muted">{t("analytics.drivenNote")}</p>
               </Card>
             </div>
           </div>
@@ -229,37 +258,41 @@ export function AnalyticsView() {
 }
 
 function InfoTip({ text }: { text: string }) {
+  const { t } = useI18n();
   if (!text) return null;
   return (
     <Tooltip content={<span className="block max-w-xs text-xs font-medium">{text}</span>}>
-      <button type="button" className="inline-grid size-5 place-items-center rounded-md text-muted hover:text-ink" aria-label={`Definition: ${text}`}>
+      <button type="button" className="inline-grid size-5 place-items-center rounded-md text-muted hover:text-ink" aria-label={t("analytics.definition", { text })}>
         <Info className="size-3.5" />
       </button>
     </Tooltip>
   );
 }
 
-function Kpi({ label, value, prev, info }: { label: string; value: string; prev: string; info: string }) {
+function Kpi({ labelKey, value, prev, info }: { labelKey: MessageKey; value: string; prev: string; info: string }) {
+  const { t } = useI18n();
+  const label = t(labelKey);
   return (
     <Card className="flex flex-col gap-2 p-4" role="group" aria-label={label}>
       <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-2">
         {label}
         <InfoTip text={info} />
       </div>
-      <div className="text-[26px] font-extrabold leading-none tracking-[-0.02em] text-ink tabular" data-testid={`kpi-${label}`}>
+      <div className="text-[26px] font-extrabold leading-none tracking-[-0.02em] text-ink tabular" data-testid={`kpi-${EN_T(labelKey)}`}>
         {value}
       </div>
-      <div className="text-2xs text-muted tabular">prev. {prev}</div>
+      <div className="text-2xs text-muted tabular">{t("analytics.prev", { value: prev })}</div>
     </Card>
   );
 }
 
 function Figure({ label, value, sub, info, planned }: { label: string; value: string; sub: string; info: string; planned?: boolean }) {
+  const { t } = useI18n();
   return (
     <div className="flex flex-col gap-0.5">
       <dt className="flex items-center gap-1 text-2xs font-semibold uppercase tracking-[0.06em] text-muted">
         {label}
-        {planned && <span className="rounded-full bg-surface-2 px-1.5 py-px text-[10px] font-bold normal-case tracking-normal text-ink-2">planned</span>}
+        {planned && <span className="rounded-full bg-surface-2 px-1.5 py-px text-[10px] font-bold normal-case tracking-normal text-ink-2">{t("analytics.plannedBadge")}</span>}
         <InfoTip text={info} />
       </dt>
       <dd className="text-[18px] font-extrabold text-ink tabular">{value}</dd>
@@ -269,47 +302,51 @@ function Figure({ label, value, sub, info, planned }: { label: string; value: st
 }
 
 function ExportMenu({ api, query, view }: { api: ReturnType<typeof analyticsApi>; query: AnalyticsQuery; view: "drivers" | "depots" | "tours" | "trend" }) {
+  const { t, locale } = useI18n();
   return (
     <Menu>
       <MenuTrigger asChild>
         <Button variant="secondary" size="sm">
-          <Download /> Export
+          <Download /> {t("common.export")}
         </Button>
       </MenuTrigger>
       <MenuContent align="end">
         <MenuLabel>
-          {query.from} – {query.to}
+          <bdi dir="ltr">
+            {query.from} – {query.to}
+          </bdi>
         </MenuLabel>
-        <MenuItem onSelect={() => download(api.exportUrl(query, view, "csv"))}>CSV (Excel, semicolon)</MenuItem>
-        <MenuItem onSelect={() => download(api.exportUrl(query, view, "xlsx"))}>Excel (.xlsx)</MenuItem>
+        <MenuItem onSelect={() => download(api.exportUrl(query, view, "csv", locale))}>{t("analytics.csvSemicolon")}</MenuItem>
+        <MenuItem onSelect={() => download(api.exportUrl(query, view, "xlsx", locale))}>{t("common.exportXlsx")}</MenuItem>
       </MenuContent>
     </Menu>
   );
 }
 
 function TrendTable({ data }: { data: Summary }) {
+  const { t, fmt } = useI18n();
   return (
     <div className="max-h-80 overflow-auto">
-      <table className="w-full text-[13px]" aria-label="Outcomes per period">
+      <table className="w-full text-[13px]" aria-label={t("analytics.trendTable")}>
         <thead className="sticky top-0 bg-surface text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
           <tr className="border-b border-line">
-            <th className="py-2 text-start">Period</th>
-            <th className="text-end">Tours</th>
-            <th className="text-end">Delivered</th>
-            <th className="text-end">Not delivered</th>
-            <th className="text-end">Open</th>
-            <th className="text-end">Success</th>
+            <th className="py-2 text-start">{t("analytics.th.period")}</th>
+            <th className="text-end">{t("analytics.th.tours")}</th>
+            <th className="text-end">{t("analytics.th.delivered")}</th>
+            <th className="text-end">{t("analytics.th.notDelivered")}</th>
+            <th className="text-end">{t("analytics.th.open")}</th>
+            <th className="text-end">{t("analytics.th.success")}</th>
           </tr>
         </thead>
         <tbody>
-          {data.trend.map((t) => (
-            <tr key={t.bucket} className="border-b border-line last:border-0 tabular">
-              <td className="py-1.5">{t.bucket}</td>
-              <td className="text-end">{t.tours}</td>
-              <td className="text-end">{delivered(t)}</td>
-              <td className="text-end">{notDelivered(t)}</td>
-              <td className="text-end">{t.open}</td>
-              <td className="text-end">{pct(t.successRate)}</td>
+          {data.trend.map((b) => (
+            <tr key={b.bucket} className="border-b border-line last:border-0 tabular">
+              <td className="py-1.5">{b.bucket}</td>
+              <td className="text-end">{b.tours}</td>
+              <td className="text-end">{delivered(b)}</td>
+              <td className="text-end">{notDelivered(b)}</td>
+              <td className="text-end">{b.open}</td>
+              <td className="text-end">{pct(b.successRate, 1, fmt)}</td>
             </tr>
           ))}
         </tbody>
@@ -321,6 +358,7 @@ function TrendTable({ data }: { data: Summary }) {
 type Tab = "drivers" | "depots" | "tours";
 
 function BreakdownTables({ api, query, mayExport }: { api: ReturnType<typeof analyticsApi>; query: AnalyticsQuery; mayExport: boolean }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("drivers");
   const [rows, setRows] = useState<{ tab: Tab; data: DriverRow[] | DepotRow[] | TourRow[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -342,18 +380,12 @@ function BreakdownTables({ api, query, mayExport }: { api: ReturnType<typeof ana
   return (
     <Card className="overflow-hidden">
       <CardHeader
-        title="Breakdown"
-        description="Performance per driver, location and tour"
+        title={t("analytics.breakdown")}
+        description={t("analytics.breakdownDesc")}
         actions={mayExport ? <ExportMenu api={api} query={query} view={tab} /> : undefined}
       />
-      <div className="flex gap-1 border-b border-line px-4 pt-2" role="tablist" aria-label="Breakdown">
-        {(
-          [
-            ["drivers", "Drivers"],
-            ["depots", "Locations"],
-            ["tours", "Tours"],
-          ] as const
-        ).map(([k, label]) => (
+      <div className="flex gap-1 border-b border-line px-4 pt-2" role="tablist" aria-label={t("analytics.breakdown")}>
+        {(["drivers", "depots", "tours"] as const).map((k) => (
           <button
             key={k}
             type="button"
@@ -362,13 +394,13 @@ function BreakdownTables({ api, query, mayExport }: { api: ReturnType<typeof ana
             onClick={() => setTab(k)}
             className={cn("-mb-px border-b-2 px-3 pb-2 text-[13px] font-semibold", tab === k ? "border-brand-600 text-ink" : "border-transparent text-muted hover:text-ink")}
           >
-            {label}
+            {t(`analytics.tab.${k}`)}
           </button>
         ))}
       </div>
       {error && <p className="px-4 py-4 text-[13px] text-danger-ink">{error}</p>}
       {!rows && !error && <Skeleton className="m-4 h-40" />}
-      {rows && rows.data.length === 0 && <p className="px-4 py-6 text-center text-[13px] text-muted">No data in this period.</p>}
+      {rows && rows.data.length === 0 && <p className="px-4 py-6 text-center text-[13px] text-muted">{t("analytics.noDataPeriod")}</p>}
       {rows && rows.data.length > 0 && (
         <div className="max-h-[520px] overflow-auto">
           {rows.tab === "tours" ? <ToursTable rows={rows.data as TourRow[]} /> : <PeopleTable rows={rows.data as (DriverRow | DepotRow)[]} kind={rows.tab} />}
@@ -381,37 +413,38 @@ function BreakdownTables({ api, query, mayExport }: { api: ReturnType<typeof ana
 const Th = ({ children, end }: { children: ReactNode; end?: boolean }) => <th className={cn("h-10 whitespace-nowrap px-3", end ? "text-end" : "text-start")}>{children}</th>;
 
 function PeopleTable({ rows, kind }: { rows: (DriverRow | DepotRow)[]; kind: "drivers" | "depots" }) {
+  const { t, fmt } = useI18n();
   return (
-    <table className="w-full min-w-[980px] text-[13px]" aria-label={kind === "drivers" ? "Driver performance" : "Location performance"}>
+    <table className="w-full min-w-[980px] text-[13px]" aria-label={kind === "drivers" ? t("analytics.driverPerformance") : t("analytics.locationPerformance")}>
       <thead className="sticky top-0 bg-surface text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
         <tr className="border-b border-line">
-          <Th>{kind === "drivers" ? "Driver" : "Location"}</Th>
-          <Th end>Tours</Th>
-          <Th end>Stops</Th>
-          <Th end>Delivered</Th>
-          <Th end>Not delivered</Th>
-          <Th end>Open</Th>
-          <Th end>Success</Th>
-          <Th end>On-time starts</Th>
-          <Th end>Avg tour (actual)</Th>
-          <Th end>Stops / active h</Th>
-          <Th end>Planned km</Th>
+          <Th>{kind === "drivers" ? t("analytics.th.driver") : t("analytics.th.location")}</Th>
+          <Th end>{t("analytics.th.tours")}</Th>
+          <Th end>{t("analytics.th.stops")}</Th>
+          <Th end>{t("analytics.th.delivered")}</Th>
+          <Th end>{t("analytics.th.notDelivered")}</Th>
+          <Th end>{t("analytics.th.open")}</Th>
+          <Th end>{t("analytics.th.success")}</Th>
+          <Th end>{t("analytics.th.onTimeStarts")}</Th>
+          <Th end>{t("analytics.th.avgTour")}</Th>
+          <Th end>{t("analytics.th.stopsPerHour")}</Th>
+          <Th end>{t("analytics.th.plannedKm")}</Th>
         </tr>
       </thead>
       <tbody>
         {rows.map((r) => (
           <tr key={"driverId" in r ? (r.driverId ?? "none") : r.depotId} className="border-b border-line last:border-0 tabular">
-            <td className="whitespace-nowrap px-3 py-2 font-semibold text-ink">{r.name ?? "(no driver)"}</td>
+            <td className="whitespace-nowrap px-3 py-2 font-semibold text-ink">{r.name ?? t("analytics.noDriver")}</td>
             <td className="px-3 text-end">{r.tours}</td>
             <td className="px-3 text-end">{r.stops}</td>
             <td className="px-3 text-end">{delivered(r)}</td>
             <td className="px-3 text-end">{notDelivered(r)}</td>
             <td className="px-3 text-end">{r.open}</td>
-            <td className="px-3 text-end font-semibold text-ink">{pct(r.successRate)}</td>
-            <td className="px-3 text-end">{pct(r.onTimeStartRate, 0)}</td>
-            <td className="px-3 text-end">{r.avgTourMinutes === null ? "–" : `${num(r.avgTourMinutes)} min`}</td>
-            <td className="px-3 text-end">{num(r.stopsPerActiveHour, 1)}</td>
-            <td className="px-3 text-end text-ink-2">{r.planned.plannedDistanceKm === null ? "–" : num(r.planned.plannedDistanceKm)}</td>
+            <td className="px-3 text-end font-semibold text-ink">{pct(r.successRate, 1, fmt)}</td>
+            <td className="px-3 text-end">{pct(r.onTimeStartRate, 0, fmt)}</td>
+            <td className="px-3 text-end">{r.avgTourMinutes === null ? "–" : t("common.min", { n: num(r.avgTourMinutes, 0, fmt) })}</td>
+            <td className="px-3 text-end">{num(r.stopsPerActiveHour, 1, fmt)}</td>
+            <td className="px-3 text-end text-ink-2">{r.planned.plannedDistanceKm === null ? "–" : num(r.planned.plannedDistanceKm, 0, fmt)}</td>
           </tr>
         ))}
       </tbody>
@@ -420,22 +453,23 @@ function PeopleTable({ rows, kind }: { rows: (DriverRow | DepotRow)[]; kind: "dr
 }
 
 function ToursTable({ rows }: { rows: TourRow[] }) {
+  const { t, fmt } = useI18n();
   return (
-    <table className="w-full min-w-[1000px] text-[13px]" aria-label="Tour performance">
+    <table className="w-full min-w-[1000px] text-[13px]" aria-label={t("analytics.tourPerformance")}>
       <thead className="sticky top-0 bg-surface text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
         <tr className="border-b border-line">
-          <Th>Date</Th>
-          <Th>Tour</Th>
-          <Th>Location</Th>
-          <Th>Driver</Th>
-          <Th>Status</Th>
-          <Th end>Stops</Th>
-          <Th end>Delivered</Th>
-          <Th end>Not delivered</Th>
-          <Th end>Success</Th>
-          <Th end>Actual min</Th>
-          <Th end>Planned min</Th>
-          <Th end>Planned km</Th>
+          <Th>{t("analytics.th.date")}</Th>
+          <Th>{t("analytics.th.tour")}</Th>
+          <Th>{t("analytics.th.location")}</Th>
+          <Th>{t("analytics.th.driver")}</Th>
+          <Th>{t("analytics.th.status")}</Th>
+          <Th end>{t("analytics.th.stops")}</Th>
+          <Th end>{t("analytics.th.delivered")}</Th>
+          <Th end>{t("analytics.th.notDelivered")}</Th>
+          <Th end>{t("analytics.th.success")}</Th>
+          <Th end>{t("analytics.th.actualMin")}</Th>
+          <Th end>{t("analytics.th.plannedMin")}</Th>
+          <Th end>{t("analytics.th.plannedKm")}</Th>
         </tr>
       </thead>
       <tbody>
@@ -444,21 +478,26 @@ function ToursTable({ rows }: { rows: TourRow[] }) {
             <td className="whitespace-nowrap px-3 py-2 text-ink-2">{r.date}</td>
             <td className="whitespace-nowrap px-3 font-semibold text-ink">
               {r.name}
-              {r.archived && <span className="ms-1.5 text-2xs font-normal text-muted">archived</span>}
+              {r.archived && <span className="ms-1.5 text-2xs font-normal text-muted">{t("analytics.archived")}</span>}
             </td>
             <td className="whitespace-nowrap px-3 text-ink-2">{r.depot}</td>
             <td className="whitespace-nowrap px-3 text-ink-2">{r.driver ?? "–"}</td>
-            <td className="whitespace-nowrap px-3 text-ink-2">{r.status.replace("_", " ")}</td>
+            <td className="whitespace-nowrap px-3 text-ink-2">{tourStatusText(r.status, t)}</td>
             <td className="px-3 text-end">{r.stops}</td>
             <td className="px-3 text-end">{delivered(r)}</td>
             <td className="px-3 text-end">{notDelivered(r)}</td>
-            <td className="px-3 text-end font-semibold text-ink">{pct(r.successRate)}</td>
-            <td className="px-3 text-end">{num(r.minutes)}</td>
-            <td className="px-3 text-end text-ink-2">{num(r.plannedMinutes)}</td>
-            <td className="px-3 text-end text-ink-2">{num(r.plannedDistanceKm, 1)}</td>
+            <td className="px-3 text-end font-semibold text-ink">{pct(r.successRate, 1, fmt)}</td>
+            <td className="px-3 text-end">{num(r.minutes, 0, fmt)}</td>
+            <td className="px-3 text-end text-ink-2">{num(r.plannedMinutes, 0, fmt)}</td>
+            <td className="px-3 text-end text-ink-2">{num(r.plannedDistanceKm, 1, fmt)}</td>
           </tr>
         ))}
       </tbody>
     </table>
   );
+}
+
+/** A tour status from the analytics API in the current language (unknown values as sent, readable). */
+function tourStatusText(status: string, t: TFunction) {
+  return TOUR_STATUSES.has(status) ? tourStatusLabel(status as Parameters<typeof tourStatusLabel>[0], t) : status.replace("_", " ");
 }

@@ -6,9 +6,11 @@ import { ArchiveRestore, Map as MapIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { errorMessage } from "../lib/api";
-import { lifecycleApi, STATUS_LABEL, type TourEvent } from "../lib/lifecycle";
+import type { MessageKey } from "../lib/i18n";
+import { useI18n, useT } from "../lib/i18n/client";
+import { lifecycleApi, statusLabel, type TourEvent } from "../lib/lifecycle";
 import { useDispatch } from "../lib/store";
-import { STOP_STATUS } from "./StatusBadge";
+import { STOP_STATUS, stopStatusLabel } from "./StatusBadge";
 import { TourActionsMenu } from "./TourActions";
 
 export const LIFECYCLE_TONE: Record<Tour["status"], BadgeTone> = {
@@ -21,37 +23,21 @@ export const LIFECYCLE_TONE: Record<Tour["status"], BadgeTone> = {
 
 /** Status + archive/publication markers of a tour, as used in lists and drawers. */
 export function LifecycleBadges({ tour }: { tour: Tour }) {
+  const t = useT();
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       <Badge tone={LIFECYCLE_TONE[tour.status]} dot>
-        {STATUS_LABEL[tour.status]}
+        {statusLabel(tour.status, t)}
       </Badge>
-      {tour.archivedAt && <Badge tone="outline">Archived</Badge>}
-      {tour.closedRemotely && <Badge tone="outline">Closed by Dispatch</Badge>}
-      {tour.status === "planned" && <Badge tone={tour.publishedAt ? "info" : "outline"}>{tour.publishedAt ? "Published" : "Not published"}</Badge>}
+      {tour.archivedAt && <Badge tone="outline">{t("tours.rec.archived")}</Badge>}
+      {tour.closedRemotely && <Badge tone="outline">{t("tours.rec.closedByDispatch")}</Badge>}
+      {tour.status === "planned" && <Badge tone={tour.publishedAt ? "info" : "outline"}>{tour.publishedAt ? t("tours.rec.published") : t("common.notPublished")}</Badge>}
     </span>
   );
 }
 
-const when = (iso?: string | null) => (iso ? new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }) : "–");
-
-const EVENT_LABEL: Record<string, string> = {
-  created: "Created",
-  assigned: "Driver / vehicle assigned",
-  optimized: "Optimized",
-  published: "Published",
-  unpublished: "Withdrawn",
-  started: "Started",
-  paused: "Paused",
-  resumed: "Resumed",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  archived: "Archived",
-  restored: "Restored",
-  rescheduled: "Moved",
-  note: "Driver note",
-  returned: "Returned to unassigned list",
-};
+/** Tour event kinds with a label (`tours.event.<kind>`); other kinds are shown as sent. */
+const EVENT_KINDS = new Set(["created", "assigned", "optimized", "published", "unpublished", "started", "paused", "resumed", "completed", "cancelled", "archived", "restored", "rescheduled", "note", "returned"]);
 
 /**
  * Any tour, any date, archived or not – loaded from the server (the day view only holds today's
@@ -60,6 +46,14 @@ const EVENT_LABEL: Record<string, string> = {
 export function TourRecordSheet({ tourId, onOpenChange, onChanged }: { tourId: string | null; onOpenChange: (open: boolean) => void; onChanged?: () => void }) {
   const { session, scoped, openTour } = useDispatch();
   const router = useRouter();
+  const { t: tr, fmt } = useI18n();
+  const when = (iso?: string | null) => (iso ? fmt.dateTime(iso) : tr("common.dash"));
+  const eventText = (e: TourEvent) => {
+    let text = EVENT_KINDS.has(e.kind) ? tr(`tours.event.${e.kind}` as MessageKey) : e.kind;
+    if (typeof e.detail?.reason === "string") text = tr("tours.rec.eventReason", { label: text, reason: e.detail.reason });
+    if (e.kind === "rescheduled" && typeof e.detail?.toDate === "string") text = tr("tours.rec.eventMoved", { label: text, date: e.detail.toDate });
+    return text;
+  };
   const api = lifecycleApi(session.organizationId);
   const [data, setData] = useState<{ tour: Tour; stops: Stop[]; events: TourEvent[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +79,7 @@ export function TourRecordSheet({ tourId, onOpenChange, onChanged }: { tourId: s
   const open = (s: Stop) => s.status === "pending" || s.status === "in_progress";
   const inDayView = t && !t.archivedAt && t.status !== "cancelled";
   return (
-    <Sheet open={!!tourId} onOpenChange={onOpenChange} title={t ? `Tour ${t.name}` : "Tour"} description={t ? `${depot?.name ?? ""} · ${t.date}` : undefined} className="max-w-lg">
+    <Sheet open={!!tourId} onOpenChange={onOpenChange} title={t ? tr("tours.rec.title", { name: t.name }) : tr("tours.rec.titleEmpty")} description={t ? `${depot?.name ?? ""} · ${t.date}` : undefined} className="max-w-lg">
       {error && <p className="text-[13px] text-danger-ink">{error}</p>}
       {!data && !error && (
         <div className="flex flex-col gap-2" aria-busy="true">
@@ -108,31 +102,31 @@ export function TourRecordSheet({ tourId, onOpenChange, onChanged }: { tourId: s
           </div>
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[13px]">
             <div>
-              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Driver</dt>
-              <dd className="font-semibold text-ink">{driver?.displayName ?? "–"}</dd>
+              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{tr("tours.f.driver")}</dt>
+              <dd className="font-semibold text-ink">{driver?.displayName ?? tr("common.dash")}</dd>
             </div>
             <div>
-              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Planned start</dt>
+              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{tr("tours.rec.plannedStart")}</dt>
               <dd className="font-semibold text-ink tabular">{formatClock(t.plannedStartMinute)}</dd>
             </div>
             <div>
-              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Started</dt>
+              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{tr("tours.rec.started")}</dt>
               <dd className="tabular">{when(t.startedAt)}</dd>
             </div>
             <div>
-              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t.status === "cancelled" ? "Cancelled" : "Finished"}</dt>
+              <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t.status === "cancelled" ? tr("tours.rec.cancelled") : tr("tours.rec.finished")}</dt>
               <dd className="tabular">{when(t.closedAt ?? t.finishedAt)}</dd>
             </div>
             {t.closeReason && (
               <div className="col-span-2">
-                <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Reason{t.closedRemotely ? " (closed by Dispatch)" : ""}</dt>
+                <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t.closedRemotely ? tr("tours.rec.reasonDispatch") : tr("tours.rec.reason")}</dt>
                 <dd className="text-ink">{t.closeReason}</dd>
               </div>
             )}
             {t.archivedAt && (
               <div className="col-span-2">
-                <dt className="text-2xs uppercase tracking-[0.08em] text-muted">Archived</dt>
-                <dd>{when(t.archivedAt)} · everything kept</dd>
+                <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{tr("tours.rec.archived")}</dt>
+                <dd>{tr("tours.rec.archivedAt", { when: when(t.archivedAt) })}</dd>
               </div>
             )}
           </dl>
@@ -145,20 +139,20 @@ export function TourRecordSheet({ tourId, onOpenChange, onChanged }: { tourId: s
                 router.push("/map");
               }}
             >
-              <MapIcon /> Open in the day view
+              <MapIcon /> {tr("tours.rec.openDay")}
             </Button>
           )}
           {t.archivedAt && (
             <p className="flex items-center gap-1.5 text-2xs text-muted">
-              <ArchiveRestore className="size-3.5" /> Restore it to work with it in the day view again (its status stays {STATUS_LABEL[t.status].toLowerCase()}).
+              <ArchiveRestore className="size-3.5" /> {tr("tours.rec.restoreHint", { status: statusLabel(t.status, tr).toLowerCase() })}
             </p>
           )}
-          <section aria-label="Stops">
+          <section aria-label={tr("tours.rec.stops")}>
             <h3 className="mb-1 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
-              Stops ({data.stops.length})
+              {tr("tours.rec.stopsCount", { count: data.stops.length })}
             </h3>
             {data.stops.length === 0 ? (
-              <p className="rounded-md border border-dashed border-line px-3 py-3 text-center text-[13px] text-muted">No stops on this tour.</p>
+              <p className="rounded-md border border-dashed border-line px-3 py-3 text-center text-[13px] text-muted">{tr("tours.rec.noStops")}</p>
             ) : (
               <ol className="flex flex-col divide-y divide-line rounded-xl border border-line">
                 {data.stops.map((s, i) => (
@@ -169,30 +163,26 @@ export function TourRecordSheet({ tourId, onOpenChange, onChanged }: { tourId: s
                       <span className="block truncate text-2xs text-muted">
                         {s.address.street} {s.address.houseNumber ?? ""}, {s.address.postalCode} {s.address.city}
                       </span>
-                      {s.cancelReason && <span className="block text-2xs text-danger-ink">Cancelled: {s.cancelReason}</span>}
+                      {s.cancelReason && <span className="block text-2xs text-danger-ink">{tr("tours.rec.stopCancelled", { reason: s.cancelReason })}</span>}
                     </span>
                     <span className="flex shrink-0 flex-col items-end gap-0.5">
-                      <Badge tone={STOP_STATUS[s.status].tone}>{STOP_STATUS[s.status].label}</Badge>
+                      <Badge tone={STOP_STATUS[s.status].tone}>{stopStatusLabel(s.status, tr)}</Badge>
                       {s.completedAt && <span className="text-2xs text-muted tabular">{when(s.completedAt)}</span>}
-                      {(s.proofs?.length ?? 0) > 0 && <span className="text-2xs text-muted">{s.proofs!.length} proof(s)</span>}
+                      {(s.proofs?.length ?? 0) > 0 && <span className="text-2xs text-muted">{tr("tours.rec.proofs", { count: s.proofs!.length })}</span>}
                     </span>
                   </li>
                 ))}
               </ol>
             )}
           </section>
-          <section aria-label="History">
-            <h3 className="mb-1 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">History</h3>
+          <section aria-label={tr("tours.rec.history")}>
+            <h3 className="mb-1 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">{tr("tours.rec.history")}</h3>
             <ol className="flex flex-col gap-1 text-[12.5px]">
               {data.events
                 .filter((e) => e.source === "tour")
                 .map((e, i) => (
                   <li key={i} className="flex justify-between gap-3">
-                    <span className="text-ink-2">
-                      {EVENT_LABEL[e.kind] ?? e.kind}
-                      {typeof e.detail?.reason === "string" ? ` – ${e.detail.reason}` : ""}
-                      {e.kind === "rescheduled" && typeof e.detail?.toDate === "string" ? ` to ${e.detail.toDate}` : ""}
-                    </span>
+                    <span className="text-ink-2">{eventText(e)}</span>
                     <span className="shrink-0 text-muted tabular">{when(e.at)}</span>
                   </li>
                 ))}

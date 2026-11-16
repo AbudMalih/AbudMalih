@@ -19,38 +19,19 @@ import { Badge, Button, Checkbox, cn } from "@turvio/web-ui/ds";
 import { FileSpreadsheet, Loader2, MapPin, Upload } from "lucide-react";
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, ApiCallError, errorMessage } from "../lib/api";
+import { currentT, type TFunction } from "../lib/i18n";
+import { useI18n, useT } from "../lib/i18n/client";
 import { AddressSearch } from "./AddressSearch";
+import { stopStatusLabel } from "./StatusBadge";
 
-const FIELD_LABEL: Record<ImportField, string> = {
-  recipientName: "Recipient (person)",
-  company: "Company",
-  address: "Full address (one column)",
-  street: "Street (+ number)",
-  houseNumber: "House number",
-  postalCode: "Postcode",
-  city: "City",
-  countryCode: "Country code",
-  tracking: "Tracking number(s)",
-  lat: "Latitude",
-  lng: "Longitude",
-  type: "Type (delivery/pickup)",
-  priority: "Priority",
-  notes: "Notes",
-  phone: "Phone",
-  twStart: "Window from (HH:MM)",
-  twEnd: "Window to (HH:MM)",
-};
+/** Label of an import field in the current language. */
+const fieldLabel = (f: ImportField, t: TFunction) => t(`import.field.${f}`);
 
-const ROW_ERROR: Record<string, string> = {
-  street_missing: "street missing",
-  city_missing: "city missing",
-  postal_code_invalid: "postcode invalid",
-  coordinates_invalid: "coordinates invalid",
-  time_window_invalid: "time window invalid",
-  address_unrecognized: "address not recognised",
-  postal_code_4_digits: "postcode has only 4 digits",
-  postcode_city_mismatch: "postcode does not belong to this city",
-};
+const ROW_ERRORS = new Set(["street_missing", "city_missing", "postal_code_invalid", "coordinates_invalid", "time_window_invalid", "address_unrecognized", "postal_code_4_digits", "postcode_city_mismatch"]);
+/** A row check code in words (unknown codes as they are). */
+const rowErrorLabel = (code: string, t: TFunction) => (ROW_ERRORS.has(code) ? t(`import.rowError.${code}` as "import.rowError.street_missing") : code);
+
+const STOP_STATUSES = new Set(["pending", "in_progress", "delivered", "picked_up", "failed", "attempted", "rescheduled", "returned", "skipped", "cancelled"]);
 
 /** Result of the server postcode/city check (POST /v1/geocode/postcodes). */
 type PostcodeCheck = { status: "ok" | "mismatch" | "unknown"; knownCities?: string[] };
@@ -74,31 +55,37 @@ export class ImportErrorBoundary extends Component<{ children: ReactNode; onRese
   render() {
     if (!this.state.error) return this.props.children;
     return (
-      <div role="alert" className="flex flex-col gap-2 rounded-md bg-danger-soft/70 px-3 py-2 text-sm text-danger">
-        <strong>The file could not be processed. Nothing was imported.</strong>
-        <span className="text-xs">{this.state.error}</span>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            this.setState({ error: null });
-            this.props.onReset();
-          }}
-        >
-          Start again
-        </Button>
-      </div>
+      <ImportErrorNotice
+        error={this.state.error}
+        onReset={() => {
+          this.setState({ error: null });
+          this.props.onReset();
+        }}
+      />
     );
   }
 }
 
-const MAPPING_PROBLEM = (p: string) =>
+function ImportErrorNotice({ error, onReset }: { error: string; onReset: () => void }) {
+  const t = useT();
+  return (
+    <div role="alert" className="flex flex-col gap-2 rounded-md bg-danger-soft/70 px-3 py-2 text-sm text-danger">
+      <strong>{t("import.processingFailed")}</strong>
+      <span className="text-xs">{error}</span>
+      <Button variant="secondary" size="sm" onClick={onReset}>
+        {t("import.startAgain")}
+      </Button>
+    </div>
+  );
+}
+
+const MAPPING_PROBLEM = (p: string, t: TFunction) =>
   p === "no_address_columns"
-    ? "Map either a full-address column, or street plus postcode or city."
+    ? t("import.noAddressColumns")
     : p === "lat_lng_incomplete"
-      ? "Map both latitude and longitude, or neither."
+      ? t("import.latLngIncomplete")
       : p.startsWith("mapped_twice:")
-        ? `Each field can be mapped once (${p.slice(13).split(",").map((f) => FIELD_LABEL[f as ImportField]).join(", ")}).`
+        ? t("import.mappedTwice", { fields: p.slice(13).split(",").map((f) => fieldLabel(f as ImportField, t)).join(t("import.sep")) })
         : p;
 
 type Geo = { status: "file" | "found" | "street" | "manual" | "missing"; label?: string };
@@ -130,7 +117,7 @@ async function bytesOf(file: File): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(new Uint8Array(r.result as ArrayBuffer));
-    r.onerror = () => reject(r.error ?? new Error("The file could not be read."));
+    r.onerror = () => reject(r.error ?? new Error(currentT()("import.readFailed")));
     r.readAsArrayBuffer(file);
   });
 }
@@ -138,7 +125,7 @@ async function bytesOf(file: File): Promise<Uint8Array> {
 export async function readTable(file: File): Promise<string[][]> {
   const bytes = await bytesOf(file);
   if (/\.xlsx$/i.test(file.name) || file.type.includes("spreadsheetml")) return parseXlsx(bytes);
-  if (/\.xls$/i.test(file.name)) throw new Error("Old .xls files are not supported – save the file as .xlsx or CSV.");
+  if (/\.xls$/i.test(file.name)) throw new Error(currentT()("import.xlsUnsupported"));
   return parseDelimited(decodeText(bytes));
 }
 
@@ -163,6 +150,7 @@ export function FileImport({
   /** Increase to check the tracking numbers against TURVIO again (e.g. after a refused save). */
   recheck?: number;
 }) {
+  const { t } = useI18n();
   const [fileName, setFileName] = useState<string | null>(null);
   const [table, setTable] = useState<string[][] | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
@@ -190,13 +178,13 @@ export function FileImport({
     setExisting({ state: "idle", found: [] });
     setLeaveOutExisting(false);
     try {
-      const t = (await readTable(file)).filter((r) => r.some((c) => c.trim()));
-      if (!t.length) throw new Error("The file is empty.");
-      if (t.length > MAX_ROWS + 1) throw new Error(`The file has ${t.length} rows – import at most ${MAX_ROWS} at a time.`);
-      const detected = detectColumns(t[0]!);
-      setTable(t);
+      const cells = (await readTable(file)).filter((r) => r.some((c) => c.trim()));
+      if (!cells.length) throw new Error(t("import.fileEmpty"));
+      if (cells.length > MAX_ROWS + 1) throw new Error(t("import.tooManyRows", { count: String(cells.length), max: String(MAX_ROWS) }));
+      const detected = detectColumns(cells[0]!);
+      setTable(cells);
       setHeader(!!detected);
-      setColumns(detected ?? t[0]!.map((_, i) => (i === 0 ? "address" : null)));
+      setColumns(detected ?? cells[0]!.map((_, i) => (i === 0 ? "address" : null)));
       setFileName(file.name);
     } catch (e) {
       setTable(null);
@@ -264,7 +252,7 @@ export function FileImport({
     }
     let alive = true;
     setExisting((x) => ({ ...x, state: "busy" }));
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const found: ExistingParcel[] = [];
         for (let i = 0; i < trackingList.length; i += 5000) {
@@ -278,7 +266,7 @@ export function FileImport({
     }, 300);
     return () => {
       alive = false;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [trackingList, organizationId, recheck]);
   const blockingExisting = useMemo(() => existing.found.filter((f) => f.blocking), [existing.found]);
@@ -344,30 +332,35 @@ export function FileImport({
   const reason = !table
     ? undefined
     : problems.length
-      ? "Fix the column mapping."
+      ? t("import.fixMapping")
       : invalid.length
-        ? `${invalid.length} row(s) cannot be imported – fix the file.`
+        ? t("import.invalidRows", { count: invalid.length })
         : plan.unresolved
-          ? `Decide where ${plan.unresolved} conflicting parcel(s) belong.`
+          ? t("import.unresolved", { count: plan.unresolved })
           : plan.blockingGroups
-            ? `${plan.blockingGroups} stop(s) have more than ${MAX_PARCELS_PER_STOP} parcels.`
+            ? t("import.tooManyParcels", { count: plan.blockingGroups, max: MAX_PARCELS_PER_STOP })
             : existing.state === "busy" || existing.state === "idle"
-              ? "Checking tracking numbers…"
+              ? t("import.checkingTracking")
               : existing.state === "error"
-                ? "Tracking numbers could not be checked – try again."
+                ? t("import.trackingCheckFailed")
                 : blockingExisting.length && !leaveOutExisting
-                  ? `${blockingExisting.length} parcel(s) are already in TURVIO.`
+                  ? t("import.alreadyInTurvio", { count: blockingExisting.length })
                   : geocoding === "busy"
-                    ? "Finding locations…"
+                    ? t("import.findingLocations")
                     : stops.length === 0
-                      ? "Nothing to import."
+                      ? t("import.nothingToImport")
                       : undefined;
   const blocked = !table || !!reason;
 
   useEffect(() => {
-    onChange({ stops, blocked, reason, label: stops.length ? `Import ${stops.length} stop${stops.length === 1 ? "" : "s"} (${parcels} parcel${parcels === 1 ? "" : "s"})` : "Import" });
+    onChange({
+      stops,
+      blocked,
+      reason,
+      label: stops.length ? t("import.importLabel", { count: stops.length, parcels: t("import.parcelsCount", { count: parcels }) }) : t("import.import"),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stops, blocked, parcels, reason]);
+  }, [stops, blocked, parcels, reason, t]);
 
   const counts = {
     file: groups.filter((g) => g.input.location).length,
@@ -385,7 +378,7 @@ export function FileImport({
           type="file"
           accept=".csv,.txt,.tsv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
           className="sr-only"
-          aria-label="Choose a CSV or Excel file"
+          aria-label={t("import.chooseFileLabel")}
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) void load(f);
@@ -393,21 +386,21 @@ export function FileImport({
           }}
         />
         <Button variant="secondary" onClick={() => input.current?.click()}>
-          <Upload /> {fileName ? "Choose another file" : "Choose CSV or Excel file"}
+          <Upload /> {fileName ? t("import.chooseAnother") : t("import.chooseFile")}
         </Button>
         {fileName && (
           <span className="inline-flex items-center gap-1.5 text-sm text-ink-2">
-            <FileSpreadsheet className="size-4" /> {fileName} · {table!.length - (header ? 1 : 0)} rows
+            <FileSpreadsheet className="size-4" /> {fileName} · {t("import.fileRows", { count: table!.length - (header ? 1 : 0) })}
           </span>
         )}
       </div>
       {readError && <p className="rounded-md bg-danger-soft px-2.5 py-1.5 text-xs text-danger">{readError}</p>}
 
       {table && (
-        <section aria-label="Column mapping" className="flex flex-col gap-2">
+        <section aria-label={t("import.mappingLabel")} className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="text-[13px] font-semibold text-ink">Columns</h3>
-            <Checkbox label="First row is a header" checked={header} onCheckedChange={(v) => setHeader(!!v)} />
+            <h3 className="text-[13px] font-semibold text-ink">{t("import.columns")}</h3>
+            <Checkbox label={t("import.headerRow")} checked={header} onCheckedChange={(v) => setHeader(!!v)} />
           </div>
           <div className="overflow-x-auto rounded-md border border-line">
             <table className="w-full text-xs">
@@ -416,15 +409,15 @@ export function FileImport({
                   {table[0]!.map((cell, i) => (
                     <th key={i} className="min-w-36 p-1.5 text-start align-top font-normal">
                       <select
-                        aria-label={`Column ${i + 1}${header ? ` (${cell})` : ""}`}
+                        aria-label={header ? t("import.columnWithHeader", { n: i + 1, header: cell }) : t("import.column", { n: i + 1 })}
                         value={columns[i] ?? ""}
                         onChange={(e) => setColumns((cs) => cs.map((c, k) => (k === i ? ((e.target.value || null) as ImportField | null) : c)))}
                         className={cn("h-8 w-full rounded border bg-surface px-1.5 text-xs", columns[i] ? "border-brand-500 text-ink" : "border-line text-muted")}
                       >
-                        <option value="">Ignore</option>
+                        <option value="">{t("import.ignore")}</option>
                         {IMPORT_FIELDS.map((f) => (
                           <option key={f} value={f}>
-                            {FIELD_LABEL[f]}
+                            {fieldLabel(f, t)}
                           </option>
                         ))}
                       </select>
@@ -448,58 +441,85 @@ export function FileImport({
           </div>
           {problems.map((p) => (
             <p key={p} className="text-xs text-danger" role="alert">
-              {MAPPING_PROBLEM(p)}
+              {MAPPING_PROBLEM(p, t)}
             </p>
           ))}
         </section>
       )}
 
       {rows.length > 0 && (
-        <section aria-label="Import review" className="flex flex-col gap-2">
+        <section aria-label={t("import.reviewLabel")} className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <Badge tone="outline">{rows.length} rows</Badge>
+            <Badge tone="outline">{t("import.rows", { count: rows.length })}</Badge>
             <Badge tone="outline">
-              {groups.length} stops · {groups.reduce((n, g) => n + (g.input.parcels?.length ?? 0), 0)} parcels
+              {t("import.stopsBadge", { count: groups.length, parcels: t("import.allParcels", { count: groups.reduce((n, g) => n + (g.input.parcels?.length ?? 0), 0) }) })}
             </Badge>
-            {rows.length > groups.length + invalid.length && <Badge tone="brand">{rows.length - invalid.length - groups.length} rows merged into stops at the same address</Badge>}
-            {counts.file > 0 && <Badge tone="success">{counts.file} with coordinates from the file</Badge>}
-            {counts.found > 0 && <Badge tone="success">{counts.found} found (house number)</Badge>}
-            {counts.street > 0 && <Badge tone="warning">{counts.street} street level only</Badge>}
-            {counts.manual > 0 && <Badge tone="success">{counts.manual} picked by hand</Badge>}
-            {counts.missing > 0 && <Badge tone="warning">{counts.missing} without location</Badge>}
+            {rows.length > groups.length + invalid.length && <Badge tone="brand">{t("import.merged", { count: rows.length - invalid.length - groups.length })}</Badge>}
+            {counts.file > 0 && <Badge tone="success">{t("import.withCoordinates", { count: counts.file })}</Badge>}
+            {counts.found > 0 && <Badge tone="success">{t("import.foundHouse", { count: counts.found })}</Badge>}
+            {counts.street > 0 && <Badge tone="warning">{t("import.streetLevel", { count: counts.street })}</Badge>}
+            {counts.manual > 0 && <Badge tone="success">{t("import.pickedByHand", { count: counts.manual })}</Badge>}
+            {counts.missing > 0 && <Badge tone="warning">{t("import.withoutLocation", { count: counts.missing })}</Badge>}
           </div>
           {invalid.length > 0 && (
             <div className="rounded-md bg-danger-soft/70 px-2.5 py-1.5 text-xs text-danger" role="alert">
-              {invalid.length} row{invalid.length === 1 ? "" : "s"} cannot be imported – fix the file or the column mapping:
+              {t("import.invalidHead", { count: invalid.length })}
               <ul className="mt-1 list-disc ps-4">
                 {invalid.slice(0, 8).map((r) => (
                   <li key={r.line}>
-                    Row {r.line}: {r.errors.map((e) => (e === "postcode_city_mismatch" ? `${ROW_ERROR[e]} (${r.postalCode} is ${postcodes?.checks.get(pcKey(r.postalCode, r.city))?.knownCities?.join(", ") ?? "elsewhere"}, not ${r.city})` : e === "postal_code_4_digits" ? `${ROW_ERROR[e]} (${r.postalCode})` : (ROW_ERROR[e] ?? e))).join(", ")}
+                    {t("import.rowLine", {
+                      line: String(r.line),
+                      errors: r.errors
+                        .map((e) =>
+                          e === "postcode_city_mismatch"
+                            ? t("import.mismatchDetail", {
+                                error: rowErrorLabel(e, t),
+                                postcode: r.postalCode,
+                                cities: postcodes?.checks.get(pcKey(r.postalCode, r.city))?.knownCities?.join(t("import.sep")) ?? t("import.elsewhere"),
+                                city: r.city,
+                              })
+                            : e === "postal_code_4_digits"
+                              ? t("import.fourDigitDetail", { error: rowErrorLabel(e, t), postcode: r.postalCode })
+                              : rowErrorLabel(e, t),
+                        )
+                        .join(t("import.sep")),
+                    })}
                   </li>
                 ))}
-                {invalid.length > 8 && <li>… and {invalid.length - 8} more</li>}
+                {invalid.length > 8 && <li>{t("import.andMore", { count: invalid.length - 8 })}</li>}
               </ul>
             </div>
           )}
           {verifiedFixes.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 rounded-md bg-warning-soft/70 px-2.5 py-1.5 text-xs text-warning-ink">
-              {verifiedFixes.length} postcode(s) lost their leading zero (e.g. {verifiedFixes[0]!.postalCode} → {verifiedFixes[0]!.postalCodeSuggestion} {verifiedFixes[0]!.city}); the corrected code belongs to the city.
+              {t("import.leadingZero", {
+                count: verifiedFixes.length,
+                from: verifiedFixes[0]!.postalCode,
+                to: verifiedFixes[0]!.postalCodeSuggestion ?? "",
+                city: verifiedFixes[0]!.city,
+              })}
               <Button variant="secondary" size="sm" onClick={() => setPostcodeFixes((x) => ({ ...x, ...Object.fromEntries(verifiedFixes.map((r) => [r.line, r.postalCodeSuggestion!])) }))}>
-                Use the corrected postcodes
+                {t("import.useCorrected")}
               </Button>
             </div>
           )}
-          {postcodes && !postcodes.available && <p className="text-xs text-muted">Postcodes could not be checked against the cities on this server (no address data).</p>}
+          {postcodes && !postcodes.available && <p className="text-xs text-muted">{t("import.noPostcodeData")}</p>}
           {plan.duplicates.length > 0 && (
             <p className="rounded-md bg-surface-2 px-2.5 py-1.5 text-xs text-ink-2">
-              {plan.duplicates.length} tracking number(s) are listed twice at the same address – each is imported once: {plan.duplicates.slice(0, 3).map((d) => `${d.trackingNumber} (rows ${d.lines.join(", ")})`).join("; ")}
+              {t("import.duplicates", {
+                count: plan.duplicates.length,
+                list: plan.duplicates
+                  .slice(0, 3)
+                  .map((d) => t("import.duplicateItem", { tracking: d.trackingNumber, lines: d.lines.join(t("import.sep")) }))
+                  .join("; "),
+              })}
               {plan.duplicates.length > 3 ? " …" : ""}
             </p>
           )}
           {plan.conflicts.length > 0 && (
-            <section aria-label="Address conflicts" className="flex flex-col gap-1.5 rounded-md border border-danger/40 bg-danger-soft/40 px-2.5 py-2 text-xs">
+            <section aria-label={t("import.conflictsLabel")} className="flex flex-col gap-1.5 rounded-md border border-danger/40 bg-danger-soft/40 px-2.5 py-2 text-xs">
               <strong className="text-danger">
-                {plan.conflicts.length} tracking number(s) appear at different addresses – choose the right one for each{plan.unresolved ? ` (${plan.unresolved} open)` : ""}:
+                {plan.unresolved ? t("import.conflictsOpen", { count: plan.conflicts.length, open: plan.unresolved }) : t("import.conflicts", { count: plan.conflicts.length })}
               </strong>
               {plan.conflicts.map((c) => (
                 <fieldset key={c.trackingNumber} className="flex flex-col gap-1 rounded border border-line bg-surface px-2 py-1.5">
@@ -507,13 +527,13 @@ export function FileImport({
                   {c.options.map((o) => (
                     <label key={o.line} className="flex items-center gap-2">
                       <input type="radio" name={`conflict-${c.trackingNumber}`} checked={c.resolution === o.line} onChange={() => setResolutions((x) => ({ ...x, [c.trackingNumber]: o.line }))} />
-                      Row {o.line}: {o.address}
+                      {t("import.rowAddress", { line: String(o.line), address: o.address })}
                       {o.recipientName ? ` · ${o.recipientName}` : ""}
                     </label>
                   ))}
                   <label className="flex items-center gap-2 text-muted">
                     <input type="radio" name={`conflict-${c.trackingNumber}`} checked={c.resolution === "skip"} onChange={() => setResolutions((x) => ({ ...x, [c.trackingNumber]: "skip" }))} />
-                    Leave this parcel out of the import
+                    {t("import.leaveOutParcel")}
                   </label>
                 </fieldset>
               ))}
@@ -521,39 +541,43 @@ export function FileImport({
           )}
           {plan.blockingGroups > 0 && (
             <p className="rounded-md bg-danger-soft/70 px-2.5 py-1.5 text-xs text-danger" role="alert">
-              {plan.blockingGroups} address(es) have more than {MAX_PARCELS_PER_STOP} parcels – split the file for these addresses.
+              {t("import.tooManyAddresses", { count: plan.blockingGroups, max: MAX_PARCELS_PER_STOP })}
             </p>
           )}
-          {existing.state === "error" && <p className="text-xs text-danger" role="alert">Tracking numbers could not be checked against TURVIO: {existing.error}</p>}
+          {existing.state === "error" && <p className="text-xs text-danger" role="alert">
+              {t("import.trackingCheckError", { error: existing.error ?? "" })}
+            </p>
+          )}
           {blockingExisting.length > 0 && (
-            <section aria-label="Already in TURVIO" className="flex flex-col gap-1.5 rounded-md border border-warning/50 bg-warning-soft/60 px-2.5 py-2 text-xs text-warning-ink">
-              <strong>{blockingExisting.length} parcel(s) are already planned or delivered in TURVIO – importing them again would create duplicates:</strong>
+            <section aria-label={t("import.alreadyLabel")} className="flex flex-col gap-1.5 rounded-md border border-warning/50 bg-warning-soft/60 px-2.5 py-2 text-xs text-warning-ink">
+              <strong>{t("import.alreadyHead", { count: blockingExisting.length })}</strong>
               <ul className="max-h-28 list-disc overflow-auto ps-4">
                 {blockingExisting.slice(0, 50).map((f) => (
                   <li key={f.trackingNumber}>
-                    {f.trackingNumber} · {f.tourName ? `${f.tourName}${f.tourDate ? ` (${f.tourDate})` : ""}` : "another depot"} · {f.stopStatus}
+                    {f.trackingNumber} · {f.tourName ? `${f.tourName}${f.tourDate ? ` (${f.tourDate})` : ""}` : t("import.anotherDepot")} ·{" "}
+                    {STOP_STATUSES.has(f.stopStatus) ? stopStatusLabel(f.stopStatus as Parameters<typeof stopStatusLabel>[0], t) : f.stopStatus}
                   </li>
                 ))}
-                {blockingExisting.length > 50 && <li>… and {blockingExisting.length - 50} more</li>}
+                {blockingExisting.length > 50 && <li>{t("import.andMore", { count: blockingExisting.length - 50 })}</li>}
               </ul>
-              <Checkbox label={`Leave these ${blockingExisting.length} parcel(s) out and import the rest`} checked={leaveOutExisting} onCheckedChange={(v) => setLeaveOutExisting(!!v)} />
+              <Checkbox label={t("import.leaveOutExisting", { count: blockingExisting.length })} checked={leaveOutExisting} onCheckedChange={(v) => setLeaveOutExisting(!!v)} />
             </section>
           )}
           {reDeliveries.length > 0 && (
-            <p className="text-xs text-ink-2">{reDeliveries.length} parcel(s) had an earlier attempt that ended (e.g. not at home) – they are imported again as a re-delivery.</p>
+            <p className="text-xs text-ink-2">{t("import.reDeliveries", { count: reDeliveries.length })}</p>
           )}
           {counts.missing > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="secondary" size="sm" onClick={() => void geocode()} disabled={geocoding === "busy" || invalid.length > 0}>
                 {geocoding === "busy" ? <Loader2 className="animate-spin" /> : <MapPin />}
-                Find locations ({pending.length})
+                {t("import.findLocations", { n: pending.length })}
               </Button>
-              <Checkbox label="Also import stops without location (they stay unplanned until a location is set)" checked={includeUnlocated} onCheckedChange={(v) => setIncludeUnlocated(!!v)} />
+              <Checkbox label={t("import.includeUnlocated")} checked={includeUnlocated} onCheckedChange={(v) => setIncludeUnlocated(!!v)} />
             </div>
           )}
-          {geocoding === "unavailable" && <p className="text-xs text-warning-ink">Address search is not available on this server. Add coordinate columns to the file, or set locations later.</p>}
-          {geocoding === "error" && <p className="text-xs text-danger">Finding locations failed: {geocodeError}</p>}
-          <ul className="max-h-64 divide-y divide-line overflow-auto rounded-md border border-line" aria-label="Stops to import">
+          {geocoding === "unavailable" && <p className="text-xs text-warning-ink">{t("import.geocoderUnavailable")}</p>}
+          {geocoding === "error" && <p className="text-xs text-danger">{t("import.geocodeFailed", { error: geocodeError ?? "" })}</p>}
+          <ul className="max-h-64 divide-y divide-line overflow-auto rounded-md border border-line" aria-label={t("import.stopsLabel")}>
             {groups.map((g) => {
               const st = located(g);
               const a = g.input.address;
@@ -565,19 +589,20 @@ export function FileImport({
                         {a.street} {a.houseNumber ?? ""}, {a.postalCode} {a.city}
                       </div>
                       <div className="truncate text-muted">
-                        {g.input.recipientName ?? "–"} · {g.input.parcels?.length ?? 0} parcel(s){g.rows.length > 1 ? ` · ${g.rows.length} rows merged` : ""}
-                        {g.input.type === "pickup" ? " · pickup" : ""}
+                        {g.input.recipientName ?? "–"} · {t("import.groupParcels", { count: g.input.parcels?.length ?? 0 })}
+                        {g.rows.length > 1 ? ` · ${t("import.groupMerged", { count: g.rows.length })}` : ""}
+                        {g.input.type === "pickup" ? ` · ${t("import.groupPickup")}` : ""}
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
-                      {st?.status === "file" && <Badge tone="success">from file</Badge>}
-                      {st?.status === "found" && <Badge tone="success">found</Badge>}
-                      {st?.status === "street" && <Badge tone="warning">street only</Badge>}
-                      {st?.status === "manual" && <Badge tone="success">picked</Badge>}
-                      {!g.input.location && !geo[g.key]?.location && <Badge tone="warning">{geo[g.key]?.status === "missing" ? "not found" : "no location"}</Badge>}
+                      {st?.status === "file" && <Badge tone="success">{t("import.badge.file")}</Badge>}
+                      {st?.status === "found" && <Badge tone="success">{t("import.badge.found")}</Badge>}
+                      {st?.status === "street" && <Badge tone="warning">{t("import.badge.street")}</Badge>}
+                      {st?.status === "manual" && <Badge tone="success">{t("import.badge.manual")}</Badge>}
+                      {!g.input.location && !geo[g.key]?.location && <Badge tone="warning">{geo[g.key]?.status === "missing" ? t("import.badge.notFound") : t("import.badge.noLocation")}</Badge>}
                       {!g.input.location && (
-                        <Button variant="ghost" size="sm" onClick={() => setFixing(fixing === g.key ? null : g.key)} aria-label={`Set location for ${a.street} ${a.houseNumber ?? ""}`}>
-                          {geo[g.key]?.location ? "Change" : "Set"}
+                        <Button variant="ghost" size="sm" onClick={() => setFixing(fixing === g.key ? null : g.key)} aria-label={t("import.setLocationFor", { address: `${a.street} ${a.houseNumber ?? ""}` })}>
+                          {geo[g.key]?.location ? t("import.change") : t("import.set")}
                         </Button>
                       )}
                     </div>

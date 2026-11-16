@@ -6,6 +6,7 @@ import { useState } from "react";
 import { api as call, errorMessage } from "../lib/api";
 import { fieldCls } from "../lib/helpers";
 import { lifecycleApi } from "../lib/lifecycle";
+import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 
 /**
@@ -14,6 +15,7 @@ import { useDispatch } from "../lib/store";
  */
 export function UnassignedStopActions({ ids, onDone }: { ids: string[]; onDone: () => void }) {
   const { session, reload } = useDispatch();
+  const t = useT();
   const [dialog, setDialog] = useState<null | "cancel" | "delete">(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,8 +34,8 @@ export function UnassignedStopActions({ ids, onDone }: { ids: string[]; onDone: 
       }
     }
     setBusy(false);
-    if (ok) toast.success(`${ok} stop(s) ${dialog === "cancel" ? "cancelled" : "deleted"}`);
-    if (failed.length) toast.error(`${failed.length} stop(s) unchanged`, { description: [...new Set(failed)].join(" · ") });
+    if (ok) toast.success(t(dialog === "cancel" ? "tours.un.cancelledToast" : "tours.un.deletedToast", { count: ok }));
+    if (failed.length) toast.error(t("tours.un.unchangedToast", { count: failed.length }), { description: [...new Set(failed)].join(" · ") });
     setDialog(null);
     setReason("");
     onDone();
@@ -43,45 +45,41 @@ export function UnassignedStopActions({ ids, onDone }: { ids: string[]; onDone: 
     <>
       <Menu>
         <MenuTrigger asChild disabled={ids.length === 0}>
-          <Button size="icon-sm" variant="secondary" aria-label="More actions for the selected stops">
+          <Button size="icon-sm" variant="secondary" aria-label={t("tours.un.moreAria")}>
             <MoreHorizontal />
           </Button>
         </MenuTrigger>
         <MenuContent align="end" className="w-60">
-          <MenuLabel>{ids.length} selected stop(s)</MenuLabel>
+          <MenuLabel>{t("tours.un.selected", { count: ids.length })}</MenuLabel>
           <MenuItem icon={<Ban />} onSelect={() => setDialog("cancel")}>
-            Cancel with a reason…
+            {t("tours.un.cancelWithReason")}
           </MenuItem>
           <MenuItem icon={<Trash2 />} className="text-danger-ink" onSelect={() => setDialog("delete")}>
-            Delete draft stops…
+            {t("tours.un.deleteDrafts")}
           </MenuItem>
         </MenuContent>
       </Menu>
       <Dialog
         open={dialog !== null}
         onOpenChange={(o) => !o && !busy && setDialog(null)}
-        title={dialog === "cancel" ? `Cancel ${ids.length} stop(s)?` : `Delete ${ids.length} stop(s) permanently?`}
-        description={
-          dialog === "cancel"
-            ? "Cancelled stops are kept as records with the reason, your name and the time. They are not planned or delivered."
-            : "Only draft or test stops without any history are deleted. Stops with history stay unchanged and are reported – cancel those instead."
-        }
+        title={t(dialog === "cancel" ? "tours.un.titleCancel" : "tours.un.titleDelete", { count: ids.length })}
+        description={dialog === "cancel" ? t("tours.un.descCancel") : t("tours.un.descDelete")}
         footer={
           <>
             <Button variant="secondary" onClick={() => setDialog(null)} disabled={busy}>
-              Back
+              {t("common.back")}
             </Button>
             <Button variant="danger" onClick={() => void run()} disabled={busy || (dialog === "cancel" && reason.trim().length < 3)}>
               {busy && <Loader2 className="animate-spin" />}
-              {dialog === "cancel" ? "Cancel stops" : "Delete stops"}
+              {dialog === "cancel" ? t("tours.un.cancelStops") : t("tours.un.deleteStops")}
             </Button>
           </>
         }
       >
         {dialog === "cancel" && (
           <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-            Reason
-            <textarea className={`${fieldCls} h-20 py-2`} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-label="Reason for cancelling the stops" />
+            {t("tours.un.reason")}
+            <textarea className={`${fieldCls} h-20 py-2`} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-label={t("tours.un.reasonAria")} />
           </label>
         )}
       </Dialog>
