@@ -7,6 +7,40 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
+import { useDesignG } from "../lib/ui";
+
+/**
+ * Phase G: one bordered band, six equal cells divided by hairlines. No icons or colour per figure:
+ * the label, the figure and one line of context. Colour appears only where something needs
+ * attention (a red or amber dot and text); progress is a 2 px neutral rule.
+ */
+function Cell({ label, value, foot, tone, progress, href }: { label: string; value: ReactNode; foot?: ReactNode; tone?: "danger" | "warning"; progress?: number; href?: string }) {
+  const body = (
+    <>
+      <span className="truncate text-[12px] text-muted">{label}</span>
+      <span className="tabular text-[22px] font-medium leading-7 tracking-[-0.02em] text-ink">{value}</span>
+      {progress !== undefined ? (
+        <span className="block h-[2px] overflow-hidden rounded-full bg-[var(--selected)]" role="progressbar" aria-valuenow={Math.round(progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
+          <span className="block h-full rounded-full bg-[var(--text-3)] transition-[width] duration-700" style={{ width: `${Math.round(progress * 100)}%` }} />
+        </span>
+      ) : (
+        <span className="block h-[2px]" aria-hidden="true" />
+      )}
+      <span className={cn("flex min-h-4 items-center gap-1.5 truncate text-[12px] leading-4", tone === "danger" ? "text-danger-ink" : tone === "warning" ? "text-warning-ink" : "text-muted")}>
+        {tone && <span className={cn("size-1.5 shrink-0 rounded-full", tone === "danger" ? "bg-danger" : "bg-warning")} aria-hidden="true" />}
+        <span className="truncate">{foot}</span>
+      </span>
+    </>
+  );
+  const cls = "flex min-w-0 flex-col gap-1.5 px-4 py-3 outline-none transition-colors focus-visible:shadow-[var(--shadow-focus)]";
+  return href ? (
+    <Link href={href} className={cn(cls, "hover:bg-[var(--hover)]")}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls}>{body}</div>
+  );
+}
 
 type Accent = "violet" | "cobalt" | "mint" | "cyan" | "amber" | "coral";
 const ACC: Record<Accent, { tile: string; bar: string }> = {
@@ -61,6 +95,49 @@ export function OpsSummary() {
     .filter(Boolean)
     .join(" · ");
   const totalTours = kpis.activeTours + kpis.plannedTours;
+  const g = useDesignG();
+  if (g)
+    return (
+      <section
+        aria-label={t("map.ops.aria")}
+        className="grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-surface md:grid-cols-3 xl:grid-cols-6 [&>*]:border-line [&>*]:border-b xl:[&>*]:border-b-0 [&>*:not(:first-child)]:border-s max-md:[&>*:nth-child(odd)]:border-s-0 md:max-xl:[&>*:nth-child(3n+1)]:border-s-0"
+      >
+        <Cell
+          label={t("map.ops.activeTours")}
+          value={kpis.activeTours}
+          progress={totalTours ? kpis.activeTours / totalTours : 0}
+          foot={kpis.plannedTours ? t("map.ops.plannedMore", { n: kpis.plannedTours }) : hasData ? t("map.ops.allStarted") : t("map.ops.noTours")}
+        />
+        <Cell label={t("map.ops.drivers")} value={kpis.activeDrivers} foot={t("map.ops.vehiclesAvailable", { a: kpis.availableVehicles, b: kpis.totalVehicles })} />
+        <Cell
+          label={t("map.ops.stopsCompleted")}
+          value={kpis.completedStops}
+          progress={kpis.completion}
+          foot={hasData ? t("map.ops.completionFoot", { pct: Math.round(kpis.completion * 100), count: kpis.totalStops }) : "–"}
+        />
+        <Cell
+          label={t("map.ops.deliveriesRemaining")}
+          value={kpis.remainingDeliveries}
+          progress={remainingShare}
+          tone={kpis.unassignedDeliveries ? "warning" : undefined}
+          foot={kpis.unassignedDeliveries ? t("map.ops.unassigned", { n: kpis.unassignedDeliveries }) : hasData ? t("map.ops.allAssigned") : "–"}
+        />
+        <Cell
+          label={t("map.delayedTours")}
+          value={kpis.delayedTours}
+          tone={kpis.delayedConfirmed || kpis.delayedProjected ? "danger" : kpis.delayedEstimated ? "warning" : undefined}
+          foot={delayedSub || t("map.ops.none")}
+          href="/list?status=delayed"
+        />
+        <Cell
+          label={t("map.ops.pickups")}
+          value={kpis.scheduledPickups}
+          tone={kpis.pickupConflicts ? "danger" : undefined}
+          foot={kpis.pickupConflicts ? t("map.ops.needAttention", { n: kpis.pickupConflicts }) : t("map.ops.onSchedule")}
+          href="/pickups"
+        />
+      </section>
+    );
   return (
     <section aria-label={t("map.ops.aria")} className="grid grid-cols-2 gap-[18px] md:grid-cols-3 xl:grid-cols-6">
       <Kpi

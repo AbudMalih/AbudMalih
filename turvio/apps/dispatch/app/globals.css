@@ -28,3 +28,10 @@
    light #ffffff and dark #141821). Text never uses these colours. */
 :root { --viz-1: #2a78d6; --viz-2: #eb6834; --viz-grid: rgba(44, 40, 66, 0.1); }
 [data-theme="dark"] { --viz-1: #3987e5; --viz-2: #d95926; --viz-grid: rgba(166, 180, 224, 0.12); }
+
+/* Phase G (design preview): neutral, desaturated base map so routes and states carry the colour;
+   charcoal at night, soft grey by day. Map chrome follows the quieter radii. */
+[data-ds="g"] .turvio-tiles { filter: grayscale(1) brightness(1.04) contrast(0.92); opacity: 0.9; }
+[data-ds="g"][data-theme="dark"] .turvio-tiles { filter: grayscale(1) invert(1) brightness(0.58) contrast(1.08); opacity: 1; }
+[data-ds="g"] .leaflet-tooltip { border-radius: 6px; box-shadow: var(--shadow-lg); font: 400 12.5px/1.45 var(--font-sans); }
+[data-ds="g"] .leaflet-container.leaflet-container { background: var(--bg-2); }

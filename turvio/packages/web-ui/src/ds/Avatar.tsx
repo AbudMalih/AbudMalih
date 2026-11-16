@@ -13,7 +13,7 @@ export function Avatar({ name, size = "md", square = false, className }: { name:
   const dims = size === "sm" ? "size-6 text-[10px] rounded-[8px]" : size === "lg" ? "size-10 text-sm rounded-[13px]" : "size-[34px] text-[12.5px] rounded-[11px]";
   return (
     <span
-      className={cn("inline-flex shrink-0 items-center justify-center bg-[image:var(--avatar-bg)] font-bold text-[color:var(--avatar-text)]", dims, square && "rounded-[10px]", className)}
+      className={cn("inline-flex shrink-0 items-center justify-center bg-[image:var(--avatar-bg)] font-bold text-[color:var(--avatar-text)] g:rounded-full g:bg-[color:var(--avatar-bg)] g:bg-none g:font-semibold", dims, square && "rounded-[10px]", className)}
       aria-hidden="true"
     >
       {initials(name)}

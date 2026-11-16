@@ -44,7 +44,7 @@ export interface RouteMapProps {
 }
 
 const MAPBTN =
-  "grid size-10 place-items-center rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] text-ink-2 shadow-overlay backdrop-blur transition-[color,border-color,transform] hover:border-line-3 hover:text-ink active:scale-[0.93]";
+  "grid size-10 place-items-center rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] text-ink-2 shadow-overlay backdrop-blur transition-[color,border-color,transform] hover:border-line-3 hover:text-ink active:scale-[0.93] g:size-8 g:rounded-md g:border-line-2 g:bg-surface g:shadow-none g:backdrop-blur-none g:hover:translate-y-0 g:hover:bg-surface-2";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -397,20 +397,20 @@ export function RouteMap(props: RouteMapProps) {
       )}
 
       {state === "ready" && tiles === "unavailable" && (
-        <div className="absolute top-4 z-[450] mx-auto w-fit max-w-md rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-ink-2 shadow-overlay backdrop-blur" style={{ insetInlineStart: (props.insetStart ?? 0) + 120, insetInlineEnd: (props.insetEnd ?? 0) + 16 }} role="status">
+        <div className="absolute top-4 z-[450] mx-auto w-fit max-w-md rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-3.5 py-2.5 text-xs font-semibold text-ink-2 shadow-overlay backdrop-blur g:top-3 g:rounded-md g:border-line-2 g:bg-surface g:px-3 g:py-2 g:font-normal g:shadow-none g:backdrop-blur-none" style={{ insetInlineStart: (props.insetStart ?? 0) + 120, insetInlineEnd: (props.insetEnd ?? 0) + 16 }} role="status">
           <span className="me-2 inline-block size-2 rounded-full bg-nx-amber align-middle" aria-hidden="true" />
           {t("map.rm.tilesUnavailable")}
         </div>
       )}
       {state === "ready" && empty && (
         <div className="absolute inset-0 z-[440] flex items-center justify-center">
-          <div className="rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-3 text-[13px] font-semibold text-ink-2 shadow-overlay backdrop-blur">{t("map.rm.empty")}</div>
+          <div className="rounded-xl border border-line-strong bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-4 py-3 text-[13px] font-semibold text-ink-2 shadow-overlay backdrop-blur g:rounded-md g:border-line-2 g:bg-surface g:font-normal g:shadow-none g:backdrop-blur-none">{t("map.rm.empty")}</div>
         </div>
       )}
 
       {state === "ready" && (
         <>
-          <div className="absolute bottom-6 z-[460] flex flex-col gap-2 transition-[inset-inline-end] duration-300" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 16 }}>
+          <div className="absolute bottom-6 z-[460] flex flex-col gap-2 transition-[inset-inline-end] duration-300 g:bottom-3 g:gap-1.5" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 16 }}>
             <Tooltip content={t("map.rm.zoomIn")} side={tipSide}>
               <button className={MAPBTN} onClick={() => map.current?.zoomIn()} aria-label={t("map.rm.zoomIn")}>
                 <Plus className="size-4" />
@@ -445,7 +445,7 @@ export function RouteMap(props: RouteMapProps) {
             </Tooltip>
           </div>
           {layersOpen && (
-            <div className="absolute bottom-6 z-[460] w-56 rounded-2xl border border-line-strong bg-raised p-3 text-[13px] font-semibold shadow-overlay" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 68 }}>
+            <div className="absolute bottom-6 z-[460] w-56 rounded-2xl border border-line-strong bg-raised p-3 text-[13px] font-semibold shadow-overlay g:bottom-3 g:rounded-lg g:font-normal" style={{ insetInlineEnd: (props.insetEnd ?? 0) + 68 }}>
               <label className="flex items-center justify-between gap-2 py-1">
                 {t("map.rm.completedStops")}
                 <input type="checkbox" checked={showCompleted} onChange={(e) => setShowCompleted(e.target.checked)} className="size-4 accent-[var(--violet)]" />
@@ -457,7 +457,7 @@ export function RouteMap(props: RouteMapProps) {
             </div>
           )}
           <div
-            className="pointer-events-none absolute bottom-4 z-[440] hidden max-w-[min(560px,calc(100%-32px))] rounded-[10px] border border-line bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-2.5 py-1.5 text-[11.5px] font-semibold text-ink-2 backdrop-blur sm:block"
+            className="pointer-events-none absolute bottom-4 z-[440] hidden max-w-[min(560px,calc(100%-32px))] rounded-[10px] border border-line bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-2.5 py-1.5 text-[11.5px] font-semibold text-ink-2 backdrop-blur sm:block g:bottom-3 g:rounded-md g:border-line-2 g:bg-surface g:font-normal g:text-muted g:backdrop-blur-none"
             style={{ insetInlineStart: (props.insetStart ?? 0) + 16 }}
           >
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

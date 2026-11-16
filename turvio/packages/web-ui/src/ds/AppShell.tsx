@@ -80,7 +80,7 @@ function NavLinks({ groups, current, collapsed, onNavigate, linkComponent: A }: 
           <div key={group.label}>
             <div
               className={cn(
-                "whitespace-nowrap px-3 pb-1.5 pt-3.5 text-[11px] font-bold uppercase tracking-[0.09em] text-muted transition-opacity duration-200",
+                "whitespace-nowrap px-3 pb-1.5 pt-3.5 text-[11px] font-bold uppercase tracking-[0.09em] text-muted transition-opacity duration-200 g:px-2 g:pb-1 g:pt-4 g:text-[11.5px] g:font-medium g:normal-case g:tracking-normal g:text-subtle",
                 collapsed && "h-3.5 overflow-hidden pt-1.5 opacity-0",
               )}
             >
@@ -98,26 +98,26 @@ function NavLinks({ groups, current, collapsed, onNavigate, linkComponent: A }: 
                         onClick={onNavigate}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex h-[42px] items-center gap-[13px] whitespace-nowrap rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:shadow-[var(--shadow-focus)]",
-                          active ? "text-ink" : "text-ink-2 hover:bg-[rgba(166,180,224,.06)] hover:text-ink",
+                          "group relative flex h-[42px] items-center gap-[13px] whitespace-nowrap rounded-xl px-3 text-sm font-semibold outline-none transition-colors duration-200 focus-visible:shadow-[var(--shadow-focus)] g:h-[30px] g:gap-2.5 g:rounded-md g:px-2 g:text-[13px] g:font-medium",
+                          active ? "text-ink" : "text-ink-2 hover:bg-[rgba(166,180,224,.06)] hover:text-ink g:hover:bg-[var(--hover)]",
                         )}
                       >
                         {active && (
                           <motion.span
                             layoutId="nav-active"
-                            className="absolute inset-0 rounded-xl bg-nx-violet-soft shadow-[inset_0_0_0_1px_rgba(117,91,255,.28)]"
+                            className="absolute inset-0 rounded-xl bg-nx-violet-soft shadow-[inset_0_0_0_1px_rgba(117,91,255,.28)] g:rounded-md g:bg-[var(--selected)] g:shadow-none"
                             transition={{ type: "spring", stiffness: 420, damping: 32 }}
                           >
-                            <span className="absolute -start-3.5 top-[11px] h-5 w-[3px] rounded-[3px] bg-[linear-gradient(var(--cyan),var(--violet))]" aria-hidden="true" />
+                            <span className="absolute -start-3.5 top-[11px] h-5 w-[3px] rounded-[3px] bg-[linear-gradient(var(--cyan),var(--violet))] g:hidden" aria-hidden="true" />
                           </motion.span>
                         )}
-                        <Icon className={cn("relative size-5 shrink-0 transition-transform duration-300 ease-[var(--ease-spring)] group-active:scale-[0.88]", active && "text-nx-violet-text")} strokeWidth={1.8} />
+                        <Icon className={cn("relative size-5 shrink-0 transition-transform duration-300 ease-[var(--ease-spring)] group-active:scale-[0.88] g:size-4 g:text-muted g:group-active:scale-100", active && "text-nx-violet-text g:text-ink")} strokeWidth={1.8} />
                         <span className={cn("relative flex-1 truncate transition-opacity duration-200", collapsed && "pointer-events-none opacity-0")}>{item.label}</span>
                         {item.badge && (
                           <span
                             className={cn(
-                              "relative rounded-full border px-[7px] py-px text-[11.5px] font-bold tabular",
-                              item.badgeAlert ? "border-transparent bg-nx-coral-soft text-nx-coral" : "border-line bg-surface-2 text-muted",
+                              "relative rounded-full border px-[7px] py-px text-[11.5px] font-bold tabular g:rounded g:border-0 g:bg-transparent g:px-1 g:font-medium",
+                              item.badgeAlert ? "border-transparent bg-nx-coral-soft text-nx-coral g:text-danger-ink" : "border-line bg-surface-2 text-muted",
                               collapsed && "absolute end-2 top-1.5 size-2 border-0 p-0 text-[0px]",
                               collapsed && (item.badgeAlert ? "bg-nx-coral" : "bg-muted"),
                             )}
@@ -164,7 +164,7 @@ function ProfileCard({
       <MenuTrigger asChild>
         <button
           className={cn(
-            "flex w-full items-center gap-[11px] rounded-[14px] border border-line bg-surface p-2 text-start outline-none transition-colors duration-200 hover:border-line-strong focus-visible:shadow-[var(--shadow-focus)]",
+            "flex w-full items-center gap-[11px] rounded-[14px] border border-line bg-surface p-2 text-start outline-none transition-colors duration-200 hover:border-line-strong focus-visible:shadow-[var(--shadow-focus)] g:gap-2 g:rounded-md g:border-transparent g:bg-transparent g:p-1.5 g:hover:border-transparent g:hover:bg-[var(--hover)]",
           )}
           aria-label={L.shell.account(user.name)}
         >
@@ -244,7 +244,7 @@ function Sidebar({
   const A = linkComponent;
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <A href="/" className="mb-1 flex min-h-[58px] flex-col justify-center gap-1 rounded-xl px-2 pb-5 pt-1 outline-none focus-visible:shadow-[var(--shadow-focus)]" aria-current={undefined}>
+      <A href="/" className="mb-1 flex min-h-[58px] flex-col justify-center gap-1 rounded-xl px-2 pb-5 pt-1 outline-none focus-visible:shadow-[var(--shadow-focus)] g:min-h-0 g:flex-row g:items-center g:justify-start g:gap-2 g:pb-3" aria-current={undefined}>
         {collapsed && !mobile ? (
           <span className="flex justify-center">
             <TurvioMark size={26} />
@@ -252,21 +252,21 @@ function Sidebar({
         ) : (
           <>
             <TurvioLockup height={26} />
-            <span className="whitespace-nowrap text-[11.5px] font-semibold tracking-[0.02em] text-muted">{product}</span>
+            <span className="whitespace-nowrap text-[11.5px] font-semibold tracking-[0.02em] text-muted g:border-s g:border-line-2 g:ps-2 g:text-[12px] g:font-medium g:tracking-normal">{product}</span>
           </>
         )}
       </A>
       <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1">
         <NavLinks groups={groups} current={current} collapsed={collapsed && !mobile} onNavigate={onNavigate} linkComponent={linkComponent} />
       </div>
-      <div className="flex flex-col gap-2.5 border-t border-line pt-3">
+      <div className="flex flex-col gap-2.5 border-t border-line pt-3 g:gap-1 g:pt-2">
         {onToggle && (
           <button
             type="button"
             onClick={onToggle}
             aria-expanded={!collapsed}
             aria-label={collapsed ? L.shell.expandSidebar : L.shell.collapseSidebar}
-            className="flex h-[38px] items-center gap-3 whitespace-nowrap rounded-[10px] px-3 text-sm font-semibold text-muted outline-none transition-colors hover:bg-[rgba(166,180,224,.06)] hover:text-ink focus-visible:shadow-[var(--shadow-focus)]"
+            className="flex h-[38px] items-center gap-3 whitespace-nowrap rounded-[10px] px-3 text-sm font-semibold text-muted outline-none transition-colors hover:bg-[rgba(166,180,224,.06)] hover:text-ink focus-visible:shadow-[var(--shadow-focus)] g:h-[30px] g:gap-2.5 g:rounded-md g:px-2 g:text-[13px] g:font-medium g:hover:bg-[var(--hover)]"
           >
             <ChevronLeft className={cn("size-[18px] shrink-0 transition-transform duration-300 ease-[var(--ease-out-quart)] rtl:rotate-180", collapsed && "rotate-180 rtl:rotate-0")} />
             <span className={cn("transition-opacity duration-200", collapsed && "opacity-0")}>{L.shell.collapse}</span>
@@ -454,8 +454,8 @@ export function AppShell({
           {/* Desktop sidebar */}
           <aside
             className={cn(
-              "sticky top-0 z-30 hidden h-dvh flex-col border-e border-line bg-sidebar px-3.5 pb-3.5 pt-[18px] transition-[width] duration-[340ms] ease-[var(--ease-out-quart)] lg:flex",
-              collapsed ? "w-[84px]" : "w-[264px]",
+              "sticky top-0 z-30 hidden h-dvh flex-col border-e border-line bg-sidebar px-3.5 pb-3.5 pt-[18px] transition-[width] duration-[340ms] ease-[var(--ease-out-quart)] lg:flex g:px-2.5 g:pb-2.5 g:pt-3.5",
+              collapsed ? "w-[84px] g:w-[60px]" : "w-[264px] g:w-[232px]",
             )}
           >
             <Sidebar product={product} groups={groups} current={current} collapsed={collapsed} onToggle={toggle} footer={profile(collapsed)} linkComponent={linkComponent} />
@@ -467,10 +467,10 @@ export function AppShell({
           </Sheet>
 
           <div className={cn("flex min-w-0 flex-col", fullBleed && "h-dvh min-h-0")}>
-            <header className="sticky top-0 z-20 flex shrink-0 items-center gap-3 border-b border-line bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] px-4 py-2.5 backdrop-blur-[16px] backdrop-saturate-[1.3] sm:px-7 lg:py-3.5">
+            <header className="sticky top-0 z-20 flex shrink-0 items-center gap-3 border-b border-line bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] px-4 py-2.5 backdrop-blur-[16px] backdrop-saturate-[1.3] sm:px-7 lg:py-3.5 g:h-12 g:gap-2 g:bg-canvas g:py-0 g:backdrop-blur-none sm:g:px-5 lg:g:py-0">
               <button
                 type="button"
-                className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-surface text-ink-2 transition-colors hover:border-line-strong hover:text-ink active:scale-[0.93] lg:hidden"
+                className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-surface text-ink-2 transition-colors hover:border-line-strong hover:text-ink active:scale-[0.93] lg:hidden g:size-8 g:rounded-md"
                 onClick={() => setMobileOpen(true)}
                 aria-label={L.shell.openNavigation}
               >
@@ -479,17 +479,17 @@ export function AppShell({
               <button
                 type="button"
                 onClick={() => setPaletteOpen(true)}
-                className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-line bg-surface px-3 text-start font-medium text-muted transition-[border-color] hover:border-line-strong sm:w-[min(380px,40vw)] sm:flex-none"
+                className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-line bg-surface px-3 text-start font-medium text-muted transition-[border-color] hover:border-line-strong sm:w-[min(380px,40vw)] sm:flex-none g:h-8 g:gap-2 g:rounded-md g:border-line-2 g:bg-surface-2 g:px-2.5 g:font-normal sm:g:w-[min(300px,32vw)]"
                 aria-label={L.shell.searchButton}
               >
-                <Search className="size-[18px] shrink-0" />
-                <span className="hidden truncate text-sm sm:inline">{title && fullBleed ? title : L.shell.searchShort}</span>
-                <span className="ms-auto hidden rounded-md border border-line-strong px-[7px] py-0.5 text-[11px] font-bold text-muted sm:inline">⌘K</span>
+                <Search className="size-[18px] shrink-0 g:size-[15px]" />
+                <span className="hidden truncate text-sm sm:inline g:text-[13px]">{title && fullBleed ? title : L.shell.searchShort}</span>
+                <span className="ms-auto hidden rounded-md border border-line-strong px-[7px] py-0.5 text-[11px] font-bold text-muted sm:inline g:rounded g:px-1 g:py-0 g:font-medium">⌘K</span>
               </button>
               {headerStart}
               <div className="ms-auto flex shrink-0 items-center gap-2">
                 {environment && (
-                  <span className="hidden h-6 items-center gap-1.5 whitespace-nowrap rounded-full bg-nx-amber-soft px-2.5 text-[11.5px] font-bold text-nx-amber xl:inline-flex" title={environment}>
+                  <span className="hidden h-6 items-center gap-1.5 whitespace-nowrap rounded-full bg-nx-amber-soft px-2.5 text-[11.5px] font-bold text-nx-amber xl:inline-flex g:h-6 g:rounded g:border g:border-line-2 g:bg-transparent g:font-medium g:text-muted" title={environment}>
                     <span className="size-1.5 rounded-full bg-nx-amber" aria-hidden="true" />
                     {environment}
                   </span>
@@ -498,9 +498,9 @@ export function AppShell({
                 <ThemeSwitch />
               </div>
             </header>
-            <main className={cn(fullBleed ? "relative min-h-0 flex-1" : "flex w-full max-w-[1680px] flex-1 flex-col px-4 pb-12 pt-5 sm:px-7 sm:pt-6")}>
+            <main className={cn(fullBleed ? "relative min-h-0 flex-1" : "flex w-full max-w-[1680px] flex-1 flex-col px-4 pb-12 pt-5 sm:px-7 sm:pt-6 g:max-w-none g:pb-6 sm:g:px-5 sm:g:pt-5")}>
               {/* Keyed by route: the new page's content fades in (prototype .view); the shell stays put. */}
-              <div key={current.split("?")[0]} className={cn("animate-nx-view", fullBleed ? "h-full" : "flex flex-col gap-5")}>
+              <div key={current.split("?")[0]} className={cn("animate-nx-view", fullBleed ? "h-full" : "flex flex-col gap-5 g:gap-4")}>
                 {children}
               </div>
             </main>
@@ -519,10 +519,10 @@ export function PageHeader({ title, description, actions, tag }: { title: string
     <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-balance text-ink">{title}</h1>
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-balance text-ink g:text-[20px] g:font-semibold g:tracking-[-0.015em]">{title}</h1>
           {tag}
         </div>
-        {description && <div className="mt-1 text-sm text-ink-2">{description}</div>}
+        {description && <div className="mt-1 text-sm text-ink-2 g:mt-0.5 g:text-[13px] g:text-muted">{description}</div>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ms-auto">{actions}</div>}
     </div>

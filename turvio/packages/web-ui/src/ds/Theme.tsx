@@ -64,11 +64,11 @@ export function ThemeSwitch({ className, labels: given }: { className?: string; 
       aria-label={light ? labels.toDark : labels.toLight}
       title={light ? labels.toDark : labels.toLight}
       onClick={() => setTheme(light ? "dark" : "light")}
-      className={cn("relative flex h-[34px] w-16 shrink-0 items-center rounded-full border border-line-strong bg-surface-2 p-[3px]", className)}
+      className={cn("relative flex h-[34px] w-16 shrink-0 items-center rounded-full border border-line-strong bg-surface-2 p-[3px] g:size-8 g:justify-center g:rounded-md g:border-line-2 g:p-0 g:hover:bg-[var(--selected)]", className)}
     >
       <span
         className={cn(
-          "grid size-[26px] place-items-center rounded-full text-white transition-transform duration-[450ms] ease-[var(--ease-spring)]",
+          "grid size-[26px] place-items-center rounded-full text-white transition-transform duration-[450ms] ease-[var(--ease-spring)] g:translate-x-0 g:bg-none g:text-ink-2 g:shadow-none rtl:g:translate-x-0",
           light
             ? "translate-x-[30px] bg-[linear-gradient(140deg,#FFC66B,#FF8A6B)] shadow-[0_4px_12px_-2px_rgba(255,138,107,.55)] rtl:-translate-x-[30px]"
             : "bg-[linear-gradient(140deg,#8C76FF,#3478FF)] shadow-[0_4px_12px_-2px_rgba(117,91,255,.6)]",

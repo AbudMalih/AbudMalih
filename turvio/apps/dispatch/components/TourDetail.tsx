@@ -47,10 +47,10 @@ import { STOP_STATUS, TourStatusBadge, deadlineLabel, failureReasonLabel, stopSt
 
 function Fact({ icon, label, value, sub }: { icon: ReactNode; label: string; value: ReactNode; sub?: ReactNode }) {
   return (
-    <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-line bg-surface px-3 py-2.5">
-      <span className="mt-0.5 text-subtle [&_svg]:size-4">{icon}</span>
+    <div className="flex min-w-0 items-start gap-2.5 rounded-md border border-line bg-surface px-3 py-2.5 g:gap-2 g:rounded-none g:border-0 g:bg-transparent g:px-0 g:py-2">
+      <span className="mt-0.5 text-subtle [&_svg]:size-4 g:hidden">{icon}</span>
       <div className="min-w-0">
-        <div className="text-2xs font-medium uppercase tracking-[0.06em] text-subtle">{label}</div>
+        <div className="text-2xs font-medium uppercase tracking-[0.06em] text-subtle g:text-[12px] g:font-normal g:normal-case g:tracking-normal g:text-muted">{label}</div>
         <div className="truncate text-[13px] font-medium text-ink">{value}</div>
         {sub && <div className="line-clamp-3 text-2xs text-muted">{sub}</div>}
       </div>
@@ -161,7 +161,7 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
               {stop.notes && <div>{stop.notes}</div>}
               {stop.driverNotes && (
                 <div className="rounded-md border border-line bg-surface px-2.5 py-1.5 text-ink-2" data-testid="driver-note">
-                  <span className="text-2xs font-semibold uppercase tracking-[0.06em] text-subtle">{t("planning.driverNote")}</span>
+                  <span className="text-2xs font-semibold uppercase tracking-[0.06em] text-subtle g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2">{t("planning.driverNote")}</span>
                   <div>{stop.driverNotes}</div>
                 </div>
               )}
@@ -246,7 +246,7 @@ function Activity({ tourId, version, stopsDone }: { tourId: string; version?: nu
   }, [session.organizationId, tourId, version, stopsDone]);
   return (
     <section aria-label={t("planning.activity")}>
-      <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
+      <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2">
         <History className="size-3.5" /> {t("planning.activity")}
       </h3>
       {error ? (
@@ -345,8 +345,8 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
       {proj.delayReasons.length > 0 && open && (
         <div
           className={cn(
-            "flex gap-2.5 rounded-md border px-3 py-2.5 text-[13px]",
-            s.delayCertainty === "estimated" ? "border-nx-amber/30 bg-warning-soft text-warning-ink" : "border-nx-coral/30 bg-danger-soft text-danger-ink",
+            "flex gap-2.5 rounded-md border px-3 py-2.5 text-[13px] g:border-line-2 g:bg-transparent g:text-ink-2 g:[&>svg]:mt-0.5",
+            s.delayCertainty === "estimated" ? "border-nx-amber/30 bg-warning-soft text-warning-ink g:[&>svg]:text-warning" : "border-nx-coral/30 bg-danger-soft text-danger-ink g:[&>svg]:text-danger",
           )}
           role="alert"
           data-testid="delay-reasons"
@@ -439,7 +439,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 g:gap-x-4 g:gap-y-0 g:border-y g:border-line">
         <Fact
           icon={<Avatar name={s.driver?.displayName ?? "?"} size="sm" className="size-4 text-[8px]" />}
           label={t("planning.driver")}
@@ -557,7 +557,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
       )}
 
       {canManage && (
-        <div className="flex items-center justify-between rounded-xl border border-line bg-surface-2 px-3 py-2 text-[13px]">
+        <div className="flex items-center justify-between rounded-xl border border-line bg-surface-2 px-3 py-2 text-[13px] g:rounded-md g:bg-transparent">
           <span className="text-ink-2">{t("planning.moreActionsHint")}</span>
           <TourActionsMenu
             item={{ tour: s.tour, depotName: s.depot.name, driverName: s.driver?.displayName ?? null, stopCount: s.total, openStops: s.remaining }}
@@ -573,7 +573,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
 
       <section aria-label={t("planning.stopsInOrder")}>
         <div className="mb-1 flex items-baseline justify-between">
-          <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">{t("planning.stopsInOrder")}</h3>
+          <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2">{t("planning.stopsInOrder")}</h3>
           <span className="text-2xs text-subtle">{proj.source === "road" ? t("planning.etaRoad") : t("planning.etaStraight")}</span>
         </div>
         {s.stops.length === 0 ? (

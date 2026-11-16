@@ -19,6 +19,7 @@ import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
 import { useI18n, useT } from "../lib/i18n/client";
 import { TourDetail } from "./TourDetail";
 import { TourList } from "./TourList";
+import { useDesignG } from "../lib/ui";
 
 function MapLoading() {
   const t = useT();
@@ -48,24 +49,26 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
   const urgent = pickups.filter((p) => p.state === "late" || p.state === "at_risk" || p.state === "unassigned").slice(0, 6);
   const delayed = summaries.filter((s) => s.status === "delayed");
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex items-start gap-3 rounded-[14px] border border-line bg-surface-2 p-3 text-[13px] text-ink-2">
-        <MousePointerClick className="mt-0.5 size-4 shrink-0 text-subtle" />
+    <div className="flex flex-col gap-5 g:gap-6">
+      <div className="flex items-start gap-3 rounded-[14px] border border-line bg-surface-2 p-3 text-[13px] text-ink-2 g:gap-2 g:rounded-md g:border-0 g:bg-transparent g:p-0 g:text-muted">
+        <MousePointerClick className="mt-0.5 size-4 shrink-0 text-subtle g:size-[15px]" />
         {t("map.overviewHint")}
       </div>
       {live.allowed && <LiveFleetList vehicles={live.vehicles} serverNow={live.serverNow} onSelect={onSelectVehicle} />}
       <TrackingStatusPanel />
       {delayed.length > 0 && (
         <section>
-          <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-            <AlertTriangle className="size-3.5 text-danger" /> {t("map.delayedTours")}
+          <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2">
+            <AlertTriangle className="size-3.5 text-danger g:hidden" /> {t("map.delayedTours")}
+            <span className="ms-auto hidden tabular text-muted g:inline">{delayed.length}</span>
           </h3>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="flex flex-col gap-1.5 g:gap-0 g:divide-y g:divide-line g:overflow-hidden g:rounded-md g:border g:border-line">
             {delayed.map((s) => (
               <li key={s.tour.id}>
-                <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-start text-[13px] shadow-[inset_4px_0_0_var(--coral)] transition-colors rtl:shadow-[inset_-4px_0_0_var(--coral)] hover:bg-danger-soft">
-                  <span className="font-semibold text-danger-ink">{s.tour.name}</span> <span className="text-muted">· {s.driver?.displayName ?? t("map.noDriver")}</span>
-                  <span className="mt-0.5 block text-xs text-danger-ink/80">
+                <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-start text-[13px] shadow-[inset_4px_0_0_var(--coral)] transition-colors rtl:shadow-[inset_-4px_0_0_var(--coral)] hover:bg-danger-soft g:rounded-none g:border-0 g:bg-transparent g:py-2 g:shadow-none rtl:g:shadow-none g:hover:bg-[var(--hover)]">
+                  <span className="hidden size-1.5 rounded-full bg-danger align-middle g:me-2 g:inline-block" aria-hidden="true" />
+                  <span className="font-semibold text-danger-ink g:font-medium g:text-ink">{s.tour.name}</span> <span className="text-muted">· {s.driver?.displayName ?? t("map.noDriver")}</span>
+                  <span className="mt-0.5 block text-xs text-danger-ink/80 g:ps-3.5 g:text-muted">
                     {delayLabel(s.delayCertainty, t)} · {s.timeline.projection.delayReasons[0] ? delayReasonText(s.timeline.projection.delayReasons[0], t) : ""}
                   </span>
                 </button>
@@ -76,17 +79,17 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
       )}
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
-            <ArrowUpFromLine className="size-3.5" /> {t("map.pickupsAttention")}
+          <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2">
+            <ArrowUpFromLine className="size-3.5 g:hidden" /> {t("map.pickupsAttention")}
           </h3>
-          <Link href="/pickups" className="text-xs font-bold text-nx-violet-text hover:underline">
+          <Link href="/pickups" className="text-xs font-bold text-nx-violet-text hover:underline g:font-normal g:text-muted g:hover:text-ink">
             {t("map.allPickups")}
           </Link>
         </div>
         {urgent.length === 0 ? (
           <p className="text-[13px] text-muted">{t("map.pickupsOnSchedule")}</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-line rounded-[14px] border border-line bg-surface-2">
+          <ul className="flex flex-col divide-y divide-line rounded-[14px] border border-line bg-surface-2 g:rounded-md g:bg-transparent">
             {urgent.map((p) => (
               <li key={p.stop.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                 <div className="min-w-0">
@@ -138,10 +141,59 @@ export function MapWorkspace() {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const dayLabel = fmt.date(new Date(`${data.date}T12:00:00Z`), { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
   const depotLabel = d.depotId ? (scoped.depots.find((x) => x.id === d.depotId)?.name ?? "") : scoped.depots.length === 1 ? scoped.depots[0]!.name : t("map.depots", { count: scoped.depots.length });
+  const g = useDesignG();
   const panel = "overflow-hidden rounded-[18px] border border-line-strong bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] shadow-overlay backdrop-blur-[18px]";
 
+  const mapNode = (
+    <RouteMap
+      depots={data.depots}
+      summaries={summaries}
+      unassigned={data.unassigned}
+      colorOf={colorOf}
+      selectedTourId={selectedTourId}
+      selectedStopId={selectedStopId}
+      onSelectTour={selectTour}
+      onSelectStop={(stopId, tourId) => selectStop(stopId, tourId)}
+      fitRequest={fitRequest}
+      road={road?.source === "osrm" && road.geometry && selectedTourId ? { tourId: selectedTourId, geometry: road.geometry } : null}
+      vehicles={live.allowed ? live.vehicles : undefined}
+      serverNow={live.serverNow}
+      selectedDriverId={liveOfSelected?.driverId ?? null}
+      onSelectVehicle={selectVehicle}
+      focus={focus}
+      locationChecks={d.locationChecks}
+      insetStart={g ? 0 : isDesktop && showLeft ? 380 : 0}
+      insetEnd={g ? 0 : showRight ? 432 : 0}
+    />
+  );
+  const detailPanel = (
+    <>
+    <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4 g:h-12 g:px-4 g:py-0">
+      <div className="min-w-0">
+        <h2 className="truncate text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">{selected ? t("map.tourTitle", { name: selected.tour.name }) : t("map.opsOverview")}</h2>
+        <p className="truncate text-[12.5px] text-muted g:text-[12px]">{selected ? `${selected.depot.name} · ${selected.tour.date}` : t("map.asOf", { date: data.date, time: formatClock(data.asOfMinute) })}</p>
+      </div>
+      {selected && (
+        <Button variant="ghost" size="sm" onClick={() => selectTour(null)}>
+          {t("map.clear")}
+        </Button>
+      )}
+    </div>
+    <div className="min-h-0 flex-1 overflow-y-auto p-4">
+      {selected ? (
+        <div className="flex flex-col gap-4">
+          {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
+          <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
+        </div>
+      ) : (
+        <Overview live={live} onSelectVehicle={selectVehicle} />
+      )}
+    </div>
+    </>
+  );
+
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 g:gap-4">
       <PageHeader
         title={data.date === today ? t("map.titleToday") : t("map.title")}
         description={`${dayLabel} · ${depotLabel}`}
@@ -159,7 +211,7 @@ export function MapWorkspace() {
 
       {/* Phone/tablet switch */}
       <div className="flex items-center gap-2 lg:hidden">
-        <div className="relative inline-flex rounded-xl border border-line bg-surface p-[3px]" role="tablist" aria-label={t("map.workspaceTabs")}>
+        <div className="relative inline-flex rounded-xl border border-line bg-surface p-[3px] g:rounded-md g:p-0.5" role="tablist" aria-label={t("map.workspaceTabs")}>
           {(["tours", "map"] as const).map((p) => (
             <button
               key={p}
@@ -183,29 +235,49 @@ export function MapWorkspace() {
         )}
       </div>
 
-      {/* Map card – the map fills it; tour list and details float above it (prototype overview). */}
+      {g ? (
+        /*
+         * Phase G workspace: one bordered frame, three docked columns (tour list · map · details),
+         * separated by hairlines – no floating, blurred or shadowed cards above the map. Panels can
+         * still be hidden; below 1024 px the tour list and map switch with the tabs above, below
+         * 1280 px details open as a drawer (unchanged behaviour).
+         */
+        <div className="relative flex h-[calc(100dvh-262px)] min-h-[520px] overflow-hidden rounded-lg border border-line bg-surface">
+          {showLeft && (
+            <aside className={cn("flex min-h-0 flex-col bg-surface", isDesktop ? "w-[340px] shrink-0 border-e border-line" : "absolute inset-0 z-[470]")} aria-label={t("map.toursAndDrivers")}>
+              <TourList onPick={() => !isDesktop && setMobilePane("map")} />
+            </aside>
+          )}
+          <div className={cn("relative min-w-0 flex-1", !isDesktop && mobilePane === "tours" && "hidden")}>
+            <div className="absolute inset-0">{mapNode}</div>
+            {isDesktop && (
+              <div className="absolute start-3 top-3 z-[460] flex overflow-hidden rounded-md border border-line-2 bg-surface">
+                <Tooltip content={leftOpen ? t("map.hideTourList") : t("map.showTourList")} side="bottom">
+                  <button type="button" onClick={() => setLeftOpen((o) => !o)} aria-label={leftOpen ? t("map.hideTourList") : t("map.showTourList")} className="grid size-7 place-items-center text-muted hover:bg-[var(--hover)] hover:text-ink">
+                    {leftOpen ? <PanelLeftClose className="size-[15px] rtl:-scale-x-100" /> : <PanelLeftOpen className="size-[15px] rtl:-scale-x-100" />}
+                  </button>
+                </Tooltip>
+                {isWide && (
+                  <Tooltip content={rightOpen ? t("map.hideDetails") : t("map.showDetails")} side="bottom">
+                    <button type="button" onClick={() => setRightOpen((o) => !o)} aria-label={rightOpen ? t("map.hideDetailsPanel") : t("map.showDetailsPanel")} className="grid size-7 place-items-center border-s border-line-2 text-muted hover:bg-[var(--hover)] hover:text-ink">
+                      {rightOpen ? <PanelRightClose className="size-[15px] rtl:-scale-x-100" /> : <PanelRightOpen className="size-[15px] rtl:-scale-x-100" />}
+                    </button>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+          </div>
+          {showRight && (
+            <aside className="flex w-[380px] shrink-0 flex-col border-s border-line bg-surface" aria-label={t("common.details")}>
+              {detailPanel}
+            </aside>
+          )}
+        </div>
+      ) : (
+      /* Map card – the map fills it; tour list and details float above it (prototype overview). */
       <div className="relative h-[calc(100dvh-150px)] min-h-[560px] overflow-hidden rounded-[22px] border border-line bg-canvas-2 shadow-card lg:h-[calc(100dvh-120px)]">
         <div className={cn("absolute inset-0", !isDesktop && mobilePane === "tours" && "hidden")}>
-          <RouteMap
-            depots={data.depots}
-            summaries={summaries}
-            unassigned={data.unassigned}
-            colorOf={colorOf}
-            selectedTourId={selectedTourId}
-            selectedStopId={selectedStopId}
-            onSelectTour={selectTour}
-            onSelectStop={(stopId, tourId) => selectStop(stopId, tourId)}
-            fitRequest={fitRequest}
-            road={road?.source === "osrm" && road.geometry && selectedTourId ? { tourId: selectedTourId, geometry: road.geometry } : null}
-            vehicles={live.allowed ? live.vehicles : undefined}
-            serverNow={live.serverNow}
-            selectedDriverId={liveOfSelected?.driverId ?? null}
-            onSelectVehicle={selectVehicle}
-            focus={focus}
-            locationChecks={d.locationChecks}
-            insetStart={isDesktop && showLeft ? 380 : 0}
-            insetEnd={showRight ? 432 : 0}
-          />
+          {mapNode}
         </div>
 
         <AnimatePresence initial={false}>
@@ -252,31 +324,12 @@ export function MapWorkspace() {
               className={cn("absolute bottom-4 end-4 top-4 z-[470] flex w-[400px] flex-col", panel)}
               aria-label={t("common.details")}
             >
-              <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
-                <div className="min-w-0">
-                  <h2 className="truncate text-[15.5px] font-bold tracking-[-0.01em] text-ink">{selected ? t("map.tourTitle", { name: selected.tour.name }) : t("map.opsOverview")}</h2>
-                  <p className="truncate text-[12.5px] text-muted">{selected ? `${selected.depot.name} · ${selected.tour.date}` : t("map.asOf", { date: data.date, time: formatClock(data.asOfMinute) })}</p>
-                </div>
-                {selected && (
-                  <Button variant="ghost" size="sm" onClick={() => selectTour(null)}>
-                    {t("map.clear")}
-                  </Button>
-                )}
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                {selected ? (
-                  <div className="flex flex-col gap-4">
-                    {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
-                    <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
-                  </div>
-                ) : (
-                  <Overview live={live} onSelectVehicle={selectVehicle} />
-                )}
-              </div>
+              {detailPanel}
             </motion.aside>
           )}
         </AnimatePresence>
       </div>
+      )}
 
       {/* Below 1280px the details open as a drawer. */}
       {!isWide && (

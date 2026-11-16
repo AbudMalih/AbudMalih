@@ -16,7 +16,7 @@ export function MenuContent({ className, align = "end", sideOffset = 6, ...props
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-48 overflow-hidden rounded-xl border border-line-strong bg-raised p-1.5 text-[13px] font-semibold text-ink shadow-overlay",
+          "z-50 min-w-48 overflow-hidden rounded-xl border border-line-strong bg-raised p-1.5 text-[13px] font-semibold text-ink shadow-overlay g:rounded-lg g:p-1 g:font-normal",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98] data-[side=bottom]:slide-in-from-top-1 data-[side=top]:slide-in-from-bottom-1",
           className,
         )}
@@ -30,7 +30,7 @@ export function MenuItem({ className, icon, hint, children, ...props }: Componen
   return (
     <DropdownMenu.Item
       className={cn(
-        "relative flex min-h-[38px] cursor-default select-none items-center gap-2.5 rounded-[10px] px-2.5 py-1.5 outline-none transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-2 data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted",
+        "relative flex min-h-[38px] cursor-default select-none items-center gap-2.5 rounded-[10px] px-2.5 py-1.5 outline-none transition-colors data-[disabled]:pointer-events-none data-[highlighted]:bg-surface-2 data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:text-muted g:min-h-8 g:rounded-md g:px-2 g:data-[highlighted]:bg-[var(--selected)] g:[&_svg]:size-[15px]",
         className,
       )}
       {...props}

@@ -99,12 +99,12 @@ export function TrackingStatusPanel() {
   const admin = can(session.role, "org.settings.manage");
   return (
     <section aria-label={t("fleet.trackingStatus")}>
-      <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
+      <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2 g:[&>svg]:hidden">
         <Radio className="size-3.5" /> {t("fleet.trackingOnActiveTours")}
         {data && <span className="ms-auto font-medium normal-case tracking-normal text-muted">{t("fleet.modeValue", { mode: modeLabel(data.mode, t) })}</span>}
       </h3>
       {!data ? null : data.mode === "off" ? (
-        <p className="rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-2">
+        <p className="rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-2 g:rounded-md g:border-0 g:bg-transparent g:p-0 g:text-muted">
           {t("fleet.trackingOffNote")}{" "}
           {admin && (
             <Link href="/settings?section=tracking" className="font-semibold text-brand-700 hover:underline">
@@ -113,12 +113,12 @@ export function TrackingStatusPanel() {
           )}
         </p>
       ) : rows.length === 0 ? (
-        <p className="rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-muted">{t("fleet.noTourDriven")}</p>
+        <p className="rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-muted g:rounded-md g:border-0 g:bg-transparent g:p-0">{t("fleet.noTourDriven")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-1.5" data-testid="tracking-counts">
             {ORDER.filter((s) => counts.get(s)).map((s) => (
-              <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2 py-0.5 text-2xs font-semibold text-ink-2" title={fleetStateExplain(s, t)}>
+              <span key={s} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2 py-0.5 text-2xs font-semibold text-ink-2 g:rounded g:font-medium" title={fleetStateExplain(s, t)}>
                 <span className={cn("size-2 rounded-full", FLEET_STATE[s].dot)} aria-hidden="true" />
                 {t("fleet.stateCount", { count: counts.get(s), label: fleetStateLabel(s, t) })}
               </span>
@@ -134,7 +134,7 @@ export function TrackingStatusPanel() {
                       {d.currentTour!.name} · {fleetStateExplain(state, t)}
                     </span>
                   </span>
-                  <span className={cn("shrink-0 text-2xs font-bold", FLEET_STATE[state].text)}>
+                  <span className={cn("shrink-0 text-2xs font-bold g:font-medium", FLEET_STATE[state].text)}>
                     {fleetStateLabel(state, t)}
                     {age !== null && state !== "live" ? ` · ${ageLabel(age, t)}` : ""}
                   </span>

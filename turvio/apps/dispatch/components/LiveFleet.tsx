@@ -35,7 +35,7 @@ export function LiveFleetList({ vehicles, serverNow, onSelect }: { vehicles: Liv
   const sorted = [...vehicles].sort((a, b) => order[freshnessOf(a.recordedAt, serverNow).state] - order[freshnessOf(b.recordedAt, serverNow).state] || a.driverName.localeCompare(b.driverName));
   return (
     <section>
-      <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">
+      <h3 className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2 g:[&>svg]:hidden">
         <Radio className="size-3.5" /> {t("fleet.liveFleet")}
       </h3>
       <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-surface">

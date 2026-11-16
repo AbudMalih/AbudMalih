@@ -47,7 +47,7 @@ function DepotSwitcher() {
   return (
     <Menu>
       <MenuTrigger asChild disabled={single}>
-        <Button variant="secondary" size="md" className="max-w-[230px] justify-start font-semibold hover:translate-y-0" aria-label={t("shell.depotLabel", { name: current?.name ?? t("shell.allDepots") })}>
+        <Button variant="secondary" size="md" className="max-w-[230px] justify-start font-semibold hover:translate-y-0 g:font-normal" aria-label={t("shell.depotLabel", { name: current?.name ?? t("shell.allDepots") })}>
           <Warehouse className="text-muted" />
           <span className="truncate">{current ? current.name : t("shell.allDepots")}</span>
           {!single && <ChevronDown className="ms-auto text-muted" />}
@@ -75,7 +75,7 @@ function DateControl() {
   const { date, setDate } = useDispatch();
   const t = useI18n().t;
   return (
-    <label className="relative inline-flex h-10 items-center gap-2 rounded-xl border border-line-strong bg-surface px-3 text-[13px] font-semibold focus-within:shadow-[var(--shadow-focus)] hover:border-line-3">
+    <label className="relative inline-flex h-10 items-center gap-2 rounded-xl border border-line-strong bg-surface px-3 text-[13px] font-semibold focus-within:shadow-[var(--shadow-focus)] hover:border-line-3 g:h-8 g:rounded-md g:border-line-2 g:bg-surface-2 g:px-2.5 g:font-normal">
       <CalendarDays className="size-4 text-muted" aria-hidden="true" />
       <span className="sr-only">{t("shell.operatingDate")}</span>
       <input
@@ -98,8 +98,8 @@ function LiveIndicator() {
   const label = live === "live" ? t("shell.liveOn") : live === "connecting" ? t("shell.liveConnecting") : t("shell.liveOff");
   return (
     <Tooltip content={t("shell.lastRefresh", { label, time: fmt.time(lastLoadedAt, true) })} side="bottom">
-      <span className="hidden h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-bold text-ink-2 md:inline-flex" role="status" aria-label={label}>
-        <span className={cn("size-2 rounded-full", live === "live" ? "bg-nx-mint animate-nx-live" : live === "connecting" ? "bg-nx-amber" : "bg-muted", loading && "opacity-70")} />
+      <span className="hidden h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-bold text-ink-2 md:inline-flex g:h-8 g:rounded-md g:border-line-2 g:bg-transparent g:px-2.5 g:font-normal g:text-muted" role="status" aria-label={label}>
+        <span className={cn("size-2 rounded-full g:size-1.5 g:animate-none", live === "live" ? "bg-nx-mint animate-nx-live" : live === "connecting" ? "bg-nx-amber" : "bg-muted", loading && "opacity-70")} />
         {live === "live" ? t("shell.live") : live === "connecting" ? "…" : t("shell.polling")}
       </span>
     </Tooltip>

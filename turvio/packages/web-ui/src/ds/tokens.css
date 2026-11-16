@@ -18,6 +18,8 @@
  */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* Phase G design system (preview, opt-in with <html data-ds="g">): `g:` classes apply only there. */
+@custom-variant g (&:where([data-ds="g"], [data-ds="g"] *));
 
 /* ---------- raw NEXT palette: dark (default) ---------- */
 :root {
@@ -96,6 +98,91 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
+}
+
+
+/* =====================================================================================
+ * Phase G – enterprise design system (PREVIEW, opt-in via <html data-ds="g">).
+ * Charcoal dark (default) and a neutral professional light theme. Restrained: one accent
+ * (indigo) used for selection, focus and the primary action only; status colours are muted;
+ * no gradients, glows or tinted icon tiles; borders carry structure, shadows only on overlays.
+ * Everything not set here falls back to the NEXT tokens above.
+ * ===================================================================================== */
+:root[data-ds="g"] {
+  --bg: #0e0f11; --bg-2: #121315; --surface: #151618; --surface-2: #1a1b1e; --surface-3: #202124; --raised: #1c1d20; --navy: #1a1b1e;
+  --sidebar: #0e0f11;
+  --line: rgba(255, 255, 255, 0.065); --line-2: rgba(255, 255, 255, 0.1); --line-3: rgba(255, 255, 255, 0.16);
+  --text: #e9eaec; --text-2: #b1b4ba; --text-3: #868a92; --chart-label: #6f737b;
+  --violet: #5e6ad2; --violet-hi: #7a84de; --violet-text: #9aa2ea; --on-violet: #ffffff;
+  --cobalt: #5b8def; --cobalt-text: #8fb0f3; --cyan: #4fb3c4; --mint: #4cb782; --coral: #eb5757; --amber: #d9a03d;
+  --violet-soft: rgba(94, 106, 210, 0.16); --cobalt-soft: rgba(91, 141, 239, 0.12); --cyan-soft: rgba(79, 179, 196, 0.12);
+  --mint-soft: rgba(76, 183, 130, 0.12); --coral-soft: rgba(235, 87, 87, 0.12); --amber-soft: rgba(217, 160, 61, 0.12);
+  --brand-100-mix: rgba(94, 106, 210, 0.22); --brand-200-mix: rgba(94, 106, 210, 0.36);
+  --chart-grid: rgba(255, 255, 255, 0.06);
+  --shadow-sm: none; --shadow: none;
+  --shadow-lg: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  --glow: none; --hero-bg: var(--surface); --hero-line: transparent;
+  --avatar-bg: #2a2b2f; --avatar-text: #d6d8dc;
+  --solid: #26272b; --solid-hover: #2e2f33;
+  --scrim: rgba(0, 0, 0, 0.5);
+  --seg-ind-shadow: 0 0 0 1px var(--line-2);
+  --map-attrib: rgba(21, 22, 24, 0.85);
+  --hover: rgba(255, 255, 255, 0.04); --selected: rgba(255, 255, 255, 0.07);
+  --font-sans: var(--font-inter), var(--font-plex-arabic), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-arabic: var(--font-plex-arabic), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: 5px; --radius-md: 6px; --radius-lg: 6px; --radius-xl: 8px; --radius-2xl: 8px; --radius-3xl: 10px;
+  --shadow-primary: none; --shadow-primary-hover: none;
+  --shadow-focus: 0 0 0 2px color-mix(in srgb, var(--violet) 55%, transparent);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root[data-ds="g"]:not([data-theme="dark"]) {
+    --bg: #f7f7f8; --bg-2: #f1f1f3; --surface: #ffffff; --surface-2: #f7f7f8; --surface-3: #eeeef0; --raised: #ffffff; --navy: #f1f1f3;
+    --sidebar: #f7f7f8;
+    --line: rgba(15, 17, 24, 0.07); --line-2: rgba(15, 17, 24, 0.11); --line-3: rgba(15, 17, 24, 0.18);
+    --text: #18191c; --text-2: #4b4e56; --text-3: #6c6f78; --chart-label: #8a8d95;
+    --violet: #5e6ad2; --violet-hi: #6b76d8; --violet-text: #4651b8; --on-violet: #ffffff;
+    --cobalt: #3a6fd8; --cobalt-text: #2f5fc0; --cyan: #1f8796; --mint: #2f8a5c; --coral: #c93a3a; --amber: #9a6400;
+    --violet-soft: rgba(94, 106, 210, 0.09); --cobalt-soft: rgba(58, 111, 216, 0.08); --cyan-soft: rgba(31, 135, 150, 0.08);
+    --mint-soft: rgba(47, 138, 92, 0.08); --coral-soft: rgba(201, 58, 58, 0.07); --amber-soft: rgba(154, 100, 0, 0.08);
+    --brand-100-mix: rgba(94, 106, 210, 0.14); --brand-200-mix: rgba(94, 106, 210, 0.26);
+    --chart-grid: rgba(15, 17, 24, 0.06);
+    --shadow-lg: 0 0 0 1px rgba(15, 17, 24, 0.08), 0 12px 32px -12px rgba(15, 17, 24, 0.18);
+    --avatar-bg: #ececef; --avatar-text: #3a3d44;
+    --solid: #18191c; --solid-hover: #2b2d32;
+    --scrim: rgba(15, 17, 24, 0.18);
+    --map-attrib: rgba(255, 255, 255, 0.88);
+    --hover: rgba(15, 17, 24, 0.035); --selected: rgba(15, 17, 24, 0.06);
+    color-scheme: light;
+  }
+}
+:root[data-ds="g"][data-theme="light"] {
+  --bg: #f7f7f8; --bg-2: #f1f1f3; --surface: #ffffff; --surface-2: #f7f7f8; --surface-3: #eeeef0; --raised: #ffffff; --navy: #f1f1f3;
+  --sidebar: #f7f7f8;
+  --line: rgba(15, 17, 24, 0.07); --line-2: rgba(15, 17, 24, 0.11); --line-3: rgba(15, 17, 24, 0.18);
+  --text: #18191c; --text-2: #4b4e56; --text-3: #6c6f78; --chart-label: #8a8d95;
+  --violet: #5e6ad2; --violet-hi: #6b76d8; --violet-text: #4651b8; --on-violet: #ffffff;
+  --cobalt: #3a6fd8; --cobalt-text: #2f5fc0; --cyan: #1f8796; --mint: #2f8a5c; --coral: #c93a3a; --amber: #9a6400;
+  --violet-soft: rgba(94, 106, 210, 0.09); --cobalt-soft: rgba(58, 111, 216, 0.08); --cyan-soft: rgba(31, 135, 150, 0.08);
+  --mint-soft: rgba(47, 138, 92, 0.08); --coral-soft: rgba(201, 58, 58, 0.07); --amber-soft: rgba(154, 100, 0, 0.08);
+  --brand-100-mix: rgba(94, 106, 210, 0.14); --brand-200-mix: rgba(94, 106, 210, 0.26);
+  --chart-grid: rgba(15, 17, 24, 0.06);
+  --shadow-lg: 0 0 0 1px rgba(15, 17, 24, 0.08), 0 12px 32px -12px rgba(15, 17, 24, 0.18);
+  --avatar-bg: #ececef; --avatar-text: #3a3d44;
+  --solid: #18191c; --solid-hover: #2b2d32;
+  --scrim: rgba(15, 17, 24, 0.18);
+  --map-attrib: rgba(255, 255, 255, 0.88);
+  --hover: rgba(15, 17, 24, 0.035); --selected: rgba(15, 17, 24, 0.06);
+  color-scheme: light;
+}
+/* G typography: 13px app text, tabular figures, no heavy weights. */
+@layer base {
+  [data-ds="g"] body {
+    font-size: 13px;
+    line-height: 1.5;
+    font-feature-settings: "cv11" 1, "ss03" 1;
+    letter-spacing: -0.003em;
+  }
 }
 
 @theme {

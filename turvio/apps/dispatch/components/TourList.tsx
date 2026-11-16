@@ -42,7 +42,7 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-col gap-2.5 border-b border-line p-3">
+      <div className="flex flex-col gap-2.5 border-b border-line p-3 g:gap-2 g:p-2.5">
         <SearchInput value={query} onChange={setQuery} placeholder={t("planning.searchPlaceholder")} label={t("planning.searchLabel")} />
         <div className="-mx-1 flex gap-1 overflow-x-auto px-1" role="tablist" aria-label={t("planning.filterAria")}>
           {FILTERS.map((f) => (
@@ -52,8 +52,8 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
               aria-selected={filter === f.key}
               onClick={() => setFilter(f.key)}
               className={cn(
-                "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors",
-                filter === f.key ? "border-brand-200 bg-brand-50 text-brand-700" : "border-line bg-surface text-muted hover:border-line-strong hover:text-ink",
+                "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors g:h-6 g:rounded-md g:px-2",
+                filter === f.key ? "border-brand-200 bg-brand-50 text-brand-700 g:border-line-2 g:bg-[var(--selected)] g:text-ink" : "border-line bg-surface text-muted hover:border-line-strong hover:text-ink g:border-transparent g:bg-transparent g:hover:border-transparent g:hover:bg-[var(--hover)]",
               )}
             >
               {t(`planning.filter.${f.key}`)}
@@ -62,11 +62,11 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
           ))}
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto p-2 g:p-0">
         {visible.length === 0 ? (
           <EmptyState icon={<SearchX />} title={data.tours.length ? t("planning.noMatch") : t("planning.noToursDay")} description={data.tours.length ? t("planning.changeSearch") : t("planning.createInPlanning")} />
         ) : (
-          <ul className="flex flex-col gap-1.5" aria-label={t("planning.toursAria")}>
+          <ul className="flex flex-col gap-1.5 g:gap-0" aria-label={t("planning.toursAria")}>
             {visible.map((s) => {
               const sel = s.tour.id === selectedTourId;
               const pct = s.total ? (s.completed / s.total) * 100 : 0;
@@ -82,40 +82,40 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                     }}
                     aria-pressed={sel}
                     className={cn(
-                      "group relative w-full overflow-hidden rounded-lg border bg-surface p-3 text-start outline-none transition-[border-color,box-shadow] duration-[var(--duration-fast)] focus-visible:shadow-[var(--shadow-focus)]",
-                      sel ? "border-brand-500 shadow-raised ring-1 ring-brand-500" : "border-line shadow-xs hover:border-line-strong hover:shadow-card",
+                      "group relative w-full overflow-hidden rounded-lg border bg-surface p-3 text-start outline-none transition-[border-color,box-shadow] duration-[var(--duration-fast)] focus-visible:shadow-[var(--shadow-focus)] g:rounded-none g:border-0 g:border-b g:border-line g:bg-transparent g:px-3 g:py-2.5 g:shadow-none g:ring-0 g:transition-colors",
+                      sel ? "border-brand-500 shadow-raised ring-1 ring-brand-500 g:bg-[var(--selected)] g:shadow-none" : "border-line shadow-xs hover:border-line-strong hover:shadow-card g:shadow-none g:hover:bg-[var(--hover)]",
                     )}
                   >
-                    <span className="absolute inset-y-0 start-0 w-1" style={{ backgroundColor: color }} aria-hidden="true" />
+                    <span className="absolute inset-y-0 start-0 w-1 g:inset-y-2.5 g:w-[3px] g:rounded-e" style={{ backgroundColor: color }} aria-hidden="true" />
                     <div className="flex items-center justify-between gap-2">
                       <span className="flex min-w-0 items-center gap-2">
-                        <Route className="size-3.5 shrink-0 text-subtle" />
-                        <span className="truncate text-[13px] font-semibold text-ink">{s.tour.name}</span>
+                        <Route className="size-3.5 shrink-0 text-subtle g:hidden" />
+                        <span className="truncate text-[13px] font-semibold text-ink g:font-medium">{s.tour.name}</span>
                         <span className="truncate text-xs text-muted">{s.depot.name}</span>
                       </span>
                       <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
                     </div>
-                    <div className="mt-2.5 flex items-center gap-2.5">
-                      <Avatar name={s.driver?.displayName ?? "–"} size="sm" />
+                    <div className="mt-2.5 flex items-center gap-2.5 g:mt-1.5 g:gap-2">
+                      <Avatar name={s.driver?.displayName ?? "–"} size="sm" className="g:size-5 g:text-[9px]" />
                       <div className="min-w-0 flex-1">
-                        <div className={cn("truncate text-[13px] font-medium", s.driver ? "text-ink-2" : "text-warning-ink")}>{s.driver?.displayName ?? t("planning.noDriver")}</div>
+                        <div className={cn("truncate text-[13px] font-medium g:font-normal", s.driver ? "text-ink-2" : "text-warning-ink")}>{s.driver?.displayName ?? t("planning.noDriver")}</div>
                         <div className="flex items-center gap-1 truncate text-2xs text-muted">
                           <Truck className="size-3" /> {s.vehicleLabel ? `${s.vehicleLabel} · ${s.vehiclePlate}` : t("planning.noVehicle")}
                         </div>
                       </div>
                       <div className="shrink-0 text-end">
-                        <div className="text-[13px] font-semibold tabular text-ink">
+                        <div className="text-[13px] font-semibold tabular text-ink g:font-medium">
                           {s.completed}
                           <span className="font-normal text-subtle">/{s.total}</span>
                         </div>
                         <div className="text-2xs text-muted">{t("planning.left", { n: s.remaining })}</div>
                       </div>
                     </div>
-                    <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-surface-3">
-                      <div className={cn("h-full rounded-full transition-[width] duration-500", s.status === "delayed" ? "bg-danger" : s.status === "completed" ? "bg-success" : "bg-brand-600")} style={{ width: `${pct}%` }} />
+                    <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-surface-3 g:mt-2 g:h-[2px] g:bg-[var(--selected)]">
+                      <div className={cn("h-full rounded-full transition-[width] duration-500", s.status === "delayed" ? "bg-danger" : s.status === "completed" ? "bg-success" : "bg-brand-600 g:bg-[var(--text-3)]")} style={{ width: `${pct}%` }} />
                     </div>
                     {(deadline !== null || s.status === "planned") && (
-                      <div className="mt-2 flex items-center justify-between gap-2 text-2xs text-muted">
+                      <div className="mt-2 flex items-center justify-between gap-2 text-2xs text-muted g:mt-1.5">
                         {s.status === "planned" ? (
                           <span title={projectionNote(s.timeline.projection, t)}>
                             {scheduledFinishLabel(s.timeline.projection, t)
