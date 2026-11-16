@@ -440,8 +440,8 @@ export function FleetView() {
                         </td>
                         <td className="px-4 py-3 text-ink-2">{depotName(d.depotId)}</td>
                         <td className="px-4 py-3 tabular text-ink-2">{t("fleet.hoursValue", { n: fmt.number(d.maxShiftMinutes / 60, 1) })}</td>
-                        <td className="px-4 py-3">{d.userId ? <Badge tone="success" className="g:text-[13px]">{t("fleet.connected")}</Badge> : <Badge tone="outline" className="g:border-0 g:px-0 g:text-[13px]">{t("fleet.noLogin")}</Badge>}</td>
-                        <td className="px-4 py-3">{d.active ? <Badge tone="success" dot className="g:text-[13px]">{t("fleet.active")}</Badge> : <Badge className="g:text-[13px]">{t("fleet.inactive")}</Badge>}</td>
+                        <td className="px-4 py-3">{d.userId ? <Badge tone="success" className="g:text-[13px]"><span className="g:font-normal">{t("fleet.connected")}</span></Badge> : <Badge tone="outline" className="g:border-0 g:px-0 g:text-[13px]"><span className="g:font-normal">{t("fleet.noLogin")}</span></Badge>}</td>
+                        <td className="px-4 py-3">{d.active ? <Badge tone="success" dot className="g:text-[13px]"><span className="g:font-normal">{t("fleet.active")}</span></Badge> : <Badge className="g:text-[13px]"><span className="g:font-normal">{t("fleet.inactive")}</span></Badge>}</td>
                         <td className="px-4 py-3 text-end">
                           <Menu>
                             <MenuTrigger asChild>
@@ -494,7 +494,7 @@ export function FleetView() {
                         </td>
                         <td className="px-4 py-3 text-ink-2">{depotName(v.depotId)}</td>
                         <td className="px-4 py-3 tabular text-ink-2">{v.capacityParcels ?? "–"}</td>
-                        <td className="px-4 py-3">{v.active ? <Badge tone="success" dot className="g:text-[13px]">{t("fleet.active")}</Badge> : <Badge className="g:text-[13px]">{t("fleet.inactive")}</Badge>}</td>
+                        <td className="px-4 py-3">{v.active ? <Badge tone="success" dot className="g:text-[13px]"><span className="g:font-normal">{t("fleet.active")}</span></Badge> : <Badge className="g:text-[13px]"><span className="g:font-normal">{t("fleet.inactive")}</span></Badge>}</td>
                         <td className="px-4 py-3 text-end">
                           <Menu>
                             <MenuTrigger asChild>
@@ -555,8 +555,8 @@ export function FleetView() {
                           <div className="truncate text-[13px] font-medium text-ink">{m.email}</div>
                           <div className="text-xs text-muted g:text-[12px]">{memberScopeLabel(m, depotName, t)}</div>
                         </div>
-                        <Badge tone={m.role === "owner" ? "brand" : "neutral"} className="g:text-[13px] g:font-normal g:text-ink-2">{roleLabel(m.role, t)}</Badge>
-                        {!m.active && <Badge className="g:text-[13px] g:font-normal">{t("fleet.inactive")}</Badge>}
+                        <Badge tone={m.role === "owner" ? "brand" : "neutral"} className="g:text-[13px] g:font-normal g:text-ink-2"><span className="g:font-normal">{roleLabel(m.role, t)}</span></Badge>
+                        {!m.active && <Badge className="g:text-[13px]"><span className="g:font-normal">{t("fleet.inactive")}</span></Badge>}
                       </li>
                     ))}
                   </ul>
@@ -568,7 +568,7 @@ export function FleetView() {
                           <li key={i.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px] g:min-h-9 g:py-1 g:hover:bg-[var(--hover)]">
                             <Mail className="size-4 text-subtle g:hidden" />
                             <span className="min-w-0 flex-1 truncate">{i.email}</span>
-                            <Badge tone="outline" className="g:border-0 g:px-0 g:text-[13px] g:font-normal g:text-ink-2">{roleLabel(i.role, t)}</Badge>
+                            <Badge tone="outline" className="g:border-0 g:px-0 g:text-[13px] g:font-normal g:text-ink-2"><span className="g:font-normal">{roleLabel(i.role, t)}</span></Badge>
                             <Button
                               size="sm"
                               variant="ghost"

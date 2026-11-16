@@ -335,7 +335,7 @@ function CompanySection({ data, onSaved }: { data: CompanySettings; onSaved: () 
         {field("addressCountry", t("settings.field.country"), { maxLength: 2, ltr: true })}
         {field("website", t("settings.field.website"), { placeholder: "https://", ltr: true })}
       </div>
-      <dl className="grid grid-cols-1 gap-3 rounded-xl border border-line bg-surface-2 p-4 text-[13px] sm:grid-cols-3 g:max-w-3xl g:rounded-none g:border-x-0 g:border-b-0 g:bg-transparent g:px-4 g:py-3.5">
+      <dl className="grid grid-cols-1 gap-3 rounded-xl border border-line bg-surface-2 p-4 text-[13px] sm:grid-cols-3 g:rounded-none g:border-x-0 g:border-b-0 g:bg-transparent g:px-4 g:py-3.5">
         <div>
           <dt className={DT}>{t("settings.timeZone")}</dt>
           <dd className={DD}>{c.timeZone}</dd>
@@ -555,7 +555,7 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
           ))}
         </div>
         </div>
-        <dl className={cn("grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-4 g:max-w-3xl", G_GROUP_T)}>
+        <dl className={cn("grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-4", G_GROUP_T)}>
           <div>
             <dt className={DT}>{t("settings.noticeVersion")}</dt>
             <dd className="font-semibold text-ink tabular g:font-medium">{tk.noticeVersion}</dd>
@@ -692,7 +692,8 @@ function DriverRow({ d, admin, noticeVersion, selected, onSelect, onPilot }: { d
         <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-bold g:bg-transparent g:px-0 g:py-0 g:text-[12.5px] g:font-normal", toneCls)} title={trackingStateExplain(d.state, t)}>
           {d.state === "live" && <span className="size-1.5 animate-pulse rounded-full bg-current g:hidden" aria-hidden="true" />}
           <span className={cn("hidden size-1.5 shrink-0 rounded-full g:inline-block", dotCls)} aria-hidden="true" />
-          {trackingStateLabel(d.state, t)}
+          {/* G: the label at body weight (the global G rule keeps font-bold at 600). */}
+          <span className="g:font-normal">{trackingStateLabel(d.state, t)}</span>
         </span>
       </td>
       <td className="whitespace-nowrap px-3 text-2xs g:text-[12.5px]">
