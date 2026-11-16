@@ -10,6 +10,7 @@ import { stopStatusLabel } from "./StatusBadge";
 /*
  * Analytics charts (SVG, no chart library). Series colours are --viz-1 / --viz-2 (validated for
  * both themes); text always uses ink tokens. One y-axis per chart; hover shows the exact values.
+ * Phase G: same series colours; gridlines use the hairline token, legend and tooltips are quieter.
  */
 
 /*
@@ -38,10 +39,10 @@ function niceMax(v: number) {
 
 function Legend({ items }: { items: { color: string; label: string }[] }) {
   return (
-    <div className="flex flex-wrap gap-3 text-2xs font-semibold text-ink-2">
+    <div className="flex flex-wrap gap-3 text-2xs font-semibold text-ink-2 g:text-[12px] g:font-normal g:text-muted">
       {items.map((i) => (
         <span key={i.label} className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-[3px]" style={{ background: i.color }} aria-hidden="true" />
+          <span className="size-2.5 rounded-[3px] g:size-2 g:rounded-[2px]" style={{ background: i.color }} aria-hidden="true" />
           {i.label}
         </span>
       ))}
@@ -76,7 +77,7 @@ export function OutcomeBars({ trend, granularity }: { trend: TrendBucket[]; gran
         <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={t("analytics.chart.processedAria")} onMouseLeave={() => setHover(null)}>
           {Array.from({ length: max.max / max.step + 1 }, (_, i) => i * max.step).map((v) => (
             <g key={v}>
-              <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--viz-grid)" strokeWidth={1} />
+              <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--viz-grid)" strokeWidth={1} className="g:[stroke:var(--line)]" />
               <text x={pad.l - 6} y={y(v) + 3.5} textAnchor="end" className="fill-[var(--text-3)] text-[10px] tabular">
                 {fmt.number(v)}
               </text>
@@ -105,12 +106,12 @@ export function OutcomeBars({ trend, granularity }: { trend: TrendBucket[]; gran
         </svg>
         {h && hover !== null && (
           <div
-            className="pointer-events-none absolute top-1 z-10 min-w-[170px] rounded-xl border border-line-strong bg-raised px-3 py-2 text-2xs shadow-overlay"
+            className="pointer-events-none absolute top-1 z-10 min-w-[170px] rounded-xl border border-line-strong bg-raised px-3 py-2 text-2xs shadow-overlay g:rounded-md g:border-line-2 g:px-2.5 g:py-1.5 g:text-[12px]"
             style={{ left: `${Math.min(78, ((pad.l + slot * hover + slot / 2) / W) * 100)}%` }}
             role="status"
             dir={dir}
           >
-            <div className="mb-1 font-bold text-ink">{bucketLabel(h.bucket, granularity, t, fmt)}</div>
+            <div className="mb-1 font-bold text-ink g:font-medium">{bucketLabel(h.bucket, granularity, t, fmt)}</div>
             <div className="flex justify-between gap-4 text-ink-2">
               <span>{t("analytics.kpi.delivered")}</span>
               <span className="font-bold text-ink tabular">{delivered(h)}</span>
@@ -171,7 +172,7 @@ export function SuccessLine({ trend, granularity }: { trend: TrendBucket[]; gran
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={t("analytics.chart.successAria")} onMouseLeave={() => setHover(null)}>
         {[0, 0.5, 1].map((v) => (
           <g key={v}>
-            <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--viz-grid)" strokeWidth={1} />
+            <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--viz-grid)" strokeWidth={1} className="g:[stroke:var(--line)]" />
             <text x={pad.l - 6} y={y(v) + 3.5} textAnchor="end" className="fill-[var(--text-3)] text-[10px]">
               {pct(v, 0, fmt)}
             </text>
@@ -194,8 +195,8 @@ export function SuccessLine({ trend, granularity }: { trend: TrendBucket[]; gran
         {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={pad.t + ih} stroke="var(--line-2)" strokeDasharray="3 3" />}
       </svg>
       {h && hover !== null && (
-        <div className="pointer-events-none absolute top-1 z-10 rounded-xl border border-line-strong bg-raised px-3 py-2 text-2xs shadow-overlay" style={{ left: `${Math.min(80, (x(hover) / W) * 100)}%` }} role="status" dir={dir}>
-          <span className="font-bold text-ink">{bucketLabel(h.bucket, granularity, t, fmt)}</span> · <span className="text-ink-2">{h.successRate === null ? t("analytics.chart.noProcessed") : pct(h.successRate, 1, fmt)}</span>
+        <div className="pointer-events-none absolute top-1 z-10 rounded-xl border border-line-strong bg-raised px-3 py-2 text-2xs shadow-overlay g:rounded-md g:border-line-2 g:px-2.5 g:py-1.5 g:text-[12px]" style={{ left: `${Math.min(80, (x(hover) / W) * 100)}%` }} role="status" dir={dir}>
+          <span className="font-bold text-ink g:font-medium">{bucketLabel(h.bucket, granularity, t, fmt)}</span> · <span className="text-ink-2">{h.successRate === null ? t("analytics.chart.noProcessed") : pct(h.successRate, 1, fmt)}</span>
         </div>
       )}
     </div>
@@ -209,16 +210,16 @@ export function ReasonBars({ rows, label }: { rows: { reason: string | null; sta
   const total = rows.reduce((n, r) => n + r.count, 0);
   if (!rows.length) return <p className="py-6 text-center text-[13px] text-muted">{t("analytics.chart.noUndelivered")}</p>;
   return (
-    <ul className="flex flex-col gap-2.5" aria-label={t("analytics.chart.reasonsAria")}>
+    <ul className="flex flex-col gap-2.5 g:gap-2" aria-label={t("analytics.chart.reasonsAria")}>
       {rows.slice(0, 8).map((r) => (
         <li key={`${r.reason}-${r.status}`} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1">
-          <span className="truncate text-[13px] font-semibold text-ink">
+          <span className="truncate text-[13px] font-semibold text-ink g:font-normal">
             {label(r.reason)} <span className="font-normal text-muted">· {STOP_STATUSES.has(r.status) ? stopStatusLabel(r.status as Parameters<typeof stopStatusLabel>[0], t) : r.status}</span>
           </span>
-          <span className="text-[13px] font-bold text-ink tabular">
-            {r.count} <span className="font-semibold text-muted">· {pct(Math.round((r.count / total) * 100) / 100, 0, fmt)}</span>
+          <span className="text-[13px] font-bold text-ink tabular g:font-medium">
+            {r.count} <span className="font-semibold text-muted g:font-normal">· {pct(Math.round((r.count / total) * 100) / 100, 0, fmt)}</span>
           </span>
-          <div className="col-span-2 h-2 overflow-hidden rounded-full bg-surface-2">
+          <div className="col-span-2 h-2 overflow-hidden rounded-full bg-surface-2 g:h-1 g:bg-[var(--selected)]">
             <i className={cn("block h-full rounded-full")} style={{ width: `${(r.count / max) * 100}%`, background: "var(--viz-1)" }} />
           </div>
         </li>

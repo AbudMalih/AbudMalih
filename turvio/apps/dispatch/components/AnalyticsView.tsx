@@ -87,17 +87,18 @@ export function AnalyticsView() {
   const N = (v: number | null, digits?: number) => num(v, digits, fmt);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 g:gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("analytics.title")}</h1>
-        <p className="text-sm text-ink-2">
+        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink g:text-[20px] g:font-semibold g:leading-7 g:tracking-normal">{t("analytics.title")}</h1>
+        <p className="text-sm text-ink-2 g:text-[13px] g:text-muted">
           {t("analytics.intro")}
           {data && ` ${t("analytics.rangeNote", { from: fmt.day(data.range.from), to: fmt.day(data.range.to), tz: data.timeZone })}`}
         </p>
       </div>
 
-      <Card className="flex flex-col gap-3 p-4">
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label={t("analytics.period")}>
+      {/* G: one toolbar row – presets as a quiet segmented control, then the filters (32 px). */}
+      <Card className="flex flex-col gap-3 p-4 g:flex-row g:flex-wrap g:items-center g:gap-2 g:border-0 g:bg-transparent g:p-0">
+        <div className="flex flex-wrap gap-1 g:gap-0.5 g:rounded-md g:border g:border-line g:bg-surface g:p-0.5" role="tablist" aria-label={t("analytics.period")}>
           {PRESETS.map((k) => (
             <button
               key={k}
@@ -105,7 +106,10 @@ export function AnalyticsView() {
               role="tab"
               aria-selected={preset === k}
               onClick={() => setPreset(k)}
-              className={cn("h-8 rounded-[10px] px-3 text-[13px] font-semibold text-muted hover:bg-surface-2 hover:text-ink", preset === k && "bg-brand-50 text-brand-700 hover:bg-brand-50")}
+              className={cn(
+                "h-8 rounded-[10px] px-3 text-[13px] font-semibold text-muted hover:bg-surface-2 hover:text-ink g:h-7 g:rounded g:px-2.5 g:text-[12.5px] g:font-medium g:transition-colors g:hover:bg-[var(--hover)]",
+                preset === k && "bg-brand-50 text-brand-700 hover:bg-brand-50 g:bg-[var(--selected)] g:text-ink g:hover:bg-[var(--selected)]",
+              )}
             >
               {t(`analytics.preset.${k}`)}
             </button>
@@ -114,12 +118,12 @@ export function AnalyticsView() {
         <div className="flex flex-wrap items-center gap-2">
           {preset === "custom" && (
             <>
-              <input type="date" className={cn(fieldCls, "w-40")} value={custom.from} max={custom.to} onChange={(e) => e.target.value && setCustom({ ...custom, from: e.target.value })} aria-label={t("analytics.from")} />
+              <input type="date" className={cn(fieldCls, "w-40 g:w-36")} value={custom.from} max={custom.to} onChange={(e) => e.target.value && setCustom({ ...custom, from: e.target.value })} aria-label={t("analytics.from")} />
               <span className="text-muted">–</span>
-              <input type="date" className={cn(fieldCls, "w-40")} value={custom.to} min={custom.from} onChange={(e) => e.target.value && setCustom({ ...custom, to: e.target.value })} aria-label={t("analytics.to")} />
+              <input type="date" className={cn(fieldCls, "w-40 g:w-36")} value={custom.to} min={custom.from} onChange={(e) => e.target.value && setCustom({ ...custom, to: e.target.value })} aria-label={t("analytics.to")} />
             </>
           )}
-          <select className={cn(fieldCls, "w-44")} value={depot} onChange={(e) => (setDepot(e.target.value), setDriver(""))} aria-label={t("analytics.location")}>
+          <select className={cn(fieldCls, "w-44 g:w-40")} value={depot} onChange={(e) => (setDepot(e.target.value), setDriver(""))} aria-label={t("analytics.location")}>
             <option value="">{t("analytics.allLocations")}</option>
             {scoped.depots.map((d) => (
               <option key={d.id} value={d.id}>
@@ -127,7 +131,7 @@ export function AnalyticsView() {
               </option>
             ))}
           </select>
-          <select className={cn(fieldCls, "w-48")} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label={t("analytics.driver")}>
+          <select className={cn(fieldCls, "w-48 g:w-44")} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label={t("analytics.driver")}>
             <option value="">{t("analytics.allDrivers")}</option>
             {drivers.map((d) => (
               <option key={d.id} value={d.id}>
@@ -135,13 +139,13 @@ export function AnalyticsView() {
               </option>
             ))}
           </select>
-          <select className={cn(fieldCls, "w-40")} value={granularity} onChange={(e) => setGranularity(e.target.value as typeof granularity)} aria-label={t("analytics.groupBy")}>
+          <select className={cn(fieldCls, "w-40 g:w-36")} value={granularity} onChange={(e) => setGranularity(e.target.value as typeof granularity)} aria-label={t("analytics.groupBy")}>
             <option value="">{t("analytics.group.auto")}</option>
             <option value="day">{t("analytics.group.day")}</option>
             <option value="week">{t("analytics.group.week")}</option>
             <option value="month">{t("analytics.group.month")}</option>
           </select>
-          {loading && <span className="text-2xs text-muted">{t("analytics.updating")}</span>}
+          {loading && <span className="text-2xs text-muted g:text-[12px]">{t("analytics.updating")}</span>}
         </div>
       </Card>
 
@@ -154,7 +158,7 @@ export function AnalyticsView() {
 
       {cur && prev && data && (
         <>
-          <section aria-label={t("analytics.keyFigures")} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <section aria-label={t("analytics.keyFigures")} className="grid grid-cols-2 gap-3 lg:grid-cols-4 g:gap-px g:overflow-hidden g:rounded-lg g:border g:border-line g:bg-line">
             <Kpi labelKey="analytics.kpi.successRate" value={P(cur.stops.successRate)} prev={P(prev.stops.successRate)} info={def("successRate")} />
             <Kpi labelKey="analytics.kpi.delivered" value={N(delivered(cur.stops))} prev={N(delivered(prev.stops))} info={`${def("delivered")} ${def("pickedUp")}`} />
             <Kpi labelKey="analytics.kpi.notDelivered" value={N(notDelivered(cur.stops))} prev={N(notDelivered(prev.stops))} info={t("analytics.notDeliveredInfo")} />
@@ -164,14 +168,14 @@ export function AnalyticsView() {
             <Kpi labelKey="analytics.kpi.onTimeStarts" value={P(cur.tours.onTimeStartRate)} prev={P(prev.tours.onTimeStartRate)} info={def("onTimeStartRate")} />
             <Kpi labelKey="analytics.kpi.stopsPerActiveHour" value={N(cur.tours.stopsPerActiveHour, 1)} prev={N(prev.tours.stopsPerActiveHour, 1)} info={def("stopsPerActiveHour")} />
           </section>
-          <p className="-mt-2 text-2xs text-muted">
+          <p className="-mt-2 text-2xs text-muted g:-mt-1 g:text-[12px]">
             {data.previousRange.from === data.previousRange.to
               ? t("analytics.prevNoteDay")
               : t("analytics.prevNotePeriod", { from: fmt.day(data.previousRange.from), to: fmt.day(data.previousRange.to) })}{" "}
             {t("analytics.cancelledNote", { n: N(cur.stops.cancelled) })}
           </p>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr]">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.6fr_1fr] g:gap-3">
             <Card className="overflow-hidden">
               <CardHeader
                 title={t("analytics.outcomesTitle")}
@@ -185,32 +189,32 @@ export function AnalyticsView() {
                   </div>
                 }
               />
-              <div className="p-5">
+              <div className="p-5 g:p-4">
                 {data.trend.length === 0 ? (
                   <EmptyState icon={<BarChart3 />} title={t("analytics.noTours")} description={t("analytics.noToursDesc")} />
                 ) : table ? (
                   <TrendTable data={data} />
                 ) : (
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 g:gap-4">
                     <OutcomeBars trend={data.trend} granularity={data.granularity} />
                     <div>
-                      <h4 className="mb-1 text-[12.5px] font-bold text-ink">{t("analytics.kpi.successRate")}</h4>
+                      <h4 className="mb-1 text-[12.5px] font-bold text-ink g:text-[12px] g:font-medium g:text-muted">{t("analytics.kpi.successRate")}</h4>
                       <SuccessLine trend={data.trend} granularity={data.granularity} />
                     </div>
                   </div>
                 )}
               </div>
             </Card>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 g:gap-3">
               <Card className="overflow-hidden">
                 <CardHeader title={t("analytics.reasonsTitle")} description={t("analytics.reasonsDesc")} />
-                <div className="p-5">
+                <div className="p-5 g:p-4">
                   <ReasonBars rows={data.failureReasons} label={reasonLabel} />
                 </div>
               </Card>
               <Card className="overflow-hidden">
                 <CardHeader title={t("analytics.actualPlannedTitle")} description={t("analytics.actualPlannedDesc")} />
-                <dl className="grid grid-cols-2 gap-4 p-5 text-[13px]">
+                <dl className="grid grid-cols-2 gap-4 p-5 text-[13px] g:gap-x-4 g:gap-y-3 g:p-4">
                   <Figure
                     label={t("analytics.fig.avgTour")}
                     value={cur.tours.avgTourMinutes === null ? "–" : t("common.min", { n: N(cur.tours.avgTourMinutes) })}
@@ -245,7 +249,7 @@ export function AnalyticsView() {
                   />
                   <Figure label={t("analytics.fig.stopsPerTour")} value={N(cur.tours.stopsPerTour, 1)} sub={t("analytics.fig.stopsPerTourSub")} info={def("stopsPerTour")} />
                 </dl>
-                <p className="border-t border-line px-5 py-2.5 text-2xs text-muted">{t("analytics.drivenNote")}</p>
+                <p className="border-t border-line px-5 py-2.5 text-2xs text-muted g:px-4 g:py-2 g:text-[12px]">{t("analytics.drivenNote")}</p>
               </Card>
             </div>
           </div>
@@ -262,7 +266,7 @@ function InfoTip({ text }: { text: string }) {
   if (!text) return null;
   return (
     <Tooltip content={<span className="block max-w-xs text-xs font-medium">{text}</span>}>
-      <button type="button" className="inline-grid size-5 place-items-center rounded-md text-muted hover:text-ink" aria-label={t("analytics.definition", { text })}>
+      <button type="button" className="inline-grid size-5 place-items-center rounded-md text-muted hover:text-ink g:size-4 g:rounded-sm" aria-label={t("analytics.definition", { text })}>
         <Info className="size-3.5" />
       </button>
     </Tooltip>
@@ -273,16 +277,16 @@ function Kpi({ labelKey, value, prev, info }: { labelKey: MessageKey; value: str
   const { t } = useI18n();
   const label = t(labelKey);
   return (
-    <Card className="flex flex-col gap-2 p-4" role="group" aria-label={label}>
-      <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-2">
+    <Card className="flex flex-col gap-2 p-4 g:gap-1.5 g:rounded-none g:border-0 g:bg-surface g:px-4 g:py-3" role="group" aria-label={label}>
+      <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted">
         {label}
         <InfoTip text={info} />
       </div>
-      <div className="text-[26px] font-extrabold leading-none tracking-[-0.02em] text-ink tabular" data-testid={`kpi-${EN_T(labelKey)}`}>
+      <div className="text-[26px] font-extrabold leading-none tracking-[-0.02em] text-ink tabular g:text-[22px] g:font-medium g:leading-7" data-testid={`kpi-${EN_T(labelKey)}`}>
         {/* Figures like "1 / 7" keep their order in Arabic. */}
         <bdi dir="ltr">{value}</bdi>
       </div>
-      <div className="text-2xs text-muted tabular">{t("analytics.prev", { value: prev })}</div>
+      <div className="text-2xs text-muted tabular g:text-[12px]">{t("analytics.prev", { value: prev })}</div>
     </Card>
   );
 }
@@ -291,13 +295,13 @@ function Figure({ label, value, sub, info, planned }: { label: string; value: st
   const { t } = useI18n();
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="flex items-center gap-1 text-2xs font-semibold uppercase tracking-[0.06em] text-muted">
+      <dt className="flex items-center gap-1 text-2xs font-semibold uppercase tracking-[0.06em] text-muted g:text-[12px] g:font-normal">
         {label}
-        {planned && <span className="rounded-full bg-surface-2 px-1.5 py-px text-[10px] font-bold normal-case tracking-normal text-ink-2">{t("analytics.plannedBadge")}</span>}
+        {planned && <span className="rounded-full bg-surface-2 px-1.5 py-px text-[10px] font-bold normal-case tracking-normal text-ink-2 g:rounded g:border g:border-line g:bg-transparent g:px-1 g:text-[11px] g:font-normal g:text-muted">{t("analytics.plannedBadge")}</span>}
         <InfoTip text={info} />
       </dt>
-      <dd className="text-[18px] font-extrabold text-ink tabular">{value}</dd>
-      <dd className="text-2xs text-muted">{sub}</dd>
+      <dd className="text-[18px] font-extrabold text-ink tabular g:text-[16px] g:font-medium">{value}</dd>
+      <dd className="text-2xs text-muted g:text-[12px]">{sub}</dd>
     </div>
   );
 }
@@ -329,7 +333,7 @@ function TrendTable({ data }: { data: Summary }) {
   return (
     <div className="max-h-80 overflow-auto">
       <table className="w-full text-[13px]" aria-label={t("analytics.trendTable")}>
-        <thead className="sticky top-0 bg-surface text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
+        <thead className="sticky top-0 bg-surface g:z-[1] text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted g:shadow-[inset_0_-1px_0_var(--line)]">
           <tr className="border-b border-line">
             <th className="py-2 text-start">{t("analytics.th.period")}</th>
             <th className="text-end">{t("analytics.th.tours")}</th>
@@ -341,7 +345,7 @@ function TrendTable({ data }: { data: Summary }) {
         </thead>
         <tbody>
           {data.trend.map((b) => (
-            <tr key={b.bucket} className="border-b border-line last:border-0 tabular">
+            <tr key={b.bucket} className="border-b border-line last:border-0 tabular g:transition-colors g:hover:bg-[var(--hover)]">
               <td className="py-1.5">{b.bucket}</td>
               <td className="text-end">{b.tours}</td>
               <td className="text-end">{delivered(b)}</td>
@@ -385,7 +389,7 @@ function BreakdownTables({ api, query, mayExport }: { api: ReturnType<typeof ana
         description={t("analytics.breakdownDesc")}
         actions={mayExport ? <ExportMenu api={api} query={query} view={tab} /> : undefined}
       />
-      <div className="flex gap-1 border-b border-line px-4 pt-2" role="tablist" aria-label={t("analytics.breakdown")}>
+      <div className="flex gap-1 border-b border-line px-4 pt-2 g:gap-0.5 g:px-3" role="tablist" aria-label={t("analytics.breakdown")}>
         {(["drivers", "depots", "tours"] as const).map((k) => (
           <button
             key={k}
@@ -393,13 +397,13 @@ function BreakdownTables({ api, query, mayExport }: { api: ReturnType<typeof ana
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={cn("-mb-px border-b-2 px-3 pb-2 text-[13px] font-semibold", tab === k ? "border-brand-600 text-ink" : "border-transparent text-muted hover:text-ink")}
+            className={cn("-mb-px border-b-2 px-3 pb-2 text-[13px] font-semibold g:px-2.5 g:pb-1.5 g:font-medium g:transition-colors", tab === k ? "border-brand-600 text-ink" : "border-transparent text-muted hover:text-ink")}
           >
             {t(`analytics.tab.${k}`)}
           </button>
         ))}
       </div>
-      {error && <p className="px-4 py-4 text-[13px] text-danger-ink">{error}</p>}
+      {error && <p className="px-4 py-4 text-[13px] text-danger-ink g:py-3">{error}</p>}
       {!rows && !error && <Skeleton className="m-4 h-40" />}
       {rows && rows.data.length === 0 && <p className="px-4 py-6 text-center text-[13px] text-muted">{t("analytics.noDataPeriod")}</p>}
       {rows && rows.data.length > 0 && (
@@ -411,13 +415,13 @@ function BreakdownTables({ api, query, mayExport }: { api: ReturnType<typeof ana
   );
 }
 
-const Th = ({ children, end }: { children: ReactNode; end?: boolean }) => <th className={cn("h-10 whitespace-nowrap px-3", end ? "text-end" : "text-start")}>{children}</th>;
+const Th = ({ children, end }: { children: ReactNode; end?: boolean }) => <th className={cn("h-10 whitespace-nowrap px-3 g:h-9 g:first:ps-4 g:last:pe-4", end ? "text-end" : "text-start")}>{children}</th>;
 
 function PeopleTable({ rows, kind }: { rows: (DriverRow | DepotRow)[]; kind: "drivers" | "depots" }) {
   const { t, fmt } = useI18n();
   return (
     <table className="w-full min-w-[980px] text-[13px]" aria-label={kind === "drivers" ? t("analytics.driverPerformance") : t("analytics.locationPerformance")}>
-      <thead className="sticky top-0 bg-surface text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
+      <thead className="sticky top-0 bg-surface g:z-[1] text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted g:shadow-[inset_0_-1px_0_var(--line)]">
         <tr className="border-b border-line">
           <Th>{kind === "drivers" ? t("analytics.th.driver") : t("analytics.th.location")}</Th>
           <Th end>{t("analytics.th.tours")}</Th>
@@ -434,18 +438,18 @@ function PeopleTable({ rows, kind }: { rows: (DriverRow | DepotRow)[]; kind: "dr
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={"driverId" in r ? (r.driverId ?? "none") : r.depotId} className="border-b border-line last:border-0 tabular">
-            <td className="whitespace-nowrap px-3 py-2 font-semibold text-ink">{r.name ?? t("analytics.noDriver")}</td>
+          <tr key={"driverId" in r ? (r.driverId ?? "none") : r.depotId} className="border-b border-line last:border-0 tabular g:transition-colors g:hover:bg-[var(--hover)]">
+            <td className="whitespace-nowrap px-3 py-2 font-semibold text-ink g:ps-4 g:font-medium">{r.name ?? t("analytics.noDriver")}</td>
             <td className="px-3 text-end">{r.tours}</td>
             <td className="px-3 text-end">{r.stops}</td>
             <td className="px-3 text-end">{delivered(r)}</td>
             <td className="px-3 text-end">{notDelivered(r)}</td>
             <td className="px-3 text-end">{r.open}</td>
-            <td className="px-3 text-end font-semibold text-ink">{pct(r.successRate, 1, fmt)}</td>
+            <td className="px-3 text-end font-semibold text-ink g:font-medium">{pct(r.successRate, 1, fmt)}</td>
             <td className="px-3 text-end">{pct(r.onTimeStartRate, 0, fmt)}</td>
             <td className="px-3 text-end">{r.avgTourMinutes === null ? "–" : t("common.min", { n: num(r.avgTourMinutes, 0, fmt) })}</td>
             <td className="px-3 text-end">{num(r.stopsPerActiveHour, 1, fmt)}</td>
-            <td className="px-3 text-end text-ink-2">{r.planned.plannedDistanceKm === null ? "–" : num(r.planned.plannedDistanceKm, 0, fmt)}</td>
+            <td className="px-3 text-end text-ink-2 g:pe-4">{r.planned.plannedDistanceKm === null ? "–" : num(r.planned.plannedDistanceKm, 0, fmt)}</td>
           </tr>
         ))}
       </tbody>
@@ -457,7 +461,7 @@ function ToursTable({ rows }: { rows: TourRow[] }) {
   const { t, fmt } = useI18n();
   return (
     <table className="w-full min-w-[1000px] text-[13px]" aria-label={t("analytics.tourPerformance")}>
-      <thead className="sticky top-0 bg-surface text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
+      <thead className="sticky top-0 bg-surface g:z-[1] text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted g:shadow-[inset_0_-1px_0_var(--line)]">
         <tr className="border-b border-line">
           <Th>{t("analytics.th.date")}</Th>
           <Th>{t("analytics.th.tour")}</Th>
@@ -475,9 +479,9 @@ function ToursTable({ rows }: { rows: TourRow[] }) {
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.tourId} className="border-b border-line last:border-0 tabular">
-            <td className="whitespace-nowrap px-3 py-2 text-ink-2">{r.date}</td>
-            <td className="whitespace-nowrap px-3 font-semibold text-ink">
+          <tr key={r.tourId} className="border-b border-line last:border-0 tabular g:transition-colors g:hover:bg-[var(--hover)]">
+            <td className="whitespace-nowrap px-3 py-2 text-ink-2 g:ps-4">{r.date}</td>
+            <td className="whitespace-nowrap px-3 font-semibold text-ink g:font-medium">
               {r.name}
               {r.archived && <span className="ms-1.5 text-2xs font-normal text-muted">{t("analytics.archived")}</span>}
             </td>
@@ -487,10 +491,10 @@ function ToursTable({ rows }: { rows: TourRow[] }) {
             <td className="px-3 text-end">{r.stops}</td>
             <td className="px-3 text-end">{delivered(r)}</td>
             <td className="px-3 text-end">{notDelivered(r)}</td>
-            <td className="px-3 text-end font-semibold text-ink">{pct(r.successRate, 1, fmt)}</td>
+            <td className="px-3 text-end font-semibold text-ink g:font-medium">{pct(r.successRate, 1, fmt)}</td>
             <td className="px-3 text-end">{num(r.minutes, 0, fmt)}</td>
             <td className="px-3 text-end text-ink-2">{num(r.plannedMinutes, 0, fmt)}</td>
-            <td className="px-3 text-end text-ink-2">{num(r.plannedDistanceKm, 1, fmt)}</td>
+            <td className="px-3 text-end text-ink-2 g:pe-4">{num(r.plannedDistanceKm, 1, fmt)}</td>
           </tr>
         ))}
       </tbody>

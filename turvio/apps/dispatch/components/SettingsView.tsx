@@ -18,6 +18,23 @@ import { roleLabel } from "./DispatchShell";
 type Section = "preferences" | "company" | "driver-rules" | "tracking" | "team";
 
 /**
+ * Phase G: a section is one flat bordered form – header, then groups separated by hairlines
+ * (no inner cards), 12 px muted labels above 32 px controls.
+ */
+const G_FORM = "g:gap-0 g:p-0";
+const G_HEAD = "g:mx-0 g:mt-0";
+const G_GROUP = "g:px-4 g:py-3.5";
+const G_GROUP_T = "g:border-t g:border-line g:px-4 g:py-3.5";
+const LABEL = "flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted";
+const LEGEND = "mb-1 text-[13px] font-semibold text-ink g:mb-1.5 g:text-[12px] g:font-normal g:text-muted";
+/** Segmented control in G (classic: separate bordered buttons). */
+const SEG = "flex flex-wrap gap-2 g:inline-flex g:w-fit g:max-w-full g:gap-0.5 g:rounded-md g:border g:border-line-2 g:bg-surface-2 g:p-0.5";
+const SEG_ITEM = "h-10 rounded-xl border border-line px-4 text-[13px] font-semibold text-ink-2 hover:border-line-strong g:h-7 g:rounded g:border-0 g:px-3 g:font-medium g:text-muted g:hover:text-ink";
+const SEG_ON = "border-brand-500 bg-brand-50 text-brand-700 g:bg-[var(--selected)] g:text-ink";
+const DT = "text-2xs uppercase tracking-[0.08em] text-muted g:text-[12px]";
+const DD = "font-semibold text-ink g:font-medium";
+
+/**
  * Settings: personal preferences (every user) and company settings (read by staff, changed by
  * company admins – the API enforces the same rules and asks for the second factor).
  */
@@ -56,16 +73,16 @@ export function SettingsView() {
   const go = (s: Section) => router.replace(`${pathname ?? "/settings"}?section=${s}`, { scroll: false });
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("shell.title.settings")}</h1>
-        <p className="text-sm text-ink-2">
+    <div className="flex flex-col gap-5 g:gap-4">
+      <div className="flex flex-col gap-1 g:gap-0.5">
+        <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink g:text-[20px] g:font-semibold g:tracking-[-0.015em]">{t("shell.title.settings")}</h1>
+        <p className="text-sm text-ink-2 g:text-[13px] g:text-muted">
           {tr("settings.intro", { org: session.organizationName })}{" "}
           {overview && !overview.canEdit.company && <span className="text-muted">{t("settings.readOnlyCompany")}</span>}
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_1fr]">
-        <nav aria-label={t("settings.nav")} className="flex gap-1 overflow-x-auto lg:flex-col">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[220px_1fr] g:gap-4 g:lg:grid-cols-[200px_1fr] g:lg:gap-6">
+        <nav aria-label={t("settings.nav")} className="flex gap-1 overflow-x-auto lg:flex-col g:gap-px">
           {visible.map((s) => (
             <button
               key={s.key}
@@ -73,8 +90,8 @@ export function SettingsView() {
               onClick={() => go(s.key)}
               aria-current={section === s.key ? "page" : undefined}
               className={cn(
-                "flex h-10 shrink-0 items-center gap-2.5 rounded-xl px-3 text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink [&_svg]:size-4",
-                section === s.key && "bg-brand-50 text-brand-700 hover:bg-brand-50",
+                "flex h-10 shrink-0 items-center gap-2.5 rounded-xl px-3 text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink [&_svg]:size-4 g:h-[30px] g:gap-2 g:rounded-md g:px-2.5 g:text-[13px] g:font-medium g:hover:bg-[var(--hover)] g:[&_svg]:size-[15px] g:[&_svg]:text-muted",
+                section === s.key && "bg-brand-50 text-brand-700 hover:bg-brand-50 g:bg-[var(--selected)] g:text-ink g:hover:bg-[var(--selected)]",
               )}
             >
               {s.icon}
@@ -84,7 +101,7 @@ export function SettingsView() {
         </nav>
         <div className="min-w-0">
           {error && (
-            <Card className="p-5 text-[13px] text-danger-ink" role="alert">
+            <Card className="p-5 text-[13px] text-danger-ink g:mb-4 g:p-4" role="alert">
               {error}
             </Card>
           )}
@@ -100,10 +117,10 @@ export function SettingsView() {
   );
 }
 
-function ReadOnlyNote() {
+function ReadOnlyNote({ className }: { className?: string }) {
   const { t } = useI18n();
   return (
-    <p className="flex items-center gap-1.5 text-2xs text-muted">
+    <p className={cn("flex items-center gap-1.5 text-2xs text-muted g:text-[12px]", className)}>
       <Lock className="size-3.5" /> {t("settings.readOnly")}
     </p>
   );
@@ -177,11 +194,13 @@ function PreferencesSection() {
   };
   if (!prefs) return <Skeleton className="h-64" />;
   return (
-    <Card className="flex flex-col gap-5 p-5">
-      <CardHeader className="-mx-5 -mt-5" title={t("settings.section.preferences")} description={t("settings.prefsDesc")} />
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-[13px] font-semibold text-ink">{t("shell.language")}</legend>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("shell.language")} data-testid="language-choice">
+    <Card className={cn("flex flex-col gap-5 p-5", G_FORM)}>
+      <CardHeader className={cn("-mx-5 -mt-5", G_HEAD)} title={t("settings.section.preferences")} description={t("settings.prefsDesc")} />
+      {/* Group padding sits on a wrapper: a fieldset puts its legend above its own padding. */}
+      <div className={G_GROUP}>
+      <fieldset className="flex flex-col gap-2 g:gap-1.5">
+        <legend className={LEGEND}>{t("shell.language")}</legend>
+        <div className={SEG} role="radiogroup" aria-label={t("shell.language")} data-testid="language-choice">
           {LOCALES.map((l) => (
             <button
               key={l}
@@ -190,7 +209,7 @@ function PreferencesSection() {
               aria-checked={locale === l}
               disabled={langBusy}
               onClick={() => void chooseLanguage(l)}
-              className={cn("h-10 rounded-xl border border-line px-4 text-[13px] font-semibold text-ink-2 hover:border-line-strong disabled:opacity-60", locale === l && "border-brand-500 bg-brand-50 text-brand-700")}
+              className={cn(SEG_ITEM, "disabled:opacity-60", locale === l && SEG_ON)}
             >
               <span lang={l} dir={l === "ar" ? "rtl" : "ltr"}>
                 {LOCALE_NAMES[l]}
@@ -198,11 +217,13 @@ function PreferencesSection() {
             </button>
           ))}
         </div>
-        <span className="text-2xs text-muted">{t("shell.languageHint")}</span>
+        <span className="text-2xs text-muted g:text-[12px]">{t("shell.languageHint")}</span>
       </fieldset>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-[13px] font-semibold text-ink">{t("settings.appearance")}</legend>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("settings.appearance")}>
+      </div>
+      <div className={G_GROUP_T}>
+      <fieldset className="flex flex-col gap-2 g:gap-1.5">
+        <legend className={LEGEND}>{t("settings.appearance")}</legend>
+        <div className={SEG} role="radiogroup" aria-label={t("settings.appearance")}>
           {(["system", "light", "dark"] as const).map((th) => (
             <button
               key={th}
@@ -213,16 +234,17 @@ function PreferencesSection() {
                 setThemeChoice(th);
                 applyTheme(th);
               }}
-              className={cn("h-10 rounded-xl border border-line px-4 text-[13px] font-semibold text-ink-2 hover:border-line-strong", theme === th && "border-brand-500 bg-brand-50 text-brand-700")}
+              className={cn(SEG_ITEM, theme === th && SEG_ON)}
             >
               {t(`settings.theme.${th}`)}
             </button>
           ))}
         </div>
-        <span className="text-2xs text-muted">{t("settings.appearanceHint")}</span>
+        <span className="text-2xs text-muted g:text-[12px]">{t("settings.appearanceHint")}</span>
       </fieldset>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+      </div>
+      <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2 g:gap-x-4 g:gap-y-3", G_GROUP_T)}>
+        <label className={cn(LABEL, "g:max-w-sm")}>
           {t("settings.defaultLocation")}
           <select className={fieldCls} value={depot} onChange={(e) => setDepot(e.target.value)} aria-label={t("settings.defaultLocation")}>
             <option value="">{t("settings.allMyLocations")}</option>
@@ -232,9 +254,9 @@ function PreferencesSection() {
               </option>
             ))}
           </select>
-          <span className="text-2xs font-normal text-muted">{t("settings.defaultLocationHint")}</span>
+          <span className="text-2xs font-normal text-muted g:text-[12px]">{t("settings.defaultLocationHint")}</span>
         </label>
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+        <label className={cn(LABEL, "g:max-w-sm")}>
           {t("settings.toursOpensWith")}
           <select className={fieldCls} value={toursView} onChange={(e) => setToursView(e.target.value as typeof toursView)} aria-label={t("settings.toursOpensWith")}>
             <option value="day">{t("settings.toursView.day")}</option>
@@ -243,7 +265,7 @@ function PreferencesSection() {
           </select>
         </label>
       </div>
-      <div>
+      <div className={G_GROUP_T}>
         <Button variant="primary" onClick={() => void save()} disabled={busy}>
           {busy && <Loader2 className="animate-spin" />}
           {t("settings.savePreferences")}
@@ -294,16 +316,16 @@ function CompanySection({ data, onSaved }: { data: CompanySettings; onSaved: () 
     }
   };
   const field = (k: keyof typeof form, label: string, props: { type?: string; placeholder?: string; className?: string; maxLength?: number; ltr?: boolean } = {}) => (
-    <label className={cn("flex flex-col gap-1.5 text-[13px] font-medium text-ink-2", props.className)}>
+    <label className={cn(LABEL, props.className)}>
       {label}
       <Input value={form[k]} disabled={!editable} dir={props.ltr ? "ltr" : undefined} type={props.type} placeholder={props.placeholder} maxLength={props.maxLength} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label} />
     </label>
   );
   return (
-    <Card className="flex flex-col gap-5 p-5">
-      <CardHeader className="-mx-5 -mt-5" title={t("settings.section.company")} description={t("settings.companyDesc")} />
-      {!editable && <ReadOnlyNote />}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <Card className={cn("flex flex-col gap-5 p-5", G_FORM)}>
+      <CardHeader className={cn("-mx-5 -mt-5", G_HEAD)} title={t("settings.section.company")} description={t("settings.companyDesc")} />
+      {!editable && <ReadOnlyNote className="g:px-4 g:pt-3" />}
+      <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2 g:max-w-3xl g:gap-x-4 g:gap-y-3", G_GROUP)}>
         {field("name", t("settings.field.name"), { className: "sm:col-span-2", maxLength: 160 })}
         {field("contactEmail", t("settings.field.contactEmail"), { type: "email", ltr: true })}
         {field("contactPhone", t("settings.field.contactPhone"), { placeholder: "+49 …", ltr: true })}
@@ -313,23 +335,23 @@ function CompanySection({ data, onSaved }: { data: CompanySettings; onSaved: () 
         {field("addressCountry", t("settings.field.country"), { maxLength: 2, ltr: true })}
         {field("website", t("settings.field.website"), { placeholder: "https://", ltr: true })}
       </div>
-      <dl className="grid grid-cols-1 gap-3 rounded-xl border border-line bg-surface-2 p-4 text-[13px] sm:grid-cols-3">
+      <dl className="grid grid-cols-1 gap-3 rounded-xl border border-line bg-surface-2 p-4 text-[13px] sm:grid-cols-3 g:max-w-3xl g:rounded-none g:border-x-0 g:border-b-0 g:bg-transparent g:px-4 g:py-3.5">
         <div>
-          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.timeZone")}</dt>
-          <dd className="font-semibold text-ink">{c.timeZone}</dd>
-          <dd className="text-2xs text-muted">{t("settings.timeZoneHint")}</dd>
+          <dt className={DT}>{t("settings.timeZone")}</dt>
+          <dd className={DD}>{c.timeZone}</dd>
+          <dd className="text-2xs text-muted g:text-[12px]">{t("settings.timeZoneHint")}</dd>
         </div>
         <div>
-          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.podRetention")}</dt>
-          <dd className="font-semibold text-ink">{t("settings.days", { count: data.proofRetentionDays })}</dd>
+          <dt className={DT}>{t("settings.podRetention")}</dt>
+          <dd className={DD}>{t("settings.days", { count: data.proofRetentionDays })}</dd>
         </div>
         <div>
-          <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.plan")}</dt>
-          <dd className="font-semibold text-ink">{data.subscription ? `${data.subscription.plan} · ${data.subscription.status}` : t("settings.planHidden")}</dd>
+          <dt className={DT}>{t("settings.plan")}</dt>
+          <dd className={DD}>{data.subscription ? `${data.subscription.plan} · ${data.subscription.status}` : t("settings.planHidden")}</dd>
         </div>
       </dl>
       {editable && (
-        <div>
+        <div className={G_GROUP_T}>
           <Button variant="primary" onClick={() => void save()} disabled={busy || Object.keys(changed).length === 0 || !form.name.trim()}>
             {busy && <Loader2 className="animate-spin" />}
             {t("settings.saveCompany")}
@@ -383,38 +405,38 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
     }
   };
   return (
-    <Card className="flex flex-col gap-5 p-5">
-      <CardHeader className="-mx-5 -mt-5" title={t("settings.section.driverRules")} description={t("settings.rulesDesc")} />
-      {!editable && <ReadOnlyNote />}
-      <div className="flex flex-col gap-3">
+    <Card className={cn("flex flex-col gap-5 p-5", G_FORM)}>
+      <CardHeader className={cn("-mx-5 -mt-5", G_HEAD)} title={t("settings.section.driverRules")} description={t("settings.rulesDesc")} />
+      {!editable && <ReadOnlyNote className="g:px-4 g:pt-3" />}
+      <div className={cn("flex flex-col gap-3", G_GROUP)}>
         <label className="flex items-start gap-3 text-[13px]">
           <Checkbox checked={phone} onCheckedChange={(c) => editable && setPhone(c === true)} label={t("settings.showPhone")} />
           <span>
-            <span className="font-semibold text-ink">{t("settings.showPhone")}</span>
-            <span className="block text-2xs text-muted">{t("settings.showPhoneHint")}</span>
+            <span className="font-semibold text-ink g:font-medium">{t("settings.showPhone")}</span>
+            <span className="block text-2xs text-muted g:text-[12px]">{t("settings.showPhoneHint")}</span>
           </span>
         </label>
         <label className="flex items-start gap-3 text-[13px]">
           <Checkbox checked={podLocation} onCheckedChange={(c) => editable && setPodLocation(c === true)} label={t("settings.podLocation")} />
           <span>
-            <span className="font-semibold text-ink">{t("settings.podLocation")}</span>
-            <span className="block text-2xs text-muted">{t("settings.podLocationHint")}</span>
+            <span className="font-semibold text-ink g:font-medium">{t("settings.podLocation")}</span>
+            <span className="block text-2xs text-muted g:text-[12px]">{t("settings.podLocationHint")}</span>
           </span>
         </label>
       </div>
-      <section aria-label={t("settings.failureReasons")} className="flex flex-col gap-2">
-        <h3 className="text-[13px] font-semibold text-ink">{t("settings.reasonsTitle")}</h3>
-        <p className="text-2xs text-muted">
+      <section aria-label={t("settings.failureReasons")} className={cn("flex flex-col gap-2", G_GROUP_T)}>
+        <h3 className="text-[13px] font-semibold text-ink g:font-medium">{t("settings.reasonsTitle")}</h3>
+        <p className="text-2xs text-muted g:text-[12px]">
           {r.customFailureReasons ? t("settings.reasonsOwn") : t("settings.reasonsStandard")} {t("settings.reasonsNoRemove")}
         </p>
-        <ul className="flex flex-col divide-y divide-line rounded-xl border border-line">
+        <ul className="flex flex-col divide-y divide-line rounded-xl border border-line g:max-w-3xl g:rounded-md">
           {reasons.map((x, i) => (
-            <li key={x.code} className="grid grid-cols-1 items-center gap-2 px-3 py-2 sm:grid-cols-[180px_1fr_auto]">
+            <li key={x.code} className="grid grid-cols-1 items-center gap-2 px-3 py-2 sm:grid-cols-[180px_1fr_auto] g:gap-x-3 g:gap-y-1 g:py-1.5">
               <code className="text-2xs text-muted" dir="ltr">
                 {x.code}
               </code>
               <Input value={x.label} disabled={!editable} placeholder={t("settings.labelPlaceholder")} maxLength={80} onChange={(e) => setReasons(reasons.map((y, j) => (j === i ? { ...y, label: e.target.value } : y)))} aria-label={t("settings.labelFor", { code: x.code })} />
-              <label className="flex items-center gap-2 text-2xs text-ink-2">
+              <label className="flex items-center gap-2 text-2xs text-ink-2 g:text-[12px]">
                 <Checkbox checked={!!x.requiresNote} onCheckedChange={(c) => editable && setReasons(reasons.map((y, j) => (j === i ? { ...y, requiresNote: c === true } : y)))} label={t("settings.noteRequiredFor", { code: x.code })} />
                 {t("settings.noteRequired")}
               </label>
@@ -423,7 +445,7 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
         </ul>
         {editable && reasons.length < 30 && (
           <div className="flex flex-wrap items-end gap-2">
-            <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+            <label className={LABEL}>
               {t("settings.newReason")}
               <Input value={newLabel} maxLength={80} onChange={(e) => setNewLabel(e.target.value)} placeholder={t("settings.newReasonPlaceholder")} aria-label={t("settings.newReason")} className="w-64" />
             </label>
@@ -442,7 +464,7 @@ function DriverRulesSection({ data, onSaved }: { data: CompanySettings; onSaved:
         )}
       </section>
       {editable && (
-        <div className="flex items-center gap-3">
+        <div className={cn("flex items-center gap-3", G_GROUP_T)}>
           <Button variant="primary" onClick={() => void save()} disabled={busy}>
             {busy && <Loader2 className="animate-spin" />}
             {t("settings.saveRules")}
@@ -494,9 +516,9 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
   };
   return (
     <div className="flex flex-col gap-4">
-      <Card className="flex flex-col gap-4 p-5">
+      <Card className={cn("flex flex-col gap-4 p-5", G_FORM)}>
         <CardHeader
-          className="-mx-5 -mt-5"
+          className={cn("-mx-5 -mt-5", G_HEAD)}
           title={t("settings.section.tracking")}
           description={t("settings.trackingDesc")}
           actions={
@@ -505,8 +527,9 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
             </Button>
           }
         />
-        {!admin && <ReadOnlyNote />}
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t("settings.trackingMode")}>
+        {!admin && <ReadOnlyNote className="g:px-4 g:pt-3" />}
+        <div className={G_GROUP}>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 g:flex g:max-w-3xl g:flex-col g:gap-0 g:divide-y g:divide-line g:rounded-md g:border g:border-line" role="radiogroup" aria-label={t("settings.trackingMode")}>
           {(["off", "pilot", "active_tours"] as const).map((m) => (
             <button
               key={m}
@@ -517,35 +540,41 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
               onClick={() => setModeDialog(m)}
               className={cn(
                 "flex flex-col items-start gap-1 rounded-2xl border border-line bg-surface p-4 text-start transition-colors enabled:hover:border-line-strong disabled:cursor-default",
-                mode === m && "border-brand-500 bg-brand-50",
+                "g:flex-row g:flex-wrap g:items-center g:gap-x-3 g:gap-y-0.5 g:rounded-none g:border-0 g:bg-transparent g:px-3 g:py-2 g:enabled:hover:bg-[var(--hover)]",
+                mode === m && "border-brand-500 bg-brand-50 g:bg-[var(--selected)]",
               )}
             >
-              <span className={cn("text-[14px] font-bold text-ink", mode === m && "text-brand-700")}>{modeLabel(m, t)}</span>
-              <span className="text-2xs text-muted">{t(`settings.modeDesc.${m}`, { limit: tk.pilotLimit })}</span>
-              {mode === m && <Badge tone="brand">{t("settings.current")}</Badge>}
+              {/* G: a small radio mark instead of a highlighted card. */}
+              <span className={cn("hidden size-3.5 shrink-0 items-center justify-center rounded-full border g:inline-flex", mode === m ? "border-brand-600" : "border-line-3")} aria-hidden="true">
+                {mode === m && <span className="size-1.5 rounded-full bg-brand-600" />}
+              </span>
+              <span className={cn("text-[14px] font-bold text-ink g:shrink-0 g:text-[13px] g:font-medium sm:g:w-44", mode === m && "text-brand-700 g:text-ink")}>{modeLabel(m, t)}</span>
+              <span className="text-2xs text-muted g:min-w-0 g:flex-1 g:text-[12px] max-sm:g:basis-full max-sm:g:ps-[26px]">{t(`settings.modeDesc.${m}`, { limit: tk.pilotLimit })}</span>
+              {mode === m && <Badge tone="brand" className="g:text-muted">{t("settings.current")}</Badge>}
             </button>
           ))}
         </div>
-        <dl className="grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-4">
+        </div>
+        <dl className={cn("grid grid-cols-2 gap-3 text-[13px] sm:grid-cols-4 g:max-w-3xl", G_GROUP_T)}>
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.noticeVersion")}</dt>
-            <dd className="font-semibold text-ink tabular">{tk.noticeVersion}</dd>
+            <dt className={DT}>{t("settings.noticeVersion")}</dt>
+            <dd className="font-semibold text-ink tabular g:font-medium">{tk.noticeVersion}</dd>
           </div>
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.acknowledged")}</dt>
-            <dd className="font-semibold text-ink tabular">{t("settings.acknowledgedValue", { ack: tk.acknowledgedCurrentNotice, count: tk.activeDrivers })}</dd>
+            <dt className={DT}>{t("settings.acknowledged")}</dt>
+            <dd className="font-semibold text-ink tabular g:font-medium">{t("settings.acknowledgedValue", { ack: tk.acknowledgedCurrentNotice, count: tk.activeDrivers })}</dd>
           </div>
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.positionInterval")}</dt>
-            <dd className="font-semibold text-ink tabular">{t("common.sec", { n: tk.intervalSeconds })}</dd>
+            <dt className={DT}>{t("settings.positionInterval")}</dt>
+            <dd className="font-semibold text-ink tabular g:font-medium">{t("common.sec", { n: tk.intervalSeconds })}</dd>
           </div>
           <div>
-            <dt className="text-2xs uppercase tracking-[0.08em] text-muted">{t("settings.historyKept")}</dt>
-            <dd className="font-semibold text-ink tabular">{t("settings.days", { count: tk.retentionDays })}</dd>
+            <dt className={DT}>{t("settings.historyKept")}</dt>
+            <dd className="font-semibold text-ink tabular g:font-medium">{t("settings.days", { count: tk.retentionDays })}</dd>
           </div>
         </dl>
         {admin && (
-          <div>
+          <div className="g:-mt-1 g:px-4 g:pb-3.5">
             <Button variant="secondary" size="sm" onClick={() => setNoticeDialog(true)}>
               {t("settings.requireNewAck")}
             </Button>
@@ -554,10 +583,10 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-          <h3 className="text-[15px] font-bold text-ink">{t("settings.drivers")}</h3>
+        <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3 g:min-h-11 g:gap-x-3 g:py-2">
+          <h3 className="text-[15px] font-bold text-ink g:text-[13.5px] g:font-semibold">{t("settings.drivers")}</h3>
           {list && (
-            <span className="text-2xs text-muted">
+            <span className="text-2xs text-muted g:text-[12px]">
               {Object.entries(list.summary)
                 .map(([k, n]) => {
                   const label = trackingStateLabel(k as keyof typeof TRACKING_STATE, t);
@@ -586,7 +615,7 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
             <table className="w-full min-w-[860px] text-[13px]" aria-label={t("settings.tableLabel")}>
               <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                 <tr className="border-b border-line">
-                  {admin && <th className="h-10 w-10 ps-4" aria-label={t("settings.select")} />}
+                  {admin && <th className="h-10 w-10 ps-4 g:h-9" aria-label={t("settings.select")} />}
                   <th className="px-3 text-start">{t("settings.col.driver")}</th>
                   <th className="px-3 text-start">{t("settings.col.location")}</th>
                   <th className="px-3 text-start">{t("settings.col.pilot")}</th>
@@ -604,7 +633,7 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
             </table>
           </div>
         )}
-        <p className="border-t border-line px-4 py-2.5 text-2xs text-muted">
+        <p className="border-t border-line px-4 py-2.5 text-2xs text-muted g:py-2 g:text-[12px]">
           {t("settings.privacyFooter")}
         </p>
       </Card>
@@ -631,15 +660,17 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
 function DriverRow({ d, admin, noticeVersion, selected, onSelect, onPilot }: { d: DriverTracking; admin: boolean; noticeVersion: number; selected: boolean; onSelect: () => void; onPilot: (on: boolean) => void }) {
   const { t, fmt } = useI18n();
   const st = TRACKING_STATE[d.state];
-  const toneCls = { success: "bg-success-soft text-success-ink", warning: "bg-warning-soft text-warning-ink", danger: "bg-danger-soft text-danger-ink", neutral: "bg-surface-2 text-muted", info: "bg-info-soft text-info-ink" }[st.tone];
+  // G: status as a small dot + text; colour in the text only where action is needed (amber/red).
+  const toneCls = { success: "bg-success-soft text-success-ink g:text-ink-2", warning: "bg-warning-soft text-warning-ink", danger: "bg-danger-soft text-danger-ink", neutral: "bg-surface-2 text-muted", info: "bg-info-soft text-info-ink g:text-ink-2" }[st.tone];
+  const dotCls = { success: "bg-success", warning: "bg-warning", danger: "bg-danger", neutral: "bg-subtle", info: "bg-info" }[st.tone];
   return (
-    <tr className="border-b border-line last:border-0">
+    <tr className={cn("border-b border-line last:border-0 g:hover:bg-[var(--hover)]", selected && "g:bg-[var(--selected)] g:hover:bg-[var(--selected)]")}>
       {admin && (
         <td className="ps-4">
           <Checkbox checked={selected} onCheckedChange={onSelect} label={t("settings.selectName", { name: d.name })} />
         </td>
       )}
-      <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-ink">{d.name}</td>
+      <td className="whitespace-nowrap px-3 py-2.5 font-semibold text-ink g:font-medium">{d.name}</td>
       <td className="whitespace-nowrap px-3 text-ink-2">{d.depotName ?? "–"}</td>
       <td className="px-3">
         {admin ? (
@@ -649,23 +680,24 @@ function DriverRow({ d, admin, noticeVersion, selected, onSelect, onPilot }: { d
             aria-checked={d.pilot}
             aria-label={t("settings.pilotFor", { name: d.name })}
             onClick={() => onPilot(!d.pilot)}
-            className={cn("relative inline-flex h-6 w-10 items-center rounded-full transition-colors", d.pilot ? "bg-brand-600" : "bg-surface-3")}
+            className={cn("relative inline-flex h-6 w-10 items-center rounded-full transition-colors g:h-[18px] g:w-[34px]", d.pilot ? "bg-brand-600" : "bg-surface-3")}
           >
-            <span className={cn("inline-block size-5 rounded-full bg-white shadow-xs transition-transform", d.pilot ? "translate-x-[18px] rtl:-translate-x-[18px]" : "translate-x-0.5 rtl:-translate-x-0.5")} />
+            <span className={cn("inline-block size-5 rounded-full bg-white shadow-xs transition-transform g:size-3.5 g:shadow-none", d.pilot ? "translate-x-[18px] rtl:-translate-x-[18px]" : "translate-x-0.5 rtl:-translate-x-0.5")} />
           </button>
         ) : (
           <span className="text-ink-2">{d.pilot ? t("common.yes") : t("common.no")}</span>
         )}
       </td>
       <td className="px-3">
-        <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-bold", toneCls)} title={trackingStateExplain(d.state, t)}>
-          {d.state === "live" && <span className="size-1.5 animate-pulse rounded-full bg-current" aria-hidden="true" />}
+        <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-bold g:bg-transparent g:px-0 g:py-0 g:text-[12.5px] g:font-normal", toneCls)} title={trackingStateExplain(d.state, t)}>
+          {d.state === "live" && <span className="size-1.5 animate-pulse rounded-full bg-current g:hidden" aria-hidden="true" />}
+          <span className={cn("hidden size-1.5 shrink-0 rounded-full g:inline-block", dotCls)} aria-hidden="true" />
           {trackingStateLabel(d.state, t)}
         </span>
       </td>
-      <td className="whitespace-nowrap px-3 text-2xs">
+      <td className="whitespace-nowrap px-3 text-2xs g:text-[12.5px]">
         {d.acknowledgedCurrent ? (
-          <span className="text-success-ink">{t("settings.ackCurrent", { version: d.acknowledgedVersion, date: fmt.date(d.acknowledgedAt!, { dateStyle: "short" }) })}</span>
+          <span className="text-success-ink g:text-ink-2">{t("settings.ackCurrent", { version: d.acknowledgedVersion, date: fmt.date(d.acknowledgedAt!, { dateStyle: "short" }) })}</span>
         ) : d.acknowledgedVersion ? (
           <span className="text-warning-ink">{t("settings.ackPending", { from: d.acknowledgedVersion, to: noticeVersion })}</span>
         ) : (
@@ -814,24 +846,25 @@ function TeamSection({ data }: { data: CompanySettings }) {
   const roles = ["owner", "admin", "dispatcher", "driver"].filter((r) => data.roles[r]);
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Card className="flex flex-col gap-2 p-5">
-          <ShieldCheck className="size-5 text-brand-600" />
-          <h3 className="text-[15px] font-bold text-ink">{t("settings.team")}</h3>
-          <p className="text-[13px] text-ink-2">{t("settings.teamDesc")}</p>
+      {/* G: one bordered surface with two hairline-separated rows instead of two icon cards. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 g:flex g:flex-col g:gap-0 g:rounded-lg g:border g:border-line g:bg-surface">
+        <Card className="flex flex-col gap-2 p-5 g:gap-1 g:rounded-none g:border-0 g:bg-transparent g:px-4 g:py-3">
+          <ShieldCheck className="size-5 text-brand-600 g:hidden" />
+          <h3 className="text-[15px] font-bold text-ink g:text-[13.5px] g:font-semibold">{t("settings.team")}</h3>
+          <p className="text-[13px] text-ink-2 g:text-muted">{t("settings.teamDesc")}</p>
           {data.canEdit.team ? (
-            <Link href="/fleet?tab=team" className="inline-flex items-center gap-1 text-[13px] font-bold text-brand-700 hover:underline">
+            <Link href="/fleet?tab=team" className="inline-flex items-center gap-1 text-[13px] font-bold text-brand-700 hover:underline g:w-fit g:font-medium">
               {t("settings.openTeam")} <ExternalLink className="size-3.5 rtl:-scale-x-100" />
             </Link>
           ) : (
-            <span className="text-2xs text-muted">{t("settings.managedByAdmins")}</span>
+            <span className="text-2xs text-muted g:text-[12px]">{t("settings.managedByAdmins")}</span>
           )}
         </Card>
-        <Card className="flex flex-col gap-2 p-5">
-          <MapPinned className="size-5 text-brand-600" />
-          <h3 className="text-[15px] font-bold text-ink">{t("settings.locations")}</h3>
-          <p className="text-[13px] text-ink-2">{t("settings.locationsDesc")}</p>
-          <Link href="/fleet?tab=depots" className="inline-flex items-center gap-1 text-[13px] font-bold text-brand-700 hover:underline">
+        <Card className="flex flex-col gap-2 p-5 g:gap-1 g:rounded-none g:border-x-0 g:border-b-0 g:border-t g:bg-transparent g:px-4 g:py-3">
+          <MapPinned className="size-5 text-brand-600 g:hidden" />
+          <h3 className="text-[15px] font-bold text-ink g:text-[13.5px] g:font-semibold">{t("settings.locations")}</h3>
+          <p className="text-[13px] text-ink-2 g:text-muted">{t("settings.locationsDesc")}</p>
+          <Link href="/fleet?tab=depots" className="inline-flex items-center gap-1 text-[13px] font-bold text-brand-700 hover:underline g:w-fit g:font-medium">
             {t("settings.openLocations")} <ExternalLink className="size-3.5 rtl:-scale-x-100" />
           </Link>
         </Card>
@@ -842,7 +875,7 @@ function TeamSection({ data }: { data: CompanySettings }) {
           <table className="w-full min-w-[560px] text-[13px]" aria-label={t("settings.rolesTable")}>
             <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
               <tr className="border-b border-line">
-                <th className="h-10 ps-5 text-start">{t("settings.permission")}</th>
+                <th className="h-10 ps-5 text-start g:h-9 g:ps-4">{t("settings.permission")}</th>
                 {roles.map((r) => (
                   <th key={r} className="px-3 text-center">
                     {roleLabel(r, t)}
@@ -852,11 +885,11 @@ function TeamSection({ data }: { data: CompanySettings }) {
             </thead>
             <tbody>
               {KEY_PERMISSIONS.map((p) => (
-                <tr key={p} className="border-b border-line last:border-0">
-                  <td className="py-2 ps-5 text-ink-2">{t(`settings.perm.${p}`)}</td>
+                <tr key={p} className="border-b border-line last:border-0 g:hover:bg-[var(--hover)]">
+                  <td className="py-2 ps-5 text-ink-2 g:ps-4">{t(`settings.perm.${p}`)}</td>
                   {roles.map((r) => (
                     <td key={r} className="px-3 text-center">
-                      {data.roles[r]!.includes(p) ? <span className="font-bold text-success-ink" aria-label={t("settings.ariaYes")}>✓</span> : <span className="text-subtle" aria-label={t("settings.ariaNo")}>–</span>}
+                      {data.roles[r]!.includes(p) ? <span className="font-bold text-success-ink g:font-medium g:text-ink-2" aria-label={t("settings.ariaYes")}>✓</span> : <span className="text-subtle" aria-label={t("settings.ariaNo")}>–</span>}
                     </td>
                   ))}
                 </tr>
@@ -865,7 +898,7 @@ function TeamSection({ data }: { data: CompanySettings }) {
           </table>
         </div>
       </Card>
-      <p className="flex items-center gap-1.5 text-2xs text-muted">
+      <p className="flex items-center gap-1.5 text-2xs text-muted g:text-[12px]">
         <Settings2 className="size-3.5" /> {t("settings.rolesEnforced")}
       </p>
     </div>

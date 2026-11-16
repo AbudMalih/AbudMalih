@@ -36,16 +36,17 @@ export function PickupsView() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-5">
-        <div className="mb-4 flex flex-col gap-1">
-          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("pickups.title")}</h1>
-          <p className="mt-1 text-sm text-ink-2">{t("pickups.subtitle", { date: fmt.day(data.date), time: formatClock(data.asOfMinute) })}</p>
+      <div className="flex flex-col gap-5 g:gap-4">
+        <div className="mb-4 flex flex-col gap-1 g:mb-0">
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink g:text-[20px] g:font-semibold g:leading-7 g:tracking-normal">{t("pickups.title")}</h1>
+          <p className="mt-1 text-sm text-ink-2 g:mt-0 g:text-[13px] g:text-muted">{t("pickups.subtitle", { date: fmt.day(data.date), time: formatClock(data.asOfMinute) })}</p>
         </div>
 
         <Card className="overflow-hidden">
-          <div className="flex flex-col gap-3 border-b border-line px-4 py-3">
-            <SearchInput value={query} onChange={setQuery} placeholder={t("pickups.searchPlaceholder")} label={t("pickups.searchLabel")} className="sm:w-96" />
-            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1" role="tablist" aria-label={t("pickups.filterLabel")}>
+          {/* G: one toolbar row – search, then the state filters as quiet segments. */}
+          <div className="flex flex-col gap-3 border-b border-line px-4 py-3 g:gap-2 g:px-3 g:py-2 lg:g:flex-row lg:g:items-center">
+            <SearchInput value={query} onChange={setQuery} placeholder={t("pickups.searchPlaceholder")} label={t("pickups.searchLabel")} className="sm:w-96 g:shrink-0 g:sm:w-72" />
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 g:min-w-0 g:gap-0.5" role="tablist" aria-label={t("pickups.filterLabel")}>
               {chips.map((c) => (
                 <button
                   key={c.key}
@@ -53,13 +54,15 @@ export function PickupsView() {
                   aria-selected={filter === c.key}
                   onClick={() => setFilter(c.key)}
                   className={cn(
-                    "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors",
-                    filter === c.key ? "border-brand-200 bg-brand-50 text-brand-700" : "border-line bg-surface text-muted hover:border-line-strong hover:text-ink",
+                    "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors g:rounded g:border-transparent g:text-[12.5px]",
+                    filter === c.key
+                      ? "border-brand-200 bg-brand-50 text-brand-700 g:border-transparent g:bg-[var(--selected)] g:text-ink"
+                      : "border-line bg-surface text-muted hover:border-line-strong hover:text-ink g:border-transparent g:bg-transparent g:hover:border-transparent g:hover:bg-[var(--hover)]",
                   )}
                 >
-                  {c.key === "attention" && <AlertTriangle className="size-3" />}
+                  {c.key === "attention" && <AlertTriangle className="size-3 g:hidden" />}
                   {c.label}
-                  <span className="tabular text-2xs opacity-70">{count(c.key)}</span>
+                  <span className="tabular text-2xs opacity-70 g:text-[12px] g:text-muted g:opacity-100">{count(c.key)}</span>
                 </button>
               ))}
             </div>
@@ -75,13 +78,13 @@ export function PickupsView() {
               <table className="w-full min-w-[960px] text-[13px]">
                 <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
                   <tr className="border-b border-line">
-                    <th className="h-10 ps-4 pe-3 text-start font-medium">{t("pickups.th.deadline")}</th>
-                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.customer")}</th>
-                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.window")}</th>
-                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.tourDriver")}</th>
-                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.eta")}</th>
-                    <th className="h-10 px-3 text-start font-medium">{t("pickups.th.status")}</th>
-                    <th className="h-10 pe-4 ps-3 text-end font-medium">
+                    <th className="h-10 ps-4 pe-3 text-start font-medium g:h-9">{t("pickups.th.deadline")}</th>
+                    <th className="h-10 px-3 text-start font-medium g:h-9">{t("pickups.th.customer")}</th>
+                    <th className="h-10 px-3 text-start font-medium g:h-9">{t("pickups.th.window")}</th>
+                    <th className="h-10 px-3 text-start font-medium g:h-9">{t("pickups.th.tourDriver")}</th>
+                    <th className="h-10 px-3 text-start font-medium g:h-9">{t("pickups.th.eta")}</th>
+                    <th className="h-10 px-3 text-start font-medium g:h-9">{t("pickups.th.status")}</th>
+                    <th className="h-10 pe-4 ps-3 text-end font-medium g:h-9">
                       <span className="sr-only">{t("pickups.th.actions")}</span>
                     </th>
                   </tr>
@@ -92,27 +95,34 @@ export function PickupsView() {
                     const tours = summaries.filter((s) => s.depot.id === r.depotId && s.tour.status !== "completed");
                     const open = r.state !== "completed" && r.state !== "failed";
                     return (
-                      <tr key={r.stop.id} className={cn("border-b border-line last:border-0", conflict && r.state === "late" ? "bg-danger-soft/40" : conflict ? "bg-warning-soft/40" : "")}>
+                      <tr
+                        key={r.stop.id}
+                        className={cn(
+                          "border-b border-line last:border-0 g:transition-colors g:hover:bg-[var(--hover)]",
+                          // G: no row tint; the deadline, ETA and state already carry the colour.
+                          conflict && r.state === "late" ? "bg-danger-soft/40 g:bg-transparent" : conflict ? "bg-warning-soft/40 g:bg-transparent" : "",
+                        )}
+                      >
                         <td className="whitespace-nowrap py-3 pe-3 ps-4">
-                          <span className={cn("font-semibold tabular", !open ? "text-muted" : (r.minutesToDeadline ?? 999) < 60 ? "text-danger-ink" : (r.minutesToDeadline ?? 999) < 150 ? "text-warning-ink" : "text-ink")}>
+                          <span className={cn("font-semibold tabular g:font-medium", !open ? "text-muted" : (r.minutesToDeadline ?? 999) < 60 ? "text-danger-ink" : (r.minutesToDeadline ?? 999) < 150 ? "text-warning-ink" : "text-ink")}>
                             {r.stop.timeWindow ? formatClock(r.stop.timeWindow.end) : "–"}
                           </span>
-                          <span className="block text-2xs text-muted">{open ? t("pickups.closes", { when: deadlineLabel(r.minutesToDeadline, t) }) : t("pickups.closed")}</span>
+                          <span className="block text-2xs text-muted tabular g:text-[12px]">{open ? t("pickups.closes", { when: deadlineLabel(r.minutesToDeadline, t) }) : t("pickups.closed")}</span>
                         </td>
                         <td className="px-3 py-3">
                           <span className="flex items-center gap-1.5 font-medium text-ink">
-                            <ArrowUpFromLine className="size-3.5 text-nx-violet-text" />
+                            <ArrowUpFromLine className="size-3.5 text-nx-violet-text g:hidden" />
                             {r.stop.recipientName}
                             {r.stop.priority && <Star className="size-3.5 fill-nx-amber text-nx-amber" aria-label={t("pickups.priority")} />}
                           </span>
-                          <span className="block text-xs text-muted">
+                          <span className="block text-xs text-muted g:max-w-[360px] g:truncate">
                             {formatAddress(r.stop)} · {scoped.depots.find((x) => x.id === r.depotId)?.name}
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-3 tabular text-ink-2">{r.stop.timeWindow ? `${formatClock(r.stop.timeWindow.start)}–${formatClock(r.stop.timeWindow.end)}` : "–"}</td>
                         <td className="whitespace-nowrap px-3 py-3">
                           {r.tourId ? (
-                            <button onClick={() => selectTour(r.tourId)} className="text-start font-medium text-ink hover:text-brand-700">
+                            <button onClick={() => selectTour(r.tourId)} className="text-start font-medium text-ink hover:text-brand-700 g:hover:text-ink g:hover:underline">
                               {r.tourName}
                               <span className="block text-xs font-normal text-muted">{r.driverName ?? t("pickups.noDriver")}</span>
                             </button>

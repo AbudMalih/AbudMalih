@@ -30,9 +30,9 @@ export function ToursPage() {
   };
   const current = VIEWS.find((v) => v.key === view)!;
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex rounded-xl border border-line bg-surface-2 p-0.5" role="tablist" aria-label={t("tours.view.aria")}>
+    <div className="flex flex-col gap-4 g:gap-5">
+      <div className="flex flex-wrap items-center gap-3 g:gap-x-5 g:gap-y-1 g:border-b g:border-line">
+        <div className="flex rounded-xl border border-line bg-surface-2 p-0.5 g:gap-5 g:rounded-none g:border-0 g:bg-transparent g:p-0" role="tablist" aria-label={t("tours.view.aria")}>
           {VIEWS.map((v) => (
             <button
               key={v.key}
@@ -40,20 +40,23 @@ export function ToursPage() {
               role="tab"
               aria-selected={view === v.key}
               onClick={() => setView(v.key)}
-              className={cn("h-9 rounded-[10px] px-3.5 text-[13px] font-semibold text-muted transition-colors", view === v.key && "bg-surface text-ink shadow-xs")}
+              className={cn(
+                "h-9 rounded-[10px] px-3.5 text-[13px] font-semibold text-muted transition-colors g:-mb-px g:h-10 g:rounded-none! g:border-b-2 g:border-transparent g:px-0 g:font-medium g:duration-150 g:hover:text-ink",
+                view === v.key && "bg-surface text-ink shadow-xs g:border-ink g:bg-transparent g:shadow-none",
+              )}
             >
               {t(v.label)}
             </button>
           ))}
         </div>
-        <span className="text-[12.5px] text-muted">{t(current.hint)}</span>
+        <span className="text-[12.5px] text-muted g:ms-auto g:hidden g:text-[12px] md:g:inline">{t(current.hint)}</span>
       </div>
       {view === "day" ? (
         <ListView />
       ) : (
         <>
           <div className="flex flex-col gap-1">
-            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{view === "archived" ? t("tours.view.archivedTitle") : t("tours.view.all")}</h1>
+            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink g:text-[20px] g:font-semibold g:tracking-[-0.015em]">{view === "archived" ? t("tours.view.archivedTitle") : t("tours.view.all")}</h1>
           </div>
           <ToursManager key={view} archived={view === "archived" ? "only" : "exclude"} />
         </>

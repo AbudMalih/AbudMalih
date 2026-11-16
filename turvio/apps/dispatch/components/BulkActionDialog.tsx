@@ -9,6 +9,7 @@ import { lifecycleApi, reasonText, type BulkAction, type BulkPreview, type BulkR
 import type { MessageKey } from "../lib/i18n";
 import { useI18n } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
+import { gField, gNote } from "./TourActions";
 
 /** Which bulk actions are destructive; texts are `tours.bulk.<action>.*`. */
 export const BULK_LABEL: Record<BulkAction, { danger?: boolean }> = {
@@ -125,7 +126,7 @@ export function BulkActionDialog({
       {error && <p className="text-[13px] text-danger-ink">{error}</p>}
       {s && !result && (
         <div className="flex flex-col gap-3 text-[13px] text-ink-2" data-testid="bulk-preview">
-          <dl className="grid grid-cols-3 gap-2 text-center">
+          <dl className="grid grid-cols-3 gap-2 text-center g:gap-0 g:overflow-hidden g:rounded-md g:border g:border-line g:text-start">
             {(
               [
                 [t("tours.bulk.selected"), s.selected],
@@ -136,16 +137,16 @@ export function BulkActionDialog({
                 [t("tours.del.completedDeliveries"), s.completedDeliveries],
               ] as const
             ).map(([label, n]) => (
-              <div key={label} className="rounded-xl border border-line bg-surface-2 px-2 py-2">
-                <dd className="text-lg font-extrabold text-ink tabular">{n}</dd>
-                <dt className="text-2xs text-muted">{label}</dt>
+              <div key={label} className="rounded-xl border border-line bg-surface-2 px-2 py-2 g:flex g:flex-col-reverse g:justify-end g:gap-0.5 g:rounded-none g:border-s-0 g:border-t-0 g:bg-transparent g:px-3 g:[&:nth-child(3n)]:border-e-0 g:[&:nth-child(n+4)]:border-b-0">
+                <dd className="text-lg font-extrabold text-ink tabular g:text-[18px] g:font-medium g:leading-6">{n}</dd>
+                <dt className="text-2xs text-muted g:truncate g:text-[12px]">{label}</dt>
               </div>
             ))}
           </dl>
           {blocked.length > 0 && (
-            <details className="rounded-md bg-warning-soft px-3 py-2 text-warning-ink">
-              <summary className="cursor-pointer font-semibold">
-                <ShieldAlert className="me-1 inline size-4" />
+            <details className={cn("rounded-md bg-warning-soft px-3 py-2 text-warning-ink", gNote)}>
+              <summary className="cursor-pointer font-semibold g:font-medium">
+                <ShieldAlert className="me-1 inline size-4 g:size-[15px]" />
                 {t("tours.bulk.stayUnchanged", { count: blocked.length })}
               </summary>
               <ul className="mt-1 max-h-40 list-disc overflow-y-auto ps-5">
@@ -159,12 +160,12 @@ export function BulkActionDialog({
           )}
           {needsReason && (
             <>
-              <label className="flex flex-col gap-1.5 font-medium">
+              <label className="flex flex-col gap-1.5 font-medium g:gap-1 g:text-[12px] g:font-normal g:text-muted">
                 {t("tours.bulk.reasonLabel")}
-                <textarea className={cn(fieldCls, "h-16 py-2")} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-label={t("tours.close.reason")} />
+                <textarea className={cn(fieldCls, "h-16 py-2", gField, "g:text-ink")} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-label={t("tours.close.reason")} />
               </label>
               <fieldset className="flex flex-col gap-1">
-                <legend className="mb-1 font-medium">{t("tours.close.openStops")}</legend>
+                <legend className="mb-1 font-medium g:text-[12px] g:font-normal g:text-muted">{t("tours.close.openStops")}</legend>
                 <label className="flex items-center gap-2">
                   <input type="radio" name="bulkOpenStops" checked={openStops === "return"} onChange={() => setOpenStops("return")} /> {t("tours.bulk.returnOpt")}
                 </label>
@@ -176,7 +177,7 @@ export function BulkActionDialog({
           )}
           {action === "delete" && s.affectedStops > 0 && (
             <fieldset className="flex flex-col gap-1">
-              <legend className="mb-1 font-medium">{t("tours.bulk.unprocessed", { count: s.affectedStops })}</legend>
+              <legend className="mb-1 font-medium g:text-[12px] g:font-normal g:text-muted">{t("tours.bulk.unprocessed", { count: s.affectedStops })}</legend>
               <label className="flex items-center gap-2">
                 <input type="radio" name="bulkDeleteStops" checked={!deleteStops} onChange={() => setDeleteStops(false)} /> {t("tours.bulk.returnOpt")}
               </label>
@@ -189,8 +190,8 @@ export function BulkActionDialog({
       )}
       {result && (
         <div className="flex flex-col gap-2 text-[13px] text-ink-2" data-testid="bulk-result">
-          <p className="flex items-center gap-1.5 font-semibold text-ink">
-            <CheckCircle2 className="size-4 text-success-ink" />
+          <p className="flex items-center gap-1.5 font-semibold text-ink g:font-medium">
+            <CheckCircle2 className="size-4 text-success-ink g:size-[15px]" />
             {t(k("result"), { done: result.done, unchanged: result.unchanged, skipped: result.skipped, failed: result.failed })}
           </p>
           {result.results.filter((r) => r.result === "failed" || r.result === "skipped").length > 0 && (

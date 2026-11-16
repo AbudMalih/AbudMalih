@@ -8,6 +8,7 @@ import { fieldCls } from "../lib/helpers";
 import { lifecycleApi } from "../lib/lifecycle";
 import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
+import { gField } from "./TourActions";
 
 /**
  * Selected unassigned stops: cancel (kept as a record with a reason) or delete (only draft /
@@ -77,9 +78,9 @@ export function UnassignedStopActions({ ids, onDone }: { ids: string[]; onDone: 
         }
       >
         {dialog === "cancel" && (
-          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+          <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted">
             {t("tours.un.reason")}
-            <textarea className={`${fieldCls} h-20 py-2`} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-label={t("tours.un.reasonAria")} />
+            <textarea className={`${fieldCls} h-20 py-2 ${gField} g:text-ink`} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} aria-label={t("tours.un.reasonAria")} />
           </label>
         )}
       </Dialog>

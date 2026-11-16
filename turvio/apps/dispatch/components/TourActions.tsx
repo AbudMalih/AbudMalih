@@ -28,6 +28,12 @@ export interface ActionTour {
 
 type Dialogs = null | "edit" | "duplicate" | "finish" | "cancel" | "archive" | "restore" | "delete" | "publish" | "withdraw";
 
+/** Phase G: 32 px native fields (fieldCls stays the shared classic style); textareas take gField only. */
+export const gField = "g:rounded-md g:border-line-2 g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600";
+export const gControl = `${gField} g:h-8`;
+/** Phase G: notes in dialogs are bordered and quiet; the text keeps its meaning colour. */
+export const gNote = "g:border g:border-line-2 g:bg-surface-2";
+
 const plusDays = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 
 /** "More" menu + the dialogs it opens. `onChanged` refreshes the caller's list; the day view reloads too. */
@@ -127,10 +133,10 @@ function Footer({ busy, onCancel, onConfirm, label, tone = "primary", disabled }
 
 function Field({ label, children, hint, className }: { label: string; children: ReactNode; hint?: ReactNode; className?: string }) {
   return (
-    <label className={cn("flex flex-col gap-1.5 text-[13px] font-medium text-ink-2", className)}>
+    <label className={cn("flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted", className)}>
       {label}
       {children}
-      {hint && <span className="text-2xs font-normal text-muted">{hint}</span>}
+      {hint && <span className="text-2xs font-normal text-muted g:text-[12px]">{hint}</span>}
     </label>
   );
 }
@@ -183,13 +189,13 @@ export function EditTourDialog({ item, onClose, onChanged }: { item: ActionTour;
           <Input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} aria-label={tr("tours.f.tourName")} />
         </Field>
         <Field label={tr("tours.f.date")} hint={canMove ? undefined : tr("tours.edit.onlyDate")}>
-          <input type="date" className={fieldCls} value={date} disabled={!canMove} onChange={(e) => setDate(e.target.value)} aria-label={tr("tours.f.tourDate")} />
+          <input type="date" className={cn(fieldCls, gControl)} value={date} disabled={!canMove} onChange={(e) => setDate(e.target.value)} aria-label={tr("tours.f.tourDate")} />
         </Field>
         <Field label={tr("tours.f.startTime")}>
-          <input type="time" dir="ltr" className={cn(fieldCls, startMinute === null && "border-danger")} value={start} onChange={(e) => setStart(e.target.value)} aria-label={tr("tours.f.startTime")} />
+          <input type="time" dir="ltr" className={cn(fieldCls, gControl, startMinute === null && "border-danger g:border-danger")} value={start} onChange={(e) => setStart(e.target.value)} aria-label={tr("tours.f.startTime")} />
         </Field>
         <Field label={tr("tours.f.location")} hint={canMove ? undefined : tr("tours.edit.onlyLocation")}>
-          <select className={fieldCls} value={depot} disabled={!canMove} onChange={(e) => (setDepot(e.target.value), setDriver(""), setVehicle(""))} aria-label={tr("tours.f.location")}>
+          <select className={cn(fieldCls, gControl)} value={depot} disabled={!canMove} onChange={(e) => (setDepot(e.target.value), setDriver(""), setVehicle(""))} aria-label={tr("tours.f.location")}>
             {scoped.depots.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}
@@ -198,7 +204,7 @@ export function EditTourDialog({ item, onClose, onChanged }: { item: ActionTour;
           </select>
         </Field>
         <Field label={tr("tours.f.driver")}>
-          <select className={fieldCls} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label={tr("tours.f.driver")}>
+          <select className={cn(fieldCls, gControl)} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label={tr("tours.f.driver")}>
             <option value="">{tr("tours.edit.noDriver")}</option>
             {drivers.map((d) => (
               <option key={d.id} value={d.id}>
@@ -208,7 +214,7 @@ export function EditTourDialog({ item, onClose, onChanged }: { item: ActionTour;
           </select>
         </Field>
         <Field label={tr("tours.f.vehicle")} className="sm:col-span-2">
-          <select className={fieldCls} value={vehicle} onChange={(e) => setVehicle(e.target.value)} aria-label={tr("tours.f.vehicle")}>
+          <select className={cn(fieldCls, gControl)} value={vehicle} onChange={(e) => setVehicle(e.target.value)} aria-label={tr("tours.f.vehicle")}>
             <option value="">{tr("tours.edit.noVehicle")}</option>
             {vehicles.map((v) => (
               <option key={v.id} value={v.id}>
@@ -268,10 +274,10 @@ function DuplicateTourDialog({ item, onClose, onChanged }: { item: ActionTour; o
           <Input value={name} maxLength={120} onChange={(e) => setName(e.target.value)} aria-label={tr("tours.dup.nameAria")} />
         </Field>
         <Field label={tr("tours.f.date")}>
-          <input type="date" className={fieldCls} value={date} onChange={(e) => setDate(e.target.value)} aria-label={tr("tours.dup.dateAria")} />
+          <input type="date" className={cn(fieldCls, gControl)} value={date} onChange={(e) => setDate(e.target.value)} aria-label={tr("tours.dup.dateAria")} />
         </Field>
         <Field label={tr("tours.f.driver")} hint={tr("tours.dup.driverHint")}>
-          <select className={fieldCls} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label={tr("tours.dup.driverAria")}>
+          <select className={cn(fieldCls, gControl)} value={driver} onChange={(e) => setDriver(e.target.value)} aria-label={tr("tours.dup.driverAria")}>
             <option value="">{tr("tours.dup.assignLater")}</option>
             {scoped.drivers
               .filter((d) => d.active && d.depotId === t.depotId)
@@ -283,7 +289,7 @@ function DuplicateTourDialog({ item, onClose, onChanged }: { item: ActionTour; o
           </select>
         </Field>
         <Field label={tr("tours.f.vehicle")} className="sm:col-span-2">
-          <select className={fieldCls} value={vehicle} onChange={(e) => setVehicle(e.target.value)} aria-label={tr("tours.dup.vehicleAria")}>
+          <select className={cn(fieldCls, gControl)} value={vehicle} onChange={(e) => setVehicle(e.target.value)} aria-label={tr("tours.dup.vehicleAria")}>
             <option value="">{tr("tours.dup.assignLater")}</option>
             {scoped.vehicles
               .filter((v) => v.depotId === t.depotId)
@@ -352,13 +358,13 @@ export function CloseTourDialog({ item, mode, onClose, onChanged }: { item: Acti
     >
       <div className="flex flex-col gap-3 text-[13px] text-ink-2">
         {running && t.publishedAt && (
-          <p className="rounded-md bg-warning-soft px-3 py-2 text-warning-ink">
+          <p className={cn("rounded-md bg-warning-soft px-3 py-2 text-warning-ink", gNote)}>
             {tr(mode === "finish" ? "tours.close.warnFinish" : "tours.close.warnCancel", { driver: item.driverName ?? tr("tours.close.theDriver") })}
           </p>
         )}
         <Field label={tr("tours.close.reasonLabel")}>
           <textarea
-            className={cn(fieldCls, "h-20 py-2")}
+            className={cn(fieldCls, "h-20 py-2", gField)}
             value={reason}
             maxLength={500}
             onChange={(e) => setReason(e.target.value)}
@@ -367,7 +373,7 @@ export function CloseTourDialog({ item, mode, onClose, onChanged }: { item: Acti
           />
         </Field>
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1 font-medium">{item.openStops !== undefined ? tr("tours.close.openStopsCount", { count: item.openStops }) : tr("tours.close.openStops")}</legend>
+          <legend className="mb-1 font-medium g:text-[12px] g:font-normal g:text-muted">{item.openStops !== undefined ? tr("tours.close.openStopsCount", { count: item.openStops }) : tr("tours.close.openStops")}</legend>
           <label className="flex items-start gap-2">
             <input type="radio" name="openStops" checked={openStops === "return"} onChange={() => setOpenStops("return")} className="mt-1" />
             <span>
@@ -479,7 +485,7 @@ export function DeleteTourDialog({ item, onClose, onChanged, onDeleted }: { item
         <div className="flex flex-col gap-3 text-[13px] text-ink-2" data-testid="delete-preview">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
             <dt className="text-muted">{tr("tours.del.tour")}</dt>
-            <dd className="font-semibold text-ink">{e.tour.name}</dd>
+            <dd className="font-semibold text-ink g:font-medium">{e.tour.name}</dd>
             <dt className="text-muted">{tr("tours.f.date")}</dt>
             <dd>{e.tour.date}</dd>
             <dt className="text-muted">{tr("tours.f.driver")}</dt>
@@ -491,10 +497,10 @@ export function DeleteTourDialog({ item, onClose, onChanged, onDeleted }: { item
           </dl>
           {e.eligible ? (
             <>
-              <p className="rounded-md bg-success-soft px-3 py-2 text-success-ink">{tr("tours.del.eligible")}</p>
+              <p className={cn("rounded-md bg-success-soft px-3 py-2 text-success-ink", gNote)}>{tr("tours.del.eligible")}</p>
               {e.stops > 0 && (
                 <fieldset className="flex flex-col gap-1.5">
-                  <legend className="mb-1 font-medium">{tr("tours.del.unprocessed", { count: e.stops })}</legend>
+                  <legend className="mb-1 font-medium g:text-[12px] g:font-normal g:text-muted">{tr("tours.del.unprocessed", { count: e.stops })}</legend>
                   <label className="flex items-center gap-2">
                     <input type="radio" name="deleteStops" checked={!deleteStops} onChange={() => setDeleteStops(false)} />
                     {tr("tours.del.returnThem")}
@@ -508,9 +514,9 @@ export function DeleteTourDialog({ item, onClose, onChanged, onDeleted }: { item
               <p className="text-2xs text-muted">{tr("tours.del.recorded")}</p>
             </>
           ) : (
-            <div className="flex flex-col gap-2 rounded-md bg-danger-soft px-3 py-2 text-danger-ink" role="alert">
-              <p className="flex items-center gap-1.5 font-semibold">
-                <ShieldAlert className="size-4" /> {tr("tours.del.protected")}
+            <div className={cn("flex flex-col gap-2 rounded-md bg-danger-soft px-3 py-2 text-danger-ink", gNote)} role="alert">
+              <p className="flex items-center gap-1.5 font-semibold g:font-medium">
+                <ShieldAlert className="size-4 g:size-[15px]" /> {tr("tours.del.protected")}
               </p>
               <ul className="list-disc ps-5">
                 {e.reasons.map((r) => (

@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { errorMessage } from "../lib/api";
 import { useT } from "../lib/i18n/client";
+import { useDesignG } from "../lib/ui";
 import { driverBusy, tourColor, vehicleBusy } from "../lib/helpers";
 import { optimizeNotes, optimizeProblems } from "../lib/optimize";
 import { useDispatch } from "../lib/store";
@@ -19,7 +20,7 @@ import { TourStatusBadge } from "./StatusBadge";
 import { TourEndsDialog, tourEndsSummary } from "./TourEndsDialog";
 import { TourDetailSheet } from "./TourDetail";
 
-const selectCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
+const selectCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none g:h-8 g:border-line-2 g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600";
 
 function AssignMenu<T extends { id: string }>({
   kind,
@@ -45,10 +46,10 @@ function AssignMenu<T extends { id: string }>({
   return (
     <Menu>
       <MenuTrigger asChild disabled={disabled}>
-        <Button variant="secondary" size="sm" className={cn("w-full justify-start", !current && "border-nx-amber/30 bg-warning-soft/50 text-warning-ink")} aria-label={t("planning.assign.aria", { label, value: current ? render(current) : t("planning.assign.notAssigned") })}>
+        <Button variant="secondary" size="sm" className={cn("w-full justify-start g:gap-1.5 g:px-2 g:font-normal g:text-ink-2 g:[&_svg]:text-subtle", !current && "border-nx-amber/30 bg-warning-soft/50 text-warning-ink g:border-dashed g:border-line-3 g:bg-transparent g:text-warning-ink")} aria-label={t("planning.assign.aria", { label, value: current ? render(current) : t("planning.assign.notAssigned") })}>
           {icon}
           <span className="truncate">{current ? render(current) : t(`planning.assign.${kind}`)}</span>
-          <ChevronDown className="ms-auto text-subtle" />
+          <ChevronDown className="ms-auto text-subtle g:size-3.5" />
         </Button>
       </MenuTrigger>
       <MenuContent align="start" className="w-64">
@@ -109,9 +110,119 @@ function TourCard({ s }: { s: TourSummary }) {
       setBusy(null);
     }
   };
+  const g = useDesignG();
+  const color = tourColor(scoped, s.tour.id);
+  const endsDialog = endsOpen && <TourEndsDialog tour={s.tour} depot={s.depot} open={endsOpen} onOpenChange={setEndsOpen} />;
+  const actionsMenu = <TourActionsMenu item={{ tour: s.tour, depotName: s.depot.name, driverName: s.driver?.displayName ?? null, stopCount: s.total, openStops: s.remaining }} onOpen={() => selectTour(s.tour.id)} />;
+  const driverMenu = (
+    <AssignMenu
+      kind="driver"
+      icon={busy === "assign" ? <Loader2 className="animate-spin" /> : <UserRound />}
+      current={scoped.drivers.find((d) => d.id === s.tour.driverId)}
+      options={drivers}
+      busyOf={driverBusyLabel}
+      render={(d) => d.displayName}
+      disabled={locked || busy !== null}
+      onPick={(d) => void assign({ driverId: d?.id ?? null }, d ? t("planning.driverAssigned", { driver: d.displayName, tour: s.tour.name }) : t("planning.driverRemoved", { tour: s.tour.name }))}
+    />
+  );
+  const vehicleMenu = (
+    <AssignMenu
+      kind="vehicle"
+      icon={<Truck />}
+      current={scoped.vehicles.find((v) => v.id === s.tour.vehicleId)}
+      options={vehicles}
+      busyOf={vehicleBusyLabel}
+      render={(v) => `${v.label} · ${v.licensePlate}`}
+      disabled={locked || busy !== null}
+      onPick={(v) => void assign({ vehicleId: v?.id ?? null }, v ? t("planning.vehicleAssigned", { vehicle: v.label, tour: s.tour.name }) : t("planning.vehicleRemoved", { tour: s.tour.name }))}
+    />
+  );
+  const canPublish = !s.tour.publishedAt && !locked;
+  const publishButton = canPublish && (
+    <Tooltip content={!s.tour.driverId ? t("planning.assignDriverFirst") : s.total === 0 ? t("planning.addStopsFirst") : t("planning.publishHint")}>
+      <span>
+        <Button size="sm" variant="ghost" onClick={() => setPublishing(true)} disabled={!s.tour.driverId || s.total === 0}>
+          <Send /> {t("planning.publish")}
+        </Button>
+      </span>
+    </Tooltip>
+  );
+  const confirmPublish = (
+    <ConfirmDialog
+      open={publishing}
+      onOpenChange={setPublishing}
+      title={t("planning.publishTitle", { name: s.tour.name })}
+      description={t("planning.publishDesc", { driver: s.driver?.displayName ?? t("planning.theDriver"), count: s.total })}
+      confirmLabel={t("planning.publish")}
+      onConfirm={() =>
+        publishTour(s.tour).then(
+          () => toast.success(t("planning.publishedToast", { name: s.tour.name })),
+          (e) => {
+            toast.error(t("planning.publishFailed"), { description: errorMessage(e) });
+            throw e;
+          },
+        )
+      }
+    />
+  );
+
+  /*
+   * Phase G: one row of a bordered tour table instead of a card. Same controls in the same order
+   * (name → tour detail, start/end dialog, status, actions menu, driver, vehicle, figures, optimize,
+   * publish). One line from ~768 px container width; below it the row wraps into a 2-column grid.
+   */
+  if (g)
+    return (
+      <div
+        role="group"
+        aria-label={t("planning.tourName", { name: s.tour.name })}
+        className="relative grid grid-cols-2 items-center gap-x-3 gap-y-2 py-2 pe-2 ps-4 transition-colors hover:bg-[var(--hover)] @3xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] @3xl:gap-y-0"
+      >
+        <span className="absolute inset-y-2 start-0 w-[3px] rounded-e" style={{ backgroundColor: color }} aria-hidden="true" />
+        <div className="min-w-0">
+          <button onClick={() => selectTour(s.tour.id)} className="block max-w-full truncate text-[13px] font-medium text-ink hover:text-brand-700 focus-visible:underline focus-visible:outline-none">
+            {s.tour.name}
+          </button>
+          <div className="flex min-w-0 items-center gap-1 text-[12px] text-muted">
+            <span className="tabular shrink-0">{formatClock(s.tour.plannedStartMinute)}</span>
+            <span aria-hidden="true">·</span>
+            <button onClick={() => setEndsOpen(true)} disabled={locked} className="min-w-0 truncate hover:text-ink disabled:opacity-60" title={t("planning.endsTooltip")}>
+              {tourEndsSummary(s.tour, s.depot, t)}
+            </button>
+          </div>
+          {endsDialog}
+        </div>
+        <div className="flex min-w-0 flex-col items-end @3xl:items-start">
+          <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
+          <span className="truncate text-[12px] leading-4 text-muted">{s.tour.publishedAt ? t("planning.published") : t("common.notPublished")}</span>
+        </div>
+        <div className="min-w-0">{driverMenu}</div>
+        <div className="min-w-0">{vehicleMenu}</div>
+        <div className="min-w-0 text-[12px] leading-4 text-muted @3xl:text-end">
+          <div className="tabular text-[13px] text-ink-2">{t("common.stops", { count: s.total })}</div>
+          <div className="tabular truncate">
+            {t("planning.openN", { n: s.remaining })} · {t("planning.pickupsN", { count: s.pickups })}
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-0.5">
+          <Tooltip content={t("planning.optimize")}>
+            <span>
+              <Button size="icon-sm" variant="ghost" onClick={optimize} disabled={busy !== null || locked || s.remaining < 2} aria-label={t("planning.optimize")}>
+                {busy === "optimize" ? <Loader2 className="animate-spin" /> : <Sparkles />}
+              </Button>
+            </span>
+          </Tooltip>
+          {publishButton}
+          {actionsMenu}
+        </div>
+        {confirmPublish}
+      </div>
+    );
+
   return (
     <Card interactive className="relative flex flex-col gap-3 overflow-hidden p-4" role="group" aria-label={t("planning.tourName", { name: s.tour.name })}>
-      <span className="absolute inset-y-0 start-0 w-1" style={{ backgroundColor: tourColor(scoped, s.tour.id) }} aria-hidden="true" />
+      <span className="absolute inset-y-0 start-0 w-1" style={{ backgroundColor: color }} aria-hidden="true" />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <button onClick={() => selectTour(s.tour.id)} className="text-[15px] font-semibold text-ink hover:text-brand-700">
@@ -129,37 +240,19 @@ function TourCard({ s }: { s: TourSummary }) {
             <MapPinned className="size-3.5 shrink-0" />
             <span className="truncate">{tourEndsSummary(s.tour, s.depot, t)}</span>
           </button>
-          {endsOpen && <TourEndsDialog tour={s.tour} depot={s.depot} open={endsOpen} onOpenChange={setEndsOpen} />}
+          {endsDialog}
         </div>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-1">
             <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
-            <TourActionsMenu item={{ tour: s.tour, depotName: s.depot.name, driverName: s.driver?.displayName ?? null, stopCount: s.total, openStops: s.remaining }} onOpen={() => selectTour(s.tour.id)} />
+            {actionsMenu}
           </div>
           {s.tour.publishedAt ? <Badge tone="success">{t("planning.published")}</Badge> : <Badge tone="outline">{t("common.notPublished")}</Badge>}
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <AssignMenu
-          kind="driver"
-          icon={busy === "assign" ? <Loader2 className="animate-spin" /> : <UserRound />}
-          current={scoped.drivers.find((d) => d.id === s.tour.driverId)}
-          options={drivers}
-          busyOf={driverBusyLabel}
-          render={(d) => d.displayName}
-          disabled={locked || busy !== null}
-          onPick={(d) => void assign({ driverId: d?.id ?? null }, d ? t("planning.driverAssigned", { driver: d.displayName, tour: s.tour.name }) : t("planning.driverRemoved", { tour: s.tour.name }))}
-        />
-        <AssignMenu
-          kind="vehicle"
-          icon={<Truck />}
-          current={scoped.vehicles.find((v) => v.id === s.tour.vehicleId)}
-          options={vehicles}
-          busyOf={vehicleBusyLabel}
-          render={(v) => `${v.label} · ${v.licensePlate}`}
-          disabled={locked || busy !== null}
-          onPick={(v) => void assign({ vehicleId: v?.id ?? null }, v ? t("planning.vehicleAssigned", { vehicle: v.label, tour: s.tour.name }) : t("planning.vehicleRemoved", { tour: s.tour.name }))}
-        />
+        {driverMenu}
+        {vehicleMenu}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span className="tabular">
@@ -169,33 +262,10 @@ function TourCard({ s }: { s: TourSummary }) {
           <Button size="sm" variant="ghost" onClick={optimize} disabled={busy !== null || locked || s.remaining < 2}>
             {busy === "optimize" ? <Loader2 className="animate-spin" /> : <Sparkles />} {t("planning.optimize")}
           </Button>
-          {!s.tour.publishedAt && !locked && (
-            <Tooltip content={!s.tour.driverId ? t("planning.assignDriverFirst") : s.total === 0 ? t("planning.addStopsFirst") : t("planning.publishHint")}>
-              <span>
-                <Button size="sm" variant="ghost" onClick={() => setPublishing(true)} disabled={!s.tour.driverId || s.total === 0}>
-                  <Send /> {t("planning.publish")}
-                </Button>
-              </span>
-            </Tooltip>
-          )}
+          {publishButton}
         </div>
       </div>
-      <ConfirmDialog
-        open={publishing}
-        onOpenChange={setPublishing}
-        title={t("planning.publishTitle", { name: s.tour.name })}
-        description={t("planning.publishDesc", { driver: s.driver?.displayName ?? t("planning.theDriver"), count: s.total })}
-        confirmLabel={t("planning.publish")}
-        onConfirm={() =>
-          publishTour(s.tour).then(
-            () => toast.success(t("planning.publishedToast", { name: s.tour.name })),
-            (e) => {
-              toast.error(t("planning.publishFailed"), { description: errorMessage(e) });
-              throw e;
-            },
-          )
-        }
-      />
+      {confirmPublish}
     </Card>
   );
 }
@@ -252,7 +322,7 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
           void submit();
         }}
       >
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted">
           {t("planning.depot")}
           <select className={selectCls} value={depot} onChange={(e) => (setDepot(e.target.value), setDriver(""), setVehicle(""))}>
             {scoped.depots.map((d) => (
@@ -262,11 +332,11 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted">
           {t("planning.startTime")}
           <input dir="ltr" type="time" className={cn(selectCls, startMinute === null && "border-danger")} value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={startMinute === null} />
         </label>
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted">
           {t("planning.driver")}
           <select className={selectCls} value={driver} onChange={(e) => setDriver(e.target.value)}>
             <option value="">{t("planning.assignLater")}</option>
@@ -276,9 +346,9 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               </option>
             ))}
           </select>
-          <span className="text-2xs font-normal text-muted">{t("planning.available", { n: freeDrivers.length })}</span>
+          <span className="text-2xs font-normal text-muted g:text-[12px]">{t("planning.available", { n: freeDrivers.length })}</span>
         </label>
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted">
           {t("planning.vehicle")}
           <select className={selectCls} value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
             <option value="">{t("planning.assignLater")}</option>
@@ -288,7 +358,7 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
               </option>
             ))}
           </select>
-          <span className="text-2xs font-normal text-muted">{t("planning.available", { n: freeVehicles.length })}</span>
+          <span className="text-2xs font-normal text-muted g:text-[12px]">{t("planning.available", { n: freeVehicles.length })}</span>
         </label>
         <button type="submit" className="hidden" />
       </form>
@@ -316,6 +386,7 @@ export function PlanningView() {
   const driverRows = useMemo(() => data.drivers.map((dr) => ({ dr, busyTour: driverBusy(data, dr.id) })), [data]);
   const freeVehicles = data.vehicles.filter((v) => !vehicleBusy(data, v.id));
   const canManage = session.role !== "driver";
+  const g = useDesignG();
 
   const runPlan = async () => {
     if (!depot) return;
@@ -347,8 +418,8 @@ export function PlanningView() {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("planning.title")}</h1>
-            <p className="mt-1 text-sm text-ink-2">
+            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink g:text-[20px] g:font-semibold g:tracking-[-0.015em]">{t("planning.title")}</h1>
+            <p className="mt-1 text-sm text-ink-2 g:mt-0.5 g:text-[13px] g:text-muted">
               {date} · {depot ? depot.name : t("planning.depotsN", { count: data.depots.length })} · {t("planning.openTours", { count: openTours.length })}
             </p>
           </div>
@@ -391,10 +462,19 @@ export function PlanningView() {
             />
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <div className={cn("grid grid-cols-1 gap-4", g ? "xl:grid-cols-[minmax(0,1fr)_340px]" : "xl:grid-cols-[minmax(0,1fr)_380px]")}>
             <section aria-label={t("planning.toursAria")} className="flex flex-col gap-3">
               {openTours.length === 0 ? (
-                <Card className="p-6 text-center text-[13px] text-muted">{t("planning.noOpenTours")}</Card>
+                <Card className="p-6 text-center text-[13px] text-muted g:p-5">{t("planning.noOpenTours")}</Card>
+              ) : g ? (
+                // Phase G: one bordered surface, a row per tour divided by hairlines.
+                <div className="@container overflow-hidden rounded-lg border border-line bg-surface">
+                  <div className="divide-y divide-line">
+                    {openTours.map((s) => (
+                      <TourCard key={s.tour.id} s={s} />
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
                   {openTours.map((s) => (
@@ -405,7 +485,7 @@ export function PlanningView() {
               {doneTours.length > 0 && (
                 <p className="text-xs text-muted">
                   {t("planning.completedHidden", { count: doneTours.length, names: doneTours.map((s) => s.tour.name).join(", ") })}{" "}
-                  <Link href="/list?view=all" className="font-semibold text-brand-700 hover:underline">
+                  <Link href="/list?view=all" className="font-semibold text-brand-700 hover:underline g:font-medium">
                     {t("planning.manageInTours")}
                   </Link>
                 </p>
@@ -453,14 +533,14 @@ export function PlanningView() {
                     </div>
                   }
                 />
-                {selected.size > 0 && selectedDepots.size > 1 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">{t("planning.mixedDepots")}</p>}
-                {selected.size > 0 && selectedDepots.size === 1 && targetTours.length === 0 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">{t("planning.noOpenTourInDepot")}</p>}
+                {selected.size > 0 && selectedDepots.size > 1 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink g:bg-transparent g:px-3 g:py-1.5">{t("planning.mixedDepots")}</p>}
+                {selected.size > 0 && selectedDepots.size === 1 && targetTours.length === 0 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink g:bg-transparent g:px-3 g:py-1.5">{t("planning.noOpenTourInDepot")}</p>}
                 {data.unassigned.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-[13px] text-muted">{t("planning.allPlanned")}</p>
+                  <p className="px-4 py-6 text-center text-[13px] text-muted g:py-5">{t("planning.allPlanned")}</p>
                 ) : (
-                  <ul className="max-h-[420px] divide-y divide-line overflow-y-auto">
+                  <ul className="max-h-[420px] divide-y divide-line overflow-y-auto g:max-h-[460px]">
                     {data.unassigned.map((u) => (
-                      <li key={u.id} className={cn("flex items-center gap-3 px-4 py-2.5", selected.has(u.id) && "bg-brand-50/50")}>
+                      <li key={u.id} className={cn("flex items-center gap-3 px-4 py-2.5 g:gap-2.5 g:px-3 g:py-1.5 g:hover:bg-[var(--hover)]", selected.has(u.id) && "bg-brand-50/50 g:bg-[var(--selected)] g:hover:bg-[var(--selected)]")}>
                         <Checkbox
                           checked={selected.has(u.id)}
                           onCheckedChange={(v) =>
@@ -475,10 +555,10 @@ export function PlanningView() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <span className="truncate text-[13px] font-medium text-ink">{u.recipientName ?? u.address.street}</span>
-                            {u.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-nx-violet-text" aria-label={t("common.stopType.pickup")} />}
+                            <span className="truncate text-[13px] font-medium text-ink g:font-normal">{u.recipientName ?? u.address.street}</span>
+                            {u.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-nx-violet-text g:size-3 g:text-muted" aria-label={t("common.stopType.pickup")} />}
                           </div>
-                          <div className="truncate text-2xs text-muted">
+                          <div className="truncate text-2xs text-muted g:text-[12px]">
                             {scoped.depots.find((x) => x.id === u.depotId)?.name} · {u.address.street} {u.address.houseNumber}
                             {u.timeWindow && ` · ${formatClock(u.timeWindow.start)}–${formatClock(u.timeWindow.end)}`}
                           </div>
@@ -487,9 +567,9 @@ export function PlanningView() {
                           onClick={() => setPriority(u.id, !u.priority).catch((e) => toast.error(t("planning.priorityNotSaved"), { description: errorMessage(e) }))}
                           aria-pressed={u.priority}
                           aria-label={u.priority ? t("planning.removePriorityFrom", { name: u.recipientName ?? u.address.street }) : t("planning.markPriorityName", { name: u.recipientName ?? u.address.street })}
-                          className="inline-flex size-8 items-center justify-center rounded-md hover:bg-surface-2"
+                          className="inline-flex size-8 items-center justify-center rounded-md hover:bg-surface-2 g:size-7 g:hover:bg-[var(--selected)]"
                         >
-                          <Star className={cn("size-4", u.priority ? "fill-nx-amber text-nx-amber" : "text-subtle")} />
+                          <Star className={cn("size-4 g:size-[15px]", u.priority ? "fill-nx-amber text-nx-amber g:fill-warning g:text-warning" : "text-subtle")} />
                         </button>
                       </li>
                     ))}
@@ -501,11 +581,11 @@ export function PlanningView() {
                 <CardHeader title={t("planning.drivers")} description={t("planning.available", { n: driverRows.filter((r) => !r.busyTour && r.dr.active).length })} />
                 <ul className="divide-y divide-line">
                   {driverRows.map(({ dr, busyTour }) => (
-                    <li key={dr.id} className="flex items-center gap-3 px-4 py-2.5">
-                      <Avatar name={dr.displayName} size="sm" />
+                    <li key={dr.id} className="flex items-center gap-3 px-4 py-2.5 g:gap-2.5 g:px-3 g:py-1.5 g:hover:bg-[var(--hover)]">
+                      <Avatar name={dr.displayName} size="sm" className="g:size-6 g:text-[10px]" />
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-medium text-ink">{dr.displayName}</div>
-                        <div className="text-2xs text-muted">
+                        <div className="truncate text-[13px] font-medium text-ink g:font-normal">{dr.displayName}</div>
+                        <div className="text-2xs text-muted g:text-[12px]">
                           {scoped.depots.find((x) => x.id === dr.depotId)?.name ?? t("planning.noDepot")} · {t("planning.maxShift", { h: Math.round(dr.maxShiftMinutes / 60) })}
                         </div>
                       </div>
@@ -529,13 +609,13 @@ export function PlanningView() {
                   {data.vehicles.map((v) => {
                     const busyTour = vehicleBusy(data, v.id);
                     return (
-                      <li key={v.id} className="flex items-center gap-3 px-4 py-2.5">
-                        <span className="inline-flex size-7 items-center justify-center rounded-md bg-surface-2 text-ink-2">
+                      <li key={v.id} className="flex items-center gap-3 px-4 py-2.5 g:gap-2.5 g:px-3 g:py-1.5 g:hover:bg-[var(--hover)]">
+                        <span className="inline-flex size-7 items-center justify-center rounded-md bg-surface-2 text-ink-2 g:hidden">
                           <Truck className="size-3.5" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-[13px] font-medium text-ink">{v.label}</div>
-                          <div className="text-2xs text-muted">
+                          <div className="truncate text-[13px] font-medium text-ink g:font-normal">{v.label}</div>
+                          <div className="text-2xs text-muted g:text-[12px]">
                             {v.licensePlate} · {v.capacityParcels != null ? t("common.parcels", { count: v.capacityParcels }) : t("planning.parcelsUnknown")}
                           </div>
                         </div>

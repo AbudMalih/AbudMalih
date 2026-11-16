@@ -47,14 +47,14 @@ export function sortTours(rows: TourSummary[], sort: ListSort, dir: "asc" | "des
   });
 }
 
-function Th({ label, k, sort, dir, onSort, className }: { label: string; k: ListSort; sort: ListSort; dir: "asc" | "desc"; onSort: (k: ListSort) => void; className?: string }) {
+function Th({ label, k, sort, dir, onSort, className, numeric }: { label: string; k: ListSort; sort: ListSort; dir: "asc" | "desc"; onSort: (k: ListSort) => void; className?: string; numeric?: boolean }) {
   const active = sort === k;
   const Icon = !active ? ArrowUpDown : dir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <th scope="col" aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"} className={cn("h-11 whitespace-nowrap px-3 text-start font-bold", className)}>
-      <button type="button" onClick={() => onSort(k)} className={cn("-mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 uppercase hover:bg-surface-2 hover:text-ink", active && "text-ink")}>
+    <th scope="col" aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"} className={cn("h-11 whitespace-nowrap px-3 text-start font-bold g:h-9 g:font-medium", numeric && "g:text-end", className)}>
+      <button type="button" onClick={() => onSort(k)} className={cn("group/th -mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 uppercase hover:bg-surface-2 hover:text-ink g:py-0.5 g:hover:bg-[var(--hover)]", numeric && "g:flex-row-reverse", active && "text-ink g:text-ink-2")}>
         {label}
-        <Icon className={cn("size-3", active ? "text-brand-600" : "text-subtle")} />
+        <Icon className={cn("size-3", active ? "text-brand-600 g:text-ink-2" : "text-subtle g:opacity-0 g:transition-opacity g:group-hover/th:opacity-100 g:group-focus-visible/th:opacity-100")} />
       </button>
     </th>
   );
@@ -94,10 +94,10 @@ export function ListView() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-5">
-        <div className="mb-4 flex flex-col gap-1">
-          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("map.list.title")}</h1>
-          <p className="mt-1 text-sm text-ink-2">
+      <div className="flex flex-col gap-5 g:gap-4">
+        <div className="mb-4 flex flex-col gap-1 g:mb-0 g:gap-0.5">
+          <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink g:text-[20px] g:font-semibold g:tracking-[-0.015em]">{t("map.list.title")}</h1>
+          <p className="mt-1 text-sm text-ink-2 g:mt-0 g:text-[13px] g:text-muted">
             {t("map.list.subtitle", { count: data.tours.length, date: data.date })}
             {(() => {
               const est = summaries.filter((s) => s.tour.status !== "completed" && s.timeline.projection.source === "estimate").length;
@@ -106,7 +106,7 @@ export function ListView() {
           </p>
         </div>
         <Card className="overflow-hidden">
-          <div className="flex flex-col gap-2 border-b border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 border-b border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between g:px-3 g:py-2">
             <SearchInput
               value={query}
               onChange={(v) => {
@@ -115,13 +115,13 @@ export function ListView() {
               }}
               placeholder={t("map.list.searchPlaceholder")}
               label={t("map.list.searchLabel")}
-              className="sm:w-80"
+              className="sm:w-80 g:sm:w-72"
             />
             <Menu>
               <MenuTrigger asChild>
-                <Button variant="secondary" className={cn(statuses.length > 0 && "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-50")}>
-                  <ListFilter /> {t("map.list.status")}
-                  {statuses.length > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-2xs font-semibold leading-4 text-white">{statuses.length}</span>}
+                <Button variant="secondary" className={cn(statuses.length > 0 && "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-50 g:border-line-3 g:bg-[var(--selected)] g:text-ink g:hover:bg-[var(--selected)]")}>
+                  <ListFilter className="g:text-muted" /> {t("map.list.status")}
+                  {statuses.length > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-2xs font-semibold leading-4 text-white g:bg-transparent g:px-0 g:text-[12px] g:font-medium g:text-muted">{statuses.length}</span>}
                 </Button>
               </MenuTrigger>
               <MenuContent className="w-52">
@@ -157,18 +157,18 @@ export function ListView() {
                     <Th label={t("map.list.col.tour")} k="name" sort={sort} dir={dir} onSort={onSort} className="ps-4" />
                     <Th label={t("map.list.col.driver")} k="driver" sort={sort} dir={dir} onSort={onSort} />
                     <Th label={t("map.list.col.depot")} k="depot" sort={sort} dir={dir} onSort={onSort} />
-                    <th scope="col" className="h-10 px-3 text-start font-medium">{t("map.list.col.vehicle")}</th>
-                    <Th label={t("map.list.col.stops")} k="total" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label={t("map.list.col.done")} k="completed" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label={t("map.list.col.left")} k="remaining" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label={t("map.list.col.pickups")} k="pickups" sort={sort} dir={dir} onSort={onSort} />
-                    <Th label={t("map.list.col.status")} k="status" sort={sort} dir={dir} onSort={onSort} />
+                    <th scope="col" className="h-10 px-3 text-start font-medium g:h-9">{t("map.list.col.vehicle")}</th>
+                    <Th label={t("map.list.col.stops")} k="total" sort={sort} dir={dir} onSort={onSort} numeric />
+                    <Th label={t("map.list.col.done")} k="completed" sort={sort} dir={dir} onSort={onSort} numeric />
+                    <Th label={t("map.list.col.left")} k="remaining" sort={sort} dir={dir} onSort={onSort} numeric />
+                    <Th label={t("map.list.col.pickups")} k="pickups" sort={sort} dir={dir} onSort={onSort} numeric />
+                    <Th label={t("map.list.col.status")} k="status" sort={sort} dir={dir} onSort={onSort} className="g:ps-6" />
                     <Th label={t("map.list.col.finish")} k="eta" sort={sort} dir={dir} onSort={onSort} className="pe-4" />
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((s) => (
-                    <tr key={s.tour.id} onClick={() => selectTour(s.tour.id)} className="cursor-pointer border-b border-line transition-colors last:border-0 hover:bg-surface-2/50">
+                    <tr key={s.tour.id} onClick={() => selectTour(s.tour.id)} className="cursor-pointer border-b border-line transition-colors last:border-0 hover:bg-surface-2/50 g:h-9 g:duration-150 g:hover:bg-[var(--hover)]">
                       <td className="whitespace-nowrap py-3 pe-3 ps-4">
                         <button
                           type="button"
@@ -176,17 +176,18 @@ export function ListView() {
                             e.stopPropagation();
                             selectTour(s.tour.id);
                           }}
-                          className="flex items-center gap-2 rounded font-semibold text-ink outline-none hover:text-brand-700 focus-visible:shadow-[var(--shadow-focus)]"
+                          className="flex items-center gap-2 rounded font-semibold text-ink outline-none hover:text-brand-700 focus-visible:shadow-[var(--shadow-focus)] g:font-medium g:hover:text-ink g:hover:underline g:underline-offset-2"
+                          title={s.tour.id}
                         >
-                          <span className="size-2.5 rounded-full" style={{ backgroundColor: tourColor(scoped, s.tour.id) }} aria-hidden="true" />
+                          <span className="size-2.5 rounded-full g:size-2" style={{ backgroundColor: tourColor(scoped, s.tour.id) }} aria-hidden="true" />
                           {s.tour.name}
                         </button>
-                        <span className="block font-mono text-2xs text-subtle">{s.tour.id}</span>
+                        <span className="block font-mono text-2xs text-subtle g:hidden">{s.tour.id}</span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3">
                         {s.driver ? (
                           <span className="flex items-center gap-2">
-                            <Avatar name={s.driver.displayName} size="sm" />
+                            <Avatar name={s.driver.displayName} size="sm" className="g:size-5 g:text-[9px]" />
                             {s.driver.displayName}
                           </span>
                         ) : (
@@ -196,19 +197,23 @@ export function ListView() {
                       <td className="whitespace-nowrap px-3 py-3 text-ink-2">{s.depot.name}</td>
                       <td className="whitespace-nowrap px-3 py-3 text-ink-2">
                         {s.vehicleLabel ?? <span className="text-warning-ink">–</span>}
-                        {s.vehiclePlate && <span className="block text-2xs text-muted">{s.vehiclePlate}</span>}
+                        {s.vehiclePlate && <span className="block text-2xs text-muted g:ms-1.5 g:inline g:text-[12px]">{s.vehiclePlate}</span>}
                       </td>
-                      <td className="px-3 py-3 tabular">{s.total}</td>
-                      <td className="px-3 py-3 tabular">
-                        {s.completed}
-                        {s.failed > 0 && <span className="block text-2xs text-danger-ink">{t("map.list.failed", { n: s.failed })}</span>}
+                      <td className="px-3 py-3 tabular g:text-end">{s.total}</td>
+                      <td className="px-3 py-3 tabular g:whitespace-nowrap g:text-end">
+                        <span className="g:inline-flex g:flex-row-reverse g:items-baseline g:gap-1.5">
+                          {s.completed}
+                          {s.failed > 0 && <span className="block text-2xs text-danger-ink g:text-[12px]">{t("map.list.failed", { n: s.failed })}</span>}
+                        </span>
                       </td>
-                      <td className="px-3 py-3 tabular">{s.remaining}</td>
-                      <td className="px-3 py-3 tabular">
-                        {s.pickups}
-                        {s.pickupsRemaining > 0 && <span className="block text-2xs text-muted">{t("map.list.open", { n: s.pickupsRemaining })}</span>}
+                      <td className="px-3 py-3 tabular g:text-end">{s.remaining}</td>
+                      <td className="px-3 py-3 tabular g:whitespace-nowrap g:text-end">
+                        <span className="g:inline-flex g:flex-row-reverse g:items-baseline g:gap-1.5">
+                          {s.pickups}
+                          {s.pickupsRemaining > 0 && <span className="block text-2xs text-muted g:text-[12px]">{t("map.list.open", { n: s.pickupsRemaining })}</span>}
+                        </span>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-3">
+                      <td className="whitespace-nowrap px-3 py-3 g:ps-6">
                         <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
                       </td>
                       <td className="whitespace-nowrap py-3 pe-4 ps-3 tabular">
@@ -216,7 +221,7 @@ export function ListView() {
                           {s.status === "completed" ? formatClock(s.timeline.projectedEndMinute) : finishValue(s.timeline.projection)}
                           {s.status !== "completed" && s.timeline.projection.source === "estimate" ? t("map.list.est") : ""}
                         </span>
-                        <span className="block text-2xs text-muted">
+                        <span className="block text-2xs text-muted g:ms-2 g:inline g:text-[12px]">
                           {s.status === "completed"
                             ? t("map.list.finished")
                             : scheduledFinishLabel(s.timeline.projection, t)
@@ -231,7 +236,7 @@ export function ListView() {
             </div>
           )}
           {filtered.length > 0 && (
-            <div className="flex items-center justify-between border-t border-line px-4 py-3 text-[13px] text-muted">
+            <div className="flex items-center justify-between border-t border-line px-4 py-3 text-[13px] text-muted g:px-3 g:py-2 g:text-[12px]">
               <span className="tabular">
                 {t("map.list.pageRange", { from: p * PAGE + 1, to: Math.min(filtered.length, (p + 1) * PAGE), total: filtered.length })}
               </span>

@@ -10,6 +10,7 @@ import { lifecycleApi } from "../lib/lifecycle";
 import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { gField } from "./TourActions";
 
 /**
  * Dispatcher edits on an open stop: address, order, move to another tour, and three different
@@ -100,7 +101,7 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
           </Button>
         }
       >
-        <div className="grid grid-cols-6 gap-2 text-[13px]">
+        <div className="grid grid-cols-6 gap-2 text-[13px] g:gap-x-2 g:gap-y-3">
           {(
             [
               ["recipientName", tr("tours.se.recipient"), "col-span-6"],
@@ -111,13 +112,13 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
             ] as const
           ).map(([k, label, cls]) => (
             <label key={k} className={`flex flex-col gap-1 ${cls}`}>
-              <span className="font-medium text-ink-2">{label}</span>
+              <span className="font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">{label}</span>
               <Input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label} dir={k === "postalCode" ? "ltr" : undefined} />
             </label>
           ))}
           {addressChanged && (
             <label className="col-span-6 flex flex-col gap-1">
-              <span className="font-medium text-ink-2">{published ? tr("tours.se.reasonRequired") : tr("tours.se.reasonOptional")}</span>
+              <span className="font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">{published ? tr("tours.se.reasonRequired") : tr("tours.se.reasonOptional")}</span>
               <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label={tr("tours.se.reasonChangeAria")} maxLength={500} />
             </label>
           )}
@@ -125,12 +126,12 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
       </Dialog>
 
       <Dialog open={moving} onOpenChange={setMoving} title={tr("tours.se.moveTitle")} description={tr("tours.se.moveDesc")}>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 g:gap-0 g:divide-y g:divide-line g:overflow-hidden g:rounded-md g:border g:border-line">
           {targets.map((t) => (
             <Button
               key={t.tour.id}
               variant="secondary"
-              className="justify-start"
+              className="justify-start g:h-9 g:rounded-none g:border-0 g:bg-transparent g:font-normal g:hover:bg-[var(--hover)]"
               onClick={async () => {
                 await attempt(tr("tours.se.movedTo", { name: t.tour.name }), () => assignStops([stop.id], t.tour.id));
                 setMoving(false);
@@ -185,9 +186,9 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
           </Button>
         }
       >
-        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2 g:gap-1 g:text-[12px] g:font-normal g:text-muted">
           {tr("tours.se.reason")}
-          <textarea className={`${fieldCls} h-20 py-2`} value={cancelReason} maxLength={500} onChange={(e) => setCancelReason(e.target.value)} aria-label={tr("tours.se.cancelReasonAria")} />
+          <textarea className={`${fieldCls} h-20 py-2 ${gField} g:text-ink`} value={cancelReason} maxLength={500} onChange={(e) => setCancelReason(e.target.value)} aria-label={tr("tours.se.cancelReasonAria")} />
         </label>
       </Dialog>
 

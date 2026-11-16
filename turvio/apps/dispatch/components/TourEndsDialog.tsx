@@ -31,7 +31,7 @@ export function tourEndsSummary(t: Tour, depot: Depot, tr: TFunction = EN_T): st
 
 function Choice<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { value: T; label: string; hint: string }[]; label: string }) {
   return (
-    <div role="radiogroup" aria-label={label} className="grid gap-1.5 sm:grid-cols-3">
+    <div role="radiogroup" aria-label={label} className="grid gap-1.5 sm:grid-cols-3 g:gap-2">
       {options.map((o) => (
         <button
           key={o.value}
@@ -39,10 +39,10 @@ function Choice<T extends string>({ value, onChange, options, label }: { value: 
           role="radio"
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
-          className={cn("rounded-md border px-2.5 py-2 text-start text-sm", value === o.value ? "border-brand-500 bg-brand-50 text-ink" : "border-line text-ink-2 hover:bg-surface-2")}
+          className={cn("rounded-md border px-2.5 py-2 text-start text-sm g:py-1.5 g:text-[13px] g:transition-colors", value === o.value ? "border-brand-500 bg-brand-50 text-ink g:border-brand-600 g:bg-[var(--selected)]" : "border-line text-ink-2 hover:bg-surface-2 g:border-line-2 g:hover:bg-[var(--hover)]")}
         >
           <div className="font-medium">{o.label}</div>
-          <div className="text-2xs text-muted">{o.hint}</div>
+          <div className="text-2xs text-muted g:text-[12px]">{o.hint}</div>
         </button>
       ))}
     </div>
@@ -53,7 +53,7 @@ function PlaceField({ place, onChange, near }: { place: PickedPlace | null; onCh
   const t = useT();
   if (place)
     return (
-      <div className="flex items-center justify-between gap-2 rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-sm">
+      <div className="flex items-center justify-between gap-2 rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-sm g:border-line-2 g:bg-transparent g:py-1 g:text-[13px]">
         <span className="min-w-0 truncate text-ink" title={place.label}>
           {place.label}
         </span>
@@ -115,9 +115,9 @@ export function TourEndsDialog({ tour, depot, open, onOpenChange }: { tour: Tour
         </>
       }
     >
-      <div className="flex flex-col gap-4">
-        <section className="flex flex-col gap-2">
-          <h3 className="text-[13px] font-semibold text-ink">{t("planning.start")}</h3>
+      <div className="flex flex-col gap-4 g:gap-0 g:divide-y g:divide-line">
+        <section className="flex flex-col gap-2 g:pb-4">
+          <h3 className="text-[13px] font-semibold text-ink g:text-[13.5px]">{t("planning.start")}</h3>
           <Choice
             label={t("planning.start")}
             value={startMode}
@@ -128,10 +128,10 @@ export function TourEndsDialog({ tour, depot, open, onOpenChange }: { tour: Tour
             ]}
           />
           {startMode === "address" && <PlaceField place={start} onChange={setStart} near={depot.location} />}
-          <p className="text-2xs text-muted">{t("planning.liveStartHint")}</p>
+          <p className="text-2xs text-muted g:text-[12px]">{t("planning.liveStartHint")}</p>
         </section>
-        <section className="flex flex-col gap-2">
-          <h3 className="text-[13px] font-semibold text-ink">{t("planning.end")}</h3>
+        <section className="flex flex-col gap-2 g:pt-4">
+          <h3 className="text-[13px] font-semibold text-ink g:text-[13.5px]">{t("planning.end")}</h3>
           <Choice
             label={t("planning.end")}
             value={endMode}

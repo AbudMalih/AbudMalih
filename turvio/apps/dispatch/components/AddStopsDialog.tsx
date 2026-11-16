@@ -11,11 +11,11 @@ import { useDispatch } from "../lib/store";
 import { FileImport, ImportErrorBoundary, type FileImportState } from "./FileImport";
 
 const inputCls =
-  "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none aria-[invalid=true]:border-danger";
+  "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none aria-[invalid=true]:border-danger g:h-8 g:border-line-2 g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600";
 
 function F({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <label className={cn("flex flex-col gap-1 text-[13px] font-medium text-ink-2", className)}>
+    <label className={cn("flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted", className)}>
       {label}
       {children}
     </label>
@@ -118,9 +118,9 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
         </>
       }
     >
-      <div className="mb-4 inline-flex rounded-md border border-line bg-surface-2 p-0.5" role="tablist" aria-label={t("planning.entryMode")}>
+      <div className="mb-4 inline-flex rounded-md border border-line bg-surface-2 p-0.5 g:border-line-2 g:bg-transparent" role="tablist" aria-label={t("planning.entryMode")}>
         {(["single", "paste", "file"] as const).map((m) => (
-          <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn("h-8 rounded px-3 text-[13px] font-medium", mode === m ? "bg-surface text-ink shadow-xs" : "text-muted")}>
+          <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn("h-8 rounded px-3 text-[13px] font-medium g:h-7 g:px-2.5 g:font-normal", mode === m ? "bg-surface text-ink shadow-xs g:bg-[var(--selected)] g:shadow-none" : "text-muted g:hover:bg-[var(--hover)] g:hover:text-ink")}>
             {t(`planning.mode.${m}`)}
           </button>
         ))}
@@ -169,7 +169,7 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
           <F label={t("planning.windowTo")} className="sm:col-span-2">
             <input dir="ltr" type="time" className={inputCls} value={f.to} onChange={(e) => set("to", e.target.value)} aria-invalid={windowInvalid} />
           </F>
-          <label className="flex items-end gap-2 pb-2 text-[13px] font-medium text-ink-2 sm:col-span-2">
+          <label className="flex items-end gap-2 pb-2 text-[13px] font-medium text-ink-2 sm:col-span-2 g:font-normal">
             <input type="checkbox" checked={f.priority} onChange={(e) => set("priority", e.target.checked)} className="size-4 accent-[var(--violet)]" /> {t("planning.priority")}
           </label>
           <F label={t("planning.trackingNumbers")} className="col-span-2 sm:col-span-6">
@@ -188,7 +188,7 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
             <code dir="ltr" className="text-2xs">Praxis Lang; Lister Meile; 12; 30161; Hannover; 52.3801; 9.7420; delivery; 09:00-12:00; TVO1,TVO2</code>
           </p>
           <textarea
-            className={cn(inputCls, "h-48 py-2 font-mono text-xs")}
+            className={cn(inputCls, "h-48 py-2 font-mono text-xs g:h-48 g:text-xs")}
             value={paste}
             onChange={(e) => setPaste(e.target.value)}
             aria-label={t("planning.stopList")}
@@ -199,7 +199,7 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
             {parsed.length === 0 ? t("planning.noLines") : t("planning.validErrors", { good: good.length, bad: bad.length })}
           </p>
           {bad.length > 0 && (
-            <ul className="max-h-28 overflow-y-auto rounded-md border border-nx-coral/30 bg-danger-soft px-3 py-2 text-xs text-danger-ink">
+            <ul className="max-h-28 overflow-y-auto rounded-md border border-nx-coral/30 bg-danger-soft px-3 py-2 text-xs text-danger-ink g:border-line-2 g:bg-transparent">
               {bad.slice(0, 20).map((b) => (
                 <li key={b.line}>
                   {t("planning.lineError", { line: b.line, error: b.error })}

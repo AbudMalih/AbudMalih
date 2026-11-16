@@ -22,14 +22,14 @@ export function ProofList({ stop }: { stop: Stop }) {
   const url = (id: string) => `/api/turvio/v1/orgs/${session.organizationId}/proofs/${id}/file`;
   return (
     <div className="flex flex-col gap-1.5" data-testid="proofs">
-      <span className="text-2xs font-semibold uppercase tracking-[0.06em] text-subtle">{t("pickups.proof.heading")}</span>
+      <span className="text-2xs font-semibold uppercase tracking-[0.06em] text-subtle g:text-[12px] g:font-medium g:text-muted">{t("pickups.proof.heading")}</span>
       <div className="flex flex-wrap gap-1.5">
         {proofs.map((p) => (
           <button
             key={p.id}
             type="button"
             onClick={() => setOpen(p.id)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink-2 hover:bg-surface-2"
+            className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink-2 hover:bg-surface-2 g:h-7 g:border-line-2 g:bg-transparent g:py-0 g:text-[12px] g:transition-colors g:hover:bg-[var(--hover)] g:[&_svg]:text-muted"
             data-testid={`proof-${p.kind}`}
           >
             {p.kind === "photo" ? <Camera className="size-3.5" /> : <PenLine className="size-3.5" />}
@@ -48,15 +48,16 @@ export function ProofList({ stop }: { stop: Stop }) {
         })}
       >
         {current && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 g:gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url(current.id)} alt={current.kind === "photo" ? t("pickups.proof.deliveryPhoto") : t("pickups.proof.recipientSignature")} className="max-h-[60vh] w-full rounded-md border border-line bg-white object-contain" data-testid="proof-image" />
-            {current.notes && <p className="text-xs text-muted">{current.notes}</p>}
-            <p className="text-2xs text-subtle">{t("pickups.proof.privacy")}</p>
+            {current.notes && <p className="text-xs text-muted g:text-[13px] g:text-ink-2">{current.notes}</p>}
+            <p className="text-2xs text-subtle g:text-[12px] g:text-muted">{t("pickups.proof.privacy")}</p>
             {canDelete && (
               <Button
                 variant="secondary"
                 size="sm"
+                className="g:self-start"
                 onClick={async () => {
                   if (!window.confirm(t("pickups.proof.confirmDelete"))) return;
                   try {

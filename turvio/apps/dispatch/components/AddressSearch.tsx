@@ -74,7 +74,7 @@ export function AddressSearch({ near, onPick, placeholder, autoFocus }: { near?:
   return (
     <div className="flex flex-col gap-1.5">
       <div className="relative">
-        <Search className="pointer-events-none absolute start-2.5 top-2.5 size-4 text-subtle" aria-hidden="true" />
+        <Search className="pointer-events-none absolute start-2.5 top-2.5 size-4 text-subtle g:top-2 g:size-[15px]" aria-hidden="true" />
         <input
           dir="auto"
           value={q}
@@ -82,17 +82,17 @@ export function AddressSearch({ near, onPick, placeholder, autoFocus }: { near?:
           placeholder={placeholder ?? t("planning.addressPlaceholder")}
           autoFocus={autoFocus}
           aria-label={t("planning.searchAddress")}
-          className="h-9 w-full rounded-md border border-line bg-surface ps-8 pe-8 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none"
+          className="h-9 w-full rounded-md border border-line bg-surface ps-8 pe-8 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none g:h-8 g:border-line-2 g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600"
         />
-        {state === "busy" && <Loader2 className="absolute end-2.5 top-2.5 size-4 animate-spin text-subtle" aria-label={t("planning.searching")} />}
+        {state === "busy" && <Loader2 className="absolute end-2.5 top-2.5 size-4 animate-spin text-subtle g:top-2 g:size-[15px]" aria-label={t("planning.searching")} />}
       </div>
       {coords && (
-        <button type="button" onClick={() => onPick({ ...coords, label: `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` })} className="flex items-center gap-2 rounded-md border border-line px-2.5 py-2 text-start text-sm hover:bg-surface-2">
-          <MapPin className="size-4 text-brand-600" /> {t("planning.useCoords", { coords: `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` })}
+        <button type="button" onClick={() => onPick({ ...coords, label: `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` })} className="flex items-center gap-2 rounded-md border border-line px-2.5 py-2 text-start text-sm hover:bg-surface-2 g:border-line-2 g:py-1.5 g:text-[13px] g:hover:bg-[var(--hover)]">
+          <MapPin className="size-4 text-brand-600 g:size-[15px] g:text-muted" /> {t("planning.useCoords", { coords: `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` })}
         </button>
       )}
       {hits.length > 0 && (
-        <ul role="listbox" aria-label={t("planning.addressResults")} className="max-h-56 divide-y divide-line overflow-auto rounded-md border border-line bg-surface">
+        <ul role="listbox" aria-label={t("planning.addressResults")} className="max-h-56 divide-y divide-line overflow-auto rounded-md border border-line bg-surface g:border-line-2">
           {hits.map((h, i) => (
             <li key={`${h.label}-${i}`}>
               <button
@@ -100,10 +100,10 @@ export function AddressSearch({ near, onPick, placeholder, autoFocus }: { near?:
                 role="option"
                 aria-selected={false}
                 onClick={() => onPick({ lat: h.location.lat, lng: h.location.lng, label: h.label, precision: h.precision })}
-                className="flex w-full items-start justify-between gap-2 px-2.5 py-2 text-start text-sm hover:bg-surface-2"
+                className="flex w-full items-start justify-between gap-2 px-2.5 py-2 text-start text-sm hover:bg-surface-2 g:py-1.5 g:text-[13px] g:hover:bg-[var(--hover)]"
               >
                 <span className="text-ink">{h.label}</span>
-                <span className={cn("shrink-0 text-2xs", h.precision === "house" ? "text-success-ink" : "text-warning-ink")}>{t(`planning.precision.${h.precision}`)}</span>
+                <span className={cn("shrink-0 text-2xs g:text-[12px]", h.precision === "house" ? "text-success-ink g:text-muted" : "text-warning-ink")}>{t(`planning.precision.${h.precision}`)}</span>
               </button>
             </li>
           ))}
