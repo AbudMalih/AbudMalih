@@ -1,7 +1,7 @@
 "use client";
 
 import { formatClock } from "@turvio/shared";
-import { delayLabel } from "../lib/eta";
+import { delayLabel, delayReasonText } from "../lib/eta";
 import { Button, PageHeader, Sheet, Tooltip, cn } from "@turvio/web-ui/ds";
 import { AlertTriangle, ArrowUpFromLine, List, Map as MapIcon, MousePointerClick, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -66,7 +66,7 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
                 <button onClick={() => selectTour(s.tour.id)} className="w-full rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-start text-[13px] shadow-[inset_4px_0_0_var(--coral)] transition-colors rtl:shadow-[inset_-4px_0_0_var(--coral)] hover:bg-danger-soft">
                   <span className="font-semibold text-danger-ink">{s.tour.name}</span> <span className="text-muted">· {s.driver?.displayName ?? t("map.noDriver")}</span>
                   <span className="mt-0.5 block text-xs text-danger-ink/80">
-                    {delayLabel(s.delayCertainty, t)} · {s.timeline.projection.delayReasons[0]?.text}
+                    {delayLabel(s.delayCertainty, t)} · {s.timeline.projection.delayReasons[0] ? delayReasonText(s.timeline.projection.delayReasons[0], t) : ""}
                   </span>
                 </button>
               </li>

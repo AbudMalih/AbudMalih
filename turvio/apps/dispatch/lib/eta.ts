@@ -14,6 +14,25 @@ import { durationText, EN_T, type TFunction } from "./i18n";
 
 export const estimateReason = (r: NonNullable<TourProjection["estimateReason"]>, t: TFunction = EN_T) => t(`common.estimate.${r}`);
 
+/** A delay reason (shared projection) in the current language. */
+export function delayReasonText(r: { kind: string; certainty: DelayCertainty; count?: number; text: string }, t: TFunction = EN_T): string {
+  const count = r.count ?? 1;
+  switch (r.kind) {
+    case "deadline_missed":
+      return t("common.reason.missed", { count });
+    case "projected_late":
+      return r.certainty === "projected" ? t("common.reason.lateProjected", { count }) : t("common.reason.lateEstimated", { count });
+    case "finish_after_shift":
+      return r.certainty === "projected" ? t("common.reasonShiftProjected") : t("common.reasonShiftEstimated");
+    case "no_driver": {
+      const time = /\d{2}:\d{2}/.exec(r.text)?.[0];
+      return time ? t("common.reasonNoDriverOverdue", { time }) : t("common.reasonNoDriverSoon");
+    }
+    default:
+      return r.text;
+  }
+}
+
 export function delayLabel(certainty: DelayCertainty | null, t: TFunction = EN_T): string {
   if (certainty === "projected") return t("common.delayProjected");
   if (certainty === "estimated") return t("common.delayEstimated");

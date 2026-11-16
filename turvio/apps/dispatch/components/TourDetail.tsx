@@ -29,7 +29,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { api, errorMessage } from "../lib/api";
-import { basisLabel, conditionLabel, finishTitle, finishValue, minutes, projectionNote, stopStateLabel } from "../lib/eta";
+import { basisLabel, conditionLabel, delayReasonText, finishTitle, finishValue, minutes, projectionNote, stopStateLabel } from "../lib/eta";
 import { tourColor } from "../lib/helpers";
 import { durationText } from "../lib/i18n";
 import { useI18n } from "../lib/i18n/client";
@@ -354,7 +354,7 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <ul className="flex flex-col gap-0.5">
             {proj.delayReasons.map((r) => (
-              <li key={r.kind}>{r.text}</li>
+              <li key={r.kind}>{delayReasonText(r, t)}</li>
             ))}
           </ul>
         </div>
