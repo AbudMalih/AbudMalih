@@ -77,7 +77,7 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
     <div className="flex flex-col gap-2 rounded-md border border-line bg-surface px-2.5 py-2 text-ink-2" data-testid="location-review">
       <div className="flex flex-wrap items-center gap-1.5">
         <MapPin className="size-3.5 text-subtle" />
-        <span className="font-medium">{t("map.lr.location")}</span>
+        <span className="font-medium g:text-ink">{t("map.lr.location")}</span>
         {badge && (
           <span data-testid="location-badge">
             <Badge tone={badge.tone}>{badge.label}</Badge>
@@ -119,14 +119,14 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
       )}
 
       {report?.confirmation && (
-        <div className="flex items-center gap-1.5 text-success-ink" data-testid="location-confirmation">
-          <CheckCircle2 className="size-3.5" /> {t("map.lr.confirmed", { at: at(report.confirmation.at, scoped.timeZone) })}
+        <div className="flex items-center gap-1.5 text-success-ink g:text-ink-2" data-testid="location-confirmation">
+          <CheckCircle2 className="size-3.5 g:text-success" /> {t("map.lr.confirmed", { at: at(report.confirmation.at, scoped.timeZone) })}
           {report.confirmation.note ? ` – ${report.confirmation.note}` : ""}
         </div>
       )}
       {report?.approach && (
         <div className="flex flex-wrap items-center gap-1.5" data-testid="location-approach">
-          <Navigation className="size-3.5 text-brand-600" />{" "}
+          <Navigation className="size-3.5 text-brand-600 g:text-muted" />{" "}
           {t("map.lr.approachLine", {
             road: report.approach.roadName || t("map.lr.approachPoint"),
             distance: report.approach.distanceMeters != null ? t("map.lr.approachDistance", { n: report.approach.distanceMeters }) : "",
@@ -272,7 +272,7 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
             </div>
           )}
           <label className="flex flex-col gap-1">
-            <span className="font-medium text-ink-2">{published ? t("map.lr.reasonRequired") : t("map.lr.reasonOptional")}</span>
+            <span className="font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">{published ? t("map.lr.reasonRequired") : t("map.lr.reasonOptional")}</span>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label={t("map.lr.reason")} maxLength={500} />
           </label>
         </div>
@@ -300,7 +300,7 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
         }
       >
         <label className="flex flex-col gap-1 text-[13px]">
-          <span className="font-medium text-ink-2">{t("map.lr.noteOptional")}</span>
+          <span className="font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">{t("map.lr.noteOptional")}</span>
           <Input value={note} onChange={(e) => setNote(e.target.value)} aria-label={t("map.lr.note")} maxLength={500} />
         </label>
       </Dialog>
@@ -342,7 +342,7 @@ export function LocationReview({ summary, stop, report }: { summary: TourSummary
               : t("map.lr.noPoint")}
           </div>
           <label className="flex flex-col gap-1">
-            <span className="font-medium text-ink-2">{published ? t("map.lr.reasonRequired") : t("map.lr.reasonOptional")}</span>
+            <span className="font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">{published ? t("map.lr.reasonRequired") : t("map.lr.reasonOptional")}</span>
             <Input value={reason} onChange={(e) => setReason(e.target.value)} aria-label={t("map.lr.approachReason")} maxLength={500} />
           </label>
         </div>

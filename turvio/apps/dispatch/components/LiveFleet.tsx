@@ -10,18 +10,21 @@ import { ageLabel, freshnessOf, freshnessLabel, type Freshness, type LiveVehicle
 import { useDispatch } from "../lib/store";
 
 const TONE: Record<Freshness, string> = {
-  live: "bg-success-soft text-success-ink",
+  live: "bg-success-soft text-success-ink g:text-ink-2",
   delayed: "bg-warning-soft text-warning-ink",
   offline: "bg-surface-3 text-muted",
 };
+/** G: status as a small static dot + text (no filled pill, no pulse). */
+const DOT: Record<Freshness, string> = { live: "bg-success", delayed: "bg-warning", offline: "bg-subtle" };
 
 export function FreshnessBadge({ recordedAt, serverNow }: { recordedAt: string; serverNow: number }) {
   const { t } = useI18n();
   const { state, ageSeconds } = freshnessOf(recordedAt, serverNow);
   const age = ageLabel(ageSeconds, t);
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold", TONE[state])} title={t("fleet.positionRecorded", { age })}>
-      {state === "live" && <span className="size-1.5 animate-pulse rounded-full bg-current" aria-hidden="true" />}
+    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold g:shrink-0 g:gap-1.5 g:bg-transparent g:px-0 g:py-0 g:text-[12px] g:font-normal", TONE[state])} title={t("fleet.positionRecorded", { age })}>
+      {state === "live" && <span className="size-1.5 animate-pulse rounded-full bg-current g:hidden" aria-hidden="true" />}
+      <span className={cn("hidden size-1.5 shrink-0 rounded-full g:inline-block", DOT[state])} aria-hidden="true" />
       {freshnessLabel(state, t)} · {age}
     </span>
   );
@@ -41,7 +44,7 @@ export function LiveFleetList({ vehicles, serverNow, onSelect }: { vehicles: Liv
       <ul className="flex flex-col divide-y divide-line rounded-md border border-line bg-surface">
         {sorted.map((v) => (
           <li key={v.driverId}>
-            <button onClick={() => onSelect(v)} className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-start hover:bg-surface-2">
+            <button onClick={() => onSelect(v)} className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-start hover:bg-surface-2 g:py-2 g:hover:bg-[var(--hover)]">
               <div className="min-w-0">
                 <div className="truncate text-[13px] font-medium text-ink">{v.driverName}</div>
                 <div className="truncate text-2xs text-muted">
@@ -73,40 +76,40 @@ export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; se
     <section className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3" aria-label={t("fleet.liveVehicle")}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", state === "live" ? "bg-brand-600 text-white" : state === "delayed" ? "bg-nx-amber text-white" : "bg-surface-3 text-muted")}>
+          <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full g:hidden", state === "live" ? "bg-brand-600 text-white" : state === "delayed" ? "bg-nx-amber text-white" : "bg-surface-3 text-muted")}>
             <Truck className="size-4" />
           </span>
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-ink">{v.driverName}</div>
-            <div className="truncate text-xs text-muted">{v.vehicle ? `${v.vehicle.label ?? ""} · ${v.vehicle.licensePlate ?? ""}` : t("fleet.noVehicleAssigned")}</div>
+            <div className="truncate text-sm font-semibold text-ink g:text-[13.5px]">{v.driverName}</div>
+            <div className="truncate text-xs text-muted g:text-[12px]">{v.vehicle ? `${v.vehicle.label ?? ""} · ${v.vehicle.licensePlate ?? ""}` : t("fleet.noVehicleAssigned")}</div>
           </div>
         </div>
         <FreshnessBadge recordedAt={v.recordedAt} serverNow={serverNow} />
       </div>
       {state !== "live" && (
-        <p className="rounded-md bg-warning-soft/70 px-2.5 py-1.5 text-xs text-warning-ink">
+        <p className="rounded-md bg-warning-soft/70 px-2.5 py-1.5 text-xs text-warning-ink g:border g:border-line-2 g:bg-transparent g:text-[12px]">
           {state === "delayed" ? t("fleet.delayedNote") : t("fleet.offlineNote")}
         </p>
       )}
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs g:gap-x-4 g:text-[12.5px]">
         <div>
-          <dt className="text-subtle">{t("fleet.progress")}</dt>
+          <dt className="text-subtle g:text-[12px] g:text-muted">{t("fleet.progress")}</dt>
           <dd className="font-medium text-ink">{t("fleet.progressValue", { done: v.progress.done, count: total, remaining: v.progress.remaining })}</dd>
         </div>
         <div>
-          <dt className="text-subtle">{t("fleet.gpsAccuracy")}</dt>
+          <dt className="text-subtle g:text-[12px] g:text-muted">{t("fleet.gpsAccuracy")}</dt>
           <dd className="font-medium text-ink">{v.position.accuracyMeters != null ? t("fleet.accuracyValue", { n: Math.round(v.position.accuracyMeters) }) : t("fleet.unknown")}</dd>
         </div>
         <div>
-          <dt className="text-subtle">{t("fleet.speed")}</dt>
+          <dt className="text-subtle g:text-[12px] g:text-muted">{t("fleet.speed")}</dt>
           <dd className="font-medium text-ink">{speedKmh != null ? t("fleet.speedValue", { n: speedKmh }) : "–"}</dd>
         </div>
         <div>
-          <dt className="text-subtle">{t("fleet.lastPosition")}</dt>
+          <dt className="text-subtle g:text-[12px] g:text-muted">{t("fleet.lastPosition")}</dt>
           <dd className="font-medium text-ink tabular">{fmt.time(v.recordedAt, true)}</dd>
         </div>
         <div className="col-span-2">
-          <dt className="text-subtle">{t("fleet.nextStop")}</dt>
+          <dt className="text-subtle g:text-[12px] g:text-muted">{t("fleet.nextStop")}</dt>
           <dd className="font-medium text-ink">
             {v.nextStop ? (
               <>
@@ -119,7 +122,7 @@ export function LiveVehiclePanel({ v, serverNow, onFocus }: { v: LiveVehicle; se
           </dd>
         </div>
       </dl>
-      <div className="rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-xs" aria-label={t("fleet.liveEta")} data-testid="live-eta">
+      <div className="rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-xs g:border-line-2 g:bg-transparent g:text-[12.5px]" aria-label={t("fleet.liveEta")} data-testid="live-eta">
         {proj && summary ? (
           <div className="flex flex-col gap-1">
             <div className="text-ink">

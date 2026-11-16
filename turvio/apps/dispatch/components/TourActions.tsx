@@ -29,10 +29,10 @@ export interface ActionTour {
 type Dialogs = null | "edit" | "duplicate" | "finish" | "cancel" | "archive" | "restore" | "delete" | "publish" | "withdraw";
 
 /** Phase G: 32 px native fields (fieldCls stays the shared classic style); textareas take gField only. */
-export const gField = "g:rounded-md g:border-line-2 g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600";
+export const gField = "g:rounded-md g:border-line-strong g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600";
 export const gControl = `${gField} g:h-8`;
 /** Phase G: notes in dialogs are bordered and quiet; the text keeps its meaning colour. */
-export const gNote = "g:border g:border-line-2 g:bg-surface-2";
+export const gNote = "g:border g:border-line-strong g:bg-surface-2";
 
 const plusDays = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 

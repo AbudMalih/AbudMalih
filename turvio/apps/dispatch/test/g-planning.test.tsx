@@ -43,7 +43,7 @@ function wrap(ui: ReactNode, v: "g" | "classic", locale: "en" | "de" | "ar" = "e
   );
 }
 
-/** Per tour: its name, the texts in it and the names of its controls (order-independent). */
+/** Per tour: its name, publish state, figures and the names of its controls (order-independent). */
 function tourGroups(container: HTMLElement) {
   return within(container)
     .getAllByRole("group", { name: /^Tour / })
@@ -53,7 +53,7 @@ function tourGroups(container: HTMLElement) {
         .getAllByRole("button")
         .map((b) => b.getAttribute("aria-label") ?? b.textContent?.trim())
         .sort(),
-      status: within(el).getByTestId("tour-status").textContent,
+      published: /Not published/.test(el.textContent ?? ""),
       figures: el.textContent?.match(/\d+ stops?|\d+ open|\d+ pickups?/g),
     }));
 }
@@ -67,7 +67,7 @@ describe("Phase G planning", () => {
     const g = wrap(<PlanningView />, "g");
     const b = tourGroups(g.container);
     expect(b.map((x) => x.name)).toEqual(a.map((x) => x.name));
-    expect(b.map((x) => x.status)).toEqual(a.map((x) => x.status));
+    expect(b.map((x) => x.published)).toEqual(a.map((x) => x.published));
     expect(b.map((x) => x.figures)).toEqual(a.map((x) => x.figures));
     // Optimize is an icon button with the same accessible name; every other control is identical.
     expect(b.map((x) => x.controls)).toEqual(a.map((x) => x.controls));

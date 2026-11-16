@@ -212,6 +212,7 @@
   --color-sidebar: var(--sidebar);
   --color-line: var(--line);
   --color-line-strong: var(--line-2);
+  --color-line-2: var(--line-2);
   --color-line-3: var(--line-3);
   --color-ink: var(--text);
   --color-ink-2: var(--text-2);

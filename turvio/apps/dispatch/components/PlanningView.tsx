@@ -31,6 +31,7 @@ function AssignMenu<T extends { id: string }>({
   render,
   onPick,
   disabled,
+  short,
 }: {
   kind: "driver" | "vehicle";
   icon: ReactNode;
@@ -40,15 +41,18 @@ function AssignMenu<T extends { id: string }>({
   render: (o: T) => string;
   onPick: (o: T | null) => void;
   disabled?: boolean;
+  /** G: shorter text for the trigger (the menu and the accessible name keep the full text). */
+  short?: (o: T) => string;
 }) {
   const t = useT();
+  const g = useDesignG();
   const label = t(`planning.${kind}`);
   return (
     <Menu>
       <MenuTrigger asChild disabled={disabled}>
-        <Button variant="secondary" size="sm" className={cn("w-full justify-start g:gap-1.5 g:px-2 g:font-normal g:text-ink-2 g:[&_svg]:text-subtle", !current && "border-nx-amber/30 bg-warning-soft/50 text-warning-ink g:border-dashed g:border-line-3 g:bg-transparent g:text-warning-ink")} aria-label={t("planning.assign.aria", { label, value: current ? render(current) : t("planning.assign.notAssigned") })}>
+        <Button variant="secondary" size="sm" className={cn("w-full justify-start g:gap-1.5 g:px-2 g:[&>svg:first-child:not(.animate-spin)]:hidden g:font-normal g:text-ink-2 g:[&_svg]:text-subtle", !current && "border-nx-amber/30 bg-warning-soft/50 text-warning-ink g:border-dashed g:border-line-3 g:bg-transparent g:text-warning-ink")} aria-label={t("planning.assign.aria", { label, value: current ? render(current) : t("planning.assign.notAssigned") })}>
           {icon}
-          <span className="truncate">{current ? render(current) : t(`planning.assign.${kind}`)}</span>
+          <span className="truncate">{current ? (g && short ? short(current) : render(current)) : t(`planning.assign.${kind}`)}</span>
           <ChevronDown className="ms-auto text-subtle g:size-3.5" />
         </Button>
       </MenuTrigger>
@@ -134,6 +138,7 @@ function TourCard({ s }: { s: TourSummary }) {
       options={vehicles}
       busyOf={vehicleBusyLabel}
       render={(v) => `${v.label} · ${v.licensePlate}`}
+      short={(v) => v.label}
       disabled={locked || busy !== null}
       onPick={(v) => void assign({ vehicleId: v?.id ?? null }, v ? t("planning.vehicleAssigned", { vehicle: v.label, tour: s.tour.name }) : t("planning.vehicleRemoved", { tour: s.tour.name }))}
     />
@@ -177,7 +182,7 @@ function TourCard({ s }: { s: TourSummary }) {
       <div
         role="group"
         aria-label={t("planning.tourName", { name: s.tour.name })}
-        className="relative grid grid-cols-2 items-center gap-x-3 gap-y-2 py-2 pe-2 ps-4 transition-colors hover:bg-[var(--hover)] @3xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.9fr)_auto] @3xl:gap-y-0"
+        className="relative grid grid-cols-2 items-center gap-x-3 gap-y-2 py-2 pe-2 ps-4 transition-colors hover:bg-[var(--hover)] @3xl:col-span-full @3xl:grid-cols-subgrid @3xl:gap-y-0"
       >
         <span className="absolute inset-y-2 start-0 w-[3px] rounded-e" style={{ backgroundColor: color }} aria-hidden="true" />
         <div className="min-w-0">
@@ -462,14 +467,15 @@ export function PlanningView() {
             />
           </Card>
         ) : (
-          <div className={cn("grid grid-cols-1 gap-4", g ? "xl:grid-cols-[minmax(0,1fr)_340px]" : "xl:grid-cols-[minmax(0,1fr)_380px]")}>
+          <div className={cn("grid grid-cols-1 gap-4", g ? "xl:grid-cols-[minmax(0,1fr)_320px]" : "xl:grid-cols-[minmax(0,1fr)_380px]")}>
             <section aria-label={t("planning.toursAria")} className="flex flex-col gap-3">
               {openTours.length === 0 ? (
                 <Card className="p-6 text-center text-[13px] text-muted g:p-5">{t("planning.noOpenTours")}</Card>
               ) : g ? (
                 // Phase G: one bordered surface, a row per tour divided by hairlines.
                 <div className="@container overflow-hidden rounded-lg border border-line bg-surface">
-                  <div className="divide-y divide-line">
+                  {/* Rows share the column widths (subgrid), so driver, vehicle and figures line up. */}
+                  <div className="divide-y divide-line @3xl:grid @3xl:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
                     {openTours.map((s) => (
                       <TourCard key={s.tour.id} s={s} />
                     ))}

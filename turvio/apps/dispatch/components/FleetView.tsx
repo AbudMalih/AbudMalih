@@ -13,11 +13,12 @@ import { roleLabel } from "./DispatchShell";
 
 type Tab = "drivers" | "vehicles" | "depots" | "team";
 const TABS: readonly Tab[] = ["drivers", "vehicles", "depots", "team"];
-const inputCls = "h-10 w-full rounded-xl border border-line-strong bg-surface px-3 text-sm font-medium text-ink hover:border-line-3 focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
+const inputCls =
+  "h-10 w-full rounded-xl border border-line-strong bg-surface px-3 text-sm font-medium text-ink hover:border-line-3 focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none g:h-8 g:rounded-md g:border-line-2 g:bg-surface-2 g:px-2.5 g:text-[13px] g:font-normal g:focus:border-brand-600";
 
 function F({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
-    <label className={cn("flex flex-col gap-1 text-[13px] font-medium text-ink-2", className)}>
+    <label className={cn("flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted", className)}>
       {label}
       {children}
     </label>
@@ -58,7 +59,7 @@ function FormDialog({ open, onOpenChange, title, submitLabel, onSubmit, valid = 
         </>
       }
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 g:gap-x-3 g:gap-y-2.5">{children}</div>
     </Dialog>
   );
 }
@@ -268,26 +269,26 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
             </select>
           </F>
           {role === "dispatcher" && (
-            <fieldset className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2">
+            <fieldset className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2 g:gap-1.5 g:text-[12px] g:font-normal g:text-muted">
               <legend className="mb-1">{t("fleet.scopeLegend")}</legend>
-              <label className="inline-flex items-center gap-1.5 font-normal">
+              <label className="inline-flex items-center gap-1.5 font-normal g:text-[13px] g:text-ink">
                 <input type="checkbox" className="accent-[var(--violet)]" checked={allLocations} onChange={(e) => setAllLocations(e.target.checked)} />
                 {t("fleet.allLocationsCompanyWide")}
               </label>
               <div className="flex flex-wrap gap-2">
                 {!allLocations && depots.map((d) => (
-                  <label key={d.id} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 font-normal">
+                  <label key={d.id} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 font-normal g:h-7 g:border-line-2 g:py-0 g:text-[13px] g:text-ink">
                     <input type="checkbox" className="accent-[var(--violet)]" checked={scope.includes(d.id)} onChange={(e) => setScope(e.target.checked ? [...scope, d.id] : scope.filter((x) => x !== d.id))} />
                     {d.name}
                   </label>
                 ))}
               </div>
-              {!allLocations && !scope.length && <p className="text-xs font-normal text-muted">{t("fleet.chooseLocation")}</p>}
+              {!allLocations && !scope.length && <p className="text-xs font-normal text-muted g:text-[12px]">{t("fleet.chooseLocation")}</p>}
             </fieldset>
           )}
         </>
       )}
-      {driver && <p className="text-xs text-muted sm:col-span-2">{t("fleet.driverInviteHint", { name: driver.displayName })}</p>}
+      {driver && <p className="text-xs text-muted sm:col-span-2 g:text-[12px]">{t("fleet.driverInviteHint", { name: driver.displayName })}</p>}
     </FormDialog>
   );
 }
@@ -353,14 +354,17 @@ export function FleetView() {
     }
   };
 
-  const th = "h-11 px-4 text-start font-bold";
+  const th = "h-11 px-4 text-start font-bold g:h-9";
+  // G: 36 px rows – compact cells, row hover, the row menu button does not add height.
+  const tr = "border-b border-line last:border-0 g:hover:bg-[var(--hover)]";
+  const rowMenu = "g:-my-1";
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 g:gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("shell.title.fleet")}</h1>
-            <p className="mt-1 text-sm text-ink-2">{session.companyWide ? session.organizationName : t("fleet.orgYourDepots", { org: session.organizationName })}</p>
+            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink g:text-[20px] g:font-semibold g:tracking-[-0.015em]">{t("shell.title.fleet")}</h1>
+            <p className="mt-1 text-sm text-ink-2 g:mt-0.5 g:text-[13px] g:text-muted">{session.companyWide ? session.organizationName : t("fleet.orgYourDepots", { org: session.organizationName })}</p>
           </div>
           <div className="flex gap-2">
             {tab === "drivers" && (
@@ -385,7 +389,7 @@ export function FleetView() {
             )}
           </div>
         </div>
-        <div className="flex gap-1 overflow-x-auto border-b border-line" role="tablist" aria-label={t("fleet.sections")}>
+        <div className="flex gap-1 overflow-x-auto border-b border-line g:gap-0.5" role="tablist" aria-label={t("fleet.sections")}>
           {tabs
             .filter((x) => x.show)
             .map((x) => (
@@ -395,13 +399,13 @@ export function FleetView() {
                 aria-selected={tab === x.key}
                 onClick={() => setTab(x.key)}
                 className={cn(
-                  "-mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium [&_svg]:size-4",
-                  tab === x.key ? "border-brand-600 text-ink" : "border-transparent text-muted hover:text-ink",
+                  "-mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-[13.5px] font-medium [&_svg]:size-4 g:h-9 g:gap-1.5 g:px-2.5 g:text-[13px] g:[&_svg]:hidden",
+                  tab === x.key ? "border-brand-600 text-ink g:border-ink" : "border-transparent text-muted hover:text-ink",
                 )}
               >
                 {x.icon}
                 {x.label}
-                {x.count !== undefined && <span className="rounded-full bg-surface-2 px-1.5 text-2xs tabular text-muted">{x.count}</span>}
+                {x.count !== undefined && <span className="rounded-full bg-surface-2 px-1.5 text-2xs tabular text-muted g:bg-transparent g:px-0 g:text-[12px]">{x.count}</span>}
               </button>
             ))}
         </div>
@@ -427,21 +431,21 @@ export function FleetView() {
                   </thead>
                   <tbody>
                     {drivers.map((d) => (
-                      <tr key={d.id} className="border-b border-line last:border-0">
+                      <tr key={d.id} className={tr}>
                         <td className="px-4 py-3">
-                          <span className="flex items-center gap-2.5 font-medium text-ink">
-                            <Avatar name={d.displayName} size="sm" />
+                          <span className="flex items-center gap-2.5 font-medium text-ink g:gap-2">
+                            <Avatar name={d.displayName} size="sm" className="g:size-5 g:text-[9px]" />
                             {d.displayName}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-ink-2">{depotName(d.depotId)}</td>
                         <td className="px-4 py-3 tabular text-ink-2">{t("fleet.hoursValue", { n: fmt.number(d.maxShiftMinutes / 60, 1) })}</td>
-                        <td className="px-4 py-3">{d.userId ? <Badge tone="success">{t("fleet.connected")}</Badge> : <Badge tone="outline">{t("fleet.noLogin")}</Badge>}</td>
-                        <td className="px-4 py-3">{d.active ? <Badge tone="success" dot>{t("fleet.active")}</Badge> : <Badge>{t("fleet.inactive")}</Badge>}</td>
+                        <td className="px-4 py-3">{d.userId ? <Badge tone="success" className="g:text-[13px]">{t("fleet.connected")}</Badge> : <Badge tone="outline" className="g:border-0 g:px-0 g:text-[13px]">{t("fleet.noLogin")}</Badge>}</td>
+                        <td className="px-4 py-3">{d.active ? <Badge tone="success" dot className="g:text-[13px]">{t("fleet.active")}</Badge> : <Badge className="g:text-[13px]">{t("fleet.inactive")}</Badge>}</td>
                         <td className="px-4 py-3 text-end">
                           <Menu>
                             <MenuTrigger asChild>
-                              <Button variant="ghost" size="icon-sm" aria-label={t("fleet.actionsFor", { name: d.displayName })}>
+                              <Button variant="ghost" size="icon-sm" className={rowMenu} aria-label={t("fleet.actionsFor", { name: d.displayName })}>
                                 <Ellipsis />
                               </Button>
                             </MenuTrigger>
@@ -483,18 +487,18 @@ export function FleetView() {
                   </thead>
                   <tbody>
                     {vehicles.map((v) => (
-                      <tr key={v.id} className="border-b border-line last:border-0">
+                      <tr key={v.id} className={tr}>
                         <td className="px-4 py-3 font-medium text-ink">{v.label}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-ink-2">
+                        <td className="px-4 py-3 font-mono text-xs text-ink-2 g:text-[12.5px]">
                           <bdi>{v.licensePlate}</bdi>
                         </td>
                         <td className="px-4 py-3 text-ink-2">{depotName(v.depotId)}</td>
                         <td className="px-4 py-3 tabular text-ink-2">{v.capacityParcels ?? "–"}</td>
-                        <td className="px-4 py-3">{v.active ? <Badge tone="success" dot>{t("fleet.active")}</Badge> : <Badge>{t("fleet.inactive")}</Badge>}</td>
+                        <td className="px-4 py-3">{v.active ? <Badge tone="success" dot className="g:text-[13px]">{t("fleet.active")}</Badge> : <Badge className="g:text-[13px]">{t("fleet.inactive")}</Badge>}</td>
                         <td className="px-4 py-3 text-end">
                           <Menu>
                             <MenuTrigger asChild>
-                              <Button variant="ghost" size="icon-sm" aria-label={t("fleet.actionsFor", { name: v.label })}>
+                              <Button variant="ghost" size="icon-sm" className={rowMenu} aria-label={t("fleet.actionsFor", { name: v.label })}>
                                 <Ellipsis />
                               </Button>
                             </MenuTrigger>
@@ -514,13 +518,13 @@ export function FleetView() {
           {tab === "depots" && (
             <ul className="divide-y divide-line">
               {scoped.depots.map((d) => (
-                <li key={d.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="inline-flex size-9 items-center justify-center rounded-md bg-navy text-white">
+                <li key={d.id} className="flex items-center gap-3 px-4 py-3 g:min-h-11 g:py-1.5 g:hover:bg-[var(--hover)]">
+                  <span className="inline-flex size-9 items-center justify-center rounded-md bg-navy text-white g:hidden">
                     <Warehouse className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] font-medium text-ink">{d.name}</div>
-                    <div className="text-xs text-muted">
+                    <div className="text-xs text-muted g:text-[12px]">
                       {d.address.street} {d.address.houseNumber}, {d.address.postalCode} {d.address.city} · {d.location.lat.toFixed(4)}, {d.location.lng.toFixed(4)}
                     </div>
                   </div>
@@ -531,7 +535,7 @@ export function FleetView() {
                   )}
                 </li>
               ))}
-              {!canDepots && <li className="px-4 py-3 text-xs text-muted">{t("fleet.depotsReadOnly")}</li>}
+              {!canDepots && <li className="px-4 py-3 text-xs text-muted g:py-2.5 g:text-[12px]">{t("fleet.depotsReadOnly")}</li>}
             </ul>
           )}
 
@@ -545,26 +549,26 @@ export function FleetView() {
                 <>
                   <ul className="divide-y divide-line">
                     {team.members.map((m) => (
-                      <li key={m.membershipId} className="flex items-center gap-3 px-4 py-3">
-                        <Avatar name={m.email} size="sm" />
+                      <li key={m.membershipId} className="flex items-center gap-3 px-4 py-3 g:min-h-11 g:py-1.5 g:hover:bg-[var(--hover)]">
+                        <Avatar name={m.email} size="sm" className="g:size-5 g:text-[9px]" />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-medium text-ink">{m.email}</div>
-                          <div className="text-xs text-muted">{memberScopeLabel(m, depotName, t)}</div>
+                          <div className="text-xs text-muted g:text-[12px]">{memberScopeLabel(m, depotName, t)}</div>
                         </div>
-                        <Badge tone={m.role === "owner" ? "brand" : "neutral"}>{roleLabel(m.role, t)}</Badge>
-                        {!m.active && <Badge>{t("fleet.inactive")}</Badge>}
+                        <Badge tone={m.role === "owner" ? "brand" : "neutral"} className="g:text-[13px] g:font-normal g:text-ink-2">{roleLabel(m.role, t)}</Badge>
+                        {!m.active && <Badge className="g:text-[13px] g:font-normal">{t("fleet.inactive")}</Badge>}
                       </li>
                     ))}
                   </ul>
                   {team.invitations.length > 0 && (
-                    <div className="border-t border-line bg-surface-2/40">
-                      <h3 className="px-4 pt-3 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">{t("fleet.pendingInvitations")}</h3>
+                    <div className="border-t border-line bg-surface-2/40 g:bg-transparent">
+                      <h3 className="px-4 pt-3 text-2xs font-semibold uppercase tracking-[0.1em] text-subtle g:border-b g:border-line g:pb-2 g:pt-2.5 g:text-[12px] g:font-medium g:text-ink-2">{t("fleet.pendingInvitations")}</h3>
                       <ul className="divide-y divide-line">
                         {team.invitations.map((i) => (
-                          <li key={i.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px]">
-                            <Mail className="size-4 text-subtle" />
+                          <li key={i.id} className="flex items-center gap-3 px-4 py-2.5 text-[13px] g:min-h-9 g:py-1 g:hover:bg-[var(--hover)]">
+                            <Mail className="size-4 text-subtle g:hidden" />
                             <span className="min-w-0 flex-1 truncate">{i.email}</span>
-                            <Badge tone="outline">{roleLabel(i.role, t)}</Badge>
+                            <Badge tone="outline" className="g:border-0 g:px-0 g:text-[13px] g:font-normal g:text-ink-2">{roleLabel(i.role, t)}</Badge>
                             <Button
                               size="sm"
                               variant="ghost"

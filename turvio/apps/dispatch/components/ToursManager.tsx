@@ -152,7 +152,7 @@ export function ToursManager({ archived }: { archived: ArchivedFilter }) {
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-3 p-4 g:gap-2 g:rounded-none g:border-0 g:bg-transparent g:p-0">
         <div className="flex flex-wrap items-end gap-2 g:items-center">
-          <div className="flex rounded-xl border border-line bg-surface-2 p-0.5 g:h-8 g:items-center g:rounded-md g:border-line-2 g:p-[2px]" role="tablist" aria-label={t("tours.m.period")}>
+          <div className="flex rounded-xl border border-line bg-surface-2 p-0.5 g:h-8 g:items-center g:rounded-md g:border-line-strong g:p-[2px]" role="tablist" aria-label={t("tours.m.period")}>
             {(["day", "range", "month"] as const).map((m) => (
               <button
                 key={m}
@@ -291,7 +291,7 @@ export function ToursManager({ archived }: { archived: ArchivedFilter }) {
       </Card>
 
       {selectedCount > 0 && (
-        <div className="sticky top-16 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-2.5 shadow-card g:min-h-10 g:gap-1 g:rounded-md g:border-line-2 g:bg-surface g:px-3 g:py-1 g:shadow-none" role="region" aria-label={t("tours.m.bulkRegion")}>
+        <div className="sticky top-16 z-10 flex flex-wrap items-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-2.5 shadow-card g:min-h-10 g:gap-1 g:rounded-md g:border-line-strong g:bg-surface g:px-3 g:py-1 g:shadow-none" role="region" aria-label={t("tours.m.bulkRegion")}>
           <span className="text-[13px] font-bold text-brand-700 g:font-medium g:text-ink g:tabular" data-testid="selection-count">
             {t(selection.mode === "all" ? "tours.m.selectedAll" : "tours.m.selected", { count: selectedCount })}
           </span>
@@ -402,8 +402,8 @@ export function ToursManager({ archived }: { archived: ArchivedFilter }) {
                       <td className="px-3 text-end tabular g:whitespace-nowrap">
                         <span className="g:inline-flex g:flex-row-reverse g:items-baseline g:gap-1.5">
                           {r.stops.delivered}
-                          {r.stops.notDelivered > 0 && <span className="block text-2xs text-danger-ink g:text-[12px]">{t("tours.m.notDelivered", { count: r.stops.notDelivered })}</span>}
-                          {r.stops.cancelled > 0 && <span className="block text-2xs text-muted g:text-[12px]">{t("tours.m.cancelledCount", { count: r.stops.cancelled })}</span>}
+                          {r.stops.notDelivered > 0 && <span className="block text-2xs text-danger-ink g:text-[12px] g:after:ms-1.5 g:after:text-subtle g:after:content-['·']">{t("tours.m.notDelivered", { count: r.stops.notDelivered })}</span>}
+                          {r.stops.cancelled > 0 && <span className="block text-2xs text-muted g:text-[12px] g:after:ms-1.5 g:after:text-subtle g:after:content-['·']">{t("tours.m.cancelledCount", { count: r.stops.cancelled })}</span>}
                         </span>
                       </td>
                       <td className="px-3 text-end tabular">{r.stops.open}</td>

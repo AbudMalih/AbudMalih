@@ -87,6 +87,12 @@ export function ListView() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE));
   const p = Math.min(page, pageCount - 1);
   const rows = filtered.slice(p * PAGE, p * PAGE + PAGE);
+  const finishNote = (s: TourSummary) =>
+    s.status === "completed"
+      ? t("map.list.finished")
+      : scheduledFinishLabel(s.timeline.projection, t)
+        ? t("map.list.departingNow", { scheduled: scheduledFinishLabel(s.timeline.projection, t)! })
+        : t("map.list.shiftUntil", { finish: lower(finishShort(s.tour, s.timeline.projection, t)), time: formatClock(s.timeline.shiftEndMinute) });
   const onSort = (k: ListSort) => {
     setDir(sort === k && dir === "asc" ? "desc" : "asc");
     setSort(k);
@@ -203,14 +209,14 @@ export function ListView() {
                       <td className="px-3 py-3 tabular g:whitespace-nowrap g:text-end">
                         <span className="g:inline-flex g:flex-row-reverse g:items-baseline g:gap-1.5">
                           {s.completed}
-                          {s.failed > 0 && <span className="block text-2xs text-danger-ink g:text-[12px]">{t("map.list.failed", { n: s.failed })}</span>}
+                          {s.failed > 0 && <span className="block text-2xs text-danger-ink g:text-[12px] g:after:ms-1.5 g:after:text-subtle g:after:content-['·']">{t("map.list.failed", { n: s.failed })}</span>}
                         </span>
                       </td>
                       <td className="px-3 py-3 tabular g:text-end">{s.remaining}</td>
                       <td className="px-3 py-3 tabular g:whitespace-nowrap g:text-end">
                         <span className="g:inline-flex g:flex-row-reverse g:items-baseline g:gap-1.5">
                           {s.pickups}
-                          {s.pickupsRemaining > 0 && <span className="block text-2xs text-muted g:text-[12px]">{t("map.list.open", { n: s.pickupsRemaining })}</span>}
+                          {s.pickupsRemaining > 0 && <span className="block text-2xs text-muted g:text-[12px] g:after:ms-1.5 g:after:text-subtle g:after:content-['·']">{t("map.list.open", { n: s.pickupsRemaining })}</span>}
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3 g:ps-6">
@@ -221,12 +227,8 @@ export function ListView() {
                           {s.status === "completed" ? formatClock(s.timeline.projectedEndMinute) : finishValue(s.timeline.projection)}
                           {s.status !== "completed" && s.timeline.projection.source === "estimate" ? t("map.list.est") : ""}
                         </span>
-                        <span className="block text-2xs text-muted g:ms-2 g:inline g:text-[12px]">
-                          {s.status === "completed"
-                            ? t("map.list.finished")
-                            : scheduledFinishLabel(s.timeline.projection, t)
-                              ? t("map.list.departingNow", { scheduled: scheduledFinishLabel(s.timeline.projection, t)! })
-                              : t("map.list.shiftUntil", { finish: lower(finishShort(s.tour, s.timeline.projection, t)), time: formatClock(s.timeline.shiftEndMinute) })}
+                        <span className="block text-2xs text-muted g:ms-2 g:inline-block g:max-w-[150px] g:truncate g:align-bottom g:text-[12px]" title={finishNote(s)}>
+                          {finishNote(s)}
                         </span>
                       </td>
                     </tr>
