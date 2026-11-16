@@ -1,3 +1,4 @@
+import { diffTours, type TourChange } from "../lib/tourChanges";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   addStop as addStopToList,
@@ -67,6 +68,8 @@ export interface Prefs {
 export interface FailedItem {
   item: OutboxItem;
   error: string;
+  /** Server refusal code (e.g. tour_closed, stop_cancelled) – shown in the driver's language. */
+  code?: string;
   at: string;
 }
 
@@ -112,6 +115,9 @@ export interface TourState extends SyntheticDataset {
   syncState: SyncState;
   syncMessage: string | null;
   lastSyncAt: string | null;
+  /** Changes dispatch made since the last sync, shown to the driver until acknowledged. */
+  dispatchChanges: TourChange[];
+  clearDispatchChanges(): void;
 
   setLocale(locale: Locale): void;
   setPrefs(p: Partial<Prefs>): void;
@@ -223,6 +229,8 @@ export const useTourStore = create<TourState>()(
         failed: [],
         syncState: "idle",
         syncMessage: null,
+        dispatchChanges: [],
+        clearDispatchChanges: () => set({ dispatchChanges: [] }),
         lastSyncAt: null,
 
         setLocale: (locale) => set({ locale }),
@@ -583,7 +591,7 @@ export const useTourStore = create<TourState>()(
           await stopTracking().catch(() => undefined);
           await auth().logout();
           for (const o of get().outbox) if (o.kind === "proof" && o.fileUri) await fileDeps.deleteFile(o.fileUri).catch(() => undefined);
-          set({ ...EMPTY_SERVER, user: null, outbox: [], failed: [], scans: {}, activeTourId: null, settingsByOrg: {}, lastSyncAt: null, lastOptimization: null, syncState: "idle", syncMessage: null });
+          set({ ...EMPTY_SERVER, user: null, outbox: [], failed: [], scans: {}, activeTourId: null, settingsByOrg: {}, lastSyncAt: null, lastOptimization: null, syncState: "idle", syncMessage: null, dispatchChanges: [] });
         },
 
         sync: async () => {
@@ -614,7 +622,15 @@ export const useTourStore = create<TourState>()(
               const localTours = get().tours;
               const snap = applyOutbox(snapshotFrom(payload, get().driverId, get()), get().outbox, localTours);
               const active = get().activeTourId;
-              set({ ...snap, activeTourId: active && snap.tours.some((t) => t.id === active) ? active : null, syncState: "idle", lastSyncAt: now() });
+              // Never replace the driver's route silently: what dispatch changed is shown to them.
+              const changes = get().lastSyncAt ? diffTours({ tours: localTours, stops: get().stops }, snap, get().outbox) : [];
+              set({
+                ...snap,
+                activeTourId: active && snap.tours.some((t) => t.id === active) ? active : null,
+                syncState: "idle",
+                lastSyncAt: now(),
+                ...(changes.length ? { dispatchChanges: [...get().dispatchChanges, ...changes].slice(-20) } : {}),
+              });
               for (const t of snap.tours) if (t.status !== "completed") void get().loadRoad(t.id);
             } catch (e) {
               const offline = isTransient(e);
@@ -653,6 +669,7 @@ export const useTourStore = create<TourState>()(
         user: s.user,
         outbox: s.outbox,
         failed: s.failed,
+        dispatchChanges: s.dispatchChanges,
         lastSyncAt: s.lastSyncAt,
       }),
     },

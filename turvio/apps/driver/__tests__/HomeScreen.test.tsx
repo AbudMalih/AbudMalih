@@ -40,4 +40,14 @@ describe("HomeScreen", () => {
     expect(screen.getByText("Tour starten")).toBeTruthy();
     expect(screen.getByText("Pakete scannen")).toBeTruthy();
   });
+
+  it("Phase E: no persistent live-location banner on Today, also while tracking runs (OS notification stays the disclosure)", async () => {
+    const { useTrackingStatus } = require("../src/lib/tracking") as typeof import("../src/lib/tracking");
+    useTrackingStatus.setState({ state: "active", buffered: 0 });
+    const r = await render(<HomeScreen />);
+    expect(r.queryByTestId("tracking-pill")).toBeNull();
+    expect(r.queryByText("Live location on")).toBeNull();
+    useTrackingStatus.setState({ state: "off" });
+  });
 });
+

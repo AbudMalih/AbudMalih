@@ -25,8 +25,8 @@ export function useTourTracking() {
       void stopTracking();
       return;
     }
-    // Ask for permissions once per tour start; later checks only read them.
-    const request = askedFor.current !== key;
+    // Permissions are never requested here: the live-location set-up explains them first
+    // (prominent disclosure) and opens when something is missing (TrackingSetupHost).
     askedFor.current = key;
     void startTracking(
       {
@@ -36,7 +36,7 @@ export function useTourTracking() {
         notificationTitle: t("tracking.notificationTitle"),
         notificationBody: t("tracking.notificationBody", { tour: onRoad.name }),
       },
-      { requestPermissions: request },
+      { requestPermissions: false },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);

@@ -159,7 +159,7 @@ export const backoffMs = (attempts: number) => Math.min(5 * 60_000, 2_000 * 2 **
 export interface DrainResult {
   sent: string[];
   /** Rejected by the server (permanent) – shown to the driver, never silently dropped. */
-  failed: { item: OutboxItem; error: string }[];
+  failed: { item: OutboxItem; error: string; code?: string }[];
   /** Stopped because the network/server is unavailable. */
   offline: boolean;
   error?: string;
@@ -199,7 +199,7 @@ export async function drainOutbox(
         break;
       }
       remove(item.id);
-      result.failed.push({ item: { ...item, lastError: message }, error: message });
+      result.failed.push({ item: { ...item, lastError: message }, error: message, ...(e instanceof ApiError && e.code ? { code: e.code } : {}) });
     }
   }
   return result;

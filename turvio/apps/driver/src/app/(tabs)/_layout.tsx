@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TrackingNoticeHost } from "../../components/Tracking";
+import { TrackingSetupHost } from "../../components/TrackingSetup";
+import { DispatchChangesHost } from "../../components/DispatchChanges";
 import { GRADIENTS, GradientFill, Ionicons, gradientSurface, type IconName } from "../../components/ui";
 import { useTourTracking } from "../../lib/useTourTracking";
 import { useT } from "../../lib/i18n";
@@ -99,6 +101,8 @@ export default function TabLayout() {
   return (
     <>
     <TrackingNoticeHost />
+    <TrackingSetupHost />
+    <DispatchChangesHost />
     <Tabs
       tabBar={(props) => <NextTabBar {...props} />}
       screenOptions={{

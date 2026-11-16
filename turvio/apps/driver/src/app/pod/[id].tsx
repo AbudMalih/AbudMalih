@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { Image, Platform, Text, View } from "react-native";
 import { SignaturePad } from "../../components/SignaturePad";
-import { Banner, Button, Card, Field, Screen, SectionTitle } from "../../components/ui";
+import { Banner, Button, Card, Field, Screen, SectionTitle, EmptyState } from "../../components/ui";
 import { storePrivateCopy } from "../../lib/files";
 import { feedback } from "../../lib/haptics";
 import { uuid } from "../../lib/ids";
@@ -29,7 +29,7 @@ export default function ProofOfDelivery() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const onSignature = useCallback((svg: string | null) => setSignature(svg), []);
-  if (!stop) return null;
+  if (!stop) return <EmptyState icon="alert-circle-outline" title={t("stop.gone")} />;
 
   const takePhoto = async () => {
     setError(null);

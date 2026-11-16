@@ -1,3 +1,4 @@
+import { PILOT_MAX } from "./settings";
 import { isOpen, minuteOfDay, nowInZone, projectTour, sortBySequence, type DispatchDataset } from "@turvio/shared";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -274,7 +275,7 @@ export function registerTrackingRoutes(app: FastifyInstance, { deps, guards }: R
       z.object({
         mode: z.enum(["off", "pilot", "active_tours"]).optional(),
         /** Pilot mode: the only drivers that are tracked (e.g. the owner's own test account). */
-        pilotDriverIds: z.array(Uuid).max(20).optional(),
+        pilotDriverIds: z.array(Uuid).max(PILOT_MAX).optional(),
         /** Pilot mode: each pilot driver agreed to be tracked for testing and read the notice. */
         confirmPilotConsent: z.literal(true).optional(),
         intervalSeconds: z.number().int().min(5).max(60).optional(),

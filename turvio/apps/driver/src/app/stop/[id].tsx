@@ -31,7 +31,7 @@ export default function StopDetail() {
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (!stop || !tour) return <EmptyState icon="alert-circle-outline" title="—" />;
+  if (!stop || !tour) return <EmptyState icon="alert-circle-outline" title={t("stop.gone")} />;
   const open = isOpen(stop.status);
   const index = stops.filter((s) => s.tourId === stop.tourId).sort((a, b) => a.sequence - b.sequence).findIndex((s) => s.id === stop.id);
   const pendingProofs = pendingProofIds(outbox);

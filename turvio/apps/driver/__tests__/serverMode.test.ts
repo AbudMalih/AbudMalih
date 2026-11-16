@@ -27,6 +27,8 @@ function memoryStore(): TokenStore {
   return { get: async (k) => m.get(k) ?? null, set: async (k, v) => void m.set(k, v), remove: async (k) => void m.delete(k) };
 }
 
+/** What the server returns for /v1/me/tours (tests change it to simulate dispatch). */
+let serverView: (p: { tours: MyTour[] }) => { tours: MyTour[] } = (p) => p;
 let online = true;
 let calls: { method: string; url: string; body?: Record<string, unknown>; auth?: string }[] = [];
 let accessValid = true;
@@ -50,7 +52,7 @@ const fetchMock = jest.fn(async (url: string, init?: RequestInit) => {
   }
   if (url.endsWith("/v1/auth/logout")) return json(204, {});
   if (!accessValid) return json(401, { error: { code: "unauthenticated" } });
-  if (url.endsWith("/v1/me/tours") && method === "GET") return json(200, payload());
+  if (url.endsWith("/v1/me/tours") && method === "GET") return json(200, serverView(payload()));
   if (url.includes("/location-checks") && method === "GET")
     return json(200, { checks: [{ stopId: stops[1]!.id, status: "checked", severity: "warning", issues: [{ code: "motorway", severity: "warning", message: "On a motorway." }], acknowledged: false }] });
   if (method === "POST") {
@@ -73,6 +75,7 @@ afterAll(() => {
   delete process.env.EXPO_PUBLIC_API_URL;
 });
 beforeEach(async () => {
+  serverView = (p) => p;
   online = true;
   accessValid = true;
   rejectWith = null;
@@ -81,7 +84,7 @@ beforeEach(async () => {
   calls = [];
   serverSeen.clear();
   setAuthClient(createAuthClient({ baseUrl: "http://api.test", store: memoryStore(), fetchImpl: fetchMock }));
-  useTourStore.setState({ user: null, outbox: [], failed: [], tours: [], stops: [], scans: {}, syncState: "idle", syncMessage: null, settingsByOrg: {} });
+  useTourStore.setState({ user: null, outbox: [], failed: [], tours: [], stops: [], scans: {}, syncState: "idle", syncMessage: null, settingsByOrg: {}, dispatchChanges: [], lastSyncAt: null });
   await useTourStore.getState().signIn("felix@jarbou.test", "secret-123456");
   calls = [];
 });
@@ -243,4 +246,53 @@ describe("driver server mode", () => {
     expect(merged.stops.find((s) => s.id === stops[2]!.id)!.parcels[0]!.loadedAt).toBeDefined();
     expect(snap.stops.find((s) => s.id === stops[0]!.id)!.status).toBe("pending");
   });
+
+  // ---------------------------------------------------------------- Phase E: remote changes
+  const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  const asToday = (p: { tours: MyTour[] }) => ({ tours: p.tours.map((x) => ({ ...x, tour: { ...x.tour, date: today() } })) });
+
+  it("Phase E: what dispatch changed is shown after the next sync – never on the first load, never silently", async () => {
+    serverView = asToday;
+    await useTourStore.getState().sync();
+    expect(useTourStore.getState().dispatchChanges).toEqual([]);
+    // Dispatch cancelled one stop (it leaves the feed) and re-ordered nothing else.
+    serverView = (p) => ({ tours: asToday(p).tours.map((x) => ({ ...x, stops: x.stops.filter((st) => st.id !== stops[0]!.id) })) });
+    await useTourStore.getState().sync();
+    expect(useTourStore.getState().dispatchChanges).toEqual([{ kind: "stops_removed", tourId: tour.id, tourName: "KAS-01", count: 1 }]);
+    expect(useTourStore.getState().stops.some((st) => st.id === stops[0]!.id)).toBe(false);
+    useTourStore.getState().clearDispatchChanges();
+    // Dispatch cancelled / withdrew the tour: it leaves the list, the driver is told.
+    serverView = () => ({ tours: [] });
+    await useTourStore.getState().sync();
+    expect(useTourStore.getState().dispatchChanges).toEqual([{ kind: "removed", tourId: tour.id, tourName: "KAS-01" }]);
+    expect(useTourStore.getState().tours).toEqual([]);
+  });
+
+  it("Phase E: finished by dispatch – the driver sees it with the reason; offline actions from before are still sent", async () => {
+    serverView = asToday;
+    await useTourStore.getState().sync();
+    online = false;
+    useTourStore.getState().tourAction(tour.id, "start");
+    useTourStore.getState().setStopStatus(stops[0]!.id, "delivered");
+    online = true;
+    serverView = (p) => ({ tours: asToday(p).tours.map((x) => ({ ...x, tour: { ...x.tour, status: "completed" as const, closedRemotely: true, closeReason: "Schicht beendet" } })) });
+    await useTourStore.getState().sync();
+    // The queued start and delivery were sent (the server decides by their time).
+    expect(posts().filter((c) => c.url.includes("/status"))).toHaveLength(2);
+    expect(useTourStore.getState().dispatchChanges).toEqual([{ kind: "finished", tourId: tour.id, tourName: "KAS-01", reason: "Schicht beendet" }]);
+    expect(useTourStore.getState().tours[0]!.status).toBe("completed");
+  });
+
+  it("Phase E: a refusal because dispatch closed the tour is kept with its code (shown in the driver's language)", async () => {
+    rejectWith = 422;
+    useTourStore.getState().setStopStatus(stops[0]!.id, "delivered");
+    const realFetch = fetchMock as unknown as jest.Mock;
+    realFetch.mockImplementationOnce(async (url: string, init?: RequestInit) => {
+      calls.push({ method: init?.method ?? "GET", url });
+      return { ok: false, status: 409, json: async () => ({ error: { code: "tour_closed", message: "The tour is closed" } }) } as Response;
+    });
+    await useTourStore.getState().sync();
+    expect(useTourStore.getState().failed.at(-1)).toMatchObject({ code: "tour_closed", error: "The tour is closed" });
+  });
 });
+

@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NavigateButton } from "../../components/NavigateButton";
 import { StopCard } from "../../components/StopCard";
 import { SyncPill } from "../../components/SyncPill";
-import { TrackingPill } from "../../components/Tracking";
 import { ActionTile, Banner, Button, Card, EmptyState, GRADIENTS, GradientFill, Ionicons, Pill, SectionTitle, gradientSurface, solidSurfaces, type IconName } from "../../components/ui";
 import Svg, { ClipPath, Defs, G, LinearGradient, Line, Rect, Stop as SvgStop } from "react-native-svg";
 import { km } from "../../lib/format";
@@ -71,7 +70,6 @@ export default function HomeScreen() {
         </View>
         <View style={{ alignItems: "flex-end", gap: space.xs }}>
           <SyncPill />
-          <TrackingPill />
         </View>
       </View>
       {!isServerMode() && <Text style={[ty.small, { color: c.warningInk }]}>{t("home.syntheticBanner")}</Text>}

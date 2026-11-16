@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { create } from "zustand";
 import { Linking, Pressable, Text, View } from "react-native";
 import { useT } from "../lib/i18n";
 import { acknowledgeNotice, startTracking, useTrackingStatus } from "../lib/tracking";
+import { openTrackingSetup, useTrackingSetup } from "../lib/trackingOnboarding";
 import { useTourStore } from "../store/tourStore";
 import { useMyTour } from "../store/useMyTour";
 import { radii, space, type as ty, useTheme } from "../theme";
@@ -12,13 +13,12 @@ import { Banner, Button, Ionicons, Sheet } from "./ui";
 export const useNoticeSheet = create<{ open: boolean }>(() => ({ open: false }));
 export const openTrackingNotice = () => useNoticeSheet.setState({ open: true });
 
-/** Mounted once (tab layout): shows the notice when tracking waits for it, once per occurrence. */
+/**
+ * Mounted once (tab layout): the notice for re-reading it from Settings. Opening it automatically
+ * when something is missing is the job of the live-location set-up (TrackingSetupHost).
+ */
 export function TrackingNoticeHost() {
   const open = useNoticeSheet((s) => s.open);
-  const state = useTrackingStatus((s) => s.state);
-  useEffect(() => {
-    if (state === "notice_required") openTrackingNotice();
-  }, [state]);
   return <TrackingNoticeSheet visible={open} onClose={() => useNoticeSheet.setState({ open: false })} />;
 }
 
@@ -95,6 +95,7 @@ export function TrackingSettingsSection({ onReadNotice = openTrackingNotice }: {
   const t = useT();
   const { c } = useTheme();
   const s = useTrackingStatus();
+  const setup = useTrackingSetup((x) => x.status);
   const user = useTourStore((x) => x.user);
   if (!user) return null;
   const text =
@@ -115,7 +116,13 @@ export function TrackingSettingsSection({ onReadNotice = openTrackingNotice }: {
         <Ionicons name={s.state === "active" ? "radio" : "radio-outline"} size={18} color={s.state === "active" ? c.successInk : c.textMuted} />
         <Text style={[ty.body, { color: c.text, flex: 1 }]}>{text}</Text>
       </View>
-      {s.state === "permission_denied" && <Button label={t("tracking.openSettings")} variant="secondary" icon="settings-outline" onPress={() => void Linking.openSettings()} />}
+      {setup && setup.missing.length > 0 && (
+        <>
+          <Text style={[ty.small, { color: c.warningInk }]}>{t("setup.incomplete")}</Text>
+          <Button label={t("setup.finish")} variant="secondary" icon="location-outline" onPress={() => openTrackingSetup(setup)} testID="tracking-setup-open" />
+        </>
+      )}
+      {s.state === "permission_denied" && !setup?.missing.length && <Button label={t("tracking.openSettings")} variant="secondary" icon="settings-outline" onPress={() => void Linking.openSettings()} />}
       {(s.state === "notice_required" || s.state === "active") && <Button label={t("tracking.noticeTitle")} variant="ghost" onPress={onReadNotice} />}
     </View>
   );

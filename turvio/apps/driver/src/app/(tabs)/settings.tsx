@@ -60,7 +60,7 @@ export default function SettingsScreen() {
               <SectionTitle>{t("settings.failed")}</SectionTitle>
               {s.failed.map((f) => (
                 <View key={f.item.id} style={{ gap: space.xs }}>
-                  <Banner text={`${f.item.kind}: ${f.error}`} tone="danger" />
+                  <Banner text={f.code === "tour_closed" ? t("sync.tourClosed") : f.code === "stop_cancelled" ? t("sync.stopCancelled") : `${f.item.kind}: ${f.error}`} tone="danger" />
                   <View style={{ flexDirection: "row", gap: space.sm }}>
                     <Button label={t("common.retry")} variant="secondary" onPress={() => s.retryFailed(f.item.id)} style={{ flex: 1 }} />
                     <Button label={t("common.discard")} variant="danger" onPress={() => void s.discardFailed(f.item.id)} style={{ flex: 1 }} />
