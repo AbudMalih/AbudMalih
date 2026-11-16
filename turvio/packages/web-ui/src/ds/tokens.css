@@ -221,6 +221,10 @@
   [dir="rtl"] body {
     font-family: var(--font-arabic);
   }
+  /* Arabic letters join: letter-spacing (tracking utilities) would break the words apart. */
+  [dir="rtl"] body :not(code, kbd, pre, .tabular) {
+    letter-spacing: normal !important;
+  }
   ::selection {
     background: var(--brand-200-mix);
   }

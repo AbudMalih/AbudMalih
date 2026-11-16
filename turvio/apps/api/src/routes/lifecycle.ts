@@ -1,3 +1,4 @@
+import { EXPORT_LANGS, localizeHeadings } from "../export-i18n";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { can, type Permission } from "@turvio/shared";
@@ -331,7 +332,7 @@ export function registerLifecycleRoutes(app: FastifyInstance, { deps, guards }: 
   /** CSV / Excel of the filtered tour list (e.g. the Archived Tours view). Logged. */
   app.get("/v1/orgs/:orgId/tours/export", { preHandler: guards.requireTenant("reports.export") }, async (req, reply) => {
     const { orgId } = OrgParams.parse(req.params);
-    const q = parse(ListQuery.and(z.object({ format: z.enum(["csv", "xlsx"]).default("csv") })), req.query, reply);
+    const q = parse(ListQuery.and(z.object({ format: z.enum(["csv", "xlsx"]).default("csv"), lang: z.enum(EXPORT_LANGS).default("en") })), req.query, reply);
     if (!q) return;
     const out = await db.asUser(claims(req), async (tx) => {
       const range = rangeOf(q, await companyToday(tx, orgId));
@@ -348,7 +349,7 @@ export function registerLifecycleRoutes(app: FastifyInstance, { deps, guards }: 
           r.stops_total, r.stops_open, r.stops_done, r.stops_not_done, r.stops_cancelled, r.stops_skipped];
       }),
     ];
-    return sendTable(reply, table, `turvio-tours-${q.archived}-${out.range.from}_${out.range.to}`, q.format);
+    return sendTable(reply, localizeHeadings(table, q.lang), `turvio-tours-${q.archived}-${out.range.from}_${out.range.to}`, q.format);
   });
 
   /** Per-day counts for the calendar jump (month view). */

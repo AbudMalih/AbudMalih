@@ -1,3 +1,4 @@
+import { EXPORT_LANGS, heading, localizeHeadings, type ExportLang } from "../export-i18n";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { toCsv, toXlsx, type Cell } from "@turvio/shared";
@@ -409,11 +410,11 @@ export function registerAnalyticsRoutes(app: FastifyInstance, { deps, guards }: 
   /** CSV / Excel of one view, same filters. Logged (who exported what, when). */
   app.get("/v1/orgs/:orgId/analytics/export", { preHandler: guards.requireTenant("reports.export") }, async (req, reply) => {
     const { orgId } = OrgParams.parse(req.params);
-    const q = parse(Query.and(z.object({ view: z.enum(EXPORT_VIEWS), format: z.enum(["csv", "xlsx"]).default("csv") })), req.query, reply);
+    const q = parse(Query.and(z.object({ view: z.enum(EXPORT_VIEWS), format: z.enum(["csv", "xlsx"]).default("csv"), lang: z.enum(EXPORT_LANGS).default("en") })), req.query, reply);
     if (!q) return;
     const table = await db.asUser(claims(req), async (tx) => {
       const ctx = await analyticsContext(tx, orgId, q);
-      const rows = await exportRows(tx, q.view, ctx.params, ctx.granularity);
+      const rows = localizeHeadings(await exportRows(tx, q.view, ctx.params, ctx.granularity, q.lang), q.lang);
       return { ctx, rows };
     });
     await db.asService((tx) => tx.query(`select app.log_read($1, $2, 'analytics_export', $3)`, [orgId, req.user!.userId, `${q.view}:${table.ctx.range.from}..${table.ctx.range.to}`]));
@@ -423,7 +424,7 @@ export function registerAnalyticsRoutes(app: FastifyInstance, { deps, guards }: 
 
 const pct = (v: number | null) => (v === null ? null : Math.round(v * 1000) / 10);
 
-async function exportRows(tx: Tx, view: (typeof EXPORT_VIEWS)[number], p: unknown[], granularity: "day" | "week" | "month"): Promise<Cell[][]> {
+async function exportRows(tx: Tx, view: (typeof EXPORT_VIEWS)[number], p: unknown[], granularity: "day" | "week" | "month", lang: ExportLang = "en"): Promise<Cell[][]> {
   const stopHead = ["Stops", "Delivered", "Picked up", "Failed", "Attempted", "Rescheduled", "Returned", "Skipped", "Cancelled", "Open", "Processed", "Success rate %"];
   const stopCells = (r: ReturnType<typeof stopFigures>): Cell[] => [r.stops, r.delivered, r.pickedUp, r.failed, r.attempted, r.rescheduled, r.returned, r.skipped, r.cancelled, r.open, r.processed, pct(r.successRate)];
   const tourHead = ["Tours", "Started", "Completed", "Cancelled tours", "Completion rate %", "On-time start rate %", "Avg tour minutes", "Active hours", "Stops per tour", "Stops per active hour"];
@@ -431,7 +432,7 @@ async function exportRows(tx: Tx, view: (typeof EXPORT_VIEWS)[number], p: unknow
   switch (view) {
     case "drivers": {
       const rows = await driverTable(tx, p);
-      return [["Driver", ...stopHead, ...tourHead], ...rows.map((r) => [r.name ?? "(no driver)", ...stopCells(r), ...tourCells(r)])];
+      return [["Driver", ...stopHead, ...tourHead], ...rows.map((r) => [r.name ?? heading("(no driver)", lang), ...stopCells(r), ...tourCells(r)])];
     }
     case "depots": {
       const rows = await depotTable(tx, p);
