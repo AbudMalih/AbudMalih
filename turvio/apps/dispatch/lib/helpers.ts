@@ -97,4 +97,4 @@ export function memberScopeLabel(m: { role: string; depotIds: string[] | null; a
 
 /** Native select / input styling used in Dispatch dialogs (no Select primitive in the design system). */
 export const fieldCls =
-  "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none disabled:opacity-60";
+  "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none disabled:opacity-60 g:h-8 g:border-line-2 g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600";
