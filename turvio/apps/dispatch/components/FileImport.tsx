@@ -404,7 +404,7 @@ export function FileImport({
         <section aria-label={t("import.mappingLabel")} className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-[13px] font-semibold text-ink g:text-[13.5px]">{t("import.columns")}</h3>
-            <Checkbox label={t("import.headerRow")} checked={header} onCheckedChange={(v) => setHeader(!!v)} />
+            <Checkbox showLabel label={t("import.headerRow")} checked={header} onCheckedChange={(v) => setHeader(!!v)} />
           </div>
           <div className="overflow-x-auto rounded-md border border-line g:border-line-2">
             <table className="w-full text-xs g:text-[12px]">
@@ -567,7 +567,7 @@ export function FileImport({
                 ))}
                 {blockingExisting.length > 50 && <li className="g:px-3 g:py-1 g:text-muted">{t("import.andMore", { count: blockingExisting.length - 50 })}</li>}
               </ul>
-              <Checkbox label={t("import.leaveOutExisting", { count: blockingExisting.length })} checked={leaveOutExisting} onCheckedChange={(v) => setLeaveOutExisting(!!v)} />
+              <Checkbox showLabel label={t("import.leaveOutExisting", { count: blockingExisting.length })} checked={leaveOutExisting} onCheckedChange={(v) => setLeaveOutExisting(!!v)} />
             </section>
           )}
           {reDeliveries.length > 0 && (
@@ -579,7 +579,7 @@ export function FileImport({
                 {geocoding === "busy" ? <Loader2 className="animate-spin" /> : <MapPin />}
                 {t("import.findLocations", { n: pending.length })}
               </Button>
-              <Checkbox label={t("import.includeUnlocated")} checked={includeUnlocated} onCheckedChange={(v) => setIncludeUnlocated(!!v)} />
+              <Checkbox showLabel label={t("import.includeUnlocated")} checked={includeUnlocated} onCheckedChange={(v) => setIncludeUnlocated(!!v)} />
             </div>
           )}
           {geocoding === "unavailable" && <p className="text-xs text-warning-ink g:text-[12px]">{t("import.geocoderUnavailable")}</p>}

@@ -54,7 +54,7 @@ function tourGroups(container: HTMLElement) {
         .map((b) => b.getAttribute("aria-label") ?? b.textContent?.trim())
         .sort(),
       published: /Not published/.test(el.textContent ?? ""),
-      figures: el.textContent?.match(/\d+ stops?|\d+ open|\d+ pickups?/g),
+      figures: [...el.querySelectorAll("*")].filter((n) => !n.children.length).flatMap((n) => n.textContent?.match(/\b\d+ (?:stops?|open|pickups?)\b/g) ?? []),
     }));
 }
 
