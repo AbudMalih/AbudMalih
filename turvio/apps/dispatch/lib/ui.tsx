@@ -3,8 +3,8 @@
 import { createContext, useContext, useEffect, type ReactNode } from "react";
 
 /**
- * Phase G design preview. The new enterprise design is opt-in per browser while it is being
- * reviewed: open any Dispatch page with `?ui=g` to switch it on, `?ui=classic` to switch it off.
+ * Phase G design (default in Dispatch). The previous design stays available as a fallback during
+ * development: open any Dispatch page with `?ui=classic` to use it, `?ui=g` to return.
  * The choice is a cookie, so the server renders `<html data-ds="g">` and there is no flash.
  * Admin never sets it. Nothing about data, permissions or behaviour depends on it.
  */

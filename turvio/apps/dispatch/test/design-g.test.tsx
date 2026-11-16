@@ -13,7 +13,7 @@ import { UiRoot } from "../lib/ui";
 import { resolveUi } from "../lib/ui-flag";
 
 /**
- * Phase G design preview: opt-in only, same data and behaviour in both designs, translations kept.
+ * Phase G design: default in Dispatch, classic as fallback; same data and behaviour in both designs, translations kept.
  */
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(""), usePathname: () => "/map", useRouter: () => ({ push: vi.fn() }) }));
 const base = createDispatchDataset(new Date("2026-11-05T10:00:00Z"));
@@ -37,10 +37,10 @@ function wrap(ui: ReactNode, v: "g" | "classic", locale: "en" | "de" | "ar" = "e
 }
 
 describe("Phase G design preview", () => {
-  it("is off unless explicitly chosen (cookie value 'g' only)", () => {
-    expect(resolveUi(undefined)).toBe("classic");
-    expect(resolveUi("1")).toBe("classic");
-    expect(resolveUi("g")).toBe("g");
+  it("is the Dispatch default; the previous design only when explicitly chosen", () => {
+    expect(resolveUi(undefined)).toBe("g");
+    expect(resolveUi("1")).toBe("g");
+    expect(resolveUi("classic")).toBe("classic");
   });
 
   it("KPI band shows the same figures and links in both designs", () => {

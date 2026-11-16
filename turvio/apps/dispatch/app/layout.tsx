@@ -32,7 +32,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={locale} dir={dirOf(locale)} className={`${jakarta.variable} ${inter.variable} ${plexArabic.variable}`} data-ds={ui === "g" ? "g" : undefined} suppressHydrationWarning>
       <head>
-        <ThemeScript />
+        <ThemeScript defaultTheme="dark" />
       </head>
       <body>
         <UiRoot ui={ui}>

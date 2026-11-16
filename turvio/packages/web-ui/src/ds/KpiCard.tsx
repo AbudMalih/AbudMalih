@@ -67,14 +67,14 @@ export function KpiCard({
   const up = trend && trend.delta > 0;
   const good = trend && (trend.delta === 0 ? null : (trend.delta > 0) === (trend.positiveIsGood ?? true));
   return (
-    <Card interactive className="flex flex-col gap-3 overflow-hidden p-5">
-      <span className="absolute inset-x-[22px] -top-px h-[1.5px] rounded-sm opacity-85" style={{ background: line }} aria-hidden="true" />
+    <Card interactive className="flex flex-col gap-3 overflow-hidden p-5 g:gap-1.5 g:px-4 g:py-3">
+      <span className="absolute inset-x-[22px] -top-px h-[1.5px] rounded-sm opacity-85 g:hidden" style={{ background: line }} aria-hidden="true" />
       <div className="flex items-center gap-3">
-        <span className={cn("inline-flex size-[38px] shrink-0 items-center justify-center rounded-xl [&_svg]:size-[18px]", accentCls)}>{icon}</span>
-        <span className="text-[13px] font-semibold text-ink-2">{label}</span>
+        <span className={cn("inline-flex size-[38px] shrink-0 items-center justify-center rounded-xl [&_svg]:size-[18px] g:hidden", accentCls)}>{icon}</span>
+        <span className="text-[13px] font-semibold text-ink-2 g:text-[12px] g:font-normal g:text-muted">{label}</span>
       </div>
       <div className="flex items-end justify-between gap-3">
-        <div className="tabular text-[30px] font-extrabold leading-none tracking-[-0.03em] text-ink">{value}</div>
+        <div className="tabular text-[30px] font-extrabold leading-none tracking-[-0.03em] text-ink g:text-[22px] g:font-medium g:tracking-[-0.02em]">{value}</div>
         {sparkline}
       </div>
       <div className="flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">

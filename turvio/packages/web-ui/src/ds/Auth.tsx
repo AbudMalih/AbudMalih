@@ -14,18 +14,18 @@ export function AuthLayout({ product, title, subtitle, children, footer }: { pro
   const L = useDsLabels();
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-canvas px-4 py-10">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_80%_0%,rgba(117,91,255,.32)_0%,rgba(52,120,255,.12)_40%,transparent_72%),radial-gradient(50%_50%_at_0%_100%,rgba(24,217,232,.10)_0%,transparent_70%)]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 g:hidden bg-[radial-gradient(70%_60%_at_80%_0%,rgba(117,91,255,.32)_0%,rgba(52,120,255,.12)_40%,transparent_72%),radial-gradient(50%_50%_at_0%_100%,rgba(24,217,232,.10)_0%,transparent_70%)]" />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(var(--hero-line)_1px,transparent_1px),linear-gradient(90deg,var(--hero-line)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(70%_70%_at_75%_10%,#000_0%,transparent_70%)]"
+        className="pointer-events-none absolute inset-0 opacity-40 g:hidden [background-image:linear-gradient(var(--hero-line)_1px,transparent_1px),linear-gradient(90deg,var(--hero-line)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(70%_70%_at_75%_10%,#000_0%,transparent_70%)]"
       />
       <div className="relative w-full max-w-[420px] animate-nx-view">
         <div className="mb-8 flex flex-col items-center gap-3">
           <TurvioLockup height={30} />
-          <span className="text-[12px] font-bold uppercase tracking-[0.12em] text-nx-violet-text">{product}</span>
+          <span className="text-[12px] font-bold uppercase tracking-[0.12em] text-nx-violet-text g:text-muted">{product}</span>
         </div>
-        <div className="rounded-[22px] border border-line-strong bg-surface p-6 shadow-overlay sm:p-8">
-          <h1 className="text-[22px] font-extrabold tracking-[-0.02em] text-ink">{title}</h1>
+        <div className="rounded-[22px] border border-line-strong bg-surface p-6 shadow-overlay sm:p-8 g:shadow-none sm:g:p-7">
+          <h1 className="text-[22px] font-extrabold tracking-[-0.02em] text-ink g:text-[18px] g:font-semibold">{title}</h1>
           {subtitle && <p className="mt-1 text-sm text-ink-2">{subtitle}</p>}
           <div className="mt-6">{children}</div>
         </div>
@@ -63,7 +63,7 @@ export function FormAlert({ tone = "danger", children }: { tone?: "danger" | "su
     <div
       role={tone === "danger" ? "alert" : "status"}
       className={cn(
-        "flex items-start gap-2 rounded-xl border px-3 py-2.5 text-[13px] font-medium",
+        "flex items-start gap-2 rounded-xl border px-3 py-2.5 text-[13px] font-medium g:font-normal",
         tone === "danger" ? "border-nx-coral/30 bg-danger-soft text-danger-ink" : "border-nx-mint/30 bg-success-soft text-success-ink",
       )}
     >

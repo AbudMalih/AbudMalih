@@ -27,5 +27,5 @@ export function CardHeader({ title, description, actions, className }: { title: 
 }
 
 export function SectionLabel({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("text-[11px] font-bold uppercase tracking-[0.09em] text-muted", className)}>{children}</div>;
+  return <div className={cn("text-[11px] font-bold uppercase tracking-[0.09em] text-muted g:text-[12px] g:font-medium g:normal-case g:tracking-normal g:text-ink-2", className)}>{children}</div>;
 }

@@ -153,7 +153,8 @@ function PreferencesSection() {
   const applyTheme = (th: Preferences["theme"]) => {
     if (th === "system") {
       try {
-        localStorage.removeItem(THEME_KEY);
+        // Explicit "follow the system" (Dispatch is charcoal when nothing is chosen).
+        localStorage.setItem(THEME_KEY, "system");
       } catch {
         /* private mode */
       }

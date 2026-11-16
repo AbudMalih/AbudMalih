@@ -33,7 +33,7 @@ export function Sheet({
         <Dialog.Overlay className="fixed inset-0 z-40 bg-[color:var(--scrim)] backdrop-blur-[4px] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
         <Dialog.Content
           className={cn(
-            "fixed inset-y-0 z-50 flex w-full max-w-md flex-col border-line-strong bg-raised shadow-overlay outline-none",
+            "fixed inset-y-0 z-50 flex w-full max-w-md flex-col border-line-strong bg-raised shadow-overlay outline-none g:bg-surface",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:duration-300 data-[state=closed]:duration-200",
             side === "right"
               ? "end-0 border-s data-[state=open]:slide-in-from-end data-[state=closed]:slide-out-to-end"
@@ -41,9 +41,9 @@ export function Sheet({
             className,
           )}
         >
-          <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+          <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4 g:px-4 g:py-3">
             <div className="min-w-0">
-              <Dialog.Title className="text-base font-bold tracking-[-0.01em] text-ink">{title}</Dialog.Title>
+              <Dialog.Title className="text-base font-bold tracking-[-0.01em] text-ink g:text-[14px] g:font-semibold g:tracking-normal">{title}</Dialog.Title>
               {description ? (
                 <Dialog.Description className="mt-0.5 text-[13px] text-muted">{description}</Dialog.Description>
               ) : (
@@ -54,7 +54,7 @@ export function Sheet({
               <X className="size-4" />
             </Dialog.Close>
           </div>
-          <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+          <div className="flex-1 overflow-y-auto px-5 py-4 g:px-4">{children}</div>
           {footer && <div className="flex justify-end gap-2 border-t border-line px-5 py-3">{footer}</div>}
         </Dialog.Content>
       </Dialog.Portal>
