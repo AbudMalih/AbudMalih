@@ -4,6 +4,7 @@ import { cn } from "@turvio/web-ui/ds";
 import { Loader2, MapPin, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiCallError } from "../lib/api";
+import { useT } from "../lib/i18n/client";
 
 export interface PickedPlace {
   lat: number;
@@ -19,8 +20,6 @@ interface GeocodeHit {
   precision: "house" | "street" | "postal_code" | "city" | "other";
 }
 
-const PRECISION: Record<GeocodeHit["precision"], string> = { house: "house number", street: "street", postal_code: "postcode", city: "city", other: "approximate" };
-
 /** "52.3759, 9.732" → coordinates (manual fallback when no address search is available). */
 export function parseLatLng(text: string): { lat: number; lng: number } | null {
   const m = text.trim().match(/^(-?\d{1,2}(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:[.,]\d+)?)$/);
@@ -34,7 +33,8 @@ export function parseLatLng(text: string): { lat: number; lng: number } | null {
  * Address search on the TURVIO geocoder (server side). Results are real geocoder hits with their
  * precision; nothing is guessed. Coordinates can be typed as a fallback ("52.37, 9.73").
  */
-export function AddressSearch({ near, onPick, placeholder = "Street and number, city", autoFocus }: { near?: { lat: number; lng: number }; onPick: (p: PickedPlace) => void; placeholder?: string; autoFocus?: boolean }) {
+export function AddressSearch({ near, onPick, placeholder, autoFocus }: { near?: { lat: number; lng: number }; onPick: (p: PickedPlace) => void; placeholder?: string; autoFocus?: boolean }) {
+  const t = useT();
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<GeocodeHit[]>([]);
   const [state, setState] = useState<"idle" | "busy" | "none" | "unavailable" | "error">("idle");
@@ -49,7 +49,7 @@ export function AddressSearch({ near, onPick, placeholder = "Street and number, 
     }
     const mine = ++seq.current;
     setState("busy");
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const params = new URLSearchParams({ q: text, limit: "6", country: "de" });
         if (near) {
@@ -67,7 +67,7 @@ export function AddressSearch({ near, onPick, placeholder = "Street and number, 
         setState(e instanceof ApiCallError && e.code === "geocoder_unavailable" ? "unavailable" : "error");
       }
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [q, near]);
 
   const coords = parseLatLng(q);
@@ -76,22 +76,23 @@ export function AddressSearch({ near, onPick, placeholder = "Street and number, 
       <div className="relative">
         <Search className="pointer-events-none absolute start-2.5 top-2.5 size-4 text-subtle" aria-hidden="true" />
         <input
+          dir="auto"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t("planning.addressPlaceholder")}
           autoFocus={autoFocus}
-          aria-label="Search address"
+          aria-label={t("planning.searchAddress")}
           className="h-9 w-full rounded-md border border-line bg-surface ps-8 pe-8 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none"
         />
-        {state === "busy" && <Loader2 className="absolute end-2.5 top-2.5 size-4 animate-spin text-subtle" aria-label="Searching" />}
+        {state === "busy" && <Loader2 className="absolute end-2.5 top-2.5 size-4 animate-spin text-subtle" aria-label={t("planning.searching")} />}
       </div>
       {coords && (
         <button type="button" onClick={() => onPick({ ...coords, label: `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` })} className="flex items-center gap-2 rounded-md border border-line px-2.5 py-2 text-start text-sm hover:bg-surface-2">
-          <MapPin className="size-4 text-brand-600" /> Use coordinates {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+          <MapPin className="size-4 text-brand-600" /> {t("planning.useCoords", { coords: `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` })}
         </button>
       )}
       {hits.length > 0 && (
-        <ul role="listbox" aria-label="Address results" className="max-h-56 divide-y divide-line overflow-auto rounded-md border border-line bg-surface">
+        <ul role="listbox" aria-label={t("planning.addressResults")} className="max-h-56 divide-y divide-line overflow-auto rounded-md border border-line bg-surface">
           {hits.map((h, i) => (
             <li key={`${h.label}-${i}`}>
               <button
@@ -102,15 +103,15 @@ export function AddressSearch({ near, onPick, placeholder = "Street and number, 
                 className="flex w-full items-start justify-between gap-2 px-2.5 py-2 text-start text-sm hover:bg-surface-2"
               >
                 <span className="text-ink">{h.label}</span>
-                <span className={cn("shrink-0 text-2xs", h.precision === "house" ? "text-success-ink" : "text-warning-ink")}>{PRECISION[h.precision]}</span>
+                <span className={cn("shrink-0 text-2xs", h.precision === "house" ? "text-success-ink" : "text-warning-ink")}>{t(`planning.precision.${h.precision}`)}</span>
               </button>
             </li>
           ))}
         </ul>
       )}
-      {state === "none" && <p className="text-xs text-muted">No address found. Check the spelling, or enter coordinates (e.g. 52.3759, 9.7320).</p>}
-      {state === "unavailable" && <p className="text-xs text-warning-ink">Address search is not available on this server. Enter coordinates instead (e.g. 52.3759, 9.7320).</p>}
-      {state === "error" && <p className="text-xs text-danger">Address search failed. Try again, or enter coordinates.</p>}
+      {state === "none" && <p className="text-xs text-muted">{t("planning.noAddress")}</p>}
+      {state === "unavailable" && <p className="text-xs text-warning-ink">{t("planning.searchUnavailable")}</p>}
+      {state === "error" && <p className="text-xs text-danger">{t("planning.searchFailed")}</p>}
     </div>
   );
 }

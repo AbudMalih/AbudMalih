@@ -5,6 +5,8 @@ import { Button, Dialog, cn, toast } from "@turvio/web-ui/ds";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { errorMessage } from "../lib/api";
+import { EN_T, type TFunction } from "../lib/i18n";
+import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 import { AddressSearch, type PickedPlace } from "./AddressSearch";
 
@@ -20,11 +22,11 @@ const placeOf = (loc: { lat: number; lng: number } | undefined, label: string | 
 export const endModeOf = (t: Tour): TourEndMode => t.endMode ?? (t.endLocation ? "address" : "depot");
 
 /** One-line summary for cards: "Depot → last stop". */
-export function tourEndsSummary(t: Tour, depot: Depot): string {
-  const start = t.startLocation ? (t.startLabel ?? "own start address") : depot.name;
+export function tourEndsSummary(t: Tour, depot: Depot, tr: TFunction = EN_T): string {
+  const start = t.startLocation ? (t.startLabel ?? tr("planning.ownStart")) : depot.name;
   const mode = endModeOf(t);
-  const end = mode === "last_stop" ? "last stop" : mode === "address" ? (t.endLabel ?? "own end address") : depot.name;
-  return `${start} → ${end}`;
+  const end = mode === "last_stop" ? tr("planning.lastStop") : mode === "address" ? (t.endLabel ?? tr("planning.ownEnd")) : depot.name;
+  return tr("planning.endsSummary", { start, end });
 }
 
 function Choice<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { value: T; label: string; hint: string }[]; label: string }) {
@@ -48,6 +50,7 @@ function Choice<T extends string>({ value, onChange, options, label }: { value: 
 }
 
 function PlaceField({ place, onChange, near }: { place: PickedPlace | null; onChange: (p: PickedPlace | null) => void; near: { lat: number; lng: number } }) {
+  const t = useT();
   if (place)
     return (
       <div className="flex items-center justify-between gap-2 rounded-md border border-line bg-surface-2/60 px-2.5 py-2 text-sm">
@@ -55,7 +58,7 @@ function PlaceField({ place, onChange, near }: { place: PickedPlace | null; onCh
           {place.label}
         </span>
         <Button variant="ghost" size="sm" onClick={() => onChange(null)}>
-          Change
+          {t("planning.change")}
         </Button>
       </div>
     );
@@ -68,6 +71,7 @@ function PlaceField({ place, onChange, near }: { place: PickedPlace | null; onCh
  */
 export function TourEndsDialog({ tour, depot, open, onOpenChange }: { tour: Tour; depot: Depot; open: boolean; onOpenChange: (o: boolean) => void }) {
   const { updateTour } = useDispatch();
+  const t = useT();
   const [startMode, setStartMode] = useState<"depot" | "address">(tour.startLocation ? "address" : "depot");
   const [start, setStart] = useState<PickedPlace | null>(placeOf(tour.startLocation, tour.startLabel));
   const [endMode, setEndMode] = useState<TourEndMode>(endModeOf(tour));
@@ -83,10 +87,10 @@ export function TourEndsDialog({ tour, depot, open, onOpenChange }: { tour: Tour
     setBusy(true);
     try {
       await updateTour(tour, patch);
-      toast.success(`Start and end saved for ${tour.name}`, { description: "Optimize the tour again to plan with the new start and end." });
+      toast.success(t("planning.endsSaved", { name: tour.name }), { description: t("planning.endsSavedDesc") });
       onOpenChange(false);
     } catch (e) {
-      toast.error("Start and end not saved", { description: errorMessage(e) });
+      toast.error(t("planning.endsNotSaved"), { description: errorMessage(e) });
     } finally {
       setBusy(false);
     }
@@ -96,46 +100,46 @@ export function TourEndsDialog({ tour, depot, open, onOpenChange }: { tour: Tour
     <Dialog
       open={open}
       onOpenChange={(o) => !busy && onOpenChange(o)}
-      title={`Start and end · ${tour.name}`}
-      description="Used for optimization, the road route and the live ETA."
+      title={t("planning.endsTitle", { name: tour.name })}
+      description={t("planning.endsDesc")}
       className="max-w-2xl"
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button variant="primary" onClick={() => void save()} disabled={busy || invalid}>
             {busy && <Loader2 className="animate-spin" />}
-            Save
+            {t("common.save")}
           </Button>
         </>
       }
     >
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-2">
-          <h3 className="text-[13px] font-semibold text-ink">Start</h3>
+          <h3 className="text-[13px] font-semibold text-ink">{t("planning.start")}</h3>
           <Choice
-            label="Start"
+            label={t("planning.start")}
             value={startMode}
             onChange={setStartMode}
             options={[
-              { value: "depot", label: "Depot", hint: depot.name },
-              { value: "address", label: "Other address", hint: "e.g. a hub or the driver's home" },
+              { value: "depot", label: t("planning.depot"), hint: depot.name },
+              { value: "address", label: t("planning.otherAddress"), hint: t("planning.startHint") },
             ]}
           />
           {startMode === "address" && <PlaceField place={start} onChange={setStart} near={depot.location} />}
-          <p className="text-2xs text-muted">While the tour is driven, the vehicle's live position (if fresh) or the last completed stop is used instead.</p>
+          <p className="text-2xs text-muted">{t("planning.liveStartHint")}</p>
         </section>
         <section className="flex flex-col gap-2">
-          <h3 className="text-[13px] font-semibold text-ink">End</h3>
+          <h3 className="text-[13px] font-semibold text-ink">{t("planning.end")}</h3>
           <Choice
-            label="End"
+            label={t("planning.end")}
             value={endMode}
             onChange={setEndMode}
             options={[
-              { value: "depot", label: "Back to depot", hint: depot.name },
-              { value: "address", label: "Other address", hint: "e.g. a second depot" },
-              { value: "last_stop", label: "At the last stop", hint: "No return trip" },
+              { value: "depot", label: t("planning.backToDepot"), hint: depot.name },
+              { value: "address", label: t("planning.otherAddress"), hint: t("planning.endHint") },
+              { value: "last_stop", label: t("planning.atLastStop"), hint: t("planning.noReturn") },
             ]}
           />
           {endMode === "address" && <PlaceField place={end} onChange={setEnd} near={depot.location} />}

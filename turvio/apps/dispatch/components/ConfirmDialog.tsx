@@ -3,6 +3,7 @@
 import { Button, Dialog } from "@turvio/web-ui/ds";
 import { Loader2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useT } from "../lib/i18n/client";
 
 /** Confirmation for destructive or outward-facing actions (delete, publish). */
 export function ConfirmDialog({
@@ -22,6 +23,7 @@ export function ConfirmDialog({
   tone?: "primary" | "danger";
   onConfirm: () => Promise<unknown>;
 }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   return (
     <Dialog
@@ -31,7 +33,7 @@ export function ConfirmDialog({
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant={tone === "danger" ? "danger" : "primary"}

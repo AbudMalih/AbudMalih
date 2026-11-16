@@ -8,15 +8,16 @@ import { tourColor } from "../lib/helpers";
 import { useDispatch } from "../lib/store";
 import { finishShort, finishValue, projectionNote, scheduledFinishLabel } from "../lib/eta";
 import { TourStatusBadge } from "./StatusBadge";
+import { useT } from "../lib/i18n/client";
 
 export type TourFilter = "all" | "active" | "delayed" | "planned" | "completed";
 
-const FILTERS: { key: TourFilter; label: string; match: (s: DispatchTourStatus) => boolean }[] = [
-  { key: "all", label: "All", match: () => true },
-  { key: "active", label: "On route", match: (s) => s === "in_progress" || s === "paused" || s === "delayed" },
-  { key: "delayed", label: "Delayed", match: (s) => s === "delayed" },
-  { key: "planned", label: "Planned", match: (s) => s === "planned" },
-  { key: "completed", label: "Done", match: (s) => s === "completed" },
+const FILTERS: { key: TourFilter; match: (s: DispatchTourStatus) => boolean }[] = [
+  { key: "all", match: () => true },
+  { key: "active", match: (s) => s === "in_progress" || s === "paused" || s === "delayed" },
+  { key: "delayed", match: (s) => s === "delayed" },
+  { key: "planned", match: (s) => s === "planned" },
+  { key: "completed", match: (s) => s === "completed" },
 ];
 
 export function filterTours(summaries: TourSummary[], query: string, filter: TourFilter): TourSummary[] {
@@ -33,6 +34,7 @@ export function filterTours(summaries: TourSummary[], query: string, filter: Tou
 export function TourList({ onPick }: { onPick?: (id: string) => void }) {
   const { summaries, scoped, selectedTourId, selectTour, data } = useDispatch();
   const asOf = data.asOfMinute;
+  const t = useT();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TourFilter>("all");
   const visible = useMemo(() => filterTours(summaries, query, filter), [summaries, query, filter]);
@@ -41,8 +43,8 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-col gap-2.5 border-b border-line p-3">
-        <SearchInput value={query} onChange={setQuery} placeholder="Search tours, drivers, vehicles…" label="Search tours and drivers" />
-        <div className="-mx-1 flex gap-1 overflow-x-auto px-1" role="tablist" aria-label="Filter tours by status">
+        <SearchInput value={query} onChange={setQuery} placeholder={t("planning.searchPlaceholder")} label={t("planning.searchLabel")} />
+        <div className="-mx-1 flex gap-1 overflow-x-auto px-1" role="tablist" aria-label={t("planning.filterAria")}>
           {FILTERS.map((f) => (
             <button
               key={f.key}
@@ -54,7 +56,7 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                 filter === f.key ? "border-brand-200 bg-brand-50 text-brand-700" : "border-line bg-surface text-muted hover:border-line-strong hover:text-ink",
               )}
             >
-              {f.label}
+              {t(`planning.filter.${f.key}`)}
               <span className="tabular text-2xs opacity-70">{counts[f.key]}</span>
             </button>
           ))}
@@ -62,9 +64,9 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {visible.length === 0 ? (
-          <EmptyState icon={<SearchX />} title={data.tours.length ? "No tours match" : "No tours for this day"} description={data.tours.length ? "Change the search or filter." : "Create a tour in Planning."} />
+          <EmptyState icon={<SearchX />} title={data.tours.length ? t("planning.noMatch") : t("planning.noToursDay")} description={data.tours.length ? t("planning.changeSearch") : t("planning.createInPlanning")} />
         ) : (
-          <ul className="flex flex-col gap-1.5" aria-label="Tours">
+          <ul className="flex flex-col gap-1.5" aria-label={t("planning.toursAria")}>
             {visible.map((s) => {
               const sel = s.tour.id === selectedTourId;
               const pct = s.total ? (s.completed / s.total) * 100 : 0;
@@ -96,9 +98,9 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                     <div className="mt-2.5 flex items-center gap-2.5">
                       <Avatar name={s.driver?.displayName ?? "–"} size="sm" />
                       <div className="min-w-0 flex-1">
-                        <div className={cn("truncate text-[13px] font-medium", s.driver ? "text-ink-2" : "text-warning-ink")}>{s.driver?.displayName ?? "No driver assigned"}</div>
+                        <div className={cn("truncate text-[13px] font-medium", s.driver ? "text-ink-2" : "text-warning-ink")}>{s.driver?.displayName ?? t("planning.noDriver")}</div>
                         <div className="flex items-center gap-1 truncate text-2xs text-muted">
-                          <Truck className="size-3" /> {s.vehicleLabel ? `${s.vehicleLabel} · ${s.vehiclePlate}` : "No vehicle"}
+                          <Truck className="size-3" /> {s.vehicleLabel ? `${s.vehicleLabel} · ${s.vehiclePlate}` : t("planning.noVehicle")}
                         </div>
                       </div>
                       <div className="shrink-0 text-end">
@@ -106,7 +108,7 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                           {s.completed}
                           <span className="font-normal text-subtle">/{s.total}</span>
                         </div>
-                        <div className="text-2xs text-muted">{s.remaining} left</div>
+                        <div className="text-2xs text-muted">{t("planning.left", { n: s.remaining })}</div>
                       </div>
                     </div>
                     <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-surface-3">
@@ -115,20 +117,19 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
                     {(deadline !== null || s.status === "planned") && (
                       <div className="mt-2 flex items-center justify-between gap-2 text-2xs text-muted">
                         {s.status === "planned" ? (
-                          <span title={projectionNote(s.timeline.projection)}>
-                            {scheduledFinishLabel(s.timeline.projection)
-                              ? `Start ${formatClock(s.tour.plannedStartMinute)} missed · ${finishShort(s.tour, s.timeline.projection)} ${finishValue(s.timeline.projection)} if departing now`
-                              : `Starts ${formatClock(s.tour.plannedStartMinute)}`}
+                          <span title={projectionNote(s.timeline.projection, t)}>
+                            {scheduledFinishLabel(s.timeline.projection, t)
+                              ? t("planning.startMissed", { start: formatClock(s.tour.plannedStartMinute), finish: finishShort(s.tour, s.timeline.projection, t), value: finishValue(s.timeline.projection) })
+                              : t("planning.starts", { time: formatClock(s.tour.plannedStartMinute) })}
                           </span>
                         ) : (
-                          <span title={projectionNote(s.timeline.projection)}>
-                            {finishShort(s.tour, s.timeline.projection)} {finishValue(s.timeline.projection)}
-                            {s.timeline.projection.source === "estimate" ? " (est.)" : ""}
+                          <span title={projectionNote(s.timeline.projection, t)}>
+                            {t(s.timeline.projection.source === "estimate" ? "planning.finishLineEst" : "planning.finishLine", { finish: finishShort(s.tour, s.timeline.projection, t), value: finishValue(s.timeline.projection) })}
                           </span>
                         )}
                         {deadline !== null && (
                           <span className={cn("flex items-center gap-1", deadline - asOf < 90 ? "font-medium text-warning-ink" : "")}>
-                            <ArrowUpFromLine className="size-3" /> {s.pickupsRemaining} pickup{s.pickupsRemaining > 1 ? "s" : ""} · by {formatClock(deadline)}
+                            <ArrowUpFromLine className="size-3" /> {t("planning.pickupsBy", { count: s.pickupsRemaining, time: formatClock(deadline) })}
                           </span>
                         )}
                       </div>
@@ -141,7 +142,8 @@ export function TourList({ onPick }: { onPick?: (id: string) => void }) {
         )}
       </div>
       <div className="border-t border-line px-3 py-2 text-2xs text-subtle">
-        {visible.length} of {summaries.length} tours · finish times from road times{summaries.some((s) => s.tour.status !== "completed" && s.timeline.projection.source === "estimate") ? " · “est.” = straight-line estimate" : ""}
+        {t("planning.listFooter", { visible: visible.length, total: summaries.length })}
+        {summaries.some((s) => s.tour.status !== "completed" && s.timeline.projection.source === "estimate") ? ` · ${t("planning.estLegend")}` : ""}
       </div>
     </div>
   );

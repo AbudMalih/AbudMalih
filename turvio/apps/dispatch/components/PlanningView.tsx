@@ -7,6 +7,7 @@ import { ArrowUpFromLine, CalendarX2, ChevronDown, Loader2, MapPinned, PackagePl
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { errorMessage } from "../lib/api";
+import { useT } from "../lib/i18n/client";
 import { driverBusy, tourColor, vehicleBusy } from "../lib/helpers";
 import { optimizeNotes, optimizeProblems } from "../lib/optimize";
 import { useDispatch } from "../lib/store";
@@ -21,7 +22,7 @@ import { TourDetailSheet } from "./TourDetail";
 const selectCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
 
 function AssignMenu<T extends { id: string }>({
-  label,
+  kind,
   icon,
   current,
   options,
@@ -30,7 +31,7 @@ function AssignMenu<T extends { id: string }>({
   onPick,
   disabled,
 }: {
-  label: string;
+  kind: "driver" | "vehicle";
   icon: ReactNode;
   current: T | undefined;
   options: T[];
@@ -39,18 +40,20 @@ function AssignMenu<T extends { id: string }>({
   onPick: (o: T | null) => void;
   disabled?: boolean;
 }) {
+  const t = useT();
+  const label = t(`planning.${kind}`);
   return (
     <Menu>
       <MenuTrigger asChild disabled={disabled}>
-        <Button variant="secondary" size="sm" className={cn("w-full justify-start", !current && "border-nx-amber/30 bg-warning-soft/50 text-warning-ink")} aria-label={`${label}: ${current ? render(current) : "not assigned"}`}>
+        <Button variant="secondary" size="sm" className={cn("w-full justify-start", !current && "border-nx-amber/30 bg-warning-soft/50 text-warning-ink")} aria-label={t("planning.assign.aria", { label, value: current ? render(current) : t("planning.assign.notAssigned") })}>
           {icon}
-          <span className="truncate">{current ? render(current) : `Assign ${label.toLowerCase()}`}</span>
+          <span className="truncate">{current ? render(current) : t(`planning.assign.${kind}`)}</span>
           <ChevronDown className="ms-auto text-subtle" />
         </Button>
       </MenuTrigger>
       <MenuContent align="start" className="w-64">
         <MenuLabel>{label}</MenuLabel>
-        {options.length === 0 && <MenuItem disabled>No {label.toLowerCase()}s in this depot</MenuItem>}
+        {options.length === 0 && <MenuItem disabled>{t(kind === "driver" ? "planning.assign.noDrivers" : "planning.assign.noVehicles")}</MenuItem>}
         {options.map((o) => {
           const busy = busyOf(o);
           return (
@@ -59,7 +62,7 @@ function AssignMenu<T extends { id: string }>({
             </MenuItem>
           );
         })}
-        {current && <MenuItem onSelect={() => onPick(null)}>Remove assignment</MenuItem>}
+        {current && <MenuItem onSelect={() => onPick(null)}>{t("planning.assign.remove")}</MenuItem>}
       </MenuContent>
     </Menu>
   );
@@ -67,6 +70,7 @@ function AssignMenu<T extends { id: string }>({
 
 function TourCard({ s }: { s: TourSummary }) {
   const { scoped, updateTour, selectTour, optimizeTour, publishTour } = useDispatch();
+  const t = useT();
   const [busy, setBusy] = useState<null | "optimize" | "assign">(null);
   const [publishing, setPublishing] = useState(false);
   const [endsOpen, setEndsOpen] = useState(false);
@@ -74,12 +78,12 @@ function TourCard({ s }: { s: TourSummary }) {
   const vehicles = scoped.vehicles.filter((v) => v.depotId === s.depot.id);
   const locked = s.tour.status === "completed";
   const driverBusyLabel = (d: Driver) => {
-    const t = driverBusy(scoped, d.id, s.tour.id);
-    return t ? `on ${t.name}` : null;
+    const other = driverBusy(scoped, d.id, s.tour.id);
+    return other ? t("planning.busyOn", { name: other.name }) : null;
   };
   const vehicleBusyLabel = (v: Vehicle) => {
-    const t = vehicleBusy(scoped, v.id, s.tour.id);
-    return t ? `on ${t.name}` : null;
+    const other = vehicleBusy(scoped, v.id, s.tour.id);
+    return other ? t("planning.busyOn", { name: other.name }) : null;
   };
   const assign = async (patch: { driverId?: string | null; vehicleId?: string | null }, msg: string) => {
     setBusy("assign");
@@ -87,7 +91,7 @@ function TourCard({ s }: { s: TourSummary }) {
       await updateTour(s.tour, patch);
       toast.success(msg);
     } catch (e) {
-      toast.error("Assignment not saved", { description: errorMessage(e) });
+      toast.error(t("planning.assignFailed"), { description: errorMessage(e) });
     } finally {
       setBusy(null);
     }
@@ -97,16 +101,16 @@ function TourCard({ s }: { s: TourSummary }) {
     try {
       // Tours on the road answer 409 here: they are re-sequenced from the tour detail with a preview.
       const r = (await optimizeTour(s.tour)).result;
-      const problems = optimizeProblems(r);
-      (problems.length ? toast.warning : toast.success)(`${s.tour.name} optimized and saved`, { description: [...problems, ...optimizeNotes(r)].join(" · ") });
+      const problems = optimizeProblems(r, t);
+      (problems.length ? toast.warning : toast.success)(t("planning.optimizedSaved", { name: s.tour.name }), { description: [...problems, ...optimizeNotes(r, t)].join(" · ") });
     } catch (e) {
-      toast.error("Optimization failed", { description: errorMessage(e) });
+      toast.error(t("planning.optimizeFailed"), { description: errorMessage(e) });
     } finally {
       setBusy(null);
     }
   };
   return (
-    <Card interactive className="relative flex flex-col gap-3 overflow-hidden p-4" role="group" aria-label={`Tour ${s.tour.name}`}>
+    <Card interactive className="relative flex flex-col gap-3 overflow-hidden p-4" role="group" aria-label={t("planning.tourName", { name: s.tour.name })}>
       <span className="absolute inset-y-0 start-0 w-1" style={{ backgroundColor: tourColor(scoped, s.tour.id) }} aria-hidden="true" />
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -114,16 +118,16 @@ function TourCard({ s }: { s: TourSummary }) {
             {s.tour.name}
           </button>
           <div className="text-xs text-muted">
-            {s.depot.name} · start {formatClock(s.tour.plannedStartMinute)}
+            {t("planning.depotStart", { depot: s.depot.name, time: formatClock(s.tour.plannedStartMinute) })}
           </div>
           <button
             onClick={() => setEndsOpen(true)}
             disabled={locked}
             className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate text-xs text-ink-2 hover:text-brand-700 disabled:opacity-60"
-            title="Where the tour starts and ends"
+            title={t("planning.endsTooltip")}
           >
             <MapPinned className="size-3.5 shrink-0" />
-            <span className="truncate">{tourEndsSummary(s.tour, s.depot)}</span>
+            <span className="truncate">{tourEndsSummary(s.tour, s.depot, t)}</span>
           </button>
           {endsOpen && <TourEndsDialog tour={s.tour} depot={s.depot} open={endsOpen} onOpenChange={setEndsOpen} />}
         </div>
@@ -132,44 +136,44 @@ function TourCard({ s }: { s: TourSummary }) {
             <TourStatusBadge status={s.status} certainty={s.delayCertainty} />
             <TourActionsMenu item={{ tour: s.tour, depotName: s.depot.name, driverName: s.driver?.displayName ?? null, stopCount: s.total, openStops: s.remaining }} onOpen={() => selectTour(s.tour.id)} />
           </div>
-          {s.tour.publishedAt ? <Badge tone="success">Published</Badge> : <Badge tone="outline">Not published</Badge>}
+          {s.tour.publishedAt ? <Badge tone="success">{t("planning.published")}</Badge> : <Badge tone="outline">{t("common.notPublished")}</Badge>}
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <AssignMenu
-          label="Driver"
+          kind="driver"
           icon={busy === "assign" ? <Loader2 className="animate-spin" /> : <UserRound />}
           current={scoped.drivers.find((d) => d.id === s.tour.driverId)}
           options={drivers}
           busyOf={driverBusyLabel}
           render={(d) => d.displayName}
           disabled={locked || busy !== null}
-          onPick={(d) => void assign({ driverId: d?.id ?? null }, d ? `${d.displayName} assigned to ${s.tour.name}` : `Driver removed from ${s.tour.name}`)}
+          onPick={(d) => void assign({ driverId: d?.id ?? null }, d ? t("planning.driverAssigned", { driver: d.displayName, tour: s.tour.name }) : t("planning.driverRemoved", { tour: s.tour.name }))}
         />
         <AssignMenu
-          label="Vehicle"
+          kind="vehicle"
           icon={<Truck />}
           current={scoped.vehicles.find((v) => v.id === s.tour.vehicleId)}
           options={vehicles}
           busyOf={vehicleBusyLabel}
           render={(v) => `${v.label} · ${v.licensePlate}`}
           disabled={locked || busy !== null}
-          onPick={(v) => void assign({ vehicleId: v?.id ?? null }, v ? `${v.label} assigned to ${s.tour.name}` : `Vehicle removed from ${s.tour.name}`)}
+          onPick={(v) => void assign({ vehicleId: v?.id ?? null }, v ? t("planning.vehicleAssigned", { vehicle: v.label, tour: s.tour.name }) : t("planning.vehicleRemoved", { tour: s.tour.name }))}
         />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span className="tabular">
-          {s.total} stops · {s.remaining} open · {s.pickups} pickups
+          {t("common.stops", { count: s.total })} · {t("planning.openN", { n: s.remaining })} · {t("planning.pickupsN", { count: s.pickups })}
         </span>
         <div className="flex gap-1">
           <Button size="sm" variant="ghost" onClick={optimize} disabled={busy !== null || locked || s.remaining < 2}>
-            {busy === "optimize" ? <Loader2 className="animate-spin" /> : <Sparkles />} Optimize
+            {busy === "optimize" ? <Loader2 className="animate-spin" /> : <Sparkles />} {t("planning.optimize")}
           </Button>
           {!s.tour.publishedAt && !locked && (
-            <Tooltip content={!s.tour.driverId ? "Assign a driver first" : s.total === 0 ? "Add stops first" : "Make the tour visible in TURVIO Driver"}>
+            <Tooltip content={!s.tour.driverId ? t("planning.assignDriverFirst") : s.total === 0 ? t("planning.addStopsFirst") : t("planning.publishHint")}>
               <span>
                 <Button size="sm" variant="ghost" onClick={() => setPublishing(true)} disabled={!s.tour.driverId || s.total === 0}>
-                  <Send /> Publish
+                  <Send /> {t("planning.publish")}
                 </Button>
               </span>
             </Tooltip>
@@ -179,14 +183,14 @@ function TourCard({ s }: { s: TourSummary }) {
       <ConfirmDialog
         open={publishing}
         onOpenChange={setPublishing}
-        title={`Publish ${s.tour.name}?`}
-        description={`${s.driver?.displayName ?? "The driver"} will see ${s.total} stops in TURVIO Driver.`}
-        confirmLabel="Publish"
+        title={t("planning.publishTitle", { name: s.tour.name })}
+        description={t("planning.publishDesc", { driver: s.driver?.displayName ?? t("planning.theDriver"), count: s.total })}
+        confirmLabel={t("planning.publish")}
         onConfirm={() =>
           publishTour(s.tour).then(
-            () => toast.success(`${s.tour.name} published`),
+            () => toast.success(t("planning.publishedToast", { name: s.tour.name })),
             (e) => {
-              toast.error("Could not publish", { description: errorMessage(e) });
+              toast.error(t("planning.publishFailed"), { description: errorMessage(e) });
               throw e;
             },
           )
@@ -198,6 +202,7 @@ function TourCard({ s }: { s: TourSummary }) {
 
 function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { scoped, depotId, createTour, selectTour, date } = useDispatch();
+  const t = useT();
   const [depot, setDepot] = useState(depotId ?? scoped.depots[0]?.id ?? "");
   const [start, setStart] = useState("07:30");
   const [driver, setDriver] = useState("");
@@ -210,14 +215,14 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
     if (startMinute === null || !depot) return;
     setBusy(true);
     try {
-      const t = await createTour({ depotId: depot, plannedStartMinute: startMinute, driverId: driver || null, vehicleId: vehicle || null });
-      toast.success(`Tour ${t.name} created`, { description: "Add stops, optimize and publish it to the driver." });
+      const created = await createTour({ depotId: depot, plannedStartMinute: startMinute, driverId: driver || null, vehicleId: vehicle || null });
+      toast.success(t("planning.tourCreated", { name: created.name }), { description: t("planning.tourCreatedDesc") });
       onOpenChange(false);
       setDriver("");
       setVehicle("");
-      selectTour(t.id);
+      selectTour(created.id);
     } catch (e) {
-      toast.error("Tour not created", { description: errorMessage(e) });
+      toast.error(t("planning.tourNotCreated"), { description: errorMessage(e) });
     } finally {
       setBusy(false);
     }
@@ -226,16 +231,16 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
     <Dialog
       open={open}
       onOpenChange={(o) => !busy && onOpenChange(o)}
-      title="New tour"
-      description={`Planned for ${date}.`}
+      title={t("planning.newTour")}
+      description={t("planning.plannedFor", { date })}
       footer={
         <>
           <Button variant="secondary" onClick={() => onOpenChange(false)} disabled={busy}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button variant="primary" onClick={submit} disabled={busy || startMinute === null || !depot}>
             {busy && <Loader2 className="animate-spin" />}
-            Create tour
+            {t("planning.createTour")}
           </Button>
         </>
       }
@@ -248,7 +253,7 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
         }}
       >
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-          Depot
+          {t("planning.depot")}
           <select className={selectCls} value={depot} onChange={(e) => (setDepot(e.target.value), setDriver(""), setVehicle(""))}>
             {scoped.depots.map((d) => (
               <option key={d.id} value={d.id}>
@@ -258,32 +263,32 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
           </select>
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-          Start time
-          <input type="time" className={cn(selectCls, startMinute === null && "border-danger")} value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={startMinute === null} />
+          {t("planning.startTime")}
+          <input dir="ltr" type="time" className={cn(selectCls, startMinute === null && "border-danger")} value={start} onChange={(e) => setStart(e.target.value)} aria-invalid={startMinute === null} />
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-          Driver
+          {t("planning.driver")}
           <select className={selectCls} value={driver} onChange={(e) => setDriver(e.target.value)}>
-            <option value="">Assign later</option>
+            <option value="">{t("planning.assignLater")}</option>
             {freeDrivers.map((d) => (
               <option key={d.id} value={d.id}>
                 {d.displayName}
               </option>
             ))}
           </select>
-          <span className="text-2xs font-normal text-muted">{freeDrivers.length} available</span>
+          <span className="text-2xs font-normal text-muted">{t("planning.available", { n: freeDrivers.length })}</span>
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
-          Vehicle
+          {t("planning.vehicle")}
           <select className={selectCls} value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
-            <option value="">Assign later</option>
+            <option value="">{t("planning.assignLater")}</option>
             {freeVehicles.map((v) => (
               <option key={v.id} value={v.id}>
                 {v.label} · {v.licensePlate}
               </option>
             ))}
           </select>
-          <span className="text-2xs font-normal text-muted">{freeVehicles.length} available</span>
+          <span className="text-2xs font-normal text-muted">{t("planning.available", { n: freeVehicles.length })}</span>
         </label>
         <button type="submit" className="hidden" />
       </form>
@@ -293,6 +298,7 @@ function NewTourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o
 
 export function PlanningView() {
   const { data, summaries, assignStops, setPriority, date, depotId, scoped, optimizePlan, session } = useDispatch();
+  const t = useT();
   // /planning?new=1 (Overview → "New tour") opens the dialog directly.
   const params = useSearchParams();
   const [newOpen, setNewOpen] = useState(() => params?.get("new") === "1" && can(session.role, "tours.manage"));
@@ -307,7 +313,7 @@ export function PlanningView() {
   const targetTours = selectedDepots.size === 1 ? openTours.filter((s) => selectedDepots.has(s.depot.id)) : [];
   const depot = scoped.depots.find((d) => d.id === depotId) ?? (scoped.depots.length === 1 ? scoped.depots[0] : undefined);
   const plannedHere = openTours.filter((s) => s.tour.status === "planned" && (!depot || s.depot.id === depot.id));
-  const driverRows = useMemo(() => data.drivers.map((dr) => ({ dr, t: driverBusy(data, dr.id) })), [data]);
+  const driverRows = useMemo(() => data.drivers.map((dr) => ({ dr, busyTour: driverBusy(data, dr.id) })), [data]);
   const freeVehicles = data.vehicles.filter((v) => !vehicleBusy(data, v.id));
   const canManage = session.role !== "driver";
 
@@ -319,13 +325,18 @@ export function PlanningView() {
         plannedHere.map((s) => s.tour.id),
         true,
       );
-      toast.success(`${plannedHere.length} tours of ${depot.name} re-planned and saved`, {
-        description: `${r.matrixSource === "osrm" ? "Road-network times" : "Straight-line time estimates"}${r.unassignedStopIds.length ? ` · ${r.unassignedStopIds.length} stop(s) left unassigned` : ""}${
-          r.unlocatedStopIds?.length ? ` · ${r.unlocatedStopIds.length} stop(s) without a map position not planned – set their location` : ""
-        }${r.locationErrors?.length ? ` · ${r.locationErrors.length} stop(s) with a wrong or unreachable location not planned – check their location` : ""}`,
+      toast.success(t("planning.planToast", { count: plannedHere.length, depot: depot.name }), {
+        description: [
+          r.matrixSource === "osrm" ? t("planning.roadTimes") : t("planning.straightTimes"),
+          r.unassignedStopIds.length ? t("planning.planLeftUnassigned", { n: r.unassignedStopIds.length }) : null,
+          r.unlocatedStopIds?.length ? t("planning.planUnlocated", { n: r.unlocatedStopIds.length }) : null,
+          r.locationErrors?.length ? t("planning.planLocationErrors", { n: r.locationErrors.length }) : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
       });
     } catch (e) {
-      toast.error("Plan optimization failed", { description: errorMessage(e) });
+      toast.error(t("planning.planFailed"), { description: errorMessage(e) });
     } finally {
       setPlanBusy(false);
     }
@@ -336,29 +347,29 @@ export function PlanningView() {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">Planning</h1>
+            <h1 className="text-[26px] font-extrabold leading-[1.15] tracking-[-0.02em] text-ink">{t("planning.title")}</h1>
             <p className="mt-1 text-sm text-ink-2">
-              {date} · {depot ? depot.name : `${data.depots.length} depots`} · {openTours.length} open tour{openTours.length === 1 ? "" : "s"}
+              {date} · {depot ? depot.name : t("planning.depotsN", { count: data.depots.length })} · {t("planning.openTours", { count: openTours.length })}
             </p>
           </div>
           {canManage && (
             <div className="flex flex-wrap items-center gap-2">
-              <Tooltip content={!depot ? "Select a depot first" : plannedHere.length === 0 ? "No planned tours in this depot" : "Distribute open and unassigned stops across the planned tours"}>
+              <Tooltip content={!depot ? t("planning.selectDepotFirst") : plannedHere.length === 0 ? t("planning.noPlannedTours") : t("planning.planHint")}>
                 <span>
                   <Button variant="secondary" onClick={runPlan} disabled={!depot || plannedHere.length === 0 || planBusy}>
-                    {planBusy ? <Loader2 className="animate-spin" /> : <Wand2 />} Optimize depot plan
+                    {planBusy ? <Loader2 className="animate-spin" /> : <Wand2 />} {t("planning.optimizePlan")}
                   </Button>
                 </span>
               </Tooltip>
-              <Tooltip content={depot ? `Add stops to the unassigned list of ${depot.name}` : "Select a depot first"}>
+              <Tooltip content={depot ? t("planning.addStopsHint", { depot: depot.name }) : t("planning.selectDepotFirst")}>
                 <span>
                   <Button variant="secondary" onClick={() => setAddOpen(true)} disabled={!depot}>
-                    <PackagePlus /> Add stops
+                    <PackagePlus /> {t("planning.addStops")}
                   </Button>
                 </span>
               </Tooltip>
               <Button variant="primary" onClick={() => setNewOpen(true)} disabled={scoped.depots.length === 0}>
-                <Plus /> New tour
+                <Plus /> {t("planning.newTour")}
               </Button>
             </div>
           )}
@@ -368,12 +379,12 @@ export function PlanningView() {
           <Card>
             <EmptyState
               icon={<CalendarX2 />}
-              title={`No tours planned for ${date}`}
-              description="Create a tour, add its stops, assign a driver and vehicle, optimize and publish it."
+              title={t("planning.emptyTitle", { date })}
+              description={t("planning.emptyDesc")}
               action={
                 canManage && (
                   <Button variant="primary" onClick={() => setNewOpen(true)}>
-                    <Plus /> New tour
+                    <Plus /> {t("planning.newTour")}
                   </Button>
                 )
               }
@@ -381,9 +392,9 @@ export function PlanningView() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <section aria-label="Tours" className="flex flex-col gap-3">
+            <section aria-label={t("planning.toursAria")} className="flex flex-col gap-3">
               {openTours.length === 0 ? (
-                <Card className="p-6 text-center text-[13px] text-muted">No open tours. Create one to plan the unassigned stops.</Card>
+                <Card className="p-6 text-center text-[13px] text-muted">{t("planning.noOpenTours")}</Card>
               ) : (
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
                   {openTours.map((s) => (
@@ -393,9 +404,9 @@ export function PlanningView() {
               )}
               {doneTours.length > 0 && (
                 <p className="text-xs text-muted">
-                  {doneTours.length} completed tour{doneTours.length > 1 ? "s" : ""} hidden ({doneTours.map((s) => s.tour.name).join(", ")}).{" "}
+                  {t("planning.completedHidden", { count: doneTours.length, names: doneTours.map((s) => s.tour.name).join(", ") })}{" "}
                   <Link href="/list?view=all" className="font-semibold text-brand-700 hover:underline">
-                    Manage, archive or clean up in Tours
+                    {t("planning.manageInTours")}
                   </Link>
                 </p>
               )}
@@ -404,31 +415,31 @@ export function PlanningView() {
             <div className="flex flex-col gap-4">
               <Card className="overflow-hidden">
                 <CardHeader
-                  title={`Unassigned stops · ${data.unassigned.length}`}
-                  description="Select stops of one depot, then assign them to a tour."
+                  title={t("planning.unassignedTitle", { n: data.unassigned.length })}
+                  description={t("planning.unassignedDesc")}
                   actions={
                     <div className="flex items-center gap-1.5">
                     <UnassignedStopActions ids={[...selected]} onDone={() => setSelected(new Set())} />
                     <Menu>
                       <MenuTrigger asChild disabled={selected.size === 0 || targetTours.length === 0 || assignBusy}>
                         <Button size="sm" variant="primary">
-                          {assignBusy ? <Loader2 className="animate-spin" /> : <PackagePlus />} Assign
+                          {assignBusy ? <Loader2 className="animate-spin" /> : <PackagePlus />} {t("planning.assign")}
                         </Button>
                       </MenuTrigger>
                       <MenuContent className="w-56">
-                        <MenuLabel>Assign {selected.size} to tour</MenuLabel>
+                        <MenuLabel>{t("planning.assignToTour", { n: selected.size })}</MenuLabel>
                         {targetTours.map((s) => (
                           <MenuItem
                             key={s.tour.id}
-                            hint={`${s.remaining} open`}
+                            hint={t("planning.openN", { n: s.remaining })}
                             onSelect={async () => {
                               setAssignBusy(true);
                               try {
                                 await assignStops([...selected], s.tour.id);
-                                toast.success(`${selected.size} stop${selected.size > 1 ? "s" : ""} assigned to ${s.tour.name}`, { description: "Saved. Optimize the tour to place them in the route." });
+                                toast.success(t("planning.assignedToast", { count: selected.size, tour: s.tour.name }), { description: t("planning.assignedDesc") });
                                 setSelected(new Set());
                               } catch (e) {
-                                toast.error("Stops not assigned", { description: errorMessage(e) });
+                                toast.error(t("planning.stopsNotAssigned"), { description: errorMessage(e) });
                               } finally {
                                 setAssignBusy(false);
                               }
@@ -442,10 +453,10 @@ export function PlanningView() {
                     </div>
                   }
                 />
-                {selected.size > 0 && selectedDepots.size > 1 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">Selected stops belong to different depots – assign them separately.</p>}
-                {selected.size > 0 && selectedDepots.size === 1 && targetTours.length === 0 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">No open tour in this depot – create one first.</p>}
+                {selected.size > 0 && selectedDepots.size > 1 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">{t("planning.mixedDepots")}</p>}
+                {selected.size > 0 && selectedDepots.size === 1 && targetTours.length === 0 && <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning-ink">{t("planning.noOpenTourInDepot")}</p>}
                 {data.unassigned.length === 0 ? (
-                  <p className="px-4 py-6 text-center text-[13px] text-muted">All stops are planned.</p>
+                  <p className="px-4 py-6 text-center text-[13px] text-muted">{t("planning.allPlanned")}</p>
                 ) : (
                   <ul className="max-h-[420px] divide-y divide-line overflow-y-auto">
                     {data.unassigned.map((u) => (
@@ -460,12 +471,12 @@ export function PlanningView() {
                               return n;
                             })
                           }
-                          label={`Select ${u.recipientName ?? u.address.street}, ${u.address.street} ${u.address.houseNumber ?? ""}`.trim()}
+                          label={t("planning.selectStop", { name: u.recipientName ?? u.address.street, address: `${u.address.street} ${u.address.houseNumber ?? ""}`.trim() })}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="truncate text-[13px] font-medium text-ink">{u.recipientName ?? u.address.street}</span>
-                            {u.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-nx-violet-text" aria-label="Pickup" />}
+                            {u.type === "pickup" && <ArrowUpFromLine className="size-3.5 shrink-0 text-nx-violet-text" aria-label={t("common.stopType.pickup")} />}
                           </div>
                           <div className="truncate text-2xs text-muted">
                             {scoped.depots.find((x) => x.id === u.depotId)?.name} · {u.address.street} {u.address.houseNumber}
@@ -473,9 +484,9 @@ export function PlanningView() {
                           </div>
                         </div>
                         <button
-                          onClick={() => setPriority(u.id, !u.priority).catch((e) => toast.error("Priority not saved", { description: errorMessage(e) }))}
+                          onClick={() => setPriority(u.id, !u.priority).catch((e) => toast.error(t("planning.priorityNotSaved"), { description: errorMessage(e) }))}
                           aria-pressed={u.priority}
-                          aria-label={u.priority ? `Remove priority from ${u.recipientName}` : `Mark ${u.recipientName} as priority`}
+                          aria-label={u.priority ? t("planning.removePriorityFrom", { name: u.recipientName ?? u.address.street }) : t("planning.markPriorityName", { name: u.recipientName ?? u.address.street })}
                           className="inline-flex size-8 items-center justify-center rounded-md hover:bg-surface-2"
                         >
                           <Star className={cn("size-4", u.priority ? "fill-nx-amber text-nx-amber" : "text-subtle")} />
@@ -487,24 +498,24 @@ export function PlanningView() {
               </Card>
 
               <Card className="overflow-hidden">
-                <CardHeader title="Drivers" description={`${driverRows.filter((r) => !r.t && r.dr.active).length} available`} />
+                <CardHeader title={t("planning.drivers")} description={t("planning.available", { n: driverRows.filter((r) => !r.busyTour && r.dr.active).length })} />
                 <ul className="divide-y divide-line">
-                  {driverRows.map(({ dr, t }) => (
+                  {driverRows.map(({ dr, busyTour }) => (
                     <li key={dr.id} className="flex items-center gap-3 px-4 py-2.5">
                       <Avatar name={dr.displayName} size="sm" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[13px] font-medium text-ink">{dr.displayName}</div>
                         <div className="text-2xs text-muted">
-                          {scoped.depots.find((x) => x.id === dr.depotId)?.name ?? "No depot"} · max {Math.round(dr.maxShiftMinutes / 60)} h
+                          {scoped.depots.find((x) => x.id === dr.depotId)?.name ?? t("planning.noDepot")} · {t("planning.maxShift", { h: Math.round(dr.maxShiftMinutes / 60) })}
                         </div>
                       </div>
                       {!dr.active ? (
-                        <Badge>Inactive</Badge>
-                      ) : t ? (
-                        <Badge tone="brand">{t.name}</Badge>
+                        <Badge>{t("planning.inactive")}</Badge>
+                      ) : busyTour ? (
+                        <Badge tone="brand">{busyTour.name}</Badge>
                       ) : (
                         <Badge tone="success" dot>
-                          Available
+                          {t("planning.availableBadge")}
                         </Badge>
                       )}
                     </li>
@@ -513,10 +524,10 @@ export function PlanningView() {
               </Card>
 
               <Card className="overflow-hidden">
-                <CardHeader title="Vehicles" description={`${freeVehicles.length} of ${data.vehicles.length} available`} />
+                <CardHeader title={t("planning.vehicles")} description={t("planning.vehiclesAvailable", { free: freeVehicles.length, total: data.vehicles.length })} />
                 <ul className="divide-y divide-line">
                   {data.vehicles.map((v) => {
-                    const t = vehicleBusy(data, v.id);
+                    const busyTour = vehicleBusy(data, v.id);
                     return (
                       <li key={v.id} className="flex items-center gap-3 px-4 py-2.5">
                         <span className="inline-flex size-7 items-center justify-center rounded-md bg-surface-2 text-ink-2">
@@ -525,14 +536,14 @@ export function PlanningView() {
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-medium text-ink">{v.label}</div>
                           <div className="text-2xs text-muted">
-                            {v.licensePlate} · {v.capacityParcels ?? "–"} parcels
+                            {v.licensePlate} · {v.capacityParcels != null ? t("common.parcels", { count: v.capacityParcels }) : t("planning.parcelsUnknown")}
                           </div>
                         </div>
-                        {t ? (
-                          <Badge tone="brand">{t.name}</Badge>
+                        {busyTour ? (
+                          <Badge tone="brand">{busyTour.name}</Badge>
                         ) : (
                           <Badge tone="success" dot>
-                            Available
+                            {t("planning.availableBadge")}
                           </Badge>
                         )}
                       </li>
@@ -545,7 +556,7 @@ export function PlanningView() {
         )}
       </div>
       <NewTourDialog open={newOpen} onOpenChange={setNewOpen} />
-      {depot && <AddStopsDialog open={addOpen} onOpenChange={setAddOpen} target={{ depotId: depot.id }} targetLabel={`${depot.name} (unassigned)`} defaultCity={depot.address.city} />}
+      {depot && <AddStopsDialog open={addOpen} onOpenChange={setAddOpen} target={{ depotId: depot.id }} targetLabel={t("planning.unassignedTarget", { depot: depot.name })} defaultCity={depot.address.city} />}
       <TourDetailSheet />
     </div>
   );
