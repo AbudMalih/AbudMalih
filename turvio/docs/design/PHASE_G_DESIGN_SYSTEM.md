@@ -1,6 +1,6 @@
 # TURVIO Phase G – Enterprise design system (proposal, step 1)
 
-Status: **proposal + working prototype of Dispatch Overview, awaiting visual approval.**
+Status: **Step 1 approved (Overview). Step 2: applied to all Dispatch screens – awaiting approval. Admin follows in Step 3.**
 Scope of step 1: design system for Dispatch Web and Admin Web; only Dispatch Overview (and the
 shared shell it sits in) is redesigned. Driver app: unchanged. Backend, data, permissions: unchanged.
 
@@ -77,10 +77,15 @@ icons where a label suffices (KPI band has none).
 * All existing actions, API calls, permissions, live updates, ETA logic and translations are the
   same components and code paths – only presentation differs.
 
-## 4. How to view the prototype
-The redesign is **opt-in per browser** while under review: open any Dispatch page with `?ui=g`
-(back with `?ui=classic`). It is a cookie; the server renders `<html data-ds="g">`. Without it
-Dispatch and Admin look exactly as before (verified by pixel comparison). Admin never sets it.
+## 4. Default and fallback
+Since Step 2, G is the **Dispatch default** and charcoal (dark) is the default theme (light and
+"follow system" remain choices in Settings / the top bar). The previous design stays available as
+a fallback during development: `?ui=classic` (back with `?ui=g`), remembered per browser. Admin is
+not affected until Step 3.
+
+Implementation notes: G styling lives in `g:` classes next to the classic ones (classic unchanged),
+plus a few global normalisations at the end of `apps/dispatch/app/globals.css` (sentence-case
+labels, weights ≤ 600, no blur/lift/gradient decoration, calmer radii, compact table cells).
 
 ## 5. Next steps after approval
 1. Apply G to Planning, Tours/Archive, Pickups, Analytics, Settings, Fleet (one screen at a time).
