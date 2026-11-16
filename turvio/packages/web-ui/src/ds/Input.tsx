@@ -3,6 +3,7 @@
 import { Search, X } from "lucide-react";
 import * as React from "react";
 import { cn } from "./cn";
+import { useDsLabels } from "./Labels";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
   return (
@@ -30,6 +31,7 @@ export function SearchInput({
   className?: string;
   label: string;
 }) {
+  const L = useDsLabels();
   return (
     <div className={cn("relative", className)}>
       <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
@@ -38,7 +40,7 @@ export function SearchInput({
         <button
           type="button"
           onClick={() => onChange("")}
-          aria-label="Clear search"
+          aria-label={L.clearSearch}
           className="absolute end-2 top-1/2 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded text-subtle hover:bg-surface-2 hover:text-ink"
         >
           <X className="size-3.5" />

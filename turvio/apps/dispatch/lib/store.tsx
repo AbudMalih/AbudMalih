@@ -17,6 +17,8 @@ import {
 } from "@turvio/shared";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ApiCallError, api } from "./api";
+import { isLocale } from "./i18n";
+import { useI18n } from "./i18n/client";
 import type { LocationChecksResponse, LocationEvent, LocationReport, StopLocationDetail } from "./locations";
 
 export interface SessionInfo {
@@ -141,12 +143,18 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
   const [positionTick, setPositionTick] = useState(0);
   const [lastLoadedAt, setLastLoadedAt] = useState(() => Date.now());
   const [orgDefaults, setOrgDefaults] = useState<DispatchState["orgDefaults"]>(null);
+  const { locale, setLocale } = useI18n();
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
   // Personal defaults (Settings → My preferences): the default location applies once, at start.
   useEffect(() => {
     let alive = true;
-    api<{ orgDefaults: Record<string, NonNullable<DispatchState["orgDefaults"]>> } | undefined>("GET", "/v1/me/preferences").then(
+    api<{ language?: string | null; orgDefaults: Record<string, NonNullable<DispatchState["orgDefaults"]>> } | undefined>("GET", "/v1/me/preferences").then(
       (p) => {
         if (!alive) return;
+        // Language is per user: the saved choice (Settings → My preferences) wins, also in a new
+        // browser. Without one, this browser's choice (sign-in page) stays – nothing is saved implicitly.
+        if (isLocale(p?.language) && p.language !== localeRef.current) setLocale(p.language);
         const d = p?.orgDefaults?.[org] ?? {};
         setOrgDefaults(d);
         if (d.defaultDepotId && initial.depots.some((x) => x.id === d.defaultDepotId)) setDepotIdState((cur) => cur ?? d.defaultDepotId!);

@@ -8,6 +8,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { errorMessage } from "../lib/api";
 import { fieldCls } from "../lib/helpers";
+import { LOCALE_NAMES, LOCALES, type Locale } from "../lib/i18n";
+import { useI18n } from "../lib/i18n/client";
 import { MODE_LABEL, TRACKING_STATE, settingsApi, type CompanySettings, type DriverTracking, type Preferences, type TrackingDrivers, type TrackingMode } from "../lib/settings";
 import { ageLabel } from "../lib/live";
 import { useDispatch } from "../lib/store";
@@ -114,6 +116,24 @@ function PreferencesSection() {
   const [depot, setDepot] = useState("");
   const [toursView, setToursView] = useState<"day" | "all" | "archived">("day");
   const [busy, setBusy] = useState(false);
+  const { locale, setLocale, t } = useI18n();
+  const [langBusy, setLangBusy] = useState(false);
+  // Language: switches at once and is saved with the account (applies on every computer).
+  const chooseLanguage = async (l: Locale) => {
+    if (l === locale) return;
+    const before = locale;
+    setLocale(l);
+    setLangBusy(true);
+    try {
+      const p = await api.savePreferences({ language: l });
+      setPrefs(p);
+    } catch (e) {
+      setLocale(before);
+      toast.error(t("settings.languageNotSaved"), { description: errorMessage(e) });
+    } finally {
+      setLangBusy(false);
+    }
+  };
   useEffect(() => {
     api.preferences().then(
       (p) => {
@@ -155,6 +175,27 @@ function PreferencesSection() {
   return (
     <Card className="flex flex-col gap-5 p-5">
       <CardHeader className="-mx-5 -mt-5" title="My preferences" description="Personal – they never change anything for your colleagues." />
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 text-[13px] font-semibold text-ink">{t("shell.language")}</legend>
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("shell.language")} data-testid="language-choice">
+          {LOCALES.map((l) => (
+            <button
+              key={l}
+              type="button"
+              role="radio"
+              aria-checked={locale === l}
+              disabled={langBusy}
+              onClick={() => void chooseLanguage(l)}
+              className={cn("h-10 rounded-xl border border-line px-4 text-[13px] font-semibold text-ink-2 hover:border-line-strong disabled:opacity-60", locale === l && "border-brand-500 bg-brand-50 text-brand-700")}
+            >
+              <span lang={l} dir={l === "ar" ? "rtl" : "ltr"}>
+                {LOCALE_NAMES[l]}
+              </span>
+            </button>
+          ))}
+        </div>
+        <span className="text-2xs text-muted">{t("shell.languageHint")}</span>
+      </fieldset>
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-[13px] font-semibold text-ink">Appearance</legend>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Appearance">

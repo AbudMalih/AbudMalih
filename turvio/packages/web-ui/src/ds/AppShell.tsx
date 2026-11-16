@@ -5,6 +5,7 @@ import { LayoutGroup, motion, MotionConfig } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Avatar } from "./Avatar";
 import { cn } from "./cn";
+import { useDsLabels } from "./Labels";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from "./Menu";
 import { Sheet } from "./Sheet";
 import { ThemeSwitch } from "./Theme";
@@ -71,9 +72,10 @@ function isActive(current: string, href: string) {
 }
 
 function NavLinks({ groups, current, collapsed, onNavigate, linkComponent: A }: { groups: NavGroup[]; current: string; collapsed: boolean; onNavigate?: () => void; linkComponent: LinkLike }) {
+  const L = useDsLabels();
   return (
     <LayoutGroup id="sidebar-nav">
-      <nav aria-label="Main" className="flex flex-col">
+      <nav aria-label={L.shell.mainNav} className="flex flex-col">
         {groups.map((group) => (
           <div key={group.label}>
             <div
@@ -155,6 +157,7 @@ function ProfileCard({
   onSignOut?: () => void;
   securityHref?: string;
 }) {
+  const L = useDsLabels();
   const switchable = (workspaces?.length ?? 0) > 1;
   return (
     <Menu>
@@ -163,7 +166,7 @@ function ProfileCard({
           className={cn(
             "flex w-full items-center gap-[11px] rounded-[14px] border border-line bg-surface p-2 text-start outline-none transition-colors duration-200 hover:border-line-strong focus-visible:shadow-[var(--shadow-focus)]",
           )}
-          aria-label={`Account: ${user.name}`}
+          aria-label={L.shell.account(user.name)}
         >
           <span className="relative shrink-0">
             <Avatar name={user.name} />
@@ -184,7 +187,7 @@ function ProfileCard({
         {switchable && (
           <>
             <MenuSeparator />
-            <MenuLabel>Switch company</MenuLabel>
+            <MenuLabel>{L.shell.switchCompany}</MenuLabel>
             {workspaces!.map((w) => (
               <MenuItem
                 key={w.id}
@@ -202,11 +205,11 @@ function ProfileCard({
         <MenuSeparator />
         {securityHref && (
           <MenuItem icon={<ShieldCheck />} onSelect={() => window.location.assign(securityHref)}>
-            Two-step verification
+            {L.shell.twoStep}
           </MenuItem>
         )}
         <MenuItem icon={<LogOut />} disabled={!onSignOut} onSelect={() => onSignOut?.()}>
-          Sign out
+          {L.shell.signOut}
         </MenuItem>
       </MenuContent>
     </Menu>
@@ -237,6 +240,7 @@ function Sidebar({
   linkComponent: LinkLike;
   mobile?: boolean;
 }) {
+  const L = useDsLabels();
   const A = linkComponent;
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -261,11 +265,11 @@ function Sidebar({
             type="button"
             onClick={onToggle}
             aria-expanded={!collapsed}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? L.shell.expandSidebar : L.shell.collapseSidebar}
             className="flex h-[38px] items-center gap-3 whitespace-nowrap rounded-[10px] px-3 text-sm font-semibold text-muted outline-none transition-colors hover:bg-[rgba(166,180,224,.06)] hover:text-ink focus-visible:shadow-[var(--shadow-focus)]"
           >
             <ChevronLeft className={cn("size-[18px] shrink-0 transition-transform duration-300 ease-[var(--ease-out-quart)] rtl:rotate-180", collapsed && "rotate-180 rtl:rotate-0")} />
-            <span className={cn("transition-opacity duration-200", collapsed && "opacity-0")}>Collapse</span>
+            <span className={cn("transition-opacity duration-200", collapsed && "opacity-0")}>{L.shell.collapse}</span>
           </button>
         )}
         {footer}
@@ -275,6 +279,7 @@ function Sidebar({
 }
 
 function CommandPalette({ open, onClose, commands }: { open: boolean; onClose: () => void; commands: Command[] }) {
+  const L = useDsLabels();
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const input = useRef<HTMLInputElement>(null);
@@ -301,7 +306,7 @@ function CommandPalette({ open, onClose, commands }: { open: boolean; onClose: (
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Search"
+        aria-label={L.shell.search}
         aria-hidden={!open}
         className={cn(
           "fixed left-1/2 top-[12vh] z-[81] w-[min(620px,calc(100%-32px))] -translate-x-1/2 overflow-hidden rounded-[22px] border border-line-strong bg-raised shadow-overlay transition-[opacity,transform] duration-300 ease-[var(--ease-spring)]",
@@ -318,13 +323,13 @@ function CommandPalette({ open, onClose, commands }: { open: boolean; onClose: (
             else if (e.key === "ArrowUp") (e.preventDefault(), setSel((s) => Math.max(s - 1, 0)));
             else if (e.key === "Enter") run(list[sel]);
           }}
-          placeholder="Search pages and actions…"
-          aria-label="Search pages and actions"
+          placeholder={L.shell.searchPlaceholder}
+          aria-label={L.shell.searchLabel}
           className="h-[58px] w-full border-0 border-b border-line bg-transparent px-5 text-base text-ink outline-none placeholder:text-muted"
           tabIndex={open ? 0 : -1}
         />
         <div className="max-h-[360px] overflow-auto p-2" role="listbox">
-          {list.length === 0 && <p className="px-3 py-6 text-center text-[13px] text-muted">No matches</p>}
+          {list.length === 0 && <p className="px-3 py-6 text-center text-[13px] text-muted">{L.shell.noMatches}</p>}
           {list.map((c, i) => {
             const Icon = c.icon;
             return (
@@ -396,6 +401,7 @@ export function AppShell({
   userMenuExtra?: ReactNode;
   children: ReactNode;
 }) {
+  const L = useDsLabels();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -456,7 +462,7 @@ export function AppShell({
           </aside>
 
           {/* Mobile drawer */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen} side="left" title={<span className="sr-only">Navigation</span>} className="max-w-[288px] bg-sidebar [&>div:first-child]:hidden [&>div:nth-child(2)]:px-3.5 [&>div:nth-child(2)]:pt-[18px]">
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen} side="left" title={<span className="sr-only">{L.shell.navigation}</span>} className="max-w-[288px] bg-sidebar [&>div:first-child]:hidden [&>div:nth-child(2)]:px-3.5 [&>div:nth-child(2)]:pt-[18px]">
             <Sidebar product={product} groups={groups} current={current} collapsed={false} onNavigate={() => setMobileOpen(false)} footer={profile(false)} linkComponent={linkComponent} mobile />
           </Sheet>
 
@@ -466,7 +472,7 @@ export function AppShell({
                 type="button"
                 className="grid size-10 shrink-0 place-items-center rounded-xl border border-line bg-surface text-ink-2 transition-colors hover:border-line-strong hover:text-ink active:scale-[0.93] lg:hidden"
                 onClick={() => setMobileOpen(true)}
-                aria-label="Open navigation"
+                aria-label={L.shell.openNavigation}
               >
                 <MenuIcon className="size-[18px]" />
               </button>
@@ -474,10 +480,10 @@ export function AppShell({
                 type="button"
                 onClick={() => setPaletteOpen(true)}
                 className="flex h-10 min-w-0 flex-1 items-center gap-2.5 rounded-xl border border-line bg-surface px-3 text-start font-medium text-muted transition-[border-color] hover:border-line-strong sm:w-[min(380px,40vw)] sm:flex-none"
-                aria-label="Search pages and actions (Ctrl K)"
+                aria-label={L.shell.searchButton}
               >
                 <Search className="size-[18px] shrink-0" />
-                <span className="hidden truncate text-sm sm:inline">{title && fullBleed ? title : "Search…"}</span>
+                <span className="hidden truncate text-sm sm:inline">{title && fullBleed ? title : L.shell.searchShort}</span>
                 <span className="ms-auto hidden rounded-md border border-line-strong px-[7px] py-0.5 text-[11px] font-bold text-muted sm:inline">⌘K</span>
               </button>
               {headerStart}

@@ -3,6 +3,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "./cn";
+import { useDsLabels } from "./Labels";
 
 /** localStorage key for an explicit choice; absent = follow the system (dark when unknown). */
 export const THEME_KEY = "turvio-theme";
@@ -50,7 +51,9 @@ export function useTheme(): [Theme, (t: Theme) => void] {
 }
 
 /** The prototype's pill switch: violet moon knob (dark) ↔ amber sun knob (light). */
-export function ThemeSwitch({ className, labels = { toDark: "Switch to dark mode", toLight: "Switch to light mode" } }: { className?: string; labels?: { toDark: string; toLight: string } }) {
+export function ThemeSwitch({ className, labels: given }: { className?: string; labels?: { toDark: string; toLight: string } }) {
+  const L = useDsLabels();
+  const labels = given ?? { toDark: L.toDark, toLight: L.toLight };
   const [theme, setTheme] = useTheme();
   const light = theme === "light";
   return (

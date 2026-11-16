@@ -3,6 +3,7 @@
 import { Button } from "@turvio/web-ui/ds";
 import { LogOut } from "lucide-react";
 import { useState } from "react";
+import { useT } from "../lib/i18n/client";
 
 export async function signOut() {
   await fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
@@ -11,6 +12,7 @@ export async function signOut() {
 
 export function SignOutButton() {
   const [busy, setBusy] = useState(false);
+  const t = useT();
   return (
     <Button
       variant="ghost"
@@ -20,7 +22,7 @@ export function SignOutButton() {
         void signOut();
       }}
     >
-      <LogOut /> Sign out
+      <LogOut className="rtl:-scale-x-100" /> {t("shell.signOut")}
     </Button>
   );
 }

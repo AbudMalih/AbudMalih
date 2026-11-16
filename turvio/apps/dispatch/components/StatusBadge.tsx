@@ -1,6 +1,8 @@
 import type { DelayCertainty, DispatchTourStatus, PickupState, StopStatus } from "@turvio/shared";
 import { Badge, type BadgeTone } from "@turvio/web-ui/ds";
 import { delayLabel } from "../lib/eta";
+import { EN_T, type TFunction } from "../lib/i18n";
+import { useT } from "../lib/i18n/client";
 
 export const TOUR_STATUS: Record<DispatchTourStatus, { label: string; tone: BadgeTone }> = {
   in_progress: { label: "On route", tone: "brand" },
@@ -34,6 +36,15 @@ export const STOP_STATUS: Record<StopStatus, { label: string; tone: BadgeTone }>
   cancelled: { label: "Cancelled", tone: "neutral" },
 };
 
+/** Labels in the current language (`label` in the maps above is the English text). */
+export const tourStatusLabel = (s: DispatchTourStatus, t: TFunction = EN_T) => t(`common.tourStatus.${s}`);
+export const pickupStateLabel = (s: PickupState, t: TFunction = EN_T) => t(`common.pickupState.${s}`);
+export const stopStatusLabel = (s: StopStatus, t: TFunction = EN_T) => t(`common.stopStatus.${s}`);
+const KNOWN_FAILURES = new Set(["recipient_absent", "refused", "address_not_found", "no_access", "damaged", "business_closed", "rescheduled_by_recipient", "other"]);
+/** A default failure-reason code in the current language; a company's own code is shown as it is. */
+export const failureReasonLabel = (code: string, t: TFunction = EN_T) =>
+  KNOWN_FAILURES.has(code) ? t(`common.failure.${code}` as `common.failure.other`) : code;
+
 /** Labels for the default failure-reason codes (companies may define their own labels). */
 export const FAILURE_REASON: Record<string, string> = {
   recipient_absent: "Recipient not at home",
@@ -48,8 +59,9 @@ export const FAILURE_REASON: Record<string, string> = {
 
 /** `certainty` tells a delay that already happened from a projected or estimated one. */
 export function TourStatusBadge({ status, certainty = null }: { status: DispatchTourStatus; certainty?: DelayCertainty | null }) {
+  const t = useT();
   const s = TOUR_STATUS[status];
-  const label = status === "delayed" ? delayLabel(certainty) : s.label;
+  const label = status === "delayed" ? delayLabel(certainty, t) : tourStatusLabel(status, t);
   const tone: BadgeTone = status === "delayed" && certainty === "estimated" ? "warning" : s.tone;
   return (
     <Badge tone={tone} dot data-testid="tour-status">
@@ -59,9 +71,11 @@ export function TourStatusBadge({ status, certainty = null }: { status: Dispatch
 }
 
 export function PickupStateBadge({ state, estimated = false }: { state: PickupState; estimated?: boolean }) {
+  const t = useT();
   const s = PICKUP_STATE[state];
   const est = estimated && (state === "late" || state === "at_risk");
-  const label = est && state === "late" ? "Possibly late (estimate)" : est ? `${s.label} (estimate)` : s.label;
+  const plain = pickupStateLabel(state, t);
+  const label = est && state === "late" ? t("common.pickupPossiblyLate") : est ? t("common.withEstimate", { label: plain }) : plain;
   return (
     <Badge tone={est && state === "late" ? "warning" : s.tone} dot>
       {label}
@@ -70,9 +84,9 @@ export function PickupStateBadge({ state, estimated = false }: { state: PickupSt
 }
 
 /** "in 1 h 05" / "12 min ago" relative to the synthetic clock. */
-export function deadlineLabel(minutes: number | null): string {
+export function deadlineLabel(minutes: number | null, t: TFunction = EN_T): string {
   if (minutes === null) return "–";
   const abs = Math.abs(Math.round(minutes));
-  const text = abs >= 60 ? `${Math.floor(abs / 60)} h ${String(abs % 60).padStart(2, "0")}` : `${abs} min`;
-  return minutes >= 0 ? `in ${text}` : `${text} ago`;
+  const text = abs >= 60 ? t("common.hShort", { h: Math.floor(abs / 60), m: String(abs % 60).padStart(2, "0") }) : t("common.min", { n: abs });
+  return minutes >= 0 ? t("common.inMinutes", { text }) : t("common.agoMinutes", { text });
 }

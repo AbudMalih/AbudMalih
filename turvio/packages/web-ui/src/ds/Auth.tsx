@@ -4,12 +4,14 @@ import { AlertCircle, ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2 } from "luci
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "./Button";
 import { cn } from "./cn";
+import { useDsLabels } from "./Labels";
 import { Input } from "./Input";
 import { ThemeSwitch } from "./Theme";
 import { TurvioLockup } from "./Wordmark";
 
 /** Full-page layout for sign-in flows – TURVIO NEXT hero language (violet glow, masked grid). */
 export function AuthLayout({ product, title, subtitle, children, footer }: { product: string; title: string; subtitle?: ReactNode; children: ReactNode; footer?: ReactNode }) {
+  const L = useDsLabels();
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-canvas px-4 py-10">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_80%_0%,rgba(117,91,255,.32)_0%,rgba(52,120,255,.12)_40%,transparent_72%),radial-gradient(50%_50%_at_0%_100%,rgba(24,217,232,.10)_0%,transparent_70%)]" />
@@ -28,7 +30,7 @@ export function AuthLayout({ product, title, subtitle, children, footer }: { pro
           <div className="mt-6">{children}</div>
         </div>
         {footer && <div className="mt-5 text-center text-[13px] text-muted">{footer}</div>}
-        <p className="mt-8 text-center text-xs font-semibold text-muted">Smart Routes. Simple Deliveries.</p>
+        <p className="mt-8 text-center text-xs font-semibold text-muted">{L.auth.tagline}</p>
       </div>
       <div className="absolute end-4 top-4">
         <ThemeSwitch />
@@ -73,6 +75,7 @@ export function FormAlert({ tone = "danger", children }: { tone?: "danger" | "su
 
 function PasswordInput({ id, value, onChange, autoComplete, invalid }: { id: string; value: string; onChange: (v: string) => void; autoComplete: string; invalid?: boolean }) {
   const [show, setShow] = useState(false);
+  const L = useDsLabels();
   return (
     <div className="relative">
       <Input id={id} type={show ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} autoComplete={autoComplete} required aria-invalid={invalid} className="h-10 pe-10" />
@@ -80,7 +83,7 @@ function PasswordInput({ id, value, onChange, autoComplete, invalid }: { id: str
         type="button"
         onClick={() => setShow((s) => !s)}
         className="absolute end-1.5 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink"
-        aria-label={show ? "Hide password" : "Show password"}
+        aria-label={show ? L.auth.hidePassword : L.auth.showPassword}
       >
         {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </button>
@@ -94,13 +97,20 @@ async function postJson(url: string, body: unknown): Promise<{ ok: boolean; stat
     const data = res.status === 204 ? {} : await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, data };
   } catch {
-    return { ok: false, status: 0, data: { error: { message: "No connection. Check your network and try again." } } };
+    return { ok: false, status: 0, data: { error: { code: "network" } } };
   }
 }
+
+type AuthText = ReturnType<typeof useDsLabels>["auth"];
+/** Known error codes in the app's language; otherwise the server's message, else the fallback. */
+const pick = (A: AuthText, r: { status: number; data: { error?: { message?: string; code?: string } } }, fallback: string) =>
+  r.status === 0 ? A.noConnection : (A.errors[r.data.error?.code ?? ""] ?? r.data.error?.message ?? fallback);
 
 const safeNext = (next: string | null | undefined, fallback: string) => (next && next.startsWith("/") && !next.startsWith("//") ? next : fallback);
 
 export function LoginForm({ product, next, home = "/" }: { product: string; next?: string | null; home?: string }) {
+  const L = useDsLabels();
+  const A = L.auth;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -123,7 +133,7 @@ export function LoginForm({ product, next, home = "/" }: { product: string; next
       return;
     }
     setBusy(false);
-    setError(r.data.error?.message ?? (r.status === 400 ? "Enter a valid email address and your password." : "Sign-in failed. Please try again."));
+    setError(pick(A, r, (r.status === 400 ? A.invalidLogin : A.signInFailed)));
   };
   const submitCode = async (e: FormEvent) => {
     e.preventDefault();
@@ -139,43 +149,43 @@ export function LoginForm({ product, next, home = "/" }: { product: string; next
     if (r.status === 401 || r.status === 429) {
       // The sign-in step is used up: start again with the password.
       setStep("password");
-      setError(r.data.error?.message ?? "Please sign in again.");
+      setError(pick(A, r, A.signInAgain));
       return;
     }
-    setError(r.data.error?.message ?? "The code is not correct.");
+    setError(pick(A, r, A.codeWrong));
   };
   if (step === "code") {
     return (
-      <AuthLayout product={product} title="Two-step verification" subtitle="Enter the 6-digit code from your authenticator app.">
+      <AuthLayout product={product} title={A.twoStepTitle} subtitle={A.twoStepSubtitle}>
         <form onSubmit={submitCode} className="flex flex-col gap-4" noValidate>
           {error && <FormAlert>{error}</FormAlert>}
-          <Field label="Authentication code" htmlFor="otp">
+          <Field label={A.authCode} htmlFor="otp">
             <OtpInput id="otp" value={code} onChange={setCode} />
           </Field>
           <Button type="submit" variant="primary" size="lg" disabled={busy || code.replace(/\s/g, "").length !== 6} className="mt-1 w-full">
             {busy && <Loader2 className="animate-spin" />}
-            {busy ? "Checking…" : "Verify"}
+            {busy ? A.checking : A.verify}
           </Button>
           <button type="button" onClick={() => (setStep("password"), setError(null), setCode(""))} className="text-[13px] font-medium text-nx-violet-text hover:underline">
-            Use a different account
+            {A.differentAccount}
           </button>
         </form>
       </AuthLayout>
     );
   }
   return (
-    <AuthLayout product={product} title="Sign in" subtitle="Use your TURVIO work account.">
+    <AuthLayout product={product} title={A.signIn} subtitle={A.signInSubtitle}>
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         {error && <FormAlert>{error}</FormAlert>}
-        <Field label="Email" htmlFor="email">
+        <Field label={A.email} htmlFor="email">
           <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required autoFocus className="h-10" />
         </Field>
         <Field
-          label="Password"
+          label={A.password}
           htmlFor="password"
           hint={
             <a href="/forgot-password" className="text-xs font-medium text-nx-violet-text hover:underline">
-              Forgot password?
+              {A.forgotPassword}
             </a>
           }
         >
@@ -183,7 +193,7 @@ export function LoginForm({ product, next, home = "/" }: { product: string; next
         </Field>
         <Button type="submit" variant="primary" size="lg" disabled={busy || !email || !password} className="mt-1 w-full">
           {busy && <Loader2 className="animate-spin" />}
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? A.signingIn : A.signIn}
         </Button>
       </form>
     </AuthLayout>
@@ -215,6 +225,7 @@ export const groupKey = (secret: string) => secret.replace(/(.{4})/g, "$1 ").tri
  * (key + otpauth link – no QR library) and confirms it with a first code.
  */
 export function MfaSetupForm({ product, next, home = "/", required }: { product: string; next?: string | null; home?: string; required?: boolean }) {
+  const A = useDsLabels().auth;
   const [status, setStatus] = useState<{ enabled: boolean } | null>(null);
   const [enrollment, setEnrollment] = useState<{ secret: string; otpauthUrl: string } | null>(null);
   const [code, setCode] = useState("");
@@ -234,12 +245,13 @@ export function MfaSetupForm({ product, next, home = "/", required }: { product:
         const data = await res.json().catch(() => ({}));
         if (!alive) return;
         if (res.ok) setStatus({ enabled: !!data.enabled });
-        else setError(data.error?.message ?? "Could not load your security settings.");
+        else setError(A.errors[data.error?.code ?? ""] ?? data.error?.message ?? A.securityLoadFailed);
       })
-      .catch(() => alive && setError("No connection. Check your network and try again."));
+      .catch(() => alive && setError(A.noConnection));
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const start = async () => {
@@ -248,7 +260,7 @@ export function MfaSetupForm({ product, next, home = "/", required }: { product:
     const r = await postJson("/api/turvio/v1/auth/mfa/enroll", {});
     setBusy(false);
     if (r.ok) setEnrollment({ secret: String(r.data.secret), otpauthUrl: String(r.data.otpauthUrl) });
-    else setError(r.data.error?.message ?? "Could not start the set-up.");
+    else setError(pick(A, r, A.setupStartFailed));
   };
   const activate = async (e: FormEvent) => {
     e.preventDefault();
@@ -262,7 +274,7 @@ export function MfaSetupForm({ product, next, home = "/", required }: { product:
       return;
     }
     setCode("");
-    setError(r.data.error?.message ?? "The code is not correct.");
+    setError(pick(A, r, A.codeWrong));
   };
   const copy = async () => {
     if (!enrollment) return;
@@ -278,40 +290,40 @@ export function MfaSetupForm({ product, next, home = "/", required }: { product:
   return (
     <AuthLayout
       product={product}
-      title="Two-step verification"
-      subtitle="Protects company and platform administration with a code from an authenticator app."
+      title={A.twoStepTitle}
+      subtitle={A.mfaSubtitle}
       footer={
         <a href={target} className="inline-flex items-center gap-1 font-medium text-nx-violet-text hover:underline">
-          <ArrowLeft className="size-3.5" /> Back
+          <ArrowLeft className="size-3.5 rtl:rotate-180" /> {A.back}
         </a>
       }
     >
       <div className="flex flex-col gap-4">
         {error && <FormAlert>{error}</FormAlert>}
         {required && !status?.enabled && (
-          <FormAlert>This action needs two-step verification. Set it up below; next time you sign in, TURVIO asks for a code.</FormAlert>
+          <FormAlert>{A.mfaRequired}</FormAlert>
         )}
         {status === null && !error && (
           <p className="flex items-center gap-2 text-[13px] text-muted">
-            <Loader2 className="size-4 animate-spin" /> Loading…
+            <Loader2 className="size-4 animate-spin" /> {A.loading}
           </p>
         )}
         {status?.enabled && (
           <>
-            <FormAlert tone="success">{done ? "Two-step verification is now on. Other sessions were signed out." : "Two-step verification is on for your account."}</FormAlert>
+            <FormAlert tone="success">{done ? A.mfaNowOn : A.mfaIsOn}</FormAlert>
             <Button variant="primary" size="lg" className="w-full" onClick={() => window.location.assign(target)}>
-              Continue
+              {A.continue}
             </Button>
           </>
         )}
         {status && !status.enabled && !enrollment && (
           <>
             <p className="text-[13px] text-ink-2">
-              You need an authenticator app on your phone, for example Google Authenticator, Microsoft Authenticator, 1Password or Aegis.
+              {A.needApp}
             </p>
             <Button variant="primary" size="lg" className="w-full" onClick={start} disabled={busy}>
               {busy && <Loader2 className="animate-spin" />}
-              Set up two-step verification
+              {A.setUpMfa}
             </Button>
           </>
         )}
@@ -319,28 +331,28 @@ export function MfaSetupForm({ product, next, home = "/", required }: { product:
           <form onSubmit={activate} className="flex flex-col gap-4" noValidate>
             <ol className="flex list-decimal flex-col gap-3 ps-5 text-[13px] text-ink-2">
               <li>
-                On your phone:{" "}
+                {A.onYourPhone}{" "}
                 <a href={enrollment.otpauthUrl} className="font-medium text-nx-violet-text hover:underline">
-                  add TURVIO to your authenticator app
+                  {A.addToApp}
                 </a>
-                . On a computer, enter this key in the app instead (type: time-based):
+                {A.orEnterKey}
                 <div className="mt-2 flex items-center gap-2">
                   <code data-testid="mfa-secret" className="flex-1 select-all rounded-md border border-line bg-surface-2 px-2.5 py-2 font-mono text-[13px] tracking-wider text-ink">
                     {groupKey(enrollment.secret)}
                   </code>
                   <Button type="button" variant="secondary" size="sm" onClick={copy}>
-                    {copied ? "Copied" : "Copy"}
+                    {copied ? A.copied : A.copy}
                   </Button>
                 </div>
               </li>
-              <li>Enter the 6-digit code the app shows.</li>
+              <li>{A.enterCode}</li>
             </ol>
-            <Field label="Authentication code" htmlFor="otp">
+            <Field label={A.authCode} htmlFor="otp">
               <OtpInput id="otp" value={code} onChange={setCode} />
             </Field>
             <Button type="submit" variant="primary" size="lg" disabled={busy || code.replace(/\s/g, "").length !== 6} className="w-full">
               {busy && <Loader2 className="animate-spin" />}
-              Turn on
+              {A.turnOn}
             </Button>
           </form>
         )}
@@ -350,6 +362,7 @@ export function MfaSetupForm({ product, next, home = "/", required }: { product:
 }
 
 export function ForgotPasswordForm({ product }: { product: string }) {
+  const A = useDsLabels().auth;
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -361,30 +374,30 @@ export function ForgotPasswordForm({ product }: { product: string }) {
     const r = await postJson("/api/auth/forgot", { email });
     setBusy(false);
     if (r.ok) setSent(true);
-    else setError(r.data.error?.message ?? "Could not send the email. Please try again.");
+    else setError(pick(A, r, A.emailSendFailed));
   };
   return (
     <AuthLayout
       product={product}
-      title="Reset your password"
-      subtitle="We will email you a link to set a new password."
+      title={A.resetTitle}
+      subtitle={A.resetSubtitle}
       footer={
         <a href="/login" className="inline-flex items-center gap-1 font-medium text-nx-violet-text hover:underline">
-          <ArrowLeft className="size-3.5" /> Back to sign in
+          <ArrowLeft className="size-3.5 rtl:rotate-180" /> {A.backToSignIn}
         </a>
       }
     >
       {sent ? (
-        <FormAlert tone="success">If an account exists for {email}, an email with a reset link is on its way. The link is valid for 60 minutes.</FormAlert>
+        <FormAlert tone="success">{A.resetSent(email)}</FormAlert>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
           {error && <FormAlert>{error}</FormAlert>}
-          <Field label="Email" htmlFor="email">
+          <Field label={A.email} htmlFor="email">
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required autoFocus className="h-10" />
           </Field>
           <Button type="submit" variant="primary" size="lg" disabled={busy || !email} className="w-full">
             {busy && <Loader2 className="animate-spin" />}
-            Send reset link
+            {A.sendResetLink}
           </Button>
         </form>
       )}
@@ -392,21 +405,22 @@ export function ForgotPasswordForm({ product }: { product: string }) {
   );
 }
 
-function passwordHint(pw: string): string | null {
+function passwordHint(pw: string, A: { pwTooShort: string; pwNeedsNumber: string }): string | null {
   if (!pw) return null;
-  if (pw.length < 12) return "Use at least 12 characters";
-  if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) return "Use letters and at least one number";
+  if (pw.length < 12) return A.pwTooShort;
+  if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) return A.pwNeedsNumber;
   return null;
 }
 
 export function ResetPasswordForm({ product, token }: { product: string; token: string | null }) {
+  const A = useDsLabels().auth;
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const weak = passwordHint(pw);
-  const mismatch = pw2 && pw !== pw2 ? "Passwords do not match" : null;
+  const weak = passwordHint(pw, A);
+  const mismatch = pw2 && pw !== pw2 ? A.pwMismatch : null;
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (weak || mismatch) return;
@@ -415,31 +429,31 @@ export function ResetPasswordForm({ product, token }: { product: string; token: 
     const r = await postJson("/api/auth/reset", { token, password: pw });
     setBusy(false);
     if (r.ok) setDone(true);
-    else setError(r.data.error?.message ?? "The password could not be changed.");
+    else setError(pick(A, r, A.pwChangeFailed));
   };
   return (
-    <AuthLayout product={product} title="Choose a new password" footer={<a href="/login" className="font-medium text-nx-violet-text hover:underline">Back to sign in</a>}>
+    <AuthLayout product={product} title={A.newPasswordTitle} footer={<a href="/login" className="font-medium text-nx-violet-text hover:underline">{A.backToSignIn}</a>}>
       {!token ? (
-        <FormAlert>This reset link is incomplete. Request a new one from the sign-in page.</FormAlert>
+        <FormAlert>{A.resetIncomplete}</FormAlert>
       ) : done ? (
         <div className="flex flex-col gap-4">
-          <FormAlert tone="success">Your password was changed and all other sessions were signed out.</FormAlert>
+          <FormAlert tone="success">{A.pwChanged}</FormAlert>
           <Button variant="primary" size="lg" className="w-full" onClick={() => window.location.assign("/login")}>
-            Sign in
+            {A.signIn}
           </Button>
         </div>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
           {error && <FormAlert>{error}</FormAlert>}
-          <Field label="New password" htmlFor="pw" error={weak}>
+          <Field label={A.newPassword} htmlFor="pw" error={weak}>
             <PasswordInput id="pw" value={pw} onChange={setPw} autoComplete="new-password" invalid={!!weak} />
           </Field>
-          <Field label="Repeat password" htmlFor="pw2" error={mismatch}>
+          <Field label={A.repeatPassword} htmlFor="pw2" error={mismatch}>
             <PasswordInput id="pw2" value={pw2} onChange={setPw2} autoComplete="new-password" invalid={!!mismatch} />
           </Field>
           <Button type="submit" variant="primary" size="lg" disabled={busy || !pw || !!weak || pw !== pw2} className="w-full">
             {busy && <Loader2 className="animate-spin" />}
-            Set new password
+            {A.setNewPassword}
           </Button>
         </form>
       )}
@@ -455,6 +469,7 @@ interface InviteInfo {
 }
 
 export function AcceptInviteForm({ product, token, home = "/" }: { product: string; token: string | null; home?: string }) {
+  const A = useDsLabels().auth;
   const [info, setInfo] = useState<InviteInfo | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -465,47 +480,48 @@ export function AcceptInviteForm({ product, token, home = "/" }: { product: stri
   useEffect(() => {
     if (!token) return;
     fetch(`/api/auth/invite?token=${encodeURIComponent(token)}`)
-      .then(async (r) => (r.ok ? setInfo(await r.json()) : setLoadError("This invitation does not exist.")))
-      .catch(() => setLoadError("No connection. Try again."));
+      .then(async (r) => (r.ok ? setInfo(await r.json()) : setLoadError(A.inviteMissing)))
+      .catch(() => setLoadError(A.noConnectionShort));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
-  const weak = passwordHint(pw);
+  const weak = passwordHint(pw, A);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
     const r = await postJson("/api/auth/accept", { token, password: pw, displayName: name || undefined });
     setBusy(false);
-    if (!r.ok) return setError(r.data.error?.message ?? "The invitation could not be accepted.");
+    if (!r.ok) return setError(pick(A, r, A.inviteFailed));
     if (info?.role === "driver") setDriverDone(true);
     else window.location.assign(home);
   };
   return (
-    <AuthLayout product={product} title="Join your team" subtitle={info ? <>You were invited to <strong className="font-semibold text-ink">{info.organizationName}</strong> as {info.role}.</> : undefined}>
+    <AuthLayout product={product} title={A.joinTitle} subtitle={info ? A.invitedTo(<strong className="font-semibold text-ink">{info.organizationName}</strong>, A.role(info.role)) : undefined}>
       {!token || loadError ? (
-        <FormAlert>{loadError ?? "This invitation link is incomplete."}</FormAlert>
+        <FormAlert>{loadError ?? A.inviteIncomplete}</FormAlert>
       ) : !info ? (
         <div className="flex justify-center py-6 text-muted">
-          <Loader2 className="size-5 animate-spin" aria-label="Loading invitation" />
+          <Loader2 className="size-5 animate-spin" aria-label={A.loadingInvite} />
         </div>
       ) : info.state !== "open" ? (
-        <FormAlert>This invitation was {info.state}. Ask your administrator for a new one.</FormAlert>
+        <FormAlert>{A.inviteState(info.state)}</FormAlert>
       ) : driverDone ? (
-        <FormAlert tone="success">You are set up. Open the TURVIO Driver app and sign in with {info.email} and your new password.</FormAlert>
+        <FormAlert tone="success">{A.driverDone(info.email)}</FormAlert>
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
           {error && <FormAlert>{error}</FormAlert>}
-          <Field label="Email" htmlFor="email">
+          <Field label={A.email} htmlFor="email">
             <Input id="email" value={info.email} readOnly className="h-10 bg-surface-2 text-muted" />
           </Field>
-          <Field label="Your name" htmlFor="name">
+          <Field label={A.yourName} htmlFor="name">
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" className="h-10" />
           </Field>
-          <Field label="Password" htmlFor="pw" error={weak} hint={<span className="text-2xs text-subtle">existing account? use its password</span>}>
+          <Field label={A.password} htmlFor="pw" error={weak} hint={<span className="text-2xs text-subtle">{A.existingAccount}</span>}>
             <PasswordInput id="pw" value={pw} onChange={setPw} autoComplete="new-password" invalid={!!weak} />
           </Field>
           <Button type="submit" variant="primary" size="lg" disabled={busy || !pw || !!weak} className="w-full">
             {busy && <Loader2 className="animate-spin" />}
-            Accept invitation
+            {A.acceptInvite}
           </Button>
         </form>
       )}

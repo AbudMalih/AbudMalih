@@ -166,7 +166,7 @@ describe("today 10:00: one figure per tour in every view", () => {
   it("map tooltip: the stop row's ETA; completed stops show their status", () => {
     const s = by.LATE!;
     expect(stopTooltipHtml(s, s.stops[0]!, 1)).toContain("ETA 10:10");
-    expect(stopTooltipHtml(by.DONE!, by.DONE!.stops[0]!, 1)).toContain("delivered");
+    expect(stopTooltipHtml(by.DONE!, by.DONE!.stops[0]!, 1)).toContain("Delivered");
     expect(stopTooltipHtml(by.PAUSE!, by.PAUSE!.stops[1]!, 2)).toContain(`ETA ${formatClock(by.PAUSE!.timeline.projections.get("PAUSE-s1")!.etaMinute)}`);
   });
 

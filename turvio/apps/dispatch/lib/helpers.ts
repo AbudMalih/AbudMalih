@@ -1,3 +1,4 @@
+import { EN_T, type Format, type TFunction } from "./i18n";
 import { hasUsableLocation, formatClock, parseMinuteOfDay, tourEndPoint, tourStartPoint, type DispatchDataset, type GeoPoint, type NewStopInput, type Stop, type Tour } from "@turvio/shared";
 
 /** Open tours (not completed) that already use this driver / vehicle. */
@@ -35,8 +36,10 @@ export function tourColor(data: Pick<DispatchDataset, "tours">, tourId: string):
   return ROUTE_COLORS[(i < 0 ? 0 : i) % ROUTE_COLORS.length]!;
 }
 
-export function publicationLabel(tour: Tour): string {
-  return tour.publishedAt ? `Published ${new Date(tour.publishedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}` : "Not published";
+export function publicationLabel(tour: Tour, t: TFunction = EN_T, fmt?: Format): string {
+  if (!tour.publishedAt) return t("common.notPublished");
+  const time = fmt ? fmt.time(tour.publishedAt) : new Date(tour.publishedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return t("common.published", { time });
 }
 
 export interface ParsedLine {
@@ -50,7 +53,7 @@ export interface ParsedLine {
  *   recipient; street; house no.; postcode; city; lat; lng; [type]; [window from-to]; [tracking numbers, comma separated]
  * Coordinates are required until a geocoding provider is connected.
  */
-export function parseStopLines(text: string, defaults: { city?: string; countryCode?: string } = {}): ParsedLine[] {
+export function parseStopLines(text: string, defaults: { city?: string; countryCode?: string } = {}, tr: TFunction = EN_T): ParsedLine[] {
   return text
     .split(/\r?\n/)
     .map((raw, i) => ({ raw: raw.trim(), line: i + 1 }))
@@ -60,12 +63,12 @@ export function parseStopLines(text: string, defaults: { city?: string; countryC
       const [recipient, street, no, postal, city, lat, lng, type, window, tracking] = c;
       const la = Number(String(lat ?? "").replace(",", "."));
       const ln = Number(String(lng ?? "").replace(",", "."));
-      if (!street || !postal) return { line, error: "street and postcode are required" };
-      if (!Number.isFinite(la) || !Number.isFinite(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180 || (la === 0 && ln === 0)) return { line, error: "valid latitude and longitude are required" };
+      if (!street || !postal) return { line, error: tr("common.lineNeedsStreet") };
+      if (!Number.isFinite(la) || !Number.isFinite(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180 || (la === 0 && ln === 0)) return { line, error: tr("common.lineNeedsCoords") };
       let tw: { start: number; end: number } | undefined;
       if (window) {
         const [a, b] = window.split("-").map((x) => parseMinuteOfDay(x.trim()));
-        if (a == null || b == null || b <= a) return { line, error: `invalid time window "${window}"` };
+        if (a == null || b == null || b <= a) return { line, error: tr("common.lineBadWindow", { window }) };
         tw = { start: a, end: b };
       }
       const t = (type ?? "").toLowerCase();
@@ -86,10 +89,10 @@ export function parseStopLines(text: string, defaults: { city?: string; countryC
 export const windowLabel = (w?: { start: number; end: number }) => (w ? `${formatClock(w.start)}–${formatClock(w.end)}` : "–");
 
 /** Team list: what a member may see. Fail-closed – a dispatcher without locations sees nothing. */
-export function memberScopeLabel(m: { role: string; depotIds: string[] | null; allLocations?: boolean }, depotName: (id: string) => string): string {
-  if (m.role === "driver") return "TURVIO Driver";
-  if (m.role === "owner" || m.role === "admin" || m.allLocations) return "All locations";
-  return m.depotIds?.length ? m.depotIds.map(depotName).join(", ") : "No locations – no access";
+export function memberScopeLabel(m: { role: string; depotIds: string[] | null; allLocations?: boolean }, depotName: (id: string) => string, t: TFunction = EN_T): string {
+  if (m.role === "driver") return t("common.scopeDriverApp");
+  if (m.role === "owner" || m.role === "admin" || m.allLocations) return t("common.scopeAll");
+  return m.depotIds?.length ? m.depotIds.map(depotName).join(", ") : t("common.scopeNone");
 }
 
 /** Native select / input styling used in Dispatch dialogs (no Select primitive in the design system). */

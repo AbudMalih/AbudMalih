@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { DispatchShell } from "../../components/DispatchShell";
 import { SignOutButton } from "../../components/SignOutButton";
+import { serverT } from "../../lib/i18n/server";
 import { DispatchProvider, type SessionInfo } from "../../lib/store";
 
 // Data is loaded per request, scoped by the database to what this user may see.
@@ -13,12 +14,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const jar = await cookies();
+  const { t } = await serverT();
   const me = await serverApi<Me>(jar, "/v1/me");
   if (!me.ok) {
     if (me.status === 401) redirect("/login");
     return (
-      <AuthLayout product="Dispatch" title="Service unavailable">
-        <FormAlert>The TURVIO service is not reachable right now (HTTP {me.status}). Please try again in a moment.</FormAlert>
+      <AuthLayout product="Dispatch" title={t("shell.serviceUnavailable")}>
+        <FormAlert>{t("shell.serviceUnavailableBody", { status: String(me.status) })}</FormAlert>
       </AuthLayout>
     );
   }
@@ -26,13 +28,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (dispatchOrgs.length === 0) {
     const isDriver = me.data.memberships.some((m) => m.role === "driver");
     return (
-      <AuthLayout product="Dispatch" title="No Dispatch access" footer={<SignOutButton />}>
+      <AuthLayout product="Dispatch" title={t("shell.noAccess")} footer={<SignOutButton />}>
         <FormAlert>
           {isDriver
-            ? "Your account is a driver account. Use the TURVIO Driver app on your phone to see your tours."
+            ? t("shell.noAccessDriver")
             : me.data.platformAdmin
-              ? "Platform administrators use TURVIO Admin. Dispatch is for the companies' own staff."
-              : "Your account is not a member of any company yet. Ask your administrator for an invitation."}
+              ? t("shell.noAccessPlatform")
+              : t("shell.noAccessNone")}
         </FormAlert>
       </AuthLayout>
     );
@@ -42,13 +44,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!data.ok) {
     if (data.status === 401) redirect("/login");
     return (
-      <AuthLayout product="Dispatch" title="Could not load your workspace" footer={<SignOutButton />}>
-        <FormAlert>Loading {chosen.organizationName ?? "the company"} failed (HTTP {data.status}). Reload the page to try again.</FormAlert>
+      <AuthLayout product="Dispatch" title={t("shell.workspaceFailed")} footer={<SignOutButton />}>
+        <FormAlert>{t("shell.workspaceFailedBody", { company: chosen.organizationName ?? t("shell.theCompany"), status: String(data.status) })}</FormAlert>
       </AuthLayout>
     );
   }
   const session: SessionInfo = {
-    userName: me.data.name ?? me.data.email ?? "User",
+    userName: me.data.name ?? me.data.email ?? t("shell.user"),
     email: me.data.email ?? "",
     role: chosen.role,
     organizationId: chosen.organizationId,

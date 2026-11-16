@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import type { ReactNode } from "react";
 import { cn } from "./cn";
+import { useDsLabels } from "./Labels";
 
 /** Side panel (drawer) built on Radix Dialog – focus trap, Esc to close, aria wiring. */
 export function Sheet({
@@ -25,6 +26,7 @@ export function Sheet({
   footer?: ReactNode;
   className?: string;
 }) {
+  const L = useDsLabels();
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -34,8 +36,8 @@ export function Sheet({
             "fixed inset-y-0 z-50 flex w-full max-w-md flex-col border-line-strong bg-raised shadow-overlay outline-none",
             "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:duration-300 data-[state=closed]:duration-200",
             side === "right"
-              ? "end-0 border-s data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right"
-              : "start-0 border-e data-[state=open]:slide-in-from-left data-[state=closed]:slide-out-to-left",
+              ? "end-0 border-s data-[state=open]:slide-in-from-end data-[state=closed]:slide-out-to-end"
+              : "start-0 border-e data-[state=open]:slide-in-from-start data-[state=closed]:slide-out-to-start",
             className,
           )}
         >
@@ -45,10 +47,10 @@ export function Sheet({
               {description ? (
                 <Dialog.Description className="mt-0.5 text-[13px] text-muted">{description}</Dialog.Description>
               ) : (
-                <Dialog.Description className="sr-only">Details</Dialog.Description>
+                <Dialog.Description className="sr-only">{L.details}</Dialog.Description>
               )}
             </div>
-            <Dialog.Close className="inline-flex size-8 items-center justify-center rounded-[10px] text-muted transition-colors hover:bg-surface-2 hover:text-ink" aria-label="Close">
+            <Dialog.Close className="inline-flex size-8 items-center justify-center rounded-[10px] text-muted transition-colors hover:bg-surface-2 hover:text-ink" aria-label={L.close}>
               <X className="size-4" />
             </Dialog.Close>
           </div>

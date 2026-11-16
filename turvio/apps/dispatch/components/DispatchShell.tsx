@@ -19,21 +19,27 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, type ReactNode } from "react";
 import { can } from "@turvio/shared";
+import type { TFunction } from "../lib/i18n";
+import { useI18n } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
 import { Steering } from "./icons";
 import { signOut } from "./SignOutButton";
 
 /** Workspaces with keyboard shortcuts 1–5 (ignored while typing). */
 export const VIEWS = [
-  { href: "/map", label: "Overview", key: "1" },
-  { href: "/planning", label: "Planning", key: "2" },
-  { href: "/list", label: "Tours", key: "3" },
-  { href: "/pickups", label: "Pickups", key: "4" },
-  { href: "/fleet", label: "Fleet & team", key: "5" },
+  { href: "/map", key: "1" },
+  { href: "/planning", key: "2" },
+  { href: "/list", key: "3" },
+  { href: "/pickups", key: "4" },
+  { href: "/fleet", key: "5" },
 ] as const;
+
+const ROLES = new Set(["owner", "admin", "dispatcher", "driver", "viewer"]);
+export const roleLabel = (role: string, t: TFunction) => (ROLES.has(role) ? t(`common.role.${role as "owner"}`) : role);
 
 function DepotSwitcher() {
   const { scoped, depotId, setDepotId, session } = useDispatch();
+  const { t } = useI18n();
   const depots = scoped.depots;
   const current = depots.find((d) => d.id === depotId);
   const toursOf = (id: string | null) => scoped.tours.filter((t) => !id || t.depotId === id).length;
@@ -41,22 +47,22 @@ function DepotSwitcher() {
   return (
     <Menu>
       <MenuTrigger asChild disabled={single}>
-        <Button variant="secondary" size="md" className="max-w-[230px] justify-start font-semibold hover:translate-y-0" aria-label={`Depot: ${current?.name ?? "All depots"}`}>
+        <Button variant="secondary" size="md" className="max-w-[230px] justify-start font-semibold hover:translate-y-0" aria-label={t("shell.depotLabel", { name: current?.name ?? t("shell.allDepots") })}>
           <Warehouse className="text-muted" />
-          <span className="truncate">{current ? current.name : "All depots"}</span>
+          <span className="truncate">{current ? current.name : t("shell.allDepots")}</span>
           {!single && <ChevronDown className="ms-auto text-muted" />}
         </Button>
       </MenuTrigger>
       <MenuContent align="start" className="w-64">
-        <MenuLabel>{session.companyWide ? "Company-wide access" : "Your depots"}</MenuLabel>
+        <MenuLabel>{session.companyWide ? t("shell.companyWide") : t("shell.yourDepots")}</MenuLabel>
         {depots.length > 1 && (
           <MenuItem onSelect={() => setDepotId(null)} hint={String(toursOf(null))} icon={depotId === null ? <Check className="!text-nx-violet-text" /> : <span className="size-4" />}>
-            All depots
+            {t("shell.allDepots")}
           </MenuItem>
         )}
         <MenuSeparator />
         {depots.map((d) => (
-          <MenuItem key={d.id} onSelect={() => setDepotId(d.id)} hint={`${toursOf(d.id)} tours`} icon={depotId === d.id ? <Check className="!text-nx-violet-text" /> : <span className="size-4" />}>
+          <MenuItem key={d.id} onSelect={() => setDepotId(d.id)} hint={t("common.tours", { count: toursOf(d.id) })} icon={depotId === d.id ? <Check className="!text-nx-violet-text" /> : <span className="size-4" />}>
             {d.name}
           </MenuItem>
         ))}
@@ -67,10 +73,11 @@ function DepotSwitcher() {
 
 function DateControl() {
   const { date, setDate } = useDispatch();
+  const t = useI18n().t;
   return (
     <label className="relative inline-flex h-10 items-center gap-2 rounded-xl border border-line-strong bg-surface px-3 text-[13px] font-semibold focus-within:shadow-[var(--shadow-focus)] hover:border-line-3">
       <CalendarDays className="size-4 text-muted" aria-hidden="true" />
-      <span className="sr-only">Operating date</span>
+      <span className="sr-only">{t("shell.operatingDate")}</span>
       <input
         type="date"
         value={date}
@@ -79,7 +86,7 @@ function DateControl() {
         aria-describedby="date-hint"
       />
       <span id="date-hint" className="sr-only">
-        Shows tours planned for the selected day.
+        {t("shell.dateHint")}
       </span>
     </label>
   );
@@ -87,12 +94,13 @@ function DateControl() {
 
 function LiveIndicator() {
   const { live, loading, lastLoadedAt } = useDispatch();
-  const label = live === "live" ? "Live – updates appear automatically" : live === "connecting" ? "Connecting…" : "Live updates unavailable – refreshing every minute";
+  const { t, fmt } = useI18n();
+  const label = live === "live" ? t("shell.liveOn") : live === "connecting" ? t("shell.liveConnecting") : t("shell.liveOff");
   return (
-    <Tooltip content={`${label} · last refresh ${new Date(lastLoadedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`} side="bottom">
+    <Tooltip content={t("shell.lastRefresh", { label, time: fmt.time(lastLoadedAt, true) })} side="bottom">
       <span className="hidden h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-xs font-bold text-ink-2 md:inline-flex" role="status" aria-label={label}>
         <span className={cn("size-2 rounded-full", live === "live" ? "bg-nx-mint animate-nx-live" : live === "connecting" ? "bg-nx-amber" : "bg-muted", loading && "opacity-70")} />
-        {live === "live" ? "Live" : live === "connecting" ? "…" : "Polling"}
+        {live === "live" ? t("shell.live") : live === "connecting" ? "…" : t("shell.polling")}
       </span>
     </Tooltip>
   );
@@ -103,6 +111,7 @@ function ShellInner({ children }: { children: ReactNode }) {
   const params = useSearchParams();
   const router = useRouter();
   const { session, switchWorkspace, kpis, summaries, selectTour, scoped } = useDispatch();
+  const { t } = useI18n();
   const tab = params?.get("tab");
   const view = params?.get("view");
   const current = pathname === "/fleet" ? `/fleet?tab=${tab ?? "drivers"}` : pathname === "/list" && view === "archived" ? "/list?view=archived" : pathname;
@@ -124,28 +133,28 @@ function ShellInner({ children }: { children: ReactNode }) {
   const drafts = scoped.tours.filter((t) => t.status === "planned").length;
   const groups: NavGroup[] = [
     {
-      label: "Operations",
+      label: t("shell.group.operations"),
       items: [
-        { href: "/map", label: "Overview", icon: LayoutGrid, shortcut: "1" },
-        { href: "/planning", label: "Planning", icon: ClipboardCheck, shortcut: "2", badge: drafts ? String(drafts) : undefined },
-        { href: "/list", label: "Tours", icon: Route, shortcut: "3" },
-        { href: "/list?view=archived", label: "Archive", icon: Archive },
-        ...(canReports ? [{ href: "/analytics", label: "Analytics", icon: BarChart3 }] : []),
-        { href: "/pickups", label: "Pickups", icon: PackageCheck, shortcut: "4", badge: kpis.pickupConflicts ? String(kpis.pickupConflicts) : undefined, badgeAlert: true },
+        { href: "/map", label: t("shell.nav.overview"), icon: LayoutGrid, shortcut: "1" },
+        { href: "/planning", label: t("shell.nav.planning"), icon: ClipboardCheck, shortcut: "2", badge: drafts ? String(drafts) : undefined },
+        { href: "/list", label: t("shell.nav.tours"), icon: Route, shortcut: "3" },
+        { href: "/list?view=archived", label: t("shell.nav.archive"), icon: Archive },
+        ...(canReports ? [{ href: "/analytics", label: t("shell.nav.analytics"), icon: BarChart3 }] : []),
+        { href: "/pickups", label: t("shell.nav.pickups"), icon: PackageCheck, shortcut: "4", badge: kpis.pickupConflicts ? String(kpis.pickupConflicts) : undefined, badgeAlert: true },
       ],
     },
     {
-      label: "Resources",
+      label: t("shell.group.resources"),
       items: [
-        { href: "/fleet?tab=drivers", label: "Drivers", icon: Steering, shortcut: "5" },
-        { href: "/fleet?tab=vehicles", label: "Vehicles", icon: Truck },
-        { href: "/fleet?tab=depots", label: "Locations", icon: MapPinned },
-        ...(isAdmin ? [{ href: "/fleet?tab=team", label: "Team", icon: ShieldCheck }] : []),
+        { href: "/fleet?tab=drivers", label: t("shell.nav.drivers"), icon: Steering, shortcut: "5" },
+        { href: "/fleet?tab=vehicles", label: t("shell.nav.vehicles"), icon: Truck },
+        { href: "/fleet?tab=depots", label: t("shell.nav.locations"), icon: MapPinned },
+        ...(isAdmin ? [{ href: "/fleet?tab=team", label: t("shell.nav.team"), icon: ShieldCheck }] : []),
       ],
     },
     {
-      label: "Workspace",
-      items: [{ href: "/settings", label: "Settings", icon: Settings }],
+      label: t("shell.group.workspace"),
+      items: [{ href: "/settings", label: t("shell.nav.settings"), icon: Settings }],
     },
   ];
 
@@ -154,14 +163,14 @@ function ShellInner({ children }: { children: ReactNode }) {
       summaries.map((s) => ({
         id: `tour:${s.tour.id}`,
         label: `${s.tour.name}${s.driver ? ` · ${s.driver.displayName}` : ""}`,
-        hint: `${s.completed}/${s.total} stops`,
+        hint: t("shell.commandHint", { done: s.completed, total: s.total }),
         icon: Route,
         run: () => {
           selectTour(s.tour.id);
           if (pathname !== "/map") router.push("/map");
         },
       })),
-    [summaries, selectTour, pathname, router],
+    [summaries, selectTour, pathname, router, t],
   );
 
   const fullBleed = false;
@@ -170,9 +179,9 @@ function ShellInner({ children }: { children: ReactNode }) {
       product="Dispatch"
       groups={groups}
       current={current}
-      user={{ name: session.userName, email: session.email, role: `${session.organizationName} · ${session.role}` }}
-      userNote={session.companyWide ? "Company-wide access" : "Access limited to assigned depots"}
-      workspaces={session.workspaces.map((w) => ({ id: w.id, name: w.name, detail: w.role, current: w.id === session.organizationId, onSelect: () => switchWorkspace(w.id) }))}
+      user={{ name: session.userName, email: session.email, role: t("shell.userRole", { org: session.organizationName, role: roleLabel(session.role, t) }) }}
+      userNote={session.companyWide ? t("shell.companyWide") : t("shell.depotLimited")}
+      workspaces={session.workspaces.map((w) => ({ id: w.id, name: w.name, detail: roleLabel(w.role, t), current: w.id === session.organizationId, onSelect: () => switchWorkspace(w.id) }))}
       environment={session.environment ?? undefined}
       onSignOut={() => void signOut()}
       securityHref={null}

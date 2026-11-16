@@ -15,5 +15,6 @@ export { KpiCard, Sparkline, type Trend } from "./KpiCard";
 export { Sheet } from "./Sheet";
 export { Dialog } from "./Dialog";
 export { Toaster, toast } from "./Toaster";
+export { DEFAULT_DS_LABELS, DsLabelsProvider, useDsLabels, type DsLabels } from "./Labels";
 export { AppShell, PageHeader, type Command, type Crumb, type IconComponent, type NavGroup, type NavItem, type ShellUser, type WorkspaceOption } from "./AppShell";
 export { AcceptInviteForm, AuthLayout, Field, FormAlert, ForgotPasswordForm, LoginForm, MfaSetupForm, ResetPasswordForm, groupKey } from "./Auth";

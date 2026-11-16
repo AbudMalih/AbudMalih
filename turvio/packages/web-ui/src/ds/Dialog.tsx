@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Dialog as D } from "radix-ui";
 import type { ReactNode } from "react";
 import { cn } from "./cn";
+import { useDsLabels } from "./Labels";
 
 /** Centered modal dialog (Radix): focus trap, Esc/overlay to close, labelled. */
 export function Dialog({
@@ -23,6 +24,7 @@ export function Dialog({
   footer?: ReactNode;
   className?: string;
 }) {
+  const L = useDsLabels();
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
@@ -37,9 +39,9 @@ export function Dialog({
           <div className="flex items-start justify-between gap-4 px-5 pb-2 pt-5">
             <div>
               <D.Title className="text-base font-bold tracking-[-0.01em] text-ink">{title}</D.Title>
-              {description ? <D.Description className="mt-1 text-[13px] text-muted">{description}</D.Description> : <D.Description className="sr-only">Dialog</D.Description>}
+              {description ? <D.Description className="mt-1 text-[13px] text-muted">{description}</D.Description> : <D.Description className="sr-only">{L.dialog}</D.Description>}
             </div>
-            <D.Close className="inline-flex size-8 items-center justify-center rounded-[10px] text-muted transition-colors hover:bg-surface-2 hover:text-ink" aria-label="Close">
+            <D.Close className="inline-flex size-8 items-center justify-center rounded-[10px] text-muted transition-colors hover:bg-surface-2 hover:text-ink" aria-label={L.close}>
               <X className="size-4" />
             </D.Close>
           </div>

@@ -85,7 +85,7 @@ export const MODE_LABEL: Record<TrackingMode, string> = { off: "Off", pilot: "Pi
 
 export const settingsApi = (org: string) => ({
   preferences: () => api<Preferences>("GET", "/v1/me/preferences"),
-  savePreferences: (p: Partial<Pick<Preferences, "theme" | "orgDefaults">>) => api<Preferences>("PUT", "/v1/me/preferences", p),
+  savePreferences: (p: Partial<Pick<Preferences, "theme" | "orgDefaults" | "language">>) => api<Preferences>("PUT", "/v1/me/preferences", p),
   overview: () => api<CompanySettings>("GET", `/v1/orgs/${org}/settings`),
   saveCompany: (p: Record<string, string | null>) => api<void>("PATCH", `/v1/orgs/${org}/settings/company`, p),
   saveDriverRules: (r: DriverSettings) => api<unknown>("PUT", `/v1/orgs/${org}/settings/driver`, r),
