@@ -38,7 +38,7 @@ export function tourColor(data: Pick<DispatchDataset, "tours">, tourId: string):
 
 export function publicationLabel(tour: Tour, t: TFunction = EN_T, fmt?: Format): string {
   if (!tour.publishedAt) return t("common.notPublished");
-  const time = fmt ? fmt.time(tour.publishedAt) : new Date(tour.publishedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const time = fmt ? fmt.time(tour.publishedAt) : new Date(tour.publishedAt).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }); // i18n-ok: fallback without fmt
   return t("common.published", { time });
 }
 

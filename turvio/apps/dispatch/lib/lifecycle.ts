@@ -152,9 +152,11 @@ export const lifecycleApi = (org: string) => ({
     return api<{ total: number; ids: string[]; truncated: boolean }>("GET", `/v1/orgs/${org}/tours?${p}`);
   },
   calendar: (month: string, depotId?: string | null) => api<{ month: string; days: CalendarDay[] }>("GET", `/v1/orgs/${org}/tours/calendar?month=${month}${depotId ? `&depotId=${depotId}` : ""}`),
-  exportUrl: (f: TourListFilter, format: "csv" | "xlsx") => {
+  /** `lang`: language of the column headings (values stay exact). */
+  exportUrl: (f: TourListFilter, format: "csv" | "xlsx", lang?: string) => {
     const p = filterQuery(f);
     p.set("format", format);
+    if (lang && lang !== "en") p.set("lang", lang);
     return `/api/turvio/v1/orgs/${org}/tours/export?${p}`;
   },
   get: (id: string) => api<{ tour: Tour; stops: Stop[] }>("GET", `/v1/orgs/${org}/tours/${id}`),

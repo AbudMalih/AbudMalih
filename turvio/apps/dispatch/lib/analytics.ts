@@ -141,4 +141,4 @@ export function presetRange(preset: "today" | "yesterday" | "week" | "last_week"
 export const pct = (v: number | null, digits = 1, fmt?: Format) => (v === null ? "–" : fmt ? `${fmt.number(v * 100, digits)} %` : `${(v * 100).toFixed(digits)} %`);
 /** Grouped number. With `fmt` in the user's language; without it German grouping as before. */
 export const num = (v: number | null, digits = 0, fmt?: Format) =>
-  v === null ? "–" : fmt ? fmt.number(v, digits) : v.toLocaleString("de-DE", { maximumFractionDigits: digits, minimumFractionDigits: digits });
+  v === null ? "–" : fmt ? fmt.number(v, digits) : v.toLocaleString("de-DE", { maximumFractionDigits: digits, minimumFractionDigits: digits }); // i18n-ok: English-default fallback (tests); the UI passes fmt

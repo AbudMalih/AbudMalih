@@ -51,7 +51,7 @@ type Selection = { mode: "ids"; ids: Map<string, number> } | { mode: "all"; tota
  */
 export function ToursManager({ archived }: { archived: ArchivedFilter }) {
   const { session, scoped, depotId, today } = useDispatch();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const api = useMemo(() => lifecycleApi(session.organizationId), [session.organizationId]);
   const [mode, setMode] = useState<DateMode>(archived === "only" ? "month" : "day");
   const [day, setDay] = useState(today);
@@ -215,8 +215,8 @@ export function ToursManager({ archived }: { archived: ArchivedFilter }) {
                 </MenuTrigger>
                 <MenuContent align="end">
                   <MenuLabel>{t("tours.m.exportLabel", { count: total, period: periodLabel })}</MenuLabel>
-                  <MenuItem onSelect={() => download(api.exportUrl(filter, "csv"))}>{t("tours.m.exportCsv")}</MenuItem>
-                  <MenuItem onSelect={() => download(api.exportUrl(filter, "xlsx"))}>{t("common.exportXlsx")}</MenuItem>
+                  <MenuItem onSelect={() => download(api.exportUrl(filter, "csv", locale))}>{t("tours.m.exportCsv")}</MenuItem>
+                  <MenuItem onSelect={() => download(api.exportUrl(filter, "xlsx", locale))}>{t("common.exportXlsx")}</MenuItem>
                 </MenuContent>
               </Menu>
             )}
