@@ -138,7 +138,7 @@ export function presetRange(preset: "today" | "yesterday" | "week" | "last_week"
 }
 
 /** "88.9 %". With `fmt` (from useI18n) the number follows the user's language; without it the output is unchanged. */
-export const pct = (v: number | null, digits = 1, fmt?: Format) => (v === null ? "–" : fmt ? `${fmt.number(v * 100, digits)} %` : `${(v * 100).toFixed(digits)} %`);
+export const pct = (v: number | null, digits = 1, fmt?: Format) => (v === null ? "–" : fmt ? (fmt.tag.startsWith("ar") ? fmt.percent(v, digits) : `${fmt.number(v * 100, digits)} %`) : `${(v * 100).toFixed(digits)} %`);
 /** Grouped number. With `fmt` in the user's language; without it German grouping as before. */
 export const num = (v: number | null, digits = 0, fmt?: Format) =>
   v === null ? "–" : fmt ? fmt.number(v, digits) : v.toLocaleString("de-DE", { maximumFractionDigits: digits, minimumFractionDigits: digits }); // i18n-ok: English-default fallback (tests); the UI passes fmt

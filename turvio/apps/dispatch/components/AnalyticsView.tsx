@@ -279,7 +279,8 @@ function Kpi({ labelKey, value, prev, info }: { labelKey: MessageKey; value: str
         <InfoTip text={info} />
       </div>
       <div className="text-[26px] font-extrabold leading-none tracking-[-0.02em] text-ink tabular" data-testid={`kpi-${EN_T(labelKey)}`}>
-        {value}
+        {/* Figures like "1 / 7" keep their order in Arabic. */}
+        <bdi dir="ltr">{value}</bdi>
       </div>
       <div className="text-2xs text-muted tabular">{t("analytics.prev", { value: prev })}</div>
     </Card>

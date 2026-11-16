@@ -17,9 +17,11 @@ import { stopStatusLabel } from "./StatusBadge";
  * containers are dir="ltr"; legends and tooltips follow the page direction.
  */
 
+/** Direction marks from Intl (Arabic) would reorder "16/11" inside the left-to-right chart. */
+const plain = (s: string) => s.replace(/[\u200e\u200f\u061c]/g, "");
 const bucketLabel = (b: string, g: "day" | "week" | "month", t: TFunction, fmt: Format) => {
-  if (g === "month") return fmt.day(b, { month: "short", year: "2-digit" });
-  const day = fmt.day(b, { day: "2-digit", month: "2-digit" });
+  if (g === "month") return plain(fmt.day(b, { month: "short", year: "2-digit" }));
+  const day = plain(fmt.day(b, { day: "2-digit", month: "2-digit" }));
   return g === "week" ? t("analytics.chart.week", { date: day }) : day;
 };
 
@@ -171,7 +173,7 @@ export function SuccessLine({ trend, granularity }: { trend: TrendBucket[]; gran
           <g key={v}>
             <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--viz-grid)" strokeWidth={1} />
             <text x={pad.l - 6} y={y(v) + 3.5} textAnchor="end" className="fill-[var(--text-3)] text-[10px]">
-              {fmt.number(v * 100)} %
+              {pct(v, 0, fmt)}
             </text>
           </g>
         ))}
@@ -214,7 +216,7 @@ export function ReasonBars({ rows, label }: { rows: { reason: string | null; sta
             {label(r.reason)} <span className="font-normal text-muted">· {STOP_STATUSES.has(r.status) ? stopStatusLabel(r.status as Parameters<typeof stopStatusLabel>[0], t) : r.status}</span>
           </span>
           <span className="text-[13px] font-bold text-ink tabular">
-            {r.count} <span className="font-semibold text-muted">· {fmt.number(Math.round((r.count / total) * 100))} %</span>
+            {r.count} <span className="font-semibold text-muted">· {pct(Math.round((r.count / total) * 100) / 100, 0, fmt)}</span>
           </span>
           <div className="col-span-2 h-2 overflow-hidden rounded-full bg-surface-2">
             <i className={cn("block h-full rounded-full")} style={{ width: `${(r.count / max) * 100}%`, background: "var(--viz-1)" }} />
