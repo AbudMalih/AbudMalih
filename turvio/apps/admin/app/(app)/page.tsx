@@ -10,6 +10,7 @@ import { displayStatus } from "../../lib/companyTable";
 import { STATUS } from "../../lib/status";
 import { attention, seatLimit } from "../../lib/attention";
 import { loadPlatform } from "../../lib/load";
+import { isDesignG } from "../../lib/ui-server";
 import { formatRelative, type ActivityKind } from "../../lib/platform";
 
 export const metadata: Metadata = { title: "Overview" };
@@ -50,6 +51,8 @@ export default async function OverviewPage() {
   const recent = [...rows].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6);
   const orgById = new Map(orgs.map((o) => [o.id, o]));
   const todo = attention(rows, now);
+  const g = await isDesignG();
+  const suspended = rows.filter((r) => r.orgStatus === "suspended").length;
 
   return (
     <>
@@ -59,6 +62,51 @@ export default async function OverviewPage() {
         actions={<NewCompanyDialog />}
       />
 
+      {g && (
+        <>
+          {/* Phase G: one KPI band (label · figure · one line of context), no hero or ring. */}
+          <section
+            aria-label="Key metrics"
+            className="grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-surface md:grid-cols-3 xl:grid-cols-6 [&>*]:border-line [&>*]:border-b xl:[&>*]:border-b-0 [&>*:not(:first-child)]:border-s max-md:[&>*:nth-child(odd)]:border-s-0 md:max-xl:[&>*:nth-child(3n+1)]:border-s-0"
+          >
+            <Kpi accent="violet" icon={<Building2 />} label="Companies on TURVIO" value={kpi.companies} foot={<><Delta value={kpi.newLast30} /> new in the last 30 days</>} href="/companies" />
+            <Kpi accent="cobalt" icon={<CreditCard />} label="Active subscriptions" value={kpi.activeSubscriptions} foot={kpi.pastDue ? <span className="text-danger-ink">{kpi.pastDue} past due</span> : "none past due"} href="/companies" />
+            <Kpi accent="amber" icon={<Hourglass />} label="Trial accounts" value={kpi.trials} foot={kpi.trialsEndingSoon ? <span className="text-warning-ink">{kpi.trialsEndingSoon} ending within 7 days</span> : "none ending within 7 days"} href="/companies" />
+            <Kpi accent="cobalt" icon={<UserPlus />} label="Active drivers" value={kpi.activeDrivers} of={seatsTotal || undefined} progress={seatsTotal ? kpi.activeDrivers / seatsTotal : undefined} foot={seatsTotal ? `${Math.round((kpi.activeDrivers / seatsTotal) * 100)} % of seats in companies with access` : "in companies with access"} info="Active driver profiles in companies whose subscription is usable." />
+            <Kpi accent="coral" icon={<ShieldAlert />} label="Payment issues" value={kpi.pastDue + suspended} foot={`${kpi.pastDue} past due · ${suspended} suspended`} href="/companies" />
+            <Kpi accent="violet" icon={<Wallet />} label="Monthly recurring revenue" value={kpi.mrrCents === null ? <span className="text-muted">—</span> : eur.format(kpi.mrrCents / 100)} foot={kpi.mrrCents === null ? "Plan prices not configured · payments off" : "from active subscriptions"} href="/plans" />
+          </section>
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+            <Panel className="flex flex-col xl:col-span-8" title="Companies over time" description="Companies on TURVIO, last six months">
+              <div className="-mx-4 h-[188px]">
+                <AreaChart id="growth" values={kpi.companiesByMonth} labels={monthLabels} />
+              </div>
+            </Panel>
+            <Panel className="flex flex-col xl:col-span-4" title="Subscriptions" description={`As of ${now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}`}>
+              <div className="flex items-baseline gap-2">
+                <span className="whitespace-nowrap text-[22px] font-medium tabular text-ink">{Math.round(usableShare * 100)} %</span>
+                <span className="text-[12px] text-muted">
+                  {usable.length} of {rows.length} companies with access · {kpi.activeDrivers} drivers · {seatsTotal} seats
+                </span>
+              </div>
+              <div className="mt-3 text-[12px] font-medium text-ink-2">Driver seats in use</div>
+              {seatRows.map((r) => (
+                <div key={r.id} className="grid grid-cols-[1fr_auto] gap-x-2.5 gap-y-1 border-t border-line py-2 first:mt-1.5">
+                  <span className="truncate text-[13px] text-ink">{r.name}</span>
+                  <span className="text-[13px] font-medium tabular text-ink-2">
+                    {r.activeDrivers} / {seatLimit(r)}
+                  </span>
+                  <div className="col-span-2">
+                    <Bar value={r.activeDrivers / (seatLimit(r) || 1)} />
+                  </div>
+                </div>
+              ))}
+            </Panel>
+          </div>
+        </>
+      )}
+      {!g && (
+        <>
       <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-12">
         {/* Hero (prototype .hero): headline figure, three stats, real growth series */}
         <section className="relative flex min-h-[330px] flex-col overflow-hidden rounded-[26px] border border-[color:var(--hero-line)] bg-[image:var(--hero-bg)] px-7 pt-[26px] shadow-overlay xl:col-span-8">
@@ -157,15 +205,17 @@ export default async function OverviewPage() {
           href="/plans"
         />
       </section>
+        </>
+      )}
 
-      <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-12 g:gap-4">
         {/* Organizations (prototype "Standorte im Vergleich" table style) */}
         <Panel
           className="xl:col-span-8"
           title="Organizations"
           description="Newest first · plan, status and driver seats"
           action={
-            <Link href="/companies" className="inline-flex h-8 items-center rounded-[10px] border border-line-strong px-3 text-[12.5px] font-bold text-ink transition-colors hover:border-line-3">
+            <Link href="/companies" className="inline-flex h-8 items-center rounded-[10px] border border-line-strong px-3 text-[12.5px] font-bold text-ink transition-colors hover:border-line-3 g:h-7 g:rounded-md g:border-line-2 g:px-2.5 g:font-medium">
               All organizations
             </Link>
           }
@@ -187,12 +237,12 @@ export default async function OverviewPage() {
                   const st = STATUS[displayStatus(r)];
                   const limit = seatLimit(r);
                   return (
-                    <tr key={r.id} className="border-t border-line">
+                    <tr key={r.id} className="border-t border-line g:hover:bg-[var(--hover)]">
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2.5">
-                          <Avatar name={r.name} square />
+                          <Avatar name={r.name} square className="g:size-6 g:text-[10px]" />
                           <div className="min-w-0">
-                            <div className="truncate font-bold text-ink">{r.name}</div>
+                            <div className="truncate font-bold text-ink g:font-medium">{r.name}</div>
                             <div className="truncate text-xs text-muted">
                               {orgById.get(r.id)?.members ?? 0} members · {r.countryCode}
                             </div>
@@ -201,7 +251,10 @@ export default async function OverviewPage() {
                       </td>
                       <td className="px-3 py-3 font-semibold text-ink-2">{r.planName}</td>
                       <td className="px-3 py-3">
-                        <span className={cn("inline-flex h-6 items-center rounded-lg px-[9px] text-xs font-bold", st.cls)}>{st.label}</span>
+                        <span className={cn("inline-flex h-6 items-center rounded-lg px-[9px] text-xs font-bold g:h-auto g:gap-1.5 g:bg-transparent g:px-0 g:font-medium", st.cls)}>
+                          <span className={cn("hidden size-1.5 rounded-full g:inline-block", st.dot)} aria-hidden="true" />
+                          {st.label}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-end font-semibold tabular text-ink-2">{orgById.get(r.id)?.depots ?? 0}</td>
                       <td className="w-[180px] px-3 py-3">
@@ -223,7 +276,7 @@ export default async function OverviewPage() {
         {/* Plan mix (prototype "exceptions by reason" bars) */}
         <Panel className="xl:col-span-4" title="Plan mix" description="Companies per plan" action={<InfoTip text="Counted from the companies' current subscriptions." />}>
           <div className="mb-4 flex items-baseline gap-2">
-            <span className="text-[34px] font-extrabold leading-none tracking-[-0.03em] text-ink tabular">{rows.length}</span>
+            <span className="text-[34px] font-extrabold leading-none tracking-[-0.03em] text-ink tabular g:text-[22px] g:font-medium">{rows.length}</span>
             <span className="text-[13px] font-semibold text-muted">companies</span>
           </div>
           <div className="flex flex-col gap-3.5">
@@ -232,26 +285,26 @@ export default async function OverviewPage() {
             ))}
             {planMix.length === 0 && <p className="text-[13px] text-muted">No subscriptions yet.</p>}
           </div>
-          <div className="mt-5 flex items-center gap-2 rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-xs text-ink-2">
+          <div className="mt-5 flex items-center gap-2 rounded-[14px] border border-line bg-surface-2 px-3 py-2.5 text-xs text-ink-2 g:mt-4 g:border-0 g:bg-transparent g:p-0 g:text-muted">
             <CreditCard className="size-4 shrink-0 text-muted" />
             Online payments are off – subscriptions are managed manually.
           </div>
         </Panel>
       </div>
 
-      <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-2 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-2 xl:grid-cols-12 g:gap-4">
         <div className="xl:col-span-4">
           <SystemHealthCard />
         </div>
 
         <Panel className="xl:col-span-4" title="Needs attention" description={todo.length ? `${todo.length} item${todo.length === 1 ? "" : "s"}` : "From subscriptions and seats"}>
           {todo.length === 0 ? (
-            <div className="flex items-center gap-2.5 rounded-[14px] border border-line bg-surface-2 p-3 text-[13px] font-semibold text-ink-2">
+            <div className="flex items-center gap-2.5 rounded-[14px] border border-line bg-surface-2 p-3 text-[13px] font-semibold text-ink-2 g:border-0 g:bg-transparent g:p-0 g:font-normal">
               <span className="size-2 rounded-full bg-nx-mint" aria-hidden="true" />
               Nothing needs attention right now.
             </div>
           ) : (
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5 g:gap-0">
               {todo.slice(0, 4).map((x) => (
                 <AttentionRow key={x.title} tone={x.tone} title={x.title} detail={x.detail} href="/companies" />
               ))}
@@ -265,7 +318,7 @@ export default async function OverviewPage() {
           title="Activity"
           description="Audit log: companies, subscriptions, members, invitations"
           action={
-            <Link href="/activity" className="text-xs font-bold text-nx-violet-text hover:underline">
+            <Link href="/activity" className="text-xs font-bold text-nx-violet-text hover:underline g:font-normal g:text-muted g:hover:text-ink">
               All
             </Link>
           }
@@ -278,15 +331,15 @@ export default async function OverviewPage() {
                 const k = FEED[e.kind];
                 const Icon = k.icon;
                 return (
-                  <li key={e.id} className="grid grid-cols-[36px_1fr_auto] items-start gap-3 border-t border-line py-3 first:border-t-0 first:pt-1">
-                    <span className={cn("grid size-9 place-items-center rounded-[11px]", k.cls)}>
-                      <Icon className="size-4" />
+                  <li key={e.id} className="grid grid-cols-[36px_1fr_auto] items-start gap-3 border-t border-line py-3 first:border-t-0 first:pt-1 g:grid-cols-[16px_1fr_auto] g:gap-2 g:py-2">
+                    <span className={cn("grid size-9 place-items-center rounded-[11px] g:size-4 g:bg-transparent g:text-muted", k.cls)}>
+                      <Icon className="size-4 g:size-[14px]" />
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate text-[13.5px] font-semibold text-ink">{e.detail}</div>
-                      <div className="truncate text-[12.5px] text-muted">{e.orgName}</div>
+                      <div className="truncate text-[13.5px] font-semibold text-ink g:text-[13px] g:font-normal">{e.detail}</div>
+                      <div className="truncate text-[12.5px] text-muted g:text-[12px]">{e.orgName}</div>
                     </div>
-                    <time dateTime={e.at} className="whitespace-nowrap text-xs font-semibold text-muted">
+                    <time dateTime={e.at} className="whitespace-nowrap text-xs font-semibold text-muted g:font-normal g:tabular">
                       {formatRelative(e.at, now)}
                     </time>
                   </li>

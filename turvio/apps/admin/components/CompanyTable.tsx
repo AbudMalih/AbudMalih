@@ -60,14 +60,14 @@ function SortHeader({ label, k, query, onSort, className }: { label: string; k: 
   const active = query.sort === k;
   const Icon = !active ? ArrowUpDown : query.dir === "asc" ? ArrowUp : ArrowDown;
   return (
-    <th scope="col" aria-sort={active ? (query.dir === "asc" ? "ascending" : "descending") : "none"} className={cn("h-11 px-3 text-start font-bold", className)}>
+    <th scope="col" aria-sort={active ? (query.dir === "asc" ? "ascending" : "descending") : "none"} className={cn("group/th h-11 px-3 text-start font-bold g:h-9 g:font-medium", className)}>
       <button
         type="button"
         onClick={() => onSort(k)}
-        className={cn("-mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 uppercase transition-colors hover:bg-surface-2 hover:text-ink", active && "text-ink")}
+        className={cn("-mx-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 uppercase transition-colors hover:bg-surface-2 hover:text-ink g:hover:bg-[var(--hover)]", active && "text-ink")}
       >
         {label}
-        <Icon className={cn("size-3", active ? "text-nx-violet-text" : "text-muted")} aria-hidden="true" />
+        <Icon className={cn("size-3", active ? "text-nx-violet-text g:text-ink-2" : "text-muted g:opacity-0 group-hover/th:opacity-100")} aria-hidden="true" />
       </button>
     </th>
   );
@@ -77,10 +77,10 @@ function FilterMenu({ label, options, selected, onChange }: { label: string; opt
   return (
     <Menu>
       <MenuTrigger asChild>
-        <Button variant="secondary" size="md" className={cn(selected.length > 0 && "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-50")}>
+        <Button variant="secondary" size="md" className={cn(selected.length > 0 && "border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-50 g:border-line-3 g:bg-[var(--selected)] g:text-ink g:hover:bg-[var(--selected)]")}>
           <ListFilter />
           {label}
-          {selected.length > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-2xs font-semibold leading-4 text-white tabular">{selected.length}</span>}
+          {selected.length > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-2xs font-semibold leading-4 text-white tabular g:bg-transparent g:px-0 g:text-muted">{selected.length}</span>}
         </Button>
       </MenuTrigger>
       <MenuContent align="start" className="w-52">
@@ -157,10 +157,10 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
 
   return (
     <Card className="overflow-hidden rounded-[22px]" id="companies">
-      <div className="flex flex-col gap-3 px-4 pb-3 pt-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 px-4 pb-3 pt-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between g:py-2.5 sm:g:px-4">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink">Companies</h2>
-          <span className="text-[13px] font-semibold text-muted tabular">{rows.length}</span>
+          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">Companies</h2>
+          <span className="text-[13px] font-semibold text-muted tabular g:font-normal">{rows.length}</span>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <SearchInput value={query.search} onChange={(v) => update({ search: v })} placeholder="Search companies…" label="Search companies" className="sm:w-64" />
@@ -181,8 +181,8 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
       </div>
 
       {selected.size > 0 && (
-        <div className="flex items-center justify-between gap-3 border-b border-brand-100 bg-brand-50/70 px-4 py-2 text-[13px] sm:px-5" role="status">
-          <span className="font-medium text-brand-700 tabular">{selected.size} selected</span>
+        <div className="flex items-center justify-between gap-3 border-b border-brand-100 bg-brand-50/70 px-4 py-2 text-[13px] sm:px-5 g:border-line g:bg-[var(--selected)] g:py-1.5 sm:g:px-4" role="status">
+          <span className="font-medium text-brand-700 tabular g:text-ink">{selected.size} selected</span>
           <div className="flex items-center gap-1.5">
             <Button size="sm" variant="secondary" onClick={() => exportCsv(rows.filter((r) => selected.has(r.id)))}>
               <Download /> Export selected
@@ -212,17 +212,17 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
         />
       ) : (
         <div className="relative overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-[13.5px]">
-            <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
+          <table className="w-full min-w-[640px] border-collapse text-[13.5px] g:text-[13px]">
+            <thead className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted g:text-[12px] g:font-medium">
               <tr className="border-b border-line">
                 <th scope="col" className="h-10 w-10 ps-4 sm:ps-5">
                   <Checkbox checked={headerChecked} onCheckedChange={toggleAll} label="Select all companies on this page" />
                 </th>
                 <SortHeader label="Company" k="name" query={query} onSort={onSort} />
                 <SortHeader label="Plan" k="plan" query={query} onSort={onSort} />
-                <th scope="col" className="h-11 px-3 text-start font-bold">Status</th>
+                <th scope="col" className="h-11 px-3 text-start font-bold g:h-9 g:font-medium">Status</th>
                 <SortHeader label="Drivers" k="drivers" query={query} onSort={onSort} className="hidden md:table-cell" />
-                <th scope="col" className="hidden h-11 px-3 text-start font-bold xl:table-cell">Billing</th>
+                <th scope="col" className="hidden h-11 px-3 text-start font-bold xl:table-cell g:h-9 g:font-medium">Billing</th>
                 <SortHeader label="Renewal" k="renewsAt" query={query} onSort={onSort} className="hidden lg:table-cell" />
                 <th scope="col" className="h-10 w-12 pe-4 sm:pe-5">
                   <span className="sr-only">Actions</span>
@@ -239,16 +239,16 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
                   <tr
                     key={r.id}
                     data-state={isSel ? "selected" : undefined}
-                    className="group border-b border-line transition-colors last:border-0 hover:bg-surface-2 data-[state=selected]:bg-brand-50"
+                    className="group border-b border-line transition-colors last:border-0 hover:bg-surface-2 data-[state=selected]:bg-brand-50 g:hover:bg-[var(--hover)] g:data-[state=selected]:bg-[var(--selected)]"
                   >
                     <td className="ps-4 sm:ps-5">
                       <Checkbox checked={isSel} onCheckedChange={(v) => toggle(r.id, v)} label={`Select ${r.name}`} />
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-3 g:py-2">
                       <button type="button" onClick={() => setDetail(r)} className="flex items-center gap-3 rounded text-start outline-none focus-visible:shadow-[var(--shadow-focus)]">
                         <Avatar name={r.name} square />
                         <span className="min-w-0">
-                          <span className="block max-w-[280px] truncate font-bold text-ink group-hover:text-brand-700">{r.name}</span>
+                          <span className="block max-w-[280px] truncate font-bold text-ink group-hover:text-brand-700 g:font-medium g:group-hover:text-ink">{r.name}</span>
                           <span className="block text-xs text-muted">
                             {r.slug} · {r.countryCode}
                           </span>
@@ -270,8 +270,8 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
                         <span className="font-normal text-subtle"> / {r.driverLimit ?? "∞"}</span>
                       </div>
                       {usage !== null && (
-                        <div className="mt-1.5 h-1 w-20 overflow-hidden rounded-full bg-surface-3">
-                          <div className={cn("h-full rounded-full", usage >= 1 ? "bg-warning" : "bg-brand-500")} style={{ width: `${usage * 100}%` }} />
+                        <div className="mt-1.5 h-1 w-20 overflow-hidden rounded-full bg-surface-3 g:h-[2px] g:bg-[var(--selected)]">
+                          <div className={cn("h-full rounded-full", usage >= 1 ? "bg-warning" : "bg-brand-500 g:bg-[var(--text-3)]")} style={{ width: `${usage * 100}%` }} />
                         </div>
                       )}
                     </td>
@@ -372,7 +372,7 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
               {detail.cancelAtPeriodEnd && <Badge tone="warning">Cancels at period end</Badge>}
             </div>
             <section>
-              <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">Subscription</h3>
+              <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle g:text-[12px] g:font-medium g:text-ink-2">Subscription</h3>
               <dl className="mt-1 divide-y divide-line">
                 <DetailRow label="Plan">{detail.planName}</DetailRow>
                 <DetailRow label="Billing cycle">{detail.interval === "month" ? "Monthly" : "Annual"}</DetailRow>
@@ -384,7 +384,7 @@ export function CompanyTable({ rows, now }: { rows: TenantRow[]; now: number }) 
               </dl>
             </section>
             <section>
-              <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle">Usage</h3>
+              <h3 className="text-2xs font-semibold uppercase tracking-[0.1em] text-subtle g:text-[12px] g:font-medium g:text-ink-2">Usage</h3>
               <dl className="mt-1 divide-y divide-line">
                 <DetailRow label="Active drivers">
                   {detail.activeDrivers} / {detail.driverLimit ?? "∞"}

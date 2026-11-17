@@ -23,7 +23,7 @@ export interface SystemStatus {
 }
 
 export const STATE: Record<ServiceState, { label: string; dot: string; text: string }> = {
-  operational: { label: "Operational", dot: "bg-nx-mint", text: "text-nx-mint" },
+  operational: { label: "Operational", dot: "bg-nx-mint g:bg-success", text: "text-nx-mint g:text-ink-2" },
   degraded: { label: "Degraded", dot: "bg-nx-amber", text: "text-nx-amber" },
   down: { label: "Down", dot: "bg-nx-coral", text: "text-nx-coral" },
   not_configured: { label: "Not configured", dot: "bg-muted", text: "text-muted" },
@@ -64,7 +64,7 @@ export function RefreshButton({ busy, onClick }: { busy: boolean; onClick: () =>
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="inline-grid size-8 place-items-center rounded-[10px] border border-line-strong bg-surface text-ink-2 transition-colors hover:border-line-3 hover:text-ink disabled:opacity-60"
+      className="inline-grid size-8 place-items-center rounded-[10px] border border-line-strong bg-surface text-ink-2 transition-colors hover:border-line-3 hover:text-ink disabled:opacity-60 g:size-7 g:border-line-2 g:hover:bg-[var(--hover)]"
       aria-label="Check again"
       title="Check again"
     >
@@ -81,14 +81,14 @@ export function ServiceRows({ services, compact = false }: { services: ServiceSt
         // Configuration is reported, not measured: never shown as "Operational" or in green.
         const st = s.kind === "config" ? (s.state === "operational" ? { label: "Configured", dot: "bg-nx-cobalt", text: "text-ink-2" } : { ...STATE[s.state] }) : STATE[s.state];
         return (
-          <li key={s.key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-t border-line py-2.5 first:border-t-0">
-            <span className={cn("size-2 rounded-full", st.dot, s.state === "operational" && s.kind === "live" && "animate-nx-live")} aria-hidden="true" />
+          <li key={s.key} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-t border-line py-2.5 first:border-t-0 g:gap-2.5 g:py-2">
+            <span className={cn("size-2 rounded-full g:size-1.5", st.dot, s.state === "operational" && s.kind === "live" && "animate-nx-live")} aria-hidden="true" />
             <div className="min-w-0">
-              <div className="truncate text-[13.5px] font-semibold text-ink">{s.label}</div>
+              <div className="truncate text-[13.5px] font-semibold text-ink g:text-[13px] g:font-medium">{s.label}</div>
               {!compact && <div className="truncate text-xs text-muted" title={s.detail}>{s.detail}</div>}
             </div>
             <div className="text-end">
-              <div className={cn("text-[12.5px] font-bold", st.text)}>{st.label}</div>
+              <div className={cn("text-[12.5px] font-bold g:text-[12px] g:font-normal", st.text)}>{st.label}</div>
               {s.latencyMs !== undefined && <div className="text-[11px] font-semibold tabular text-muted">{s.latencyMs} ms</div>}
             </div>
           </li>
@@ -103,10 +103,10 @@ export function SystemHealthCard() {
   const { state, busy, reload } = useSystemStatus();
   const live = state.status === "ready" ? state.data.services.filter((s) => s.kind === "live") : [];
   return (
-    <section className="relative min-w-0 rounded-[22px] border border-line bg-surface p-5 shadow-card">
+    <section className="relative min-w-0 rounded-[22px] border border-line bg-surface p-5 shadow-card g:p-4 g:shadow-none">
       <div className="mb-2 flex items-start gap-3">
         <div className="min-w-0">
-          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink">System health</h2>
+          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">System health</h2>
           <p className="mt-px text-[12.5px] text-muted">{state.status === "ready" ? `Measured live at ${checkedLabel(state.data.checkedAt)}` : "Live checks of the platform services"}</p>
         </div>
         <div className="ms-auto">

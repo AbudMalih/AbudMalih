@@ -41,11 +41,11 @@ export default function PlansPage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {PLAN_CATALOGUE.map((p) => (
-          <Card key={p.code} interactive className={cn("relative flex flex-col p-5", p.code === "business" && "ring-1 ring-brand-200")}>
+          <Card key={p.code} interactive className={cn("relative flex flex-col p-5 g:p-4", p.code === "business" && "ring-1 ring-brand-200 g:ring-0")}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-semibold text-ink">{p.name}</h2>
+                  <h2 className="text-base font-semibold text-ink g:text-[14px]">{p.name}</h2>
                   {p.code === "business" && <Badge tone="brand">Most complete</Badge>}
                 </div>
                 <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted">
@@ -56,21 +56,21 @@ export default function PlansPage() {
               <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-2xs text-muted">{p.code}</code>
             </div>
 
-            <div className="mt-5 flex items-baseline gap-2">
-              <span className="text-2xl font-semibold tracking-tight text-subtle">Price not set</span>
+            <div className="mt-5 flex items-baseline gap-2 g:mt-3">
+              <span className="text-2xl font-semibold tracking-tight text-subtle g:text-[18px] g:font-medium">Price not set</span>
             </div>
             <p className="mt-1 text-xs text-muted">
               {p.pricingModel === "per_driver" ? "Per driver seat" : "Flat rate"} · monthly or annual · {p.trialDays}-day trial
             </p>
 
-            <div className="my-5 h-px bg-line" />
+            <div className="my-5 h-px bg-line g:my-3" />
 
             <ul className="flex flex-col gap-2 text-[13px]">
               {ALL_FEATURES.map((f) => {
                 const on = !!p.features[f];
                 return (
                   <li key={f} className={cn("flex items-center gap-2", on ? "text-ink-2" : "text-subtle")}>
-                    {on ? <Check className="size-4 text-success" /> : <Minus className="size-4" />}
+                    {on ? <Check className="size-4 text-success g:size-3.5 g:text-ink-2" /> : <Minus className="size-4 g:size-3.5" />}
                     {FEATURE_LABEL[f]}
                   </li>
                 );
@@ -80,11 +80,11 @@ export default function PlansPage() {
         ))}
       </div>
 
-      <Card className="mt-6 overflow-hidden">
+      <Card className="mt-6 overflow-hidden g:mt-4">
         <CardHeader title="Limits" description="Effective limit = tenant override → purchased seats (per-driver plans) → plan value." actions={<Gauge className="size-4 text-subtle" />} />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-[13px]">
-            <thead className="bg-surface-2/60 text-xs text-muted">
+            <thead className="bg-surface-2/60 text-xs text-muted g:bg-transparent">
               <tr className="border-b border-line">
                 <th scope="col" className="h-10 px-5 text-start font-medium">Limit</th>
                 {PLAN_CATALOGUE.map((p) => (

@@ -6,7 +6,7 @@ import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const inputCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none";
+const inputCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none g:h-8 g:rounded-md g:border-line-2 g:bg-surface-2 g:text-[13px] g:text-ink g:shadow-none";
 const slugify = (s: string) =>
   s
     .toLowerCase()
@@ -82,7 +82,7 @@ export function NewCompanyDialog() {
         }
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted sm:col-span-2">
             Company name
             <input
               className={inputCls}
@@ -93,7 +93,7 @@ export function NewCompanyDialog() {
               }}
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
             Slug
             <input
               className={cn(inputCls, slug && !/^[a-z0-9][a-z0-9-]{1,62}$/.test(slug) && "border-danger")}
@@ -104,7 +104,7 @@ export function NewCompanyDialog() {
               }}
             />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
             Country
             <select className={inputCls} value={country} onChange={(e) => setCountry(e.target.value)}>
               {["DE", "AT", "CH", "NL", "RO", "AE"].map((c) => (
@@ -112,7 +112,7 @@ export function NewCompanyDialog() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
             Plan
             <select className={inputCls} value={plan} onChange={(e) => setPlan(e.target.value)}>
               {PLAN_CATALOGUE.map((p) => (
@@ -122,11 +122,11 @@ export function NewCompanyDialog() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
             Driver seats
             <input className={inputCls} type="number" min={1} value={seats} onChange={(e) => setSeats(e.target.value)} />
           </label>
-          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted sm:col-span-2">
             Owner email
             <input className={inputCls} type="email" value={owner} onChange={(e) => setOwner(e.target.value)} />
           </label>

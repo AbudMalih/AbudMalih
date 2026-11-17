@@ -221,6 +221,7 @@ const PlainLink: LinkLike = ({ children, ...p }) => <a {...p}>{children}</a>;
 
 function Sidebar({
   product,
+  productShort,
   groups,
   current,
   collapsed,
@@ -231,6 +232,7 @@ function Sidebar({
   mobile = false,
 }: {
   product: string;
+  productShort?: string;
   groups: NavGroup[];
   current: string;
   collapsed: boolean;
@@ -252,7 +254,16 @@ function Sidebar({
         ) : (
           <>
             <TurvioLockup height={26} />
-            <span className="whitespace-nowrap text-[11.5px] font-semibold tracking-[0.02em] text-muted g:border-s g:border-line-2 g:ps-2 g:text-[12px] g:font-medium g:tracking-normal">{product}</span>
+            <span className="whitespace-nowrap text-[11.5px] font-semibold tracking-[0.02em] text-muted g:border-s g:border-line-2 g:ps-2 g:text-[12px] g:font-medium g:tracking-normal">
+              {productShort ? (
+                <>
+                  <span className="g:hidden">{product}</span>
+                  <span className="hidden g:inline">{productShort}</span>
+                </>
+              ) : (
+                product
+              )}
+            </span>
           </>
         )}
       </A>
@@ -358,6 +369,7 @@ function CommandPalette({ open, onClose, commands }: { open: boolean; onClose: (
 
 export function AppShell({
   product,
+  productShort,
   groups,
   current,
   workspaces,
@@ -377,6 +389,8 @@ export function AppShell({
   children,
 }: {
   product: string;
+  /** Shorter product name for the narrower Phase G sidebar (e.g. "Admin" for "Platform Admin"). */
+  productShort?: string;
   groups: NavGroup[];
   current: string;
   workspaces?: WorkspaceOption[];
@@ -458,12 +472,12 @@ export function AppShell({
               collapsed ? "w-[84px] g:w-[60px]" : "w-[264px] g:w-[232px]",
             )}
           >
-            <Sidebar product={product} groups={groups} current={current} collapsed={collapsed} onToggle={toggle} footer={profile(collapsed)} linkComponent={linkComponent} />
+            <Sidebar product={product} productShort={productShort} groups={groups} current={current} collapsed={collapsed} onToggle={toggle} footer={profile(collapsed)} linkComponent={linkComponent} />
           </aside>
 
           {/* Mobile drawer */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen} side="left" title={<span className="sr-only">{L.shell.navigation}</span>} className="max-w-[288px] bg-sidebar [&>div:first-child]:hidden [&>div:nth-child(2)]:px-3.5 [&>div:nth-child(2)]:pt-[18px]">
-            <Sidebar product={product} groups={groups} current={current} collapsed={false} onNavigate={() => setMobileOpen(false)} footer={profile(false)} linkComponent={linkComponent} mobile />
+            <Sidebar product={product} productShort={productShort} groups={groups} current={current} collapsed={false} onNavigate={() => setMobileOpen(false)} footer={profile(false)} linkComponent={linkComponent} mobile />
           </Sheet>
 
           <div className={cn("flex min-w-0 flex-col", fullBleed && "h-dvh min-h-0")}>

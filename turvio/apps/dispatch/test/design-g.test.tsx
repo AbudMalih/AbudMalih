@@ -11,6 +11,7 @@ import { I18nProvider } from "../lib/i18n/client";
 import { DispatchProvider, type SessionInfo } from "../lib/store";
 import { UiRoot } from "../lib/ui";
 import { resolveUi } from "../lib/ui-flag";
+import { PICK_COLORS } from "../components/LocationPickerMap";
 
 /**
  * Phase G design: default in Dispatch, classic as fallback; same data and behaviour in both designs, translations kept.
@@ -63,11 +64,18 @@ describe("Phase G design preview", () => {
     expect(within(screen.getByRole("list", { name: "الجولات" })).getAllByRole("listitem")).toHaveLength(base.tours.length);
   });
 
-  it("G styles are scoped to the opt-in attribute and Admin never opts in", () => {
+  it("G styles are scoped to the data-ds attribute; Admin uses the same flag with the same fallback", () => {
     const tokens = readFileSync(join(__dirname, "../../../packages/web-ui/src/ds/tokens.css"), "utf8");
     const gBlocks = tokens.match(/:root\[data-ds="g"\][^{]*\{/g) ?? [];
     expect(gBlocks.length).toBeGreaterThanOrEqual(3);
     const admin = readFileSync(join(__dirname, "../../admin/app/layout.tsx"), "utf8");
-    expect(admin).not.toMatch(/data-ds/);
+    expect(admin).toMatch(/tv_ui/);
+    expect(admin).toMatch(/=== "classic"/);
+    expect(admin).toMatch(/defaultTheme="dark"/);
+  });
+
+  it("location picker: indigo in G, the classic violet unchanged", () => {
+    expect(PICK_COLORS.classic.pick).toBe("#6F55FF");
+    expect(PICK_COLORS.g.pick).toBe("#5E6AD2");
   });
 });

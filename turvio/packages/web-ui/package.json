@@ -10,7 +10,8 @@
     ".": "./src/index.tsx",
     "./styles.css": "./src/styles.css",
     "./ds": "./src/ds/index.ts",
-    "./ds/tokens.css": "./src/ds/tokens.css"
+    "./ds/tokens.css": "./src/ds/tokens.css",
+    "./ds/g.css": "./src/ds/g.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -32,14 +32,14 @@ export default async function ActivityPage() {
   return (
     <>
       <PageHeader title="Audit log" description="Changes to companies, subscriptions, memberships and invitations · newest first" />
-      <section className="rounded-[22px] border border-line bg-surface p-5 shadow-card">
+      <section className="rounded-[22px] border border-line bg-surface p-5 shadow-card g:p-4 g:shadow-none">
         {entries.length === 0 ? (
           <p className="py-6 text-center text-[13px] text-muted">No audit entries yet.</p>
         ) : (
           <div className="-mx-2 overflow-x-auto">
             <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead>
-                <tr className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted">
+                <tr className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted g:text-[12px] g:font-medium">
                   <th className="px-3 pb-2.5 text-start">Time</th>
                   <th className="px-3 pb-2.5 text-start">Event</th>
                   <th className="px-3 pb-2.5 text-start">Company</th>
@@ -52,10 +52,10 @@ export default async function ActivityPage() {
                   const at = new Date(a.at);
                   const time = at.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
                   return (
-                    <tr key={a.id} className="border-t border-line">
+                    <tr key={a.id} className="border-t border-line g:hover:bg-[var(--hover)]">
                       <td className="whitespace-nowrap px-3 py-3 text-ink-2 tabular">{at.toDateString() === today ? time : `${at.toLocaleDateString("de-DE", { day: "2-digit", month: "short" })} ${time}`}</td>
                       <td className="px-3 py-3">
-                        <span className={cn("inline-flex h-6 items-center whitespace-nowrap rounded-lg px-[9px] text-xs font-bold", ev.cls)}>{ev.label}</span>
+                        <span className={cn("inline-flex h-6 items-center whitespace-nowrap rounded-lg px-[9px] text-xs font-bold g:h-auto g:bg-transparent g:px-0 g:font-normal g:text-ink-2", ev.cls)}>{ev.label}</span>
                       </td>
                       <td className="px-3 py-3 text-ink">{a.organizationName ?? "—"}</td>
                       <td className="px-3 py-3 text-muted">{a.changedColumns?.length ? a.changedColumns.join(", ") : "—"}</td>

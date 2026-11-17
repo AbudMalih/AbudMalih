@@ -1,6 +1,6 @@
 # TURVIO Phase G – Enterprise design system (proposal, step 1)
 
-Status: **Step 1 approved (Overview). Step 2: applied to all Dispatch screens – awaiting approval. Admin follows in Step 3.**
+Status: **Steps 1–2 approved. Step 3: Admin Web on the same system – awaiting approval.**
 Scope of step 1: design system for Dispatch Web and Admin Web; only Dispatch Overview (and the
 shared shell it sits in) is redesigned. Driver app: unchanged. Backend, data, permissions: unchanged.
 
@@ -80,8 +80,11 @@ icons where a label suffices (KPI band has none).
 ## 4. Default and fallback
 Since Step 2, G is the **Dispatch default** and charcoal (dark) is the default theme (light and
 "follow system" remain choices in Settings / the top bar). The previous design stays available as
-a fallback during development: `?ui=classic` (back with `?ui=g`), remembered per browser. Admin is
-not affected until Step 3.
+a fallback during development: `?ui=classic` (back with `?ui=g`), remembered per browser.
+
+Since Step 3 the same applies to **Admin Web** (same cookie `tv_ui`, same tokens and shared
+normalisations in `packages/web-ui/src/ds/g.css`). Admin's appearance choice (Follow system / Light /
+Dark) is in the account menu, stored like Dispatch's. Admin has no translations (English only).
 
 Implementation notes: G styling lives in `g:` classes next to the classic ones (classic unchanged),
 plus a few global normalisations at the end of `apps/dispatch/app/globals.css` (sentence-case

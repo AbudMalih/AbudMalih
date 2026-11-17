@@ -1,10 +1,10 @@
 "use client";
 
-import { AppShell, type NavGroup } from "@turvio/web-ui/ds";
-import { Building2, CreditCard, LayoutGrid, ScrollText, Server } from "lucide-react";
+import { AppShell, MenuItem, MenuLabel, MenuSeparator, THEME_KEY, type NavGroup } from "@turvio/web-ui/ds";
+import { Building2, Check, CreditCard, LayoutGrid, ScrollText, Server } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { signOut, useAdminSession } from "../lib/session";
 
 /*
@@ -37,6 +37,46 @@ const NextLink = ({ children, ...p }: { href: string; className?: string; onClic
   </Link>
 );
 
+type ThemeChoice = "system" | "light" | "dark";
+
+/** Appearance in the account menu: charcoal by default, light, or follow the system (stored like Dispatch). */
+function ThemeChoices() {
+  const [choice, setChoice] = useState<ThemeChoice>("dark");
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem(THEME_KEY);
+      setChoice(s === "light" || s === "system" ? s : "dark");
+    } catch {
+      /* private mode */
+    }
+  }, []);
+  const apply = (c: ThemeChoice) => {
+    try {
+      localStorage.setItem(THEME_KEY, c);
+    } catch {
+      /* private mode: this page only */
+    }
+    document.documentElement.dataset.theme = c === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : c;
+    setChoice(c);
+  };
+  const items: [ThemeChoice, string][] = [
+    ["system", "Follow system"],
+    ["light", "Light"],
+    ["dark", "Dark"],
+  ];
+  return (
+    <>
+      <MenuSeparator />
+      <MenuLabel>Appearance</MenuLabel>
+      {items.map(([c, label]) => (
+        <MenuItem key={c} onSelect={(e) => (e.preventDefault(), apply(c))} icon={choice === c ? <Check /> : <span className="size-4" />}>
+          {label}
+        </MenuItem>
+      ))}
+    </>
+  );
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
@@ -62,6 +102,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <AppShell
       product="Platform Admin"
+      productShort="Admin"
       groups={GROUPS}
       current={pathname}
       user={{ name: session.name, email: session.email, role: "Platform admin" }}
@@ -69,6 +110,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       onSignOut={() => void signOut()}
       navigate={(href) => router.push(href)}
       linkComponent={NextLink}
+      userMenuExtra={<ThemeChoices />}
     >
       {children}
     </AppShell>

@@ -1,7 +1,9 @@
 import { ThemeScript } from "@turvio/web-ui/ds";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { jakarta, plexArabic } from "./fonts";
+import { cookies } from "next/headers";
+import { UiSwitch } from "../lib/ui";
+import { inter, jakarta, plexArabic } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,13 +20,19 @@ export const viewport: Viewport = {
   colorScheme: "dark light",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // Phase G is the default; `?ui=classic` keeps the previous design during development (lib/ui.tsx).
+  const classic = (await cookies()).get("tv_ui")?.value === "classic";
   return (
-    <html lang="en" dir="ltr" className={`${jakarta.variable} ${plexArabic.variable}`} suppressHydrationWarning>
+    <html lang="en" dir="ltr" className={`${jakarta.variable} ${inter.variable} ${plexArabic.variable}`} data-ds={classic ? undefined : "g"} suppressHydrationWarning>
       <head>
-        <ThemeScript />
+        {/* Charcoal unless the user chose light or "follow system". */}
+        <ThemeScript defaultTheme="dark" />
       </head>
-      <body>{children}</body>
+      <body>
+        <UiSwitch />
+        {children}
+      </body>
     </html>
   );
 }

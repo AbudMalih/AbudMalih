@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { haversineMeters, type GeoPoint } from "@turvio/shared";
 import type * as Leaflet from "leaflet";
 import { useEffect, useRef, useState } from "react";
+import { useDesignG } from "../lib/ui";
 import { useT } from "../lib/i18n/client";
 
 /**
@@ -24,6 +25,12 @@ const STYLE: Record<PickerMarker["kind"], { color: string; fill: string; radius:
   suggestion: { color: "#1FBF8A", fill: "#A9F2D6", radius: 7 },
   approach: { color: "#3478FF", fill: "#BBD3FF", radius: 7 },
 };
+
+/** Picked point and allowed-area colours: classic violet, Phase G indigo accent (#5e6ad2). */
+export const PICK_COLORS = {
+  classic: { pick: "#6F55FF", ring: "rgba(117,91,255,.3)", area: "#8C76FF", original: "#8C76FF" },
+  g: { pick: "#5E6AD2", ring: "rgba(94,106,210,.28)", area: "#5E6AD2", original: "#7A84DE" },
+} as const;
 
 /** Distance and permission of a picked point (pure – also used by the dialogs and tests). */
 export function pickStatus(picked: GeoPoint | null, center: GeoPoint, maxMeters?: number): { meters: number | null; allowed: boolean } {
@@ -57,6 +64,7 @@ export function LocationPickerMap({
   const latest = useRef(onPick);
   latest.current = onPick;
   const t = useT();
+  const colors = PICK_COLORS[useDesignG() ? "g" : "classic"];
   const chosenTitle = useRef("");
   chosenTitle.current = t("map.picker.chosen");
 
@@ -95,10 +103,10 @@ export function LocationPickerMap({
     const Lf = L.current;
     if (state !== "ready" || !Lf || !fixed.current) return;
     fixed.current.clearLayers();
-    if (limit) Lf.circle([center.lat, center.lng], { radius: limit, color: "#8C76FF", weight: 1, dashArray: "4 4", fillOpacity: 0.04 }).addTo(fixed.current);
+    if (limit) Lf.circle([center.lat, center.lng], { radius: limit, color: colors.area, weight: 1, dashArray: "4 4", fillOpacity: 0.04 }).addTo(fixed.current);
     for (const mk of markers) {
       const st = STYLE[mk.kind];
-      Lf.circleMarker([mk.point.lat, mk.point.lng], { radius: st.radius, color: st.color, fillColor: st.fill, fillOpacity: 1, weight: 2, dashArray: st.dash })
+      Lf.circleMarker([mk.point.lat, mk.point.lng], { radius: st.radius, color: mk.kind === "original" ? colors.original : st.color, fillColor: st.fill, fillOpacity: 1, weight: 2, dashArray: st.dash })
         .bindTooltip(mk.label, { direction: "top" })
         .on("click", (e: Leaflet.LeafletMouseEvent) => {
           Lf.DomEvent.stopPropagation(e);
@@ -106,7 +114,7 @@ export function LocationPickerMap({
         })
         .addTo(fixed.current);
     }
-  }, [state, markers, center.lat, center.lng, limit]);
+  }, [state, markers, center.lat, center.lng, limit, colors]);
 
   // The picked point: a draggable marker.
   useEffect(() => {
@@ -121,7 +129,7 @@ export function LocationPickerMap({
     if (!pick.current) {
       pick.current = Lf.marker([value.lat, value.lng], {
         draggable: true,
-        icon: Lf.divIcon({ className: "turvio-pick", html: '<div style="width:18px;height:18px;border-radius:999px;background:#6F55FF;border:3px solid #fff;box-shadow:0 0 0 5px rgba(117,91,255,.3),0 2px 6px rgba(0,0,0,.4)"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }),
+        icon: Lf.divIcon({ className: "turvio-pick", html: `<div style="width:18px;height:18px;border-radius:999px;background:${colors.pick};border:3px solid #fff;box-shadow:0 0 0 5px ${colors.ring},0 2px 6px rgba(0,0,0,.4)"></div>`, iconSize: [18, 18], iconAnchor: [9, 9] }),
         title: chosenTitle.current,
       })
         .on("dragend", () => {

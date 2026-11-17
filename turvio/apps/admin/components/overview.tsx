@@ -11,11 +11,11 @@ import type { ReactNode } from "react";
 
 export function Panel({ title, description, action, children, className }: { title: ReactNode; description?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("relative min-w-0 rounded-[22px] border border-line bg-surface p-5 shadow-card", className)}>
-      <div className="mb-3.5 flex items-start gap-3">
+    <section className={cn("relative min-w-0 rounded-[22px] border border-line bg-surface p-5 shadow-card g:p-4 g:shadow-none", className)}>
+      <div className="mb-3.5 flex items-start gap-3 g:mb-3">
         <div className="min-w-0">
-          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink">{title}</h2>
-          {description && <p className="mt-px text-[12.5px] text-muted">{description}</p>}
+          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">{title}</h2>
+          {description && <p className="mt-px text-[12.5px] text-muted g:text-[12px]">{description}</p>}
         </div>
         {action && <div className="ms-auto flex shrink-0 items-center gap-1.5">{action}</div>}
       </div>
@@ -38,8 +38,8 @@ export function Delta({ value, suffix = "", goodWhenUp = true }: { value: number
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-0.5 rounded-full px-2 text-xs font-bold tabular",
-        good === null ? "bg-surface-2 text-muted" : good ? "bg-nx-mint-soft text-nx-mint" : "bg-nx-coral-soft text-nx-coral",
+        "inline-flex h-6 items-center gap-0.5 rounded-full px-2 text-xs font-bold tabular g:h-auto g:bg-transparent g:px-0 g:font-medium",
+        good === null ? "bg-surface-2 text-muted" : good ? "bg-nx-mint-soft text-nx-mint g:text-success-ink" : "bg-nx-coral-soft text-nx-coral g:text-danger-ink",
       )}
     >
       {!flat && (value > 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />)}
@@ -81,13 +81,13 @@ export function AreaChart({ values, labels, height = 150, id }: { values: number
       {[0.25, 0.5, 0.75].map((f) => (
         <line key={f} x1="0" x2={W} y1={top + f * (H - top - bottom)} y2={top + f * (H - top - bottom)} stroke="var(--chart-grid)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
       ))}
-      <path d={`${d} L${last[0]},${H - bottom} L${pts[0]![0]},${H - bottom} Z`} fill={`url(#${id}-fill)`} className="reveal-area" />
-      <path d={d} fill="none" stroke={`url(#${id}-line)`} strokeWidth="3" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <path d={`${d} L${last[0]},${H - bottom} L${pts[0]![0]},${H - bottom} Z`} fill={`url(#${id}-fill)`} className="reveal-area g:hidden" />
+      <path d={d} fill="none" stroke={`url(#${id}-line)`} strokeWidth="3" strokeLinecap="round" vectorEffect="non-scaling-stroke" className="g:[stroke:var(--violet)] g:[stroke-width:1.75px]" />
       {pts.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={i === pts.length - 1 ? 5 : 3} fill={i === pts.length - 1 ? "var(--violet-hi)" : "var(--surface)"} stroke="var(--violet-hi)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        <circle key={i} cx={x} cy={y} r={i === pts.length - 1 ? 5 : 3} fill={i === pts.length - 1 ? "var(--violet-hi)" : "var(--surface)"} stroke="var(--violet-hi)" strokeWidth="2" vectorEffect="non-scaling-stroke" className="g:[stroke:var(--violet)] g:[r:2.5px]" />
       ))}
       {labels.map((l, i) => (
-        <text key={l + i} x={pts[i]![0]} y={H - 6} textAnchor="middle" className="fill-[var(--chart-label)] text-[11px] font-semibold">
+        <text key={l + i} x={pts[i]![0]} y={H - 6} textAnchor="middle" className="fill-[var(--chart-label)] text-[11px] font-semibold g:font-normal">
           {l}
         </text>
       ))}
@@ -123,8 +123,12 @@ export function Bar({ value, tone = "cyan" }: { value: number; tone?: "cyan" | "
     mint: "var(--mint)",
   }[tone];
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-      <i className="block h-full rounded-full transition-[width] duration-1000" style={{ width: `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`, background: bg }} />
+    <div className="h-1.5 overflow-hidden rounded-full bg-surface-2 g:h-[3px] g:bg-[var(--selected)]">
+      {/* G: neutral bars; amber/coral keep their colour (they mean "needs attention"). */}
+      <i
+        className={cn("block h-full rounded-full transition-[width] duration-1000 [background:var(--bar)]", (tone === "cyan" || tone === "violet" || tone === "mint") && "g:[background:var(--text-3)]")}
+        style={{ width: `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`, ["--bar" as string]: bg }}
+      />
     </div>
   );
 }
@@ -144,21 +148,22 @@ export function Kpi({ icon, label, value, of, progress, foot, accent, info, href
   const a = ACC[accent];
   const body = (
     <>
-      <span className="absolute inset-x-[22px] -top-px h-[1.5px] rounded-sm opacity-85" style={{ background: a.line }} aria-hidden="true" />
-      <div className="flex items-center gap-3">
-        <span className={cn("inline-grid size-[38px] shrink-0 place-items-center rounded-xl [&_svg]:size-[18px]", a.tile)}>{icon}</span>
-        <span className="min-w-0 flex-1 text-[13px] font-semibold text-ink-2">{label}</span>
+      <span className="absolute inset-x-[22px] -top-px h-[1.5px] rounded-sm opacity-85 g:hidden" style={{ background: a.line }} aria-hidden="true" />
+      <div className="flex items-center gap-3 g:gap-1.5">
+        <span className={cn("inline-grid size-[38px] shrink-0 place-items-center rounded-xl [&_svg]:size-[18px] g:hidden", a.tile)}>{icon}</span>
+        <span className="min-w-0 flex-1 text-[13px] font-semibold text-ink-2 g:text-[12px] g:font-normal g:text-muted">{label}</span>
         {info && <InfoTip text={info} />}
       </div>
-      <div className="tabular text-[30px] font-extrabold leading-none tracking-[-0.03em] text-ink">
+      <div className="tabular text-[30px] font-extrabold leading-none tracking-[-0.03em] text-ink g:text-[22px] g:font-medium g:leading-7 g:tracking-[-0.02em]">
         {value}
-        {of !== undefined && <small className="ms-1 text-[15px] font-bold tracking-normal text-muted">/ {of}</small>}
+        {of !== undefined && <small className="ms-1 text-[15px] font-bold tracking-normal text-muted g:text-[13px] g:font-normal">/ {of}</small>}
       </div>
       {progress !== undefined && <Bar value={progress} tone={a.bar} />}
       <div className="flex min-h-4 items-center gap-2 text-xs text-muted">{foot}</div>
     </>
   );
-  const cls = "relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-[22px] border border-line bg-surface p-5 shadow-card transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-overlay";
+  const cls =
+    "relative flex min-w-0 flex-col gap-3 overflow-hidden rounded-[22px] border border-line bg-surface p-5 shadow-card transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-overlay g:gap-1.5 g:rounded-none g:border-0 g:bg-transparent g:px-4 g:py-3 g:shadow-none g:hover:shadow-none g:hover:bg-[var(--hover)]";
   return href ? (
     <Link href={href} className={cls}>
       {body}
@@ -172,12 +177,12 @@ export function Kpi({ icon, label, value, of, progress, foot, accent, info, href
 export function ReasonRow({ label, value, share, color }: { label: string; value: ReactNode; share: number; color: string }) {
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-x-2.5 gap-y-1.5">
-      <span className="truncate text-[13px] font-semibold text-ink">{label}</span>
-      <span className="text-[13px] font-bold tabular text-ink">
+      <span className="truncate text-[13px] font-semibold text-ink g:font-normal">{label}</span>
+      <span className="text-[13px] font-bold tabular text-ink g:font-medium">
         {value} <span className="font-semibold text-muted">· {Math.round(share * 100)} %</span>
       </span>
-      <div className="col-span-2 h-2 overflow-hidden rounded-full bg-surface-2">
-        <i className="block h-full rounded-full" style={{ width: `${Math.round(share * 100)}%`, background: color }} />
+      <div className="col-span-2 h-2 overflow-hidden rounded-full bg-surface-2 g:h-[3px] g:bg-[var(--selected)]">
+        <i className="block h-full rounded-full [background:var(--bar)] g:[background:var(--text-3)]" style={{ width: `${Math.round(share * 100)}%`, ["--bar" as string]: color }} />
       </div>
     </div>
   );
@@ -186,14 +191,14 @@ export function ReasonRow({ label, value, share, color }: { label: string; value
 /** Prototype .warn row: severity stripe, text, action. */
 export function AttentionRow({ tone, title, detail, href, action = "Open" }: { tone: "coral" | "amber" | "violet" | "cobalt"; title: string; detail: string; href?: string; action?: string }) {
   return (
-    <div className="grid grid-cols-[4px_1fr_auto] items-center gap-3 rounded-[14px] border border-line bg-surface-2 p-3">
-      <span className="self-stretch rounded" style={{ background: `var(--${tone})` }} aria-hidden="true" />
+    <div className="grid grid-cols-[4px_1fr_auto] items-center gap-3 rounded-[14px] border border-line bg-surface-2 p-3 g:grid-cols-[6px_1fr_auto] g:gap-2.5 g:rounded-none g:border-0 g:border-t g:bg-transparent g:px-0 g:py-2.5 g:first:border-t-0">
+      <span className="self-stretch rounded g:size-1.5 g:self-center g:rounded-full" style={{ background: `var(--${tone})` }} aria-hidden="true" />
       <div className="min-w-0">
-        <div className="truncate text-[13.5px] font-bold text-ink">{title}</div>
+        <div className="truncate text-[13.5px] font-bold text-ink g:text-[13px] g:font-medium">{title}</div>
         <div className="truncate text-xs text-muted">{detail}</div>
       </div>
       {href && (
-        <Link href={href} className="inline-flex h-8 items-center gap-1 rounded-[10px] border border-line-strong bg-surface px-3 text-[12.5px] font-bold text-ink transition-colors hover:border-line-3">
+        <Link href={href} className="inline-flex h-8 items-center gap-1 rounded-[10px] border border-line-strong bg-surface px-3 text-[12.5px] font-bold text-ink transition-colors hover:border-line-3 g:h-7 g:rounded-md g:border-line-2 g:px-2.5 g:font-medium">
           {action}
           <ChevronRight className="size-3.5 rtl:rotate-180" />
         </Link>

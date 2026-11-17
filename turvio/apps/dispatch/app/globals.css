@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@turvio/web-ui/ds/tokens.css";
+@import "@turvio/web-ui/ds/g.css";
 
 /* Let Tailwind see classes used inside the shared design-system package. */
 @source "../../../packages/web-ui/src/ds";
@@ -36,21 +37,4 @@
 [data-ds="g"] .leaflet-tooltip { border-radius: 6px; box-shadow: var(--shadow-lg); font: 400 12.5px/1.45 var(--font-sans); }
 [data-ds="g"] .leaflet-container.leaflet-container { background: var(--bg-2); }
 
-/*
- * Phase G normalisations (Dispatch only, inside <html data-ds="g">). Unlayered, so they win over the
- * classic utility classes that are still in the markup for the fallback design:
- * sentence-case labels, no heavy weights, no decorative gradients/blur/lift, calmer radii.
- */
-[data-ds="g"] .uppercase { text-transform: none; letter-spacing: normal; }
-/* Elements that set their own G weight (g:font-*) keep it. */
-[data-ds="g"] :is(.font-extrabold, .font-black, .font-bold):not([class*="g:font-"]) { font-weight: 600; }
-[data-ds="g"] [class*="backdrop-blur"] { -webkit-backdrop-filter: none; backdrop-filter: none; }
-[data-ds="g"] [class*="hover:-translate-y"]:hover, [data-ds="g"] [class*="hover:translate-y"]:hover { transform: none; }
-[data-ds="g"] [class*="rounded-[14px]"], [data-ds="g"] [class*="rounded-[16px]"], [data-ds="g"] [class*="rounded-[18px]"],
-[data-ds="g"] [class*="rounded-[20px]"], [data-ds="g"] [class*="rounded-[22px]"], [data-ds="g"] [class*="rounded-[26px]"] { border-radius: 8px; }
-[data-ds="g"] [class*="rounded-[10px]"], [data-ds="g"] [class*="rounded-[11px]"], [data-ds="g"] [class*="rounded-[12px]"], [data-ds="g"] [class*="rounded-[13px]"] { border-radius: 6px; }
-[data-ds="g"] [class*="animate-nx-live"] { animation: none; }
-[data-ds="g"] .animate-nx-view { animation-duration: 0.15s; }
-/* Compact tables: 36 px rows, 12 px muted sentence-case headers, hairline rows. */
-[data-ds="g"] table thead th { font-size: 12px; font-weight: 500; color: var(--text-3); }
-[data-ds="g"] table tbody td { padding-top: 7px; padding-bottom: 7px; }
+/* Phase G normalisations: shared with Admin, see packages/web-ui/src/ds/g.css (imported above). */

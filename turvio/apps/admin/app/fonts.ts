@@ -11,6 +11,16 @@ export const jakarta = localFont({
   ],
 });
 
+// Phase G: Inter, self-hosted (SIL OFL 1.1, packages/web-ui/fonts/OFL-Inter.txt).
+export const inter = localFont({
+  variable: "--font-inter",
+  display: "swap",
+  src: [
+    { path: "../../../packages/web-ui/fonts/inter-latin-wght-normal.woff2", weight: "100 900", style: "normal" },
+    { path: "../../../packages/web-ui/fonts/inter-latin-ext-wght-normal.woff2", weight: "100 900", style: "normal" },
+  ],
+});
+
 export const plexArabic = localFont({
   variable: "--font-plex-arabic",
   display: "swap",
