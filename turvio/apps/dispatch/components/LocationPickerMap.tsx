@@ -6,6 +6,7 @@ import type * as Leaflet from "leaflet";
 import { useEffect, useRef, useState } from "react";
 import { useDesignG } from "../lib/ui";
 import { useT } from "../lib/i18n/client";
+import { TILE_ATTRIBUTION, TILE_URL } from "../lib/tiles";
 
 /**
  * Small map for choosing one point (P0-3.6): a new pin position or a navigation approach point.
@@ -76,7 +77,7 @@ export function LocationPickerMap({
         if (cancelled || !el.current) return;
         L.current = mod;
         const m = mod.map(el.current, { zoomControl: true, attributionControl: true });
-        mod.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, className: "turvio-tiles", attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(m);
+        mod.tileLayer(TILE_URL, { maxZoom: 19, className: "turvio-tiles", attribution: TILE_ATTRIBUTION }).addTo(m);
         fixed.current = mod.layerGroup().addTo(m);
         // With an allowed area: show all of it; otherwise close in on the pin.
         if (limit) m.fitBounds(mod.latLng(center.lat, center.lng).toBounds(limit * 2.2));

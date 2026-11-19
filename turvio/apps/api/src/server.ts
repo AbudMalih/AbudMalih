@@ -44,7 +44,7 @@ if (config.AUTH_PROVIDER === "dev") {
   const geocoder: Geocoder =
     config.GEOCODER === "postgres"
       ? config.GEOCODER_DATABASE_URL
-        ? new PostgresGeocoder(((pool) => (sql: string, params: unknown[]) => pool.query(sql, params) as never)(withExactFloats(new pg.Pool({ connectionString: config.GEOCODER_DATABASE_URL, max: 4 }))))
+        ? new PostgresGeocoder(((pool) => (sql: string, params: unknown[]) => pool.query(sql, params) as never)(withExactFloats(new pg.Pool({ connectionString: config.GEOCODER_DATABASE_URL, max: 4, connectionTimeoutMillis: 10_000, idleTimeoutMillis: 30_000 }))))
         : new PostgresGeocoder((sql, params) => db.asService((tx) => tx.query(sql, params)) as never)
       : config.GEOCODER === "nominatim"
       ? new NominatimGeocoder(config.GEOCODER_URL!, config.GEOCODER_USER_AGENT)

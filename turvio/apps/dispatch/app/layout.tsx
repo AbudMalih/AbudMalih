@@ -6,7 +6,7 @@ import { dirOf } from "../lib/i18n";
 import { serverLocale } from "../lib/i18n/server";
 import { UiRoot } from "../lib/ui";
 import { UI_COOKIE, resolveUi } from "../lib/ui-flag";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { inter, jakarta, plexArabic } from "./fonts";
 import "./globals.css";
 
@@ -32,7 +32,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={locale} dir={dirOf(locale)} className={`${jakarta.variable} ${inter.variable} ${plexArabic.variable}`} data-ds={ui === "g" ? "g" : undefined} suppressHydrationWarning>
       <head>
-        <ThemeScript defaultTheme="dark" />
+        <ThemeScript defaultTheme="dark" nonce={(await headers()).get("x-nonce") ?? undefined} />
       </head>
       <body>
         <UiRoot ui={ui}>

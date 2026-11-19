@@ -27,6 +27,9 @@ const ProofUpload = z.object({
 
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/svg+xml": "svg" };
 
+/** Concurrent lookups per /v1/geocode/batch request. */
+const GEOCODE_BATCH_CONCURRENCY = 4;
+
 export async function driverSettingsOf(tx: Tx, orgId: string) {
   const row = (await tx.query<{ driver_settings: unknown }>(`select driver_settings from organizations where id = $1`, [orgId])).rows[0];
   const parsed = DriverSettings.safeParse(row?.driver_settings ?? {});
@@ -318,6 +321,16 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
     }
   };
 
+  /** Batch lookups: any failure of the address service (not only "unavailable") answers 503, never a bare 500. */
+  const wrapBatch = async <T>(fn: () => Promise<T>) => {
+    try {
+      return await fn();
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      throw new ApiError(503, "geocoder_unavailable", e instanceof GeocoderUnavailable ? e.message : "Address search failed – try again in a moment");
+    }
+  };
+
   app.get("/v1/geocode/search", { preHandler: guards.authenticate }, async (req, reply) => {
     const q = parse(
       z.object({
@@ -358,13 +371,22 @@ export function registerExecutionRoutes(app: FastifyInstance, { deps, guards }: 
     if (!g || g.name === "none") throw new ApiError(503, "geocoder_unavailable", "Address search is not configured");
     if (!batchLimiter.take(req.user!.userId)) throw new ApiError(429, "rate_limited", "Too many batch requests – try again in a moment");
     const exact = (g as { exact?: (a: { street: string; houseNumber?: string; postalCode: string }) => Promise<unknown> }).exact?.bind(g);
-    const results = [];
-    for (const a of b.addresses) {
-      const r = exact
-        ? await exact(a)
-        : (await wrap(() => g.search(`${a.street} ${a.houseNumber ?? ""}, ${a.postalCode} ${a.city ?? ""}`, { countryCodes: ["DE"], limit: 1 })))[0] ?? null;
-      results.push(r ?? null);
-    }
+    // A few lookups at a time (the address database is local; order of the results = order of the input).
+    // Every lookup goes through wrap(): a geocoder failure answers 503 geocoder_unavailable, not 500.
+    const one = async (a: (typeof b.addresses)[number]) =>
+      (exact
+        ? await wrapBatch(() => exact(a))
+        : (await wrapBatch(() => g.search(`${a.street} ${a.houseNumber ?? ""}, ${a.postalCode} ${a.city ?? ""}`, { countryCodes: ["DE"], limit: 1 })))[0]) ?? null;
+    const results: unknown[] = new Array(b.addresses.length).fill(null);
+    let next = 0;
+    await Promise.all(
+      Array.from({ length: Math.min(GEOCODE_BATCH_CONCURRENCY, b.addresses.length) }, async () => {
+        while (next < b.addresses.length) {
+          const i = next++;
+          results[i] = await one(b.addresses[i]!);
+        }
+      }),
+    );
     return { provider: g.name, results };
   });
 

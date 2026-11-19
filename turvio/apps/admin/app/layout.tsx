@@ -1,7 +1,7 @@
 import { ThemeScript } from "@turvio/web-ui/ds";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { UiSwitch } from "../lib/ui";
 import { inter, jakarta, plexArabic } from "./fonts";
 import "./globals.css";
@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang="en" dir="ltr" className={`${jakarta.variable} ${inter.variable} ${plexArabic.variable}`} data-ds={classic ? undefined : "g"} suppressHydrationWarning>
       <head>
         {/* Charcoal unless the user chose light or "follow system". */}
-        <ThemeScript defaultTheme="dark" />
+        <ThemeScript defaultTheme="dark" nonce={(await headers()).get("x-nonce") ?? undefined} />
       </head>
       <body>
         <UiSwitch />

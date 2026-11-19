@@ -18,8 +18,8 @@ const script = (followSystem: boolean) =>
   `(function(){try{var k=${JSON.stringify(THEME_KEY)},d=document.documentElement,m=window.matchMedia("(prefers-color-scheme: light)");function a(){var s=null;try{s=localStorage.getItem(k)}catch(e){}d.dataset.theme=s==="light"||s==="dark"?s:(s==="system"||${followSystem ? "true" : "false"})&&m.matches?"light":"dark"}a();m.addEventListener&&m.addEventListener("change",a)}catch(e){}})();`;
 
 /** `defaultTheme="dark"`: without an explicit choice the app is dark (charcoal) instead of following the system. */
-export function ThemeScript({ defaultTheme = "system" }: { defaultTheme?: "system" | "dark" }) {
-  return <script dangerouslySetInnerHTML={{ __html: script(defaultTheme === "system") }} />;
+export function ThemeScript({ defaultTheme = "system", nonce }: { defaultTheme?: "system" | "dark"; nonce?: string }) {
+  return <script nonce={nonce} dangerouslySetInnerHTML={{ __html: script(defaultTheme === "system") }} />;
 }
 
 function readTheme(): Theme {

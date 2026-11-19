@@ -1,9 +1,12 @@
-import { sessionProxy } from "@turvio/web-session";
+import { secureSessionProxy } from "@turvio/web-session";
 import type { NextRequest } from "next/server";
 
-/** Refreshes expired sessions and sends signed-out visitors to /login. */
+
+const imgHosts: string[] = [];
+
+/** Refreshes expired sessions, sends signed-out visitors to /login and sets the Content-Security-Policy. */
 export function proxy(req: NextRequest) {
-  return sessionProxy(req);
+  return secureSessionProxy(req, { imgHosts, dev: process.env.NODE_ENV === "development" });
 }
 
 export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|brand/).*)"] };

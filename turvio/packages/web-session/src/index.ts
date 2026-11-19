@@ -225,17 +225,19 @@ export async function proxyHandler(req: NextRequest, path: string[]): Promise<Re
 
 const PUBLIC = [/^\/login/, /^\/forgot-password/, /^\/reset-password/, /^\/invite/, /^\/api\//, /^\/_next\//, /^\/brand\//, /^\/favicon/, /^\/icon/, /^\/apple-icon/];
 
-export async function sessionProxy(req: NextRequest): Promise<NextResponse> {
+/** `requestHeaders`: headers handed on to the app for this request (e.g. the CSP nonce). */
+export async function sessionProxy(req: NextRequest, requestHeaders?: Headers): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
-  if (PUBLIC.some((r) => r.test(pathname))) return NextResponse.next();
+  const next = () => (requestHeaders ? NextResponse.next({ request: { headers: requestHeaders } }) : NextResponse.next());
+  if (PUBLIC.some((r) => r.test(pathname))) return next();
   const access = req.cookies.get(COOKIES.access)?.value;
   const refreshToken = req.cookies.get(COOKIES.refresh)?.value;
-  if (access) return NextResponse.next();
+  if (access) return next();
   if (refreshToken) {
     const s = await refresh(refreshToken);
     if (s) {
       // Make the new token visible to this request's server components too.
-      const headers = new Headers(req.headers);
+      const headers = new Headers(requestHeaders ?? req.headers);
       const cookies = req.cookies.getAll().filter((c) => c.name !== COOKIES.access && c.name !== COOKIES.refresh);
       headers.set("cookie", [...cookies.map((c) => `${c.name}=${c.value}`), `${COOKIES.access}=${s.accessToken}`, `${COOKIES.refresh}=${s.refreshToken}`].join("; "));
       const res = NextResponse.next({ request: { headers } });
@@ -247,6 +249,52 @@ export async function sessionProxy(req: NextRequest): Promise<NextResponse> {
   if (pathname !== "/") login.searchParams.set("next", pathname + req.nextUrl.search);
   const res = NextResponse.redirect(login);
   clearSessionCookies(res);
+  return res;
+}
+
+// ---------------------------------------------------------------------------
+// Content-Security-Policy (per-request nonce; Next.js applies it to its own scripts)
+// ---------------------------------------------------------------------------
+
+export type CspOptions = {
+  /** Extra image origins, e.g. the map tile server (`https://tile.example.org`, `https://*.tile.example.org`). */
+  imgHosts?: string[];
+  /** Development server: allows eval (React refresh) and the hot-reload socket. */
+  dev?: boolean;
+};
+
+export function contentSecurityPolicy(nonce: string, opts: CspOptions = {}): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${opts.dev ? " 'unsafe-eval'" : ""}`,
+    // React style attributes and Leaflet's positioning are inline styles.
+    "style-src 'self' 'unsafe-inline'",
+    ["img-src 'self' data: blob:", ...(opts.imgHosts ?? [])].join(" "),
+    "font-src 'self' data:",
+    `connect-src 'self'${opts.dev ? " ws: wss:" : ""}`,
+    "worker-src 'self' blob:",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+  ].join("; ");
+}
+
+/** Image origin of a tile URL template (`https://{s}.tile.x.org/{z}/{x}/{y}.png` → `https://*.tile.x.org`). */
+export function tileOrigin(template: string): string | null {
+  const m = /^(https:\/\/)([^/]+)/.exec(template.trim());
+  return m ? m[1] + m[2]!.replace(/\{s\}/g, "*") : null;
+}
+
+/** sessionProxy plus a Content-Security-Policy with a fresh nonce on every page response. */
+export async function secureSessionProxy(req: NextRequest, opts: CspOptions = {}): Promise<NextResponse> {
+  const nonce = btoa(crypto.randomUUID());
+  const csp = contentSecurityPolicy(nonce, opts);
+  const headers = new Headers(req.headers);
+  headers.set("x-nonce", nonce);
+  headers.set("content-security-policy", csp);
+  const res = await sessionProxy(req, headers);
+  res.headers.set("content-security-policy", csp);
   return res;
 }
 

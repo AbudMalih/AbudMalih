@@ -37,7 +37,15 @@ export type Tx = pg.PoolClient;
  * (`store_location_check`, confirm, approach) would fail. A session setting, so it also holds
  * behind the session pooler; queued before the first query of each new connection.
  */
-export function withExactFloats(pool: pg.Pool): pg.Pool {
+/**
+ * Pool limits: a request never waits forever. Getting a connection gives up after
+ * DB_CONNECT_TIMEOUT_MS (pool or pooler saturated) and a statement after DB_STATEMENT_TIMEOUT_MS;
+ * both answer 503 (database_busy / database_timeout) instead of a hanging request.
+ */
+export const DB_CONNECT_TIMEOUT_MS = Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 10_000);
+export const DB_STATEMENT_TIMEOUT_MS = Number(process.env.DB_STATEMENT_TIMEOUT_MS ?? 30_000);
+
+export function withExactFloats(pool: pg.Pool, statementTimeoutMs = DB_STATEMENT_TIMEOUT_MS): pg.Pool {
   // An idle pooled connection can be closed by the server (database restart, pooler failover,
   // idle timeout). pg reports that as an 'error' event on the pool; without a listener Node treats
   // it as unhandled and the whole API process exits. The broken client is already discarded by the
@@ -47,7 +55,9 @@ export function withExactFloats(pool: pg.Pool): pg.Pool {
   });
   pool.on("connect", (client) => {
     // Never continue silently with rounded floats: a failure closes this connection (the request errors).
-    client.query("set extra_float_digits = 1").catch(() => client.end().catch(() => undefined));
+    // Session settings (also valid behind the session pooler): exact floats and a statement timeout.
+    const timeout = Number.isFinite(statementTimeoutMs) && statementTimeoutMs > 0 ? Math.round(statementTimeoutMs) : 30_000;
+    client.query(`set extra_float_digits = 1; set statement_timeout = ${timeout}`).catch(() => client.end().catch(() => undefined));
   });
   return pool;
 }
@@ -56,11 +66,20 @@ export class Db {
   readonly pool: pg.Pool;
 
   constructor(connectionString: string, ssl: PgSsl = false) {
-    this.pool = withExactFloats(new pg.Pool({ connectionString, max: 10, ssl: pgSslOptions(ssl) }));
+    this.pool = withExactFloats(new pg.Pool({ connectionString, max: 10, ssl: pgSslOptions(ssl), connectionTimeoutMillis: DB_CONNECT_TIMEOUT_MS, idleTimeoutMillis: 30_000 }));
+  }
+
+  /** A pooled connection, or 503 database_busy when none frees up in time. */
+  private async connect(): Promise<pg.PoolClient> {
+    try {
+      return await this.pool.connect();
+    } catch {
+      throw new ApiError(503, "database_busy", "The database is busy – try again in a moment");
+    }
   }
 
   async asUser<T>(claims: Claims, fn: (tx: Tx) => Promise<T>): Promise<T> {
-    const client = await this.pool.connect();
+    const client = await this.connect();
     try {
       await client.query("begin");
       await client.query("set local role authenticated");
@@ -80,7 +99,7 @@ export class Db {
   }
 
   async asService<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
-    const client = await this.pool.connect();
+    const client = await this.connect();
     try {
       await client.query("begin");
       const result = await fn(client);
@@ -132,6 +151,8 @@ export function mapPgError(e: unknown): unknown {
       return new ApiError(422, /plan limit/.test(msg) ? "plan_limit_reached" : /subscription inactive/.test(msg) ? "subscription_inactive" : "rejected", msg);
     case "22P02":
       return new ApiError(400, "invalid_input", "Invalid identifier or value");
+    case "57014":
+      return new ApiError(503, "database_timeout", "The request took too long – try again in a moment");
     case "55000": {
       // Lifecycle refusals raised by the database (20261119000200_tour_lifecycle): stable codes.
       const LIFECYCLE: Record<string, string> = {

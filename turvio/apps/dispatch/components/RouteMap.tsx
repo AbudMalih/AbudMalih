@@ -12,6 +12,7 @@ import { tourMapPoints } from "../lib/helpers";
 import { freshnessOf, type LiveVehicle } from "../lib/live";
 import type { TFunction } from "../lib/i18n";
 import { useI18n } from "../lib/i18n/client";
+import { TILE_ATTRIBUTION, TILE_URL } from "../lib/tiles";
 
 type MapState = "loading" | "ready" | "error";
 
@@ -91,10 +92,10 @@ export function RouteMap(props: RouteMapProps) {
         let loaded = 0;
         let failed = 0;
         const tl = mod
-          .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          .tileLayer(TILE_URL, {
             maxZoom: 19,
             className: "turvio-tiles",
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            attribution: TILE_ATTRIBUTION,
           })
           .on("tileload", () => {
             loaded++;
