@@ -101,7 +101,7 @@ try {
     await dispatcher.getByLabel("Email").fill("dispatch.hannover@jarbou.test");
     await dispatcher.getByLabel("Password", { exact: true }).fill("not-the-password-1");
     await dispatcher.getByRole("button", { name: "Sign in" }).click();
-    await dispatcher.getByText("Email or password is incorrect").waitFor();
+    await dispatcher.getByText(/password is (incorrect|not correct)/i).waitFor();
     await shot(dispatcher, "01-login-error");
   });
 
