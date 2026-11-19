@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 import type { Db } from "./db";
 
 export interface Mail {
@@ -26,7 +26,7 @@ export class OutboxMailer implements Mailer {
 
 /** Production: any SMTP relay (e.g. an EU mail provider). */
 export class SmtpMailer implements Mailer {
-  private readonly transport: nodemailer.Transporter;
+  private readonly transport: Transporter;
 
   constructor(
     smtpUrl: string,
