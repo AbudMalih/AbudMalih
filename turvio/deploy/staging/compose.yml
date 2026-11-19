@@ -97,6 +97,8 @@ services:
       MAILER: smtp
       SMTP_URL: ${SMTP_URL:?set SMTP_URL (EU SMTP provider)}
       MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM}
+      # Account-deletion requests from the Driver app (store requirement). Empty = requests answer 503.
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
       DISPATCH_URL: https://${TURVIO_DISPATCH_HOST}
       ADMIN_URL: https://${TURVIO_ADMIN_HOST}
       CORS_ORIGINS: https://${TURVIO_DISPATCH_HOST},https://${TURVIO_ADMIN_HOST}

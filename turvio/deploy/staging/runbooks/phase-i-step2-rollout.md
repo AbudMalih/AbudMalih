@@ -9,7 +9,7 @@ SSH key `~/.ssh/turvio_claude_deploy`). Passwords are typed at the hidden prompt
 | Release SHA | the approved commit on `claude/tender-lovelace-4odw0l` (40 characters, given in the approval) |
 | Running release (application rollback target) | `02ce796e45afe62dbb2c0aaaab3be7742944c276` |
 | Database before | PostgreSQL 17, latest migration `20261118000100` |
-| Database after | latest migration `20261119000300` |
+| Database after | latest migration `20261119000500` (0100–0300 lifecycle/settings, 0400 failure-reason grant, 0500 platform-admin functions) |
 | Disaster-recovery backup | the verified Phase I step 1 backup (`~/turvio-backups/*.dump.gpg`) |
 
 Shorthands used below (type them once in the terminal):
@@ -38,7 +38,7 @@ transaction older than a minute.
 eval "$PSQL -f $RB/phase-i-step2-apply.sql" | tee ~/turvio-backups/step2-apply.txt
 ```
 Three transactions (enums, lifecycle, settings), each checks the expected version first, `lock_timeout`
-5 s, then the hosted service-role grants. Must end with `latest_migration 20261119000300` and
+5 s, then the hosted service-role grants. Must end with `latest_migration 20261119000500` and
 `== done`. **If it stops with an error:** nothing of the failed transaction is applied; a lock timeout →
 wait a minute and run the same command again (it continues where it stopped); any other error → stop and
 send the output. The running release `02ce796` keeps working on the migrated database (tested).
@@ -52,6 +52,11 @@ diff <(sed -n '/== 8/,$p' ~/turvio-backups/step2-before.txt | grep -E '^ [a-z._]
 Expect: `FINGERPRINT UNCHANGED` (every existing row identical); V3 `0 | 0 | 0`; V4 both `t`, `0`;
 V5 only `rls_auto_enable()`; V6 `5` and both triggers; V7 `0`, `0`. **Any difference → stop** (the
 application has not changed yet; decide on the database rollback with the owner).
+
+## 3b. New API setting (before the release)
+`SUPPORT_EMAIL=<TURVIO support mailbox>` in `/opt/turvio/.env` on the VPS (passed to the API by
+`compose.yml`) – receives account-deletion requests from the Driver app. Without it the request answers
+"not available right now" (nothing else is affected).
 
 ## 4. Application release
 ```
@@ -72,7 +77,7 @@ a tour closed from Dispatch disappears at the next sync); tracking only after ac
 ## Rollback
 - **Application:** `$VPS /opt/turvio/bin/deploy --rollback` → back to `02ce796e…`, which runs on the
   migrated database. Usually sufficient.
-- **Database (only if really needed):** `release-phase-b-h.md` → Rollback §2 (guarded down scripts in
+- **Database (only if really needed):** first `supabase/rollback/20261119000500_platform_admin_management.down.sql`, then `…0400_failure_reason_private.down.sql` (each with its `delete from supabase_migrations.schema_migrations where version = …`), then `release-phase-b-h.md` → Rollback §2 (guarded down scripts in
   reverse order, fingerprint must equal `step2-before.txt`), after the application rollback.
 - **Disaster recovery:** restore the step 1 backup into a fresh project (verify-script procedure), then
   deploy `02ce796e…`. Not covered by that backup: `auth` (sign-in accounts) and `storage` (proof photos) –

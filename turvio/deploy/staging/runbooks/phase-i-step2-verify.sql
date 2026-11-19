@@ -3,7 +3,7 @@ begin transaction read only;
 set local statement_timeout = '60s';
 set local extra_float_digits = 1;
 
-\echo '== V1. migrations (expect latest 20261119000300; 20261119000100/0200/0300 present once each)'
+\echo '== V1. migrations (expect latest 20261119000500; 0100–0500 present once each)'
 select version, name from supabase_migrations.schema_migrations where version >= '20261118000100' order by version;
 
 \echo '== V2. data fingerprint (expect identical to the fingerprint taken just before the apply)'
@@ -28,6 +28,10 @@ select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.prona
 select count(*) as lifecycle_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public' and p.proname in ('close_tour', 'cancel_stop', 'delete_tour', 'tour_delete_eligibility', 'delete_draft_stop');
 select tgname from pg_trigger where not tgisinternal and tgname in ('tours_lifecycle_guard', 'user_preferences_touch') order by 1;
+
+\echo '== V6b. 0400/0500 (expect f | 2)'
+select has_function_privilege('authenticated', 'app.failure_reason_allowed(uuid, text)', 'EXECUTE') as authenticated_can_probe_failure_reasons,
+       (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname in ('platform_add_admin', 'platform_remove_admin')) as platform_admin_functions;
 
 \echo '== V7. health (expect no transaction older than 1 minute, no blocked locks)'
 select count(*) as old_transactions from pg_stat_activity
