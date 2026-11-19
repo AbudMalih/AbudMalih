@@ -183,8 +183,17 @@ select rpad('migrations', 22), lpad(count(*)::text, 6), max(version) from supaba
 SQL
 ) || die "fingerprint query failed"
 
+# Optional: a read-only report file (e.g. runbooks/phase-i-step1-columns.sql) run on the restored copy.
+cols=""
+if [ -n "${COLUMNS_SQL:-}" ]; then
+  [ -f "$COLUMNS_SQL" ] || die "no such file: $COLUMNS_SQL"
+  cols=$(docker exec -i "$CID" psql -U postgres -d postgres -X -v ON_ERROR_STOP=1 -f - < "$COLUMNS_SQL" 2>&1) \
+    || { say "$cols" | safe_errors; die "COLUMNS_SQL report failed"; }
+fi
+
 # ---------------------------------------------------------------- cleanup, then the verdict
 remove_box || die "could not remove container $BOX – remove it with: docker rm -f $BOX"
 echo "[5] fingerprint – send this block to Claude for comparison with staging (counts and hashes only):"
 echo "$fp"
+if [ -n "$cols" ]; then echo "[5b] restored-copy report ($COLUMNS_SQL):"; echo "$cols"; fi
 echo "VERIFIED: checksum, AES-256 encryption, readable archive, complete data restore and complete schema restore; restore container removed, nothing unencrypted on disk."
