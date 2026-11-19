@@ -174,12 +174,12 @@ export function Kpi({ icon, label, value, of, progress, foot, accent, info, href
 }
 
 /** Prototype .reason row: label, value, share and a coloured bar. */
-export function ReasonRow({ label, value, share, color }: { label: string; value: ReactNode; share: number; color: string }) {
+export function ReasonRow({ label, value, share, shareText, color }: { label: string; value: ReactNode; share: number; shareText: string; color: string }) {
   return (
     <div className="grid grid-cols-[1fr_auto] items-center gap-x-2.5 gap-y-1.5">
       <span className="truncate text-[13px] font-semibold text-ink g:font-normal">{label}</span>
       <span className="text-[13px] font-bold tabular text-ink g:font-medium">
-        {value} <span className="font-semibold text-muted">· {Math.round(share * 100)} %</span>
+        {value} <span className="font-semibold text-muted">· {shareText}</span>
       </span>
       <div className="col-span-2 h-2 overflow-hidden rounded-full bg-surface-2 g:h-[3px] g:bg-[var(--selected)]">
         <i className="block h-full rounded-full [background:var(--bar)] g:[background:var(--text-3)]" style={{ width: `${Math.round(share * 100)}%`, ["--bar" as string]: color }} />
@@ -189,7 +189,7 @@ export function ReasonRow({ label, value, share, color }: { label: string; value
 }
 
 /** Prototype .warn row: severity stripe, text, action. */
-export function AttentionRow({ tone, title, detail, href, action = "Open" }: { tone: "coral" | "amber" | "violet" | "cobalt"; title: string; detail: string; href?: string; action?: string }) {
+export function AttentionRow({ tone, title, detail, href, action }: { tone: "coral" | "amber" | "violet" | "cobalt"; title: string; detail: string; href?: string; action: string }) {
   return (
     <div className="grid grid-cols-[4px_1fr_auto] items-center gap-3 rounded-[14px] border border-line bg-surface-2 p-3 g:grid-cols-[6px_1fr_auto] g:gap-2.5 g:rounded-none g:border-0 g:border-t g:bg-transparent g:px-0 g:py-2.5 g:first:border-t-0">
       <span className="self-stretch rounded g:size-1.5 g:self-center g:rounded-full" style={{ background: `var(--${tone})` }} aria-hidden="true" />

@@ -2,13 +2,15 @@
 
 import { FormAlert, cn } from "@turvio/web-ui/ds";
 import { Activity, Clock, GitCommitHorizontal, Route } from "lucide-react";
-import { STATE, ServiceRows, RefreshButton, checkedLabel, useSystemStatus } from "./SystemHealth";
+import type { TFunction } from "../lib/i18n";
+import { useI18n } from "../lib/i18n/client";
+import { STATE, ServiceRows, RefreshButton, useSystemStatus } from "./SystemHealth";
 
-function uptime(s: number) {
+export function uptime(s: number, t: TFunction) {
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
-  return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : `${m} min`;
+  return d ? t("system.uptimeDays", { d, h }) : h ? t("system.uptimeHours", { h, m }) : t("system.uptimeMinutes", { m });
 }
 
 function Tile({ icon, label, value, foot }: { icon: React.ReactNode; label: string; value: React.ReactNode; foot?: React.ReactNode }) {
@@ -26,16 +28,18 @@ function Tile({ icon, label, value, foot }: { icon: React.ReactNode; label: stri
 
 /** System status (prototype "System"): live service checks measured now, configuration labelled as such. */
 export function SystemStatusView() {
+  const { t, fmt } = useI18n();
   const { state, busy, reload } = useSystemStatus();
   if (state.status === "error")
     return (
-      <FormAlert>
-        The live status could not be loaded ({state.message}). No status is shown rather than an unverified one.
-      </FormAlert>
+      <div className="flex flex-col items-start gap-3">
+        <FormAlert>{t("system.loadFailed", { reason: state.message })}</FormAlert>
+        <RefreshButton busy={busy} onClick={() => void reload()} />
+      </div>
     );
   if (state.status === "loading")
     return (
-      <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-4" aria-busy="true" aria-label="Checking services">
+      <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-4" aria-busy="true" aria-label={t("system.checking")}>
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="h-[120px] animate-pulse rounded-[22px] bg-surface" />
         ))}
@@ -52,24 +56,24 @@ export function SystemStatusView() {
   const rc = d.routingCounters;
   return (
     <>
-      <section className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4" aria-label="Summary">
-        <Tile icon={<Activity />} label="Live services operational" value={`${ok} / ${live.length}`} foot={`Measured at ${checkedLabel(d.checkedAt)}`} />
-        <Tile icon={<GitCommitHorizontal />} label="Release" value={<span className="font-mono text-xl">{d.release ? d.release.slice(0, 7) : "—"}</span>} foot={d.release ? "API image of this deployment" : "Not reported by this API"} />
-        <Tile icon={<Clock />} label="API uptime" value={uptime(d.uptimeSeconds)} foot="since the API process started" />
+      <section className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 xl:grid-cols-4 g:gap-4" aria-label={t("system.summary")}>
+        <Tile icon={<Activity />} label={t("system.liveOperational")} value={`${ok} / ${live.length}`} foot={t("system.measuredAt", { time: fmt.time(d.checkedAt, true) })} />
+        <Tile icon={<GitCommitHorizontal />} label={t("system.release")} value={<span className="font-mono text-xl g:text-[18px]">{d.release ? d.release.slice(0, 7) : "—"}</span>} foot={d.release ? t("system.releaseFoot") : t("system.releaseNone")} />
+        <Tile icon={<Clock />} label={t("system.uptime")} value={uptime(d.uptimeSeconds, t)} foot={t("system.uptimeFoot")} />
         <Tile
           icon={<Route />}
-          label="Road routing requests"
-          value={rc ? (rc.routeRequests + rc.tableRequests).toLocaleString("de-DE") : "—"}
-          foot={rc ? `${rc.failures} failed · ${rc.cacheHits} from cache · since start` : "No road routing configured"}
+          label={t("system.routing")}
+          value={rc ? fmt.number(rc.routeRequests + rc.tableRequests) : "—"}
+          foot={rc ? t("system.routingFoot", { failed: rc.failures, cached: rc.cacheHits }) : t("system.routingNone")}
         />
       </section>
 
-      <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-12 g:gap-4">
         <section className="min-w-0 rounded-[22px] border border-line bg-surface p-5 shadow-card g:p-4 g:shadow-none xl:col-span-7">
           <div className="mb-2 flex items-start gap-3">
             <div>
-              <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">Service health</h2>
-              <p className="mt-px text-[12.5px] text-muted">Live checks – each service was called just now (time-out 4 s)</p>
+              <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">{t("system.serviceHealth")}</h2>
+              <p className="mt-px text-[12.5px] text-muted">{t("system.serviceHealthDescription")}</p>
             </div>
             <div className="ms-auto">
               <RefreshButton busy={busy} onClick={() => void reload()} />
@@ -79,15 +83,15 @@ export function SystemStatusView() {
         </section>
 
         <section className="min-w-0 rounded-[22px] border border-line bg-surface p-5 shadow-card g:p-4 g:shadow-none xl:col-span-5">
-          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">Needs attention</h2>
-          <p className="mb-3.5 mt-px text-[12.5px] text-muted">{issues.length + unconfigured.length ? `${issues.length + unconfigured.length} item(s) from the live checks` : "From the live checks"}</p>
+          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">{t("system.attention")}</h2>
+          <p className="mb-3.5 mt-px text-[12.5px] text-muted">{issues.length + unconfigured.length ? t("system.attentionItems", { count: issues.length + unconfigured.length }) : t("system.attentionNone")}</p>
           <div className="flex flex-col gap-2.5">
             {[...issues, ...unconfigured].map((s) => (
               <div key={s.key} className="grid grid-cols-[4px_1fr] gap-3 rounded-[14px] border border-line bg-surface-2 p-3 g:grid-cols-[6px_1fr] g:bg-transparent">
                 <span className={cn("self-stretch rounded g:mt-1.5 g:size-1.5 g:self-start g:rounded-full", s.state === "down" ? "bg-nx-coral" : s.state === "degraded" ? "bg-nx-amber" : "bg-muted")} aria-hidden="true" />
                 <div className="min-w-0">
                   <div className="text-[13.5px] font-bold text-ink">
-                    {s.label}: {STATE[s.state].label.toLowerCase()}
+                    {s.label}: {t(STATE[s.state].label)}
                   </div>
                   <div className="text-xs text-muted">{s.detail}</div>
                 </div>
@@ -96,7 +100,7 @@ export function SystemStatusView() {
             {issues.length + unconfigured.length === 0 && (
               <div className="flex items-center gap-2.5 rounded-[14px] border border-line bg-surface-2 p-3 text-[13px] font-semibold text-ink-2 g:border-0 g:bg-transparent g:p-0 g:font-normal">
                 <span className="size-2 rounded-full bg-nx-mint" aria-hidden="true" />
-                All live checks passed.
+                {t("system.allPassed")}
               </div>
             )}
           </div>
@@ -105,10 +109,10 @@ export function SystemStatusView() {
 
       <section className="min-w-0 rounded-[22px] border border-line bg-surface p-5 shadow-card g:p-4 g:shadow-none">
         <div className="mb-2 flex flex-wrap items-baseline gap-x-3">
-          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">Configuration</h2>
-          <span className="inline-flex h-6 items-center rounded-lg bg-surface-2 px-[9px] text-xs font-bold text-muted">Not a health check</span>
+          <h2 className="text-[15.5px] font-bold tracking-[-0.01em] text-ink g:text-[13.5px] g:font-semibold g:tracking-normal">{t("system.configuration")}</h2>
+          <span className="inline-flex h-6 items-center rounded-lg bg-surface-2 px-[9px] text-xs font-bold text-muted g:h-5 g:rounded g:px-1.5 g:font-medium">{t("system.notHealthCheck")}</span>
         </div>
-        <p className="mb-2 text-[12.5px] text-muted">How this API instance is configured, read from its settings. These entries are not tested.</p>
+        <p className="mb-2 text-[12.5px] text-muted">{t("system.configurationDescription")}</p>
         <ServiceRows services={config} />
       </section>
     </>

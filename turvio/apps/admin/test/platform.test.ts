@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_QUERY, applyQuery, displayStatus, toCsv } from "../lib/companyTable";
-import { activityFeed, monthlyRecurringRevenueCents, platformKpis, platformTenants, toRow } from "../lib/platform";
+import { displayStatus } from "../lib/companyTable";
+import { monthlyRecurringRevenueCents, platformKpis, toRow } from "../lib/platform";
+import { activityFeed, platformTenants } from "./fixtures/platform";
 
 const now = new Date("2026-10-30T12:00:00Z");
 const records = platformTenants(now);
@@ -15,6 +16,14 @@ describe("platform KPIs", () => {
     expect(k.companiesByMonth).toHaveLength(6);
     expect(k.companiesByMonth.at(-1)).toBe(k.companies);
     expect([...k.companiesByMonth].sort((a, b) => a - b)).toEqual(k.companiesByMonth); // cumulative
+  });
+
+  it("counts companies without a subscription in the company figures", () => {
+    const created = [...records.map((r) => r.createdAt), new Date(now.getTime() - 86_400_000).toISOString()];
+    const k = platformKpis(records, now, created);
+    expect(k.companies).toBe(records.length + 1);
+    expect(k.newLast30).toBe(platformKpis(records, now).newLast30 + 1);
+    expect(k.activeSubscriptions).toBe(platformKpis(records, now).activeSubscriptions);
   });
 
   it("does not invent revenue when prices are not configured", () => {
@@ -35,9 +44,14 @@ describe("platform KPIs", () => {
     expect(jarbou.activeDrivers).toBe(3);
     expect(jarbou.driverLimit).toBe(5);
   });
+
+  it("a suspended company shows as suspended whatever its subscription says", () => {
+    expect(displayStatus(rows.find((r) => r.id === "org_mainkinzig")!)).toBe("suspended");
+    expect(displayStatus(rows.find((r) => r.id === "org_elbe")!)).toBe("active");
+  });
 });
 
-describe("activity feed", () => {
+describe("activity feed (fixture)", () => {
   it("is sorted newest first, limited, and derived from records", () => {
     const events = activityFeed(records, now, 8);
     expect(events.length).toBeLessThanOrEqual(8);
@@ -48,32 +62,5 @@ describe("activity feed", () => {
   it("flags trials ending within 7 days", () => {
     const events = activityFeed(records, now, 100);
     expect(events.some((e) => e.kind === "trial_ending" && e.orgId === "org_desert")).toBe(true);
-  });
-});
-
-describe("company table query", () => {
-  it("searches name, slug, country and plan", () => {
-    expect(applyQuery(rows, { ...DEFAULT_QUERY, search: "elbe" }).all.map((r) => r.id)).toEqual(["org_elbe"]);
-    expect(applyQuery(rows, { ...DEFAULT_QUERY, search: "RO" }).all.some((r) => r.id === "org_transcarpatia")).toBe(true);
-  });
-  it("filters by status (suspended overrides subscription) and plan", () => {
-    const suspended = applyQuery(rows, { ...DEFAULT_QUERY, statuses: ["suspended"] }).all;
-    expect(suspended.map((r) => r.id)).toEqual(["org_mainkinzig"]);
-    const active = applyQuery(rows, { ...DEFAULT_QUERY, statuses: ["active"] }).all;
-    expect(active.every((r) => displayStatus(r) === "active")).toBe(true);
-    const solo = applyQuery(rows, { ...DEFAULT_QUERY, plans: ["driver_solo"] }).all;
-    expect(solo.map((r) => r.id)).toEqual(["org_solo_nowak"]);
-  });
-  it("sorts and paginates", () => {
-    const byDrivers = applyQuery(rows, { ...DEFAULT_QUERY, sort: "drivers", dir: "desc", pageSize: 100 }).rows;
-    expect(byDrivers[0]!.id).toBe("org_hanse");
-    const p = applyQuery(rows, { ...DEFAULT_QUERY, pageSize: 5, page: 99 });
-    expect(p.page).toBe(p.pageCount - 1);
-    expect(p.rows.length).toBe(rows.length - 5 * (p.pageCount - 1));
-  });
-  it("exports CSV with escaping", () => {
-    const csv = toCsv([{ ...rows[0]!, name: 'A, "B" GmbH' }]);
-    expect(csv.split("\n")[0]).toContain("active_drivers");
-    expect(csv).toContain('"A, ""B"" GmbH"');
   });
 });

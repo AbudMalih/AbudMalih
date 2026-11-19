@@ -2,76 +2,57 @@ import { LimitName, PLAN_CATALOGUE, type Plan } from "@turvio/shared";
 import { Badge, Card, CardHeader, PageHeader, cn } from "@turvio/web-ui/ds";
 import { Building2, Check, Gauge, Minus, UserRound } from "lucide-react";
 import type { Metadata } from "next";
+import { createFormat, type MessageKey, type TFunction } from "../../../lib/i18n";
+import { serverT } from "../../../lib/i18n/server";
 
-export const metadata: Metadata = { title: "Plans & limits" };
-
-const LIMIT_LABEL: Record<LimitName, string> = {
-  max_drivers: "Drivers",
-  max_dispatchers: "Dispatchers",
-  max_depots: "Depots",
-  max_vehicles: "Vehicles",
-  max_stops_per_month: "Stops / month",
-};
-
-const FEATURE_LABEL: Record<string, string> = {
-  optimization: "Route optimization",
-  scanning: "Parcel scanning",
-  dispatch: "Dispatch dashboard",
-  reports: "Reports & exports",
-  api: "API access",
-  multi_depot: "Multi-depot",
-};
-
-function limitValue(p: Plan, l: LimitName) {
-  const v = p.limits[l];
-  if (v != null) return v.toLocaleString("en");
-  if (l === "max_drivers" && p.pricingModel === "per_driver") return "Per seat";
-  return "Unlimited";
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await serverT()).t("plans.title") };
 }
 
-const ALL_FEATURES = Object.keys(FEATURE_LABEL);
+const FEATURES = ["optimization", "scanning", "dispatch", "reports", "api", "multi_depot"] as const;
 
-export default function PlansPage() {
+function limitValue(p: Plan, l: LimitName, t: TFunction, num: (n: number) => string): string | null {
+  const v = p.limits[l];
+  if (v != null) return num(v);
+  if (l === "max_drivers" && p.pricingModel === "per_driver") return t("plans.perSeat");
+  return null;
+}
+
+/** The plan catalogue (packages/shared) the database and the API enforce, with its limits. */
+export default async function PlansPage() {
+  const { t, locale } = await serverT();
+  const fmt = createFormat(locale);
   return (
     <>
-      <PageHeader
-        title="Plans & limits"
-        description="The plan catalogue enforced by the database and the API. Prices are intentionally not configured yet; payments are disabled."
-      />
+      <PageHeader title={t("plans.title")} description={t("plans.description")} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {PLAN_CATALOGUE.map((p) => (
           <Card key={p.code} interactive className={cn("relative flex flex-col p-5 g:p-4", p.code === "business" && "ring-1 ring-brand-200 g:ring-0")}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-semibold text-ink g:text-[14px]">{p.name}</h2>
-                  {p.code === "business" && <Badge tone="brand">Most complete</Badge>}
-                </div>
-                <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted">
-                  {p.audience === "company" ? <Building2 className="size-3.5" /> : <UserRound className="size-3.5" />}
-                  {p.audience === "company" ? "For companies" : "For individual drivers"}
-                </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-ink g:text-[14px]">{p.name}</h2>
+                {p.code === "business" && <Badge tone="brand">{t("plans.mostComplete")}</Badge>}
+                {!p.active && <Badge tone="neutral">{t("plans.inactive")}</Badge>}
               </div>
-              <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-2xs text-muted">{p.code}</code>
+              <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted">
+                {p.audience === "company" ? <Building2 className="size-3.5" /> : <UserRound className="size-3.5" />}
+                {p.audience === "company" ? t("plans.forCompanies") : t("plans.forDrivers")}
+              </p>
             </div>
-
-            <div className="mt-5 flex items-baseline gap-2 g:mt-3">
-              <span className="text-2xl font-semibold tracking-tight text-subtle g:text-[18px] g:font-medium">Price not set</span>
-            </div>
-            <p className="mt-1 text-xs text-muted">
-              {p.pricingModel === "per_driver" ? "Per driver seat" : "Flat rate"} · monthly or annual · {p.trialDays}-day trial
+            <p className="mt-3 text-xs text-muted">
+              {p.pricingModel === "per_driver" ? t("plans.perDriver") : t("plans.flat")} · {t("plans.trial", { count: p.trialDays })}
             </p>
 
             <div className="my-5 h-px bg-line g:my-3" />
 
             <ul className="flex flex-col gap-2 text-[13px]">
-              {ALL_FEATURES.map((f) => {
+              {FEATURES.map((f) => {
                 const on = !!p.features[f];
                 return (
                   <li key={f} className={cn("flex items-center gap-2", on ? "text-ink-2" : "text-subtle")}>
-                    {on ? <Check className="size-4 text-success g:size-3.5 g:text-ink-2" /> : <Minus className="size-4 g:size-3.5" />}
-                    {FEATURE_LABEL[f]}
+                    {on ? <Check className="size-4 text-success g:size-3.5 g:text-ink-2" aria-label={t("plans.included")} /> : <Minus className="size-4 g:size-3.5" aria-label={t("plans.notIncluded")} />}
+                    {t(`plans.feature.${f}` as MessageKey)}
                   </li>
                 );
               })}
@@ -80,27 +61,31 @@ export default function PlansPage() {
         ))}
       </div>
 
-      <Card className="mt-6 overflow-hidden g:mt-4">
-        <CardHeader title="Limits" description="Effective limit = tenant override → purchased seats (per-driver plans) → plan value." actions={<Gauge className="size-4 text-subtle" />} />
+      <Card className="mt-6 overflow-hidden g:mt-0">
+        <CardHeader title={t("plans.limits")} description={t("plans.limitsDescription")} actions={<Gauge className="size-4 text-subtle" />} />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-[13px]">
             <thead className="bg-surface-2/60 text-xs text-muted g:bg-transparent">
               <tr className="border-b border-line">
-                <th scope="col" className="h-10 px-5 text-start font-medium">Limit</th>
+                <th scope="col" className="h-10 px-5 text-start font-medium g:h-9 g:px-4">{t("company.limit")}</th>
                 {PLAN_CATALOGUE.map((p) => (
-                  <th key={p.code} scope="col" className="h-10 px-5 text-start font-medium">{p.name}</th>
+                  <th key={p.code} scope="col" className="h-10 px-5 text-start font-medium g:h-9 g:px-4">
+                    {p.name}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {LimitName.options.map((l) => (
                 <tr key={l} className="border-b border-line last:border-0">
-                  <th scope="row" className="px-5 py-3 text-start font-medium text-ink-2">{LIMIT_LABEL[l]}</th>
+                  <th scope="row" className="px-5 py-3 text-start font-medium text-ink-2 g:px-4 g:py-2 g:font-normal">
+                    {t(`common.limit.${l}`)}
+                  </th>
                   {PLAN_CATALOGUE.map((p) => {
-                    const v = limitValue(p, l);
+                    const v = limitValue(p, l, t, (n) => fmt.number(n));
                     return (
-                      <td key={p.code} className={cn("px-5 py-3 tabular", v === "Unlimited" ? "text-muted" : "text-ink")}>
-                        {v}
+                      <td key={p.code} className={cn("px-5 py-3 tabular g:px-4 g:py-2", v === null ? "text-muted" : "text-ink")}>
+                        {v ?? t("common.unlimited")}
                       </td>
                     );
                   })}

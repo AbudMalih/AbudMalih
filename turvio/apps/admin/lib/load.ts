@@ -3,12 +3,13 @@ import { serverApi } from "@turvio/web-session";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import { serverT } from "./i18n/server";
 import { activityFrom, toRecords, type AuditEntry, type OverviewOrg } from "./remote";
 import { platformKpis, toRow } from "./platform";
 
 /**
- * Platform data for Overview, Organizations and Audit log (aggregates only – the platform API never
- * returns tours, stops, recipients or positions). Deduplicated per request.
+ * Platform data for the Overview (aggregates only – the platform API never returns tours, stops,
+ * recipients or positions). Deduplicated per request.
  * 401 → sign-in; missing second factor → two-step setup; other failures → an error the page shows
  * inside the shell.
  */
@@ -20,16 +21,18 @@ export const loadPlatform = cache(async () => {
     if (!r.ok && r.code === "mfa_required") redirect("/security?required=1");
   }
   if (!overview.ok || !audit.ok) return { ok: false as const, status: !overview.ok ? overview.status : !audit.ok ? audit.status : 0 };
+  const { t } = await serverT();
   const now = new Date();
-  const records = toRecords(overview.data.organizations);
+  const orgs = overview.data.organizations;
+  const records = toRecords(orgs);
   return {
     ok: true as const,
     now,
-    orgs: overview.data.organizations,
+    orgs,
     records,
     rows: records.map((r) => toRow(r, now)),
-    kpi: platformKpis(records, now),
+    kpi: platformKpis(records, now, orgs.map((o) => new Date(o.createdAt).toISOString())),
     audit: audit.data,
-    events: activityFrom(audit.data, records, now, 50),
+    events: activityFrom(audit.data, records, now, 50, t),
   };
 });

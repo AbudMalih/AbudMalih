@@ -1,7 +1,11 @@
 import { ForgotPasswordForm } from "@turvio/web-ui/ds";
+import type { Metadata } from "next";
+import { serverT } from "../../../lib/i18n/server";
 
-export const metadata = { title: "Reset password" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await serverT()).t("shell.title.resetPassword") };
+}
 
-export default function ForgotPage() {
-  return <ForgotPasswordForm product="Platform Admin" />;
+export default async function ForgotPage() {
+  return <ForgotPasswordForm product={(await serverT()).t("shell.product")} />;
 }

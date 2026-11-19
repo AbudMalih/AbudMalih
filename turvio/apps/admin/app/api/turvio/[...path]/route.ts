@@ -7,6 +7,7 @@ const handle = async (req: NextRequest, ctx: Ctx) => proxyHandler(req, (await ct
 
 export const GET = handle;
 export const POST = handle;
+export const PUT = handle;
 export const PATCH = handle;
 export const DELETE = handle;
 export const dynamic = "force-dynamic";

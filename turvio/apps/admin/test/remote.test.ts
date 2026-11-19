@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { platformKpis } from "../lib/platform";
-import { activityFrom, toRecords, type AuditEntry, type OverviewOrg } from "../lib/remote";
+import { createT } from "../lib/i18n";
+import { activityFrom, eventLabel, toRecords, type AuditEntry, type OverviewOrg } from "../lib/remote";
 
 const now = new Date("2026-11-05T12:00:00Z");
 const org = (o: Partial<OverviewOrg>): OverviewOrg => ({
@@ -20,7 +21,7 @@ const org = (o: Partial<OverviewOrg>): OverviewOrg => ({
 });
 
 describe("platform API mapping", () => {
-  it("maps organizations to KPI records and skips companies without subscription", () => {
+  it("maps organizations with a subscription to KPI records (the others are counted separately)", () => {
     const recs = toRecords([org({}), org({ id: "o2", name: "No Sub", subscription: null })]);
     expect(recs).toHaveLength(1);
     const k = platformKpis(recs, now);
@@ -41,6 +42,16 @@ describe("platform API mapping", () => {
     ];
     const ev = activityFrom(audit, recs, now);
     expect(ev.map((e) => e.kind)).toEqual(["trial_ending", "invitation", "plan_change", "registration"]);
-    expect(ev[2]!.detail).toBe("Subscription changed (seats)");
+    expect(ev[2]!.detail).toBe("Subscription changed");
+  });
+
+  it("shows deletions and translates event names", () => {
+    const audit: AuditEntry[] = [{ id: 9, action: "delete", table: "memberships", changedColumns: null, at: "2026-11-04T10:00:00Z", organizationId: "o1", organizationName: "JARBOU Logistik GmbH" }];
+    const ev = activityFrom(audit, [], now);
+    expect(ev).toHaveLength(1);
+    expect(ev[0]!.detail).toBe("Member removed");
+    expect(eventLabel("memberships", "delete", createT("de"))).toBe("Mitglied entfernt");
+    expect(eventLabel("depots", "update")).toBe("Depot: changed");
+    expect(eventLabel("weird_table", "insert")).toBe("weird_table: created");
   });
 });

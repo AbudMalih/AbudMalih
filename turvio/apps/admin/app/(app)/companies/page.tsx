@@ -1,18 +1,12 @@
-import { FormAlert, PageHeader } from "@turvio/web-ui/ds";
 import type { Metadata } from "next";
 import { CompanyTable } from "../../../components/CompanyTable";
-import { NewCompanyDialog } from "../../../components/NewCompanyDialog";
-import { loadPlatform } from "../../../lib/load";
+import { serverT } from "../../../lib/i18n/server";
 
-export const metadata: Metadata = { title: "Organizations" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await serverT()).t("companies.title") };
+}
 export const dynamic = "force-dynamic";
 
-export default async function CompaniesPage() {
-  const p = await loadPlatform();
-  return (
-    <>
-      <PageHeader title="Organizations" description="Tenants on the platform · plan, subscription and driver seats" actions={<NewCompanyDialog />} />
-      {p.ok ? <CompanyTable rows={p.rows} now={p.now.getTime()} /> : <FormAlert>The TURVIO service returned an error (HTTP {p.status}). Reload to try again.</FormAlert>}
-    </>
-  );
+export default function CompaniesPage() {
+  return <CompanyTable />;
 }

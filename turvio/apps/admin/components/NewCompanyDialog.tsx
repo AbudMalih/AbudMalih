@@ -5,6 +5,8 @@ import { Button, Dialog, cn, toast } from "@turvio/web-ui/ds";
 import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ApiError, api, errorText } from "../lib/api";
+import { useI18n } from "../lib/i18n/client";
 
 const inputCls = "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none g:h-8 g:rounded-md g:border-line-2 g:bg-surface-2 g:text-[13px] g:text-ink g:shadow-none";
 const slugify = (s: string) =>
@@ -19,8 +21,9 @@ const slugify = (s: string) =>
     .slice(0, 40);
 
 /** Onboard a company: organization + trial subscription + owner invitation (real API call). */
-export function NewCompanyDialog() {
+export function NewCompanyDialog({ onCreated }: { onCreated?: (id: string) => void }) {
   const router = useRouter();
+  const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
@@ -30,31 +33,31 @@ export function NewCompanyDialog() {
   const [seats, setSeats] = useState("5");
   const [owner, setOwner] = useState("");
   const [country, setCountry] = useState("DE");
+  const regions = typeof Intl.DisplayNames === "function" ? new Intl.DisplayNames([locale], { type: "region" }) : null;
+  const countryName = (c: string) => regions?.of(c) ?? c;
   const valid = name.trim().length >= 2 && /^[a-z0-9][a-z0-9-]{1,62}$/.test(slug) && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(owner) && Number(seats) >= 1;
 
   const submit = async () => {
     setBusy(true);
     try {
-      const res = await fetch("/api/turvio/v1/platform/organizations", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), slug, countryCode: country, planCode: plan, seats: Number(seats), ownerEmail: owner.trim() }),
+      const data = await api<{ id: string; name: string; ownerInvited: string }>("POST", "/v1/platform/organizations", {
+        name: name.trim(),
+        slug,
+        countryCode: country,
+        planCode: plan,
+        seats: Number(seats),
+        ownerEmail: owner.trim(),
       });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 403 && data?.error?.code === "mfa_required") {
-        window.location.assign("/security?required=1");
-        return;
-      }
-      if (!res.ok) throw new Error(data?.error?.message ?? `HTTP ${res.status}`);
-      toast.success(`${data.name} created`, { description: `Trial started · invitation sent to ${data.ownerInvited}` });
+      toast.success(t("companies.new.created", { name: data.name }), { description: t("companies.new.createdDetail", { email: data.ownerInvited }) });
       setOpen(false);
       setName("");
       setSlug("");
       setSlugTouched(false);
       setOwner("");
-      router.refresh();
+      if (onCreated) onCreated(data.id);
+      else router.push(`/companies/${data.id}`);
     } catch (e) {
-      toast.error("Company not created", { description: e instanceof Error ? e.message : String(e) });
+      toast.error(t("companies.new.failed"), { description: e instanceof ApiError && e.code === "duplicate" ? t("companies.new.slugTaken") : errorText(e) });
     } finally {
       setBusy(false);
     }
@@ -63,27 +66,27 @@ export function NewCompanyDialog() {
   return (
     <>
       <Button variant="primary" onClick={() => setOpen(true)}>
-        <Plus /> New company
+        <Plus /> {t("companies.new.button")}
       </Button>
       <Dialog
         open={open}
         onOpenChange={(o) => !busy && setOpen(o)}
-        title="Onboard a company"
-        description="Creates the company with a trial subscription and emails an owner invitation. No payment is taken."
+        title={t("companies.new.title")}
+        description={t("companies.new.description")}
         footer={
           <>
             <Button variant="secondary" onClick={() => setOpen(false)} disabled={busy}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button variant="primary" onClick={submit} disabled={busy || !valid}>
-              {busy && <Loader2 className="animate-spin" />} Create & invite owner
+              {busy && <Loader2 className="animate-spin" />} {t("companies.new.submit")}
             </Button>
           </>
         }
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted sm:col-span-2">
-            Company name
+            {t("companies.new.name")}
             <input
               className={inputCls}
               value={name}
@@ -94,7 +97,7 @@ export function NewCompanyDialog() {
             />
           </label>
           <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
-            Slug
+            {t("companies.new.slug")}
             <input
               className={cn(inputCls, slug && !/^[a-z0-9][a-z0-9-]{1,62}$/.test(slug) && "border-danger")}
               value={slug}
@@ -105,29 +108,31 @@ export function NewCompanyDialog() {
             />
           </label>
           <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
-            Country
+            {t("companies.new.country")}
             <select className={inputCls} value={country} onChange={(e) => setCountry(e.target.value)}>
               {["DE", "AT", "CH", "NL", "RO", "AE"].map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
-            Plan
-            <select className={inputCls} value={plan} onChange={(e) => setPlan(e.target.value)}>
-              {PLAN_CATALOGUE.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.name} ({p.trialDays}-day trial)
+                <option key={c} value={c}>
+                  {countryName(c)}
                 </option>
               ))}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
-            Driver seats
+            {t("common.plan")}
+            <select className={inputCls} value={plan} onChange={(e) => setPlan(e.target.value)}>
+              {PLAN_CATALOGUE.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {t("companies.new.planOption", { plan: p.name, days: p.trialDays })}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted">
+            {t("companies.new.seats")}
             <input className={inputCls} type="number" min={1} value={seats} onChange={(e) => setSeats(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 g:text-[12px] g:font-normal g:text-muted sm:col-span-2">
-            Owner email
+            {t("companies.new.owner")}
             <input className={inputCls} type="email" value={owner} onChange={(e) => setOwner(e.target.value)} />
           </label>
         </div>

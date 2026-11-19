@@ -1,10 +1,13 @@
 "use client";
 
-import { AppShell, MenuItem, MenuLabel, MenuSeparator, THEME_KEY, type NavGroup } from "@turvio/web-ui/ds";
-import { Building2, Check, CreditCard, LayoutGrid, ScrollText, Server } from "lucide-react";
+import { AppShell, MenuItem, MenuLabel, MenuSeparator, useThemePreference, type NavGroup, type ThemePreference } from "@turvio/web-ui/ds";
+import { Building2, Check, CreditCard, LayoutGrid, ScrollText, Server, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
+import { api, savePreferences } from "../lib/api";
+import { EN_T, LOCALE_NAMES, LOCALES, isLocale, type Locale, type MessageKey, type TFunction } from "../lib/i18n";
+import { useI18n } from "../lib/i18n/client";
 import { signOut, useAdminSession } from "../lib/session";
 
 /*
@@ -12,24 +15,31 @@ import { signOut, useAdminSession } from "../lib/session";
  * really is: platform administration. Every entry is its own route, rendered inside this shell
  * (mounted once in app/(app)/layout.tsx) and reached by client-side navigation.
  */
-export const GROUPS: NavGroup[] = [
-  { label: "Operations", items: [{ href: "/", label: "Overview", icon: LayoutGrid, shortcut: "1" }] },
+const NAV: { group: MessageKey; items: { href: string; label: MessageKey; icon: NavGroup["items"][number]["icon"]; shortcut: string }[] }[] = [
+  { group: "shell.group.operations", items: [{ href: "/", label: "shell.nav.overview", icon: LayoutGrid, shortcut: "1" }] },
   {
-    label: "Management",
+    group: "shell.group.management",
     items: [
-      { href: "/companies", label: "Organizations", icon: Building2, shortcut: "2" },
-      { href: "/plans", label: "Plans & limits", icon: CreditCard, shortcut: "3" },
+      { href: "/companies", label: "shell.nav.companies", icon: Building2, shortcut: "2" },
+      { href: "/plans", label: "shell.nav.plans", icon: CreditCard, shortcut: "3" },
     ],
   },
   {
-    label: "Platform",
+    group: "shell.group.platform",
     items: [
-      { href: "/system", label: "System status", icon: Server, shortcut: "4" },
-      { href: "/activity", label: "Audit log", icon: ScrollText, shortcut: "5" },
+      { href: "/system", label: "shell.nav.system", icon: Server, shortcut: "4" },
+      { href: "/activity", label: "shell.nav.audit", icon: ScrollText, shortcut: "5" },
+      { href: "/admins", label: "shell.nav.admins", icon: ShieldCheck, shortcut: "6" },
     ],
   },
 ];
-const ROUTES = GROUPS.flatMap((g) => g.items);
+
+export function navGroups(t: TFunction = EN_T): NavGroup[] {
+  return NAV.map((g) => ({ label: t(g.group), items: g.items.map((i) => ({ href: i.href, label: t(i.label), icon: i.icon, shortcut: i.shortcut })) }));
+}
+/** English navigation (tests). */
+export const GROUPS: NavGroup[] = navGroups();
+const ROUTES = NAV.flatMap((g) => g.items);
 
 const NextLink = ({ children, ...p }: { href: string; className?: string; onClick?: () => void; "aria-current"?: "page"; children: ReactNode }) => (
   <Link {...p} prefetch>
@@ -37,40 +47,49 @@ const NextLink = ({ children, ...p }: { href: string; className?: string; onClic
   </Link>
 );
 
-type ThemeChoice = "system" | "light" | "dark";
-
-/** Appearance in the account menu: charcoal by default, light, or follow the system (stored like Dispatch). */
-function ThemeChoices() {
-  const [choice, setChoice] = useState<ThemeChoice>("dark");
-  useEffect(() => {
-    try {
-      const s = localStorage.getItem(THEME_KEY);
-      setChoice(s === "light" || s === "system" ? s : "dark");
-    } catch {
-      /* private mode */
-    }
-  }, []);
-  const apply = (c: ThemeChoice) => {
-    try {
-      localStorage.setItem(THEME_KEY, c);
-    } catch {
-      /* private mode: this page only */
-    }
-    document.documentElement.dataset.theme = c === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : c;
-    setChoice(c);
-  };
-  const items: [ThemeChoice, string][] = [
-    ["system", "Follow system"],
-    ["light", "Light"],
-    ["dark", "Dark"],
+/**
+ * Appearance and language in the account menu. Appearance follows every other theme control (the
+ * header switch included); both choices are saved on the account (best effort, shared with Dispatch).
+ */
+export function AccountChoices() {
+  const { t, locale, setLocale } = useI18n();
+  const [pref, setPref] = useThemePreference("dark");
+  const themes: [ThemePreference, MessageKey][] = [
+    ["system", "shell.theme.system"],
+    ["light", "shell.theme.light"],
+    ["dark", "shell.theme.dark"],
   ];
+  const pickLocale = (l: Locale) => {
+    if (l === locale) return;
+    setLocale(l);
+    void savePreferences({ language: l });
+  };
   return (
     <>
       <MenuSeparator />
-      <MenuLabel>Appearance</MenuLabel>
-      {items.map(([c, label]) => (
-        <MenuItem key={c} onSelect={(e) => (e.preventDefault(), apply(c))} icon={choice === c ? <Check /> : <span className="size-4" />}>
-          {label}
+      <MenuLabel>{t("shell.appearance")}</MenuLabel>
+      {themes.map(([c, label]) => (
+        <MenuItem
+          key={c}
+          onSelect={(e) => {
+            e.preventDefault();
+            setPref(c);
+            void savePreferences({ theme: c });
+          }}
+          icon={pref === c ? <Check /> : <span className="size-4" />}
+          aria-checked={pref === c}
+          role="menuitemradio"
+        >
+          {t(label)}
+        </MenuItem>
+      ))}
+      <MenuSeparator />
+      <MenuLabel>{t("shell.language")}</MenuLabel>
+      {LOCALES.map((l) => (
+        <MenuItem key={l} onSelect={(e) => (e.preventDefault(), pickLocale(l))} icon={l === locale ? <Check /> : <span className="size-4" />} aria-checked={l === locale} role="menuitemradio">
+          <span lang={l} dir={l === "ar" ? "rtl" : "ltr"}>
+            {LOCALE_NAMES[l]}
+          </span>
         </MenuItem>
       ))}
     </>
@@ -81,17 +100,29 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const session = useAdminSession();
+  const { t, locale, setLocale } = useI18n();
+  const groups = useMemo(() => navGroups(t), [t]);
 
   // Warm every route once, so the first switch is as fast as the next ones.
   useEffect(() => {
     for (const r of ROUTES) router.prefetch(r.href);
   }, [router]);
 
-  // Keyboard: 1–5 switch pages (ignored while typing or with modifiers).
+  // A language saved on the account (e.g. chosen in Dispatch) wins over this browser's cookie.
+  useEffect(() => {
+    api<{ language: string | null }>("GET", "/v1/me/preferences")
+      .then((p) => {
+        if (isLocale(p?.language) && p.language !== locale) setLocale(p.language);
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keyboard: 1–6 switch pages (ignored while typing or with modifiers).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName)))) return;
+      const el = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey || (el && (el.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(el.tagName)))) return;
       const r = ROUTES.find((x) => x.shortcut === e.key);
       if (r && r.href !== pathname) router.push(r.href);
     };
@@ -101,16 +132,17 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <AppShell
-      product="Platform Admin"
-      productShort="Admin"
-      groups={GROUPS}
+      product={t("shell.product")}
+      productShort={t("shell.productShort")}
+      groups={groups}
       current={pathname}
-      user={{ name: session.name, email: session.email, role: "Platform admin" }}
+      user={{ name: session.name, email: session.email, role: t("shell.role") }}
       environment={session.environment ?? undefined}
       onSignOut={() => void signOut()}
       navigate={(href) => router.push(href)}
       linkComponent={NextLink}
-      userMenuExtra={<ThemeChoices />}
+      onThemeChange={(theme) => void savePreferences({ theme })}
+      userMenuExtra={<AccountChoices />}
     >
       {children}
     </AppShell>

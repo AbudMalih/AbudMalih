@@ -1,70 +1,86 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
-import { CompanyTable } from "../components/CompanyTable";
-import { platformTenants, toRow } from "../lib/platform";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CompanyTable, PAGE_SIZE } from "../components/CompanyTable";
+import type { OrgListItem } from "../lib/remote";
+import { mockFetch, path, type Call } from "./fetch";
 
-const now = new Date("2026-10-30T12:00:00Z");
-const rows = platformTenants(now).map((r) => toRow(r, now));
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn(), prefetch: vi.fn() }), usePathname: () => "/companies" }));
 
-function setup() {
-  const user = userEvent.setup();
-  render(<CompanyTable rows={rows} now={now.getTime()} />);
-  const table = () => screen.getByRole("table");
-  const bodyRows = () => within(table()).getAllByRole("row").slice(1);
-  return { user, table, bodyRows };
-}
+const org = (i: number, o: Partial<OrgListItem> = {}): OrgListItem => ({
+  id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
+  name: `Company ${i}`,
+  slug: `company-${i}`,
+  countryCode: "DE",
+  status: "active",
+  createdAt: "2026-10-01T08:00:00Z",
+  subscription: { planCode: "team", status: "active", seats: 5, trialEndsAt: null },
+  members: 3,
+  activeDrivers: 2,
+  ...o,
+});
+const ALL = [org(1, { name: "Elbe Express", subscription: null }), org(2, { name: "Hansefracht", status: "suspended" }), ...Array.from({ length: 30 }, (_, i) => org(i + 3))];
 
-describe("CompanyTable", () => {
-  it("shows the first page with pagination info", () => {
-    const { bodyRows } = setup();
-    expect(bodyRows()).toHaveLength(8);
-    expect(screen.getByText(`1–8 of ${rows.length}`)).toBeTruthy();
+let calls: Call[];
+beforeEach(() => {
+  calls = mockFetch((c) => {
+    const u = new URL(path(c), "http://x");
+    if (u.pathname !== "/v1/platform/organizations") return undefined;
+    const q = u.searchParams.get("q")?.toLowerCase();
+    const status = u.searchParams.get("status");
+    const list = ALL.filter((o) => (!q || o.name.toLowerCase().includes(q)) && (!status || o.status === status));
+    const offset = Number(u.searchParams.get("offset"));
+    return { body: { total: list.length, organizations: list.slice(offset, offset + Number(u.searchParams.get("limit"))) } };
+  });
+});
+afterEach(() => vi.unstubAllGlobals());
+
+const bodyRows = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
+
+describe("Companies list (GET /v1/platform/organizations)", () => {
+  it("shows every company, also those without a subscription ('No plan')", async () => {
+    render(<CompanyTable />);
+    await waitFor(() => expect(bodyRows()).toHaveLength(PAGE_SIZE));
+    expect(path(calls[0]!)).toBe(`/v1/platform/organizations?limit=${PAGE_SIZE}&offset=0`);
+    const elbe = bodyRows()[0]!;
+    expect(within(elbe).getByText("Elbe Express")).toBeTruthy();
+    expect(within(elbe).getByText("No plan")).toBeTruthy();
+    expect(within(bodyRows()[1]!).getByText("Suspended")).toBeTruthy();
+    expect(screen.getByText(`1–${PAGE_SIZE} of ${ALL.length}`)).toBeTruthy();
+    // No placeholder actions are left in the row menu.
+    expect(screen.queryByText(/Change plan|Suspend company|Needs login|Billing/)).toBeNull();
   });
 
-  it("filters by search and shows an empty state with reset", async () => {
-    const { user, bodyRows } = setup();
+  it("searches on the server", async () => {
+    const user = userEvent.setup();
+    render(<CompanyTable />);
+    await waitFor(() => expect(bodyRows().length).toBeGreaterThan(0));
     await user.type(screen.getByRole("searchbox", { name: "Search companies" }), "hanse");
-    expect(bodyRows()).toHaveLength(1);
-    expect(screen.getByText("Hansefracht GmbH")).toBeTruthy();
-    await user.type(screen.getByRole("searchbox", { name: "Search companies" }), "zzz");
-    expect(screen.getByText("No companies match your filters")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Clear all filters" }));
-    expect(bodyRows()).toHaveLength(8);
+    await waitFor(() => expect(bodyRows()).toHaveLength(1));
+    expect(calls.some((c) => path(c).includes("q=hanse"))).toBe(true);
   });
 
-  it("sorts by company name and toggles direction", async () => {
-    const { user, bodyRows } = setup();
-    const header = screen.getByRole("columnheader", { name: /Company/ });
-    await user.click(within(header).getByRole("button"));
-    expect(header.getAttribute("aria-sort")).toBe("ascending");
-    const first = within(bodyRows()[0]!).getAllByRole("button")[0]!.textContent;
-    expect(first).toContain("Alpen Last-Mile GmbH");
-    await user.click(within(header).getByRole("button"));
-    expect(header.getAttribute("aria-sort")).toBe("descending");
-  });
-
-  it("paginates", async () => {
-    const { user } = setup();
+  it("filters by status and pages with offset", async () => {
+    const user = userEvent.setup();
+    render(<CompanyTable />);
+    await waitFor(() => expect(bodyRows()).toHaveLength(PAGE_SIZE));
     await user.click(screen.getByRole("button", { name: "Next page" }));
-    expect(screen.getByText(`9–${rows.length} of ${rows.length}`)).toBeTruthy();
-    expect((screen.getByRole("button", { name: "Next page" }) as HTMLButtonElement).disabled).toBe(true);
+    await waitFor(() => expect(screen.getByText(`${PAGE_SIZE + 1}–${ALL.length} of ${ALL.length}`)).toBeTruthy());
+    expect(calls.some((c) => path(c).includes(`offset=${PAGE_SIZE}`))).toBe(true);
+    await user.click(screen.getByRole("button", { name: "All statuses" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Suspended" }));
+    await waitFor(() => expect(bodyRows()).toHaveLength(1));
+    expect(path(calls.at(-1)!)).toContain("status=suspended");
+    expect(path(calls.at(-1)!)).toContain("offset=0");
   });
 
-  it("selects rows and shows the bulk action bar", async () => {
-    const { user } = setup();
-    await user.click(screen.getByRole("checkbox", { name: "Select all companies on this page" }));
-    expect(screen.getByText("8 selected")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Clear selection" }));
-    expect(screen.queryByText("8 selected")).toBeNull();
-  });
-
-  it("opens the company detail sheet", async () => {
-    const { user } = setup();
-    await user.type(screen.getByRole("searchbox", { name: "Search companies" }), "elbe");
-    await user.click(screen.getByRole("button", { name: /^Elbe Express Logistik GmbH/ }));
-    const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("Subscription")).toBeTruthy();
-    expect(within(dialog).getByText("Annual")).toBeTruthy();
+  it("shows a friendly error with retry", async () => {
+    vi.unstubAllGlobals();
+    mockFetch(() => ({ status: 500, body: { error: { code: "internal", message: "boom" } } }));
+    render(<CompanyTable />);
+    expect(await screen.findByText(/not reachable right now/)).toBeTruthy();
+    expect(screen.queryByText(/500|boom/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 });

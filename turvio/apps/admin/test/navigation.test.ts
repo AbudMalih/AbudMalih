@@ -3,7 +3,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { GROUPS } from "../components/AdminShell";
 import { attention } from "../lib/attention";
-import { platformTenants, toRow } from "../lib/platform";
+import { createFormat, createT } from "../lib/i18n";
+import { toRow } from "../lib/platform";
+import { platformTenants } from "./fixtures/platform";
 
 const APP = join(__dirname, "..", "app", "(app)");
 
@@ -25,7 +27,11 @@ describe("Admin navigation", () => {
     for (const p of pages) expect(items.map((i) => i.href)).toContain(p);
   });
 
-  it("shortcuts 1–5 are unique", () => {
+  it("has Audit log and Platform admins entries", () => {
+    expect(items.map((i) => i.label)).toEqual(expect.arrayContaining(["Audit log", "Platform admins", "Companies"]));
+  });
+
+  it("shortcuts are unique", () => {
     const keys = items.map((i) => i.shortcut).filter(Boolean);
     expect(new Set(keys).size).toBe(keys.length);
   });
@@ -43,6 +49,14 @@ describe("needs attention", () => {
     expect(items.some((x) => x.title.includes("past due"))).toBe(true);
     expect(items.some((x) => x.title.includes("suspended"))).toBe(true);
     for (const x of items) expect(x.title).not.toMatch(/stop|tour|deliver/i);
+  });
+
+  it("is translated (German) and links each item to its company", () => {
+    const now = new Date("2026-11-13T10:00:00Z");
+    const rows = platformTenants(now).map((t) => toRow(t, now));
+    const items = attention(rows, now, createT("de"), createFormat("de"));
+    expect(items.some((x) => x.title.includes("gesperrt"))).toBe(true);
+    expect(items.every((x) => rows.some((r) => r.id === x.orgId))).toBe(true);
   });
 
   it("is empty for healthy companies", () => {

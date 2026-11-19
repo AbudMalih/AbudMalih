@@ -1,17 +1,21 @@
 import { PageHeader } from "@turvio/web-ui/ds";
 import type { Metadata } from "next";
 import { SystemStatusView } from "../../../components/SystemStatusView";
+import { serverT } from "../../../lib/i18n/server";
 
-export const metadata: Metadata = { title: "System status" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await serverT()).t("system.title") };
+}
 
 /**
- * Live platform status. Replaces the former static readiness checklist, whose statements had become
- * outdated: every service state shown here is measured when the page is opened (GET /v1/platform/system).
+ * Live platform status. Every service state shown here is measured when the page is opened
+ * (GET /v1/platform/system).
  */
-export default function SystemPage() {
+export default async function SystemPage() {
+  const { t } = await serverT();
   return (
     <>
-      <PageHeader title="System status" description="Platform services measured live · configuration listed separately" />
+      <PageHeader title={t("system.title")} description={t("system.description")} />
       <SystemStatusView />
     </>
   );
