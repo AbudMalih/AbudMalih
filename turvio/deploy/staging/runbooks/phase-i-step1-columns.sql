@@ -5,6 +5,8 @@
 -- Every hash is ordered by the primary key (no collation involved). A column whose hash differs in (a) and
 -- (b) while the serialization settings in S0 are equal is a real data change in that column.
 begin transaction read only;
+-- Same float text on every server (Supabase sessions default to 0 = rounded to 15 digits).
+set local extra_float_digits = 1;
 
 \echo '== S0. serialization settings'
 select current_setting('server_version') server_version, current_setting('TimeZone') timezone,

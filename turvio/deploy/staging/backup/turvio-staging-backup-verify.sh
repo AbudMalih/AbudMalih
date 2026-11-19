@@ -161,6 +161,7 @@ echo "[4] SCHEMA restore OK: ${summary%, } – all equal to the archive"
 
 # ---------------------------------------------------------------- [5] fingerprint
 fp=$(sql -F ' ' <<'SQL'
+set extra_float_digits = 1;
 select rpad(t, 22), lpad(n::text, 6), h from (
   select 'organizations' t, count(*) n, md5(coalesce(string_agg(to_jsonb(x)::text, '|' order by x.id), '')) h from public.organizations x
   union all select 'subscriptions', count(*), md5(coalesce(string_agg(to_jsonb(x)::text, '|' order by to_jsonb(x)::text), '')) from public.subscriptions x

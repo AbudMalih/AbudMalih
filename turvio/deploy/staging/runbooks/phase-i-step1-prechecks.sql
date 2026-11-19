@@ -5,6 +5,7 @@
 -- or paste into the Supabase SQL editor (turvio-staging). Expected values are noted per check.
 begin transaction read only;
 set local statement_timeout = '30s';
+set local extra_float_digits = 1;   -- same float text as the backup verification
 
 \echo '== 1. server version (expect 17.x)'
 select current_setting('server_version') as server_version;
@@ -50,6 +51,6 @@ select count(*) as unpinned_definer_functions from pg_proc p join pg_namespace n
 select has_schema_privilege('anon', 'app', 'USAGE') as anon_can_use_app_schema;
 
 \echo '== 8. data fingerprint (keep this output: it must be identical after the migrations)'
-\i turvio/supabase/rollback/fingerprint.sql
+\ir ../../../supabase/rollback/fingerprint.sql
 
 rollback;
