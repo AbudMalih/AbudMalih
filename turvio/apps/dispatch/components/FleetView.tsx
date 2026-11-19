@@ -2,10 +2,10 @@
 
 import { can, type Depot, type Driver, type Vehicle } from "@turvio/shared";
 import { Avatar, Badge, Button, Card, Dialog, EmptyState, Menu, MenuContent, MenuItem, MenuTrigger, cn, toast } from "@turvio/web-ui/ds";
-import { Ellipsis, Loader2, Mail, Plus, Truck, UserPlus, Users, Warehouse } from "lucide-react";
+import { AlertTriangle, Ellipsis, Loader2, Mail, Plus, ShieldCheck, Truck, UserPlus, Users, Warehouse } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { api, errorMessage } from "../lib/api";
+import { api, ApiCallError, errorMessage } from "../lib/api";
 import { useDispatch } from "../lib/store";
 import { memberScopeLabel } from "../lib/helpers";
 import { useI18n, useT } from "../lib/i18n/client";
@@ -298,6 +298,13 @@ interface TeamData {
   invitations: { id: string; email: string; role: string; expiresAt: string }[];
 }
 
+type TeamState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ready"; data: TeamData }
+  | { status: "error"; message: string }
+  | { status: "mfa" };
+
 export function FleetView() {
   const { scoped, session, reload } = useDispatch();
   const { t, fmt } = useI18n();
@@ -309,21 +316,36 @@ export function FleetView() {
   const tab: Tab = TABS.includes(fromUrl as Tab) ? (fromUrl as Tab) : "drivers";
   const setTab = useCallback((k: Tab) => router.replace(`${pathname ?? "/fleet"}?tab=${k}`, { scroll: false }), [router, pathname]);
   const [vehicles, setVehicles] = useState<VehicleRow[] | null>(null);
-  const [team, setTeam] = useState<TeamData | null>(null);
+  // The team list is loaded only when its tab is open: it needs company-admin rights (and two-step
+  // verification where required), which must not get in the way of the other tabs.
+  const [teamState, setTeamState] = useState<TeamState>({ status: "idle" });
+  const team = teamState.status === "ready" ? teamState.data : null;
   const [dialog, setDialog] = useState<null | { kind: "driver" | "vehicle" | "depot" | "invite"; item?: unknown }>(null);
   const org = session.organizationId;
   const isAdmin = can(session.role, "org.members.manage");
   const canDepots = can(session.role, "depots.manage");
 
   const loadVehicles = useCallback(() => api<VehicleRow[]>("GET", `/v1/orgs/${org}/vehicles`).then(setVehicles), [org]);
-  const loadTeam = useCallback(() => (isAdmin ? api<TeamData>("GET", `/v1/orgs/${org}/members`).then(setTeam) : Promise.resolve()), [org, isAdmin]);
+  const loadTeam = useCallback(async () => {
+    if (!isAdmin) return;
+    setTeamState((s) => (s.status === "ready" ? s : { status: "loading" }));
+    try {
+      const data = await api<TeamData>("GET", `/v1/orgs/${org}/members`, undefined, { mfaRedirect: false });
+      setTeamState({ status: "ready", data: { members: data.members ?? [], invitations: data.invitations ?? [] } });
+    } catch (e) {
+      setTeamState(e instanceof ApiCallError && e.status === 403 && e.code === "mfa_required" ? { status: "mfa" } : { status: "error", message: errorMessage(e) });
+    }
+  }, [org, isAdmin]);
   useEffect(() => {
     loadVehicles().catch((e) => toast.error(t("fleet.vehiclesNotLoaded"), { description: errorMessage(e) }));
-    loadTeam().catch((e) => toast.error(t("fleet.teamNotLoaded"), { description: errorMessage(e) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadVehicles, loadTeam]);
+  }, [loadVehicles]);
+  useEffect(() => setTeamState({ status: "idle" }), [org]);
+  useEffect(() => {
+    if (tab === "team" && teamState.status === "idle") void loadTeam();
+  }, [tab, teamState.status, loadTeam]);
   const refreshAll = async () => {
-    await Promise.all([reload(), loadVehicles(), loadTeam()]);
+    await Promise.all([reload(), loadVehicles(), teamState.status === "idle" ? Promise.resolve() : loadTeam()]);
   };
   const depotName = (id: string | null | undefined) => scoped.depots.find((d) => d.id === id)?.name ?? "–";
   const drivers = scoped.drivers as DriverRow[];
@@ -541,7 +563,29 @@ export function FleetView() {
 
           {tab === "team" && isAdmin && (
             <div>
-              {!team ? (
+              {teamState.status === "mfa" ? (
+                <EmptyState
+                  icon={<ShieldCheck />}
+                  title={t("fleet.teamMfaTitle")}
+                  description={t("fleet.teamMfaDesc")}
+                  action={
+                    <Button asChild size="sm">
+                      <a href={`/security?required=1&next=${encodeURIComponent("/fleet?tab=team")}`}>{t("fleet.teamMfaAction")}</a>
+                    </Button>
+                  }
+                />
+              ) : teamState.status === "error" ? (
+                <EmptyState
+                  icon={<AlertTriangle />}
+                  title={t("fleet.teamLoadFailed")}
+                  description={teamState.message}
+                  action={
+                    <Button size="sm" variant="secondary" onClick={() => void loadTeam()}>
+                      {t("common.retry")}
+                    </Button>
+                  }
+                />
+              ) : !team ? (
                 <p className="flex items-center gap-2 p-6 text-[13px] text-muted">
                   <Loader2 className="size-4 animate-spin" /> {t("fleet.loadingTeam")}
                 </p>

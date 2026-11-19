@@ -43,7 +43,12 @@ function friendly(code: string, serverMessage: string | undefined, status: numbe
   return serverMessage ?? t("common.error.http", { status });
 }
 
-export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
+export type ApiOptions = {
+  /** Default true: a 403 mfa_required sends the user to the two-step set-up page. Screens that explain it in place pass false. */
+  mfaRedirect?: boolean;
+};
+
+export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE", path: string, body?: unknown, opts: ApiOptions = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`/api/turvio${path}`, {
@@ -64,7 +69,7 @@ export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "PUT" 
   if (!res.ok) {
     const err = (data as { error?: { code?: string; message?: string; requestId?: string } }).error ?? {};
     const code = err.code ?? "error";
-    if (res.status === 403 && code === "mfa_required") {
+    if (res.status === 403 && code === "mfa_required" && opts.mfaRedirect !== false) {
       // Company administration needs two-step verification: go to the set-up page and come back.
       const here = window.location.pathname + window.location.search;
       window.location.assign(`/security?required=1&next=${encodeURIComponent(here)}`);
