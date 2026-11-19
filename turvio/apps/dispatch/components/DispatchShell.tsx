@@ -10,7 +10,9 @@ import {
   MenuSeparator,
   MenuTrigger,
   Tooltip,
+  applyThemePreference,
   cn,
+  readThemePreference,
   type Command,
   type NavGroup,
 } from "@turvio/web-ui/ds";
@@ -22,6 +24,7 @@ import { can } from "@turvio/shared";
 import type { TFunction } from "../lib/i18n";
 import { useI18n } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
+import { settingsApi } from "../lib/settings";
 import { Steering } from "./icons";
 import { signOut } from "./SignOutButton";
 
@@ -116,6 +119,23 @@ function ShellInner({ children }: { children: ReactNode }) {
   const view = params?.get("view");
   const current = pathname === "/fleet" ? `/fleet?tab=${tab ?? "drivers"}` : pathname === "/list" && view === "archived" ? "/list?view=archived" : pathname;
 
+  // The theme saved in the user's preferences (another device, another browser) wins over this browser's
+  // default once per page load; only a choice the user really saved (updatedAt) counts.
+  useEffect(() => {
+    let alive = true;
+    settingsApi(session.organizationId)
+      .preferences()
+      .then((p) => {
+        if (alive && p.updatedAt && (p.theme === "light" || p.theme === "dark" || p.theme === "system") && p.theme !== readThemePreference()) applyThemePreference(p.theme);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const saveTheme = (theme: "dark" | "light") => void settingsApi(session.organizationId).savePreferences({ theme }).catch(() => undefined);
+
   // Keyboard: 1–5 switch workspaces (ignored while typing or with modifiers).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -196,6 +216,7 @@ function ShellInner({ children }: { children: ReactNode }) {
         </div>
       }
       headerActions={<LiveIndicator />}
+      onThemeChange={saveTheme}
     >
       {/* Depot and date on small screens */}
       <div className="flex items-center gap-2 overflow-x-auto md:hidden">

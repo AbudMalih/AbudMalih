@@ -1,6 +1,6 @@
 "use client";
 
-import { can, type Depot, type Driver, type Vehicle } from "@turvio/shared";
+import { can, canAssignRole, type Depot, type Driver, type OrgRole, type Vehicle } from "@turvio/shared";
 import { Avatar, Badge, Button, Card, Dialog, EmptyState, Menu, MenuContent, MenuItem, MenuTrigger, cn, toast } from "@turvio/web-ui/ds";
 import { AlertTriangle, Ellipsis, Loader2, Mail, Plus, ShieldCheck, Truck, UserPlus, Users, Warehouse } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -226,6 +226,84 @@ function DepotDialog({ depot, open, onOpenChange, onSaved }: { depot: Depot | nu
   );
 }
 
+/** Which locations a dispatcher may see: all (company-wide) or a chosen list – none means no access. */
+function LocationScope({ depots, allLocations, setAllLocations, scope, setScope }: { depots: Depot[]; allLocations: boolean; setAllLocations: (v: boolean) => void; scope: string[]; setScope: (v: string[]) => void }) {
+  const t = useT();
+  return (
+    <fieldset className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2 g:gap-1.5 g:text-[12px] g:font-normal g:text-muted">
+      <legend className="mb-1">{t("fleet.scopeLegend")}</legend>
+      <label className="inline-flex items-center gap-1.5 font-normal g:text-[13px] g:text-ink">
+        <input type="checkbox" className="accent-[var(--violet)]" checked={allLocations} onChange={(e) => setAllLocations(e.target.checked)} />
+        {t("fleet.allLocationsCompanyWide")}
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {!allLocations &&
+          depots.map((d) => (
+            <label key={d.id} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 font-normal g:h-7 g:border-line-2 g:py-0 g:text-[13px] g:text-ink">
+              <input type="checkbox" className="accent-[var(--violet)]" checked={scope.includes(d.id)} onChange={(e) => setScope(e.target.checked ? [...scope, d.id] : scope.filter((x) => x !== d.id))} />
+              {d.name}
+            </label>
+          ))}
+      </div>
+      {!allLocations && !scope.length && <p className="text-xs font-normal text-muted g:text-[12px]">{t("fleet.chooseLocation")}</p>}
+    </fieldset>
+  );
+}
+
+type TeamMember = TeamData["members"][number];
+
+/** Change a member's role and locations (owners/admins; the API and database enforce who may assign what). */
+function MemberDialog({ member, open, onOpenChange, depots, onSaved }: { member: TeamMember | null; open: boolean; onOpenChange: (o: boolean) => void; depots: Depot[]; onSaved: () => Promise<void> }) {
+  const { session } = useDispatch();
+  const t = useT();
+  const [role, setRole] = useState<string>("dispatcher");
+  const [scope, setScope] = useState<string[]>([]);
+  const [allLocations, setAllLocations] = useState(false);
+  useEffect(() => {
+    if (open && member) {
+      setRole(member.role);
+      setScope(member.depotIds ?? []);
+      setAllLocations(member.role === "dispatcher" && !!member.allLocations);
+    }
+  }, [open, member]);
+  if (!member) return null;
+  const roles = (["dispatcher", "admin", "owner"] as const).filter((r) => r === member.role || canAssignRole(session.role as OrgRole, r));
+  const valid = role !== "dispatcher" || allLocations || scope.length > 0;
+  return (
+    <FormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("fleet.editMember")}
+      submitLabel={t("common.save")}
+      valid={valid}
+      onSubmit={async () => {
+        await api("PATCH", `/v1/orgs/${session.organizationId}/members/${member.membershipId}`, {
+          ...(role !== member.role ? { role } : {}),
+          ...(role === "dispatcher" ? { allLocations, depotIds: allLocations ? [] : scope } : {}),
+        });
+        toast.success(t("fleet.memberSaved", { email: member.email }));
+        await onSaved();
+      }}
+    >
+      <F label={t("fleet.email")} className="sm:col-span-2">
+        <input className={inputCls} dir="ltr" value={member.email} readOnly disabled />
+      </F>
+      {member.role !== "driver" && (
+        <F label={t("fleet.role")}>
+          <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)}>
+            {roles.map((r) => (
+              <option key={r} value={r}>
+                {t(`common.role.${r}`)}
+              </option>
+            ))}
+          </select>
+        </F>
+      )}
+      {role === "dispatcher" && <LocationScope depots={depots} allLocations={allLocations} setAllLocations={setAllLocations} scope={scope} setScope={setScope} />}
+    </FormDialog>
+  );
+}
+
 function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; driver: DriverRow | null; depots: Depot[]; onSaved: () => Promise<void> }) {
   const { session } = useDispatch();
   const t = useT();
@@ -268,24 +346,7 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
               {session.role === "owner" && <option value="owner">{t("common.role.owner")}</option>}
             </select>
           </F>
-          {role === "dispatcher" && (
-            <fieldset className="flex flex-col gap-1 text-[13px] font-medium text-ink-2 sm:col-span-2 g:gap-1.5 g:text-[12px] g:font-normal g:text-muted">
-              <legend className="mb-1">{t("fleet.scopeLegend")}</legend>
-              <label className="inline-flex items-center gap-1.5 font-normal g:text-[13px] g:text-ink">
-                <input type="checkbox" className="accent-[var(--violet)]" checked={allLocations} onChange={(e) => setAllLocations(e.target.checked)} />
-                {t("fleet.allLocationsCompanyWide")}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {!allLocations && depots.map((d) => (
-                  <label key={d.id} className="inline-flex items-center gap-1.5 rounded-md border border-line px-2 py-1 font-normal g:h-7 g:border-line-2 g:py-0 g:text-[13px] g:text-ink">
-                    <input type="checkbox" className="accent-[var(--violet)]" checked={scope.includes(d.id)} onChange={(e) => setScope(e.target.checked ? [...scope, d.id] : scope.filter((x) => x !== d.id))} />
-                    {d.name}
-                  </label>
-                ))}
-              </div>
-              {!allLocations && !scope.length && <p className="text-xs font-normal text-muted g:text-[12px]">{t("fleet.chooseLocation")}</p>}
-            </fieldset>
-          )}
+          {role === "dispatcher" && <LocationScope depots={depots} allLocations={allLocations} setAllLocations={setAllLocations} scope={scope} setScope={setScope} />}
         </>
       )}
       {driver && <p className="text-xs text-muted sm:col-span-2 g:text-[12px]">{t("fleet.driverInviteHint", { name: driver.displayName })}</p>}
@@ -294,7 +355,7 @@ function InviteDialog({ open, onOpenChange, driver, depots, onSaved }: { open: b
 }
 
 interface TeamData {
-  members: { membershipId: string; email: string; role: string; active: boolean; depotIds: string[] | null; allLocations?: boolean; driverId: string | null }[];
+  members: { membershipId: string; userId?: string; email: string; role: string; active: boolean; depotIds: string[] | null; allLocations?: boolean; driverId: string | null }[];
   invitations: { id: string; email: string; role: string; expiresAt: string }[];
 }
 
@@ -320,7 +381,7 @@ export function FleetView() {
   // verification where required), which must not get in the way of the other tabs.
   const [teamState, setTeamState] = useState<TeamState>({ status: "idle" });
   const team = teamState.status === "ready" ? teamState.data : null;
-  const [dialog, setDialog] = useState<null | { kind: "driver" | "vehicle" | "depot" | "invite"; item?: unknown }>(null);
+  const [dialog, setDialog] = useState<null | { kind: "driver" | "vehicle" | "depot" | "invite" | "member"; item?: unknown }>(null);
   const org = session.organizationId;
   const isAdmin = can(session.role, "org.members.manage");
   const canDepots = can(session.role, "depots.manage");
@@ -601,6 +662,29 @@ export function FleetView() {
                         </div>
                         <Badge tone={m.role === "owner" ? "brand" : "neutral"} className="g:text-[13px] g:font-normal g:text-ink-2"><span className="g:font-normal">{roleLabel(m.role, t)}</span></Badge>
                         {!m.active && <Badge className="g:text-[13px]"><span className="g:font-normal">{t("fleet.inactive")}</span></Badge>}
+                        {m.email === session.email ? (
+                          <span className="w-8 text-center text-[12px] text-muted">{t("fleet.you")}</span>
+                        ) : (
+                          <Menu>
+                            <MenuTrigger asChild>
+                              <Button variant="ghost" size="icon-sm" className={rowMenu} aria-label={t("fleet.memberActionsFor", { email: m.email })}>
+                                <Ellipsis />
+                              </Button>
+                            </MenuTrigger>
+                            <MenuContent className="w-56">
+                              {m.role !== "driver" && <MenuItem onSelect={() => setDialog({ kind: "member", item: m })}>{t("common.edit")}</MenuItem>}
+                              <MenuItem
+                                onSelect={() =>
+                                  api("PATCH", `/v1/orgs/${org}/members/${m.membershipId}`, { active: !m.active })
+                                    .then(() => (toast.success(t(m.active ? "fleet.memberDeactivated" : "fleet.memberActivated", { email: m.email })), loadTeam()))
+                                    .catch((e) => toast.error(t("fleet.memberNotSaved"), { description: errorMessage(e) }))
+                                }
+                              >
+                                {t(m.active ? "fleet.deactivateMember" : "fleet.activateMember")}
+                              </MenuItem>
+                            </MenuContent>
+                          </Menu>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -613,6 +697,18 @@ export function FleetView() {
                             <Mail className="size-4 text-subtle g:hidden" />
                             <span className="min-w-0 flex-1 truncate">{i.email}</span>
                             <Badge tone="outline" className="g:border-0 g:px-0 g:text-[13px] g:font-normal g:text-ink-2"><span className="g:font-normal">{roleLabel(i.role, t)}</span></Badge>
+                            <span className="hidden text-[12px] text-muted sm:inline">{t("fleet.expires", { date: fmt.date(i.expiresAt) })}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                api("POST", `/v1/orgs/${org}/invitations/${i.id}/resend`)
+                                  .then(() => (toast.success(t("fleet.invitationResent", { email: i.email })), loadTeam()))
+                                  .catch((e) => toast.error(t("fleet.notResent"), { description: errorMessage(e) }))
+                              }
+                            >
+                              {t("fleet.resend")}
+                            </Button>
                             <Button
                               size="sm"
                               variant="ghost"
@@ -639,6 +735,7 @@ export function FleetView() {
       <DriverDialog driver={dialog?.kind === "driver" ? ((dialog.item as DriverRow) ?? null) : null} open={dialog?.kind === "driver"} onOpenChange={(o) => !o && setDialog(null)} depots={scoped.depots} onSaved={refreshAll} />
       <VehicleDialog vehicle={dialog?.kind === "vehicle" ? ((dialog.item as VehicleRow) ?? null) : null} open={dialog?.kind === "vehicle"} onOpenChange={(o) => !o && setDialog(null)} depots={scoped.depots} onSaved={refreshAll} />
       <DepotDialog depot={dialog?.kind === "depot" ? ((dialog.item as Depot) ?? null) : null} open={dialog?.kind === "depot"} onOpenChange={(o) => !o && setDialog(null)} onSaved={refreshAll} />
+      <MemberDialog member={dialog?.kind === "member" ? (dialog.item as TeamMember) : null} open={dialog?.kind === "member"} onOpenChange={(o) => !o && setDialog(null)} depots={scoped.depots} onSaved={async () => void (await loadTeam())} />
       <InviteDialog driver={dialog?.kind === "invite" ? ((dialog.item as DriverRow) ?? null) : null} open={dialog?.kind === "invite"} onOpenChange={(o) => !o && setDialog(null)} depots={scoped.depots} onSaved={refreshAll} />
     </div>
   );

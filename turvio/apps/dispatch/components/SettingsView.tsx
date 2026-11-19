@@ -1,7 +1,7 @@
 "use client";
 
 import { can } from "@turvio/shared";
-import { Badge, Button, Card, CardHeader, Checkbox, Dialog, Input, Skeleton, THEME_KEY, cn, toast, useTheme } from "@turvio/web-ui/ds";
+import { Badge, Button, Card, CardHeader, Checkbox, Dialog, Input, Skeleton, applyThemePreference, cn, toast } from "@turvio/web-ui/ds";
 import { Building2, ExternalLink, Loader2, Lock, MapPinned, Plus, Radio, RefreshCw, Settings2, ShieldCheck, Smartphone, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -130,7 +130,6 @@ function ReadOnlyNote({ className }: { className?: string }) {
 function PreferencesSection() {
   const { session, scoped, setDepotId } = useDispatch();
   const api = settingsApi(session.organizationId);
-  const [, setTheme] = useTheme();
   const [prefs, setPrefs] = useState<Preferences | null>(null);
   const [theme, setThemeChoice] = useState<Preferences["theme"]>("system");
   const [depot, setDepot] = useState("");
@@ -167,17 +166,7 @@ function PreferencesSection() {
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.organizationId]);
-  const applyTheme = (th: Preferences["theme"]) => {
-    if (th === "system") {
-      try {
-        // Explicit "follow the system" (Dispatch is charcoal when nothing is chosen).
-        localStorage.setItem(THEME_KEY, "system");
-      } catch {
-        /* private mode */
-      }
-      document.documentElement.dataset.theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-    } else setTheme(th);
-  };
+  const applyTheme = (th: Preferences["theme"]) => applyThemePreference(th);
   const save = async () => {
     setBusy(true);
     try {

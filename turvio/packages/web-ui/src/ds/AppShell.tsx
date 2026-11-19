@@ -377,6 +377,7 @@ export function AppShell({
   userNote,
   crumbs,
   headerActions,
+  onThemeChange,
   headerStart,
   environment,
   onSignOut,
@@ -399,6 +400,8 @@ export function AppShell({
   /** Optional: shown on small screens next to the menu button (the page title carries context on desktop). */
   crumbs?: Crumb[];
   headerActions?: ReactNode;
+  /** Called when the user flips the header theme switch (apps save it as a preference). */
+  onThemeChange?: (t: "dark" | "light") => void;
   /** Extra controls after the search field (e.g. depot and date pickers). */
   headerStart?: ReactNode;
   environment?: string;
@@ -509,7 +512,7 @@ export function AppShell({
                   </span>
                 )}
                 {headerActions}
-                <ThemeSwitch />
+                <ThemeSwitch onChange={onThemeChange} />
               </div>
             </header>
             <main className={cn(fullBleed ? "relative min-h-0 flex-1" : "flex w-full max-w-[1680px] flex-1 flex-col px-4 pb-12 pt-5 sm:px-7 sm:pt-6 g:max-w-none g:pb-6 sm:g:px-5 sm:g:pt-5")}>

@@ -1,6 +1,6 @@
 // TURVIO design system (web). Tokens: ./tokens.css. See docs/DESIGN_SYSTEM.md.
 export { cn } from "./cn";
-export { THEME_KEY, ThemeScript, ThemeSwitch, useTheme, type Theme } from "./Theme";
+export { THEME_KEY, ThemeScript, ThemeSwitch, applyThemePreference, readThemePreference, useTheme, useThemePreference, type Theme, type ThemePreference } from "./Theme";
 export { TurvioLockup, TurvioMark, Wordmark, type LogoTone } from "./Wordmark";
 export { Button, Kbd, buttonVariants, type ButtonProps } from "./Button";
 export { Badge, badgeVariants, type BadgeTone } from "./Badge";

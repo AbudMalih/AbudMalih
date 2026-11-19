@@ -22,6 +22,48 @@ export function ThemeScript({ defaultTheme = "system", nonce }: { defaultTheme?:
   return <script nonce={nonce} dangerouslySetInnerHTML={{ __html: script(defaultTheme === "system") }} />;
 }
 
+/** What the user chose: a fixed theme or "follow the system". Stored in localStorage (and, by the apps, on the server). */
+export type ThemePreference = Theme | "system";
+const PREF_EVENT = "turvio-theme-preference";
+
+export function readThemePreference(fallback: ThemePreference = "dark"): ThemePreference {
+  try {
+    const s = localStorage.getItem(THEME_KEY);
+    return s === "light" || s === "dark" || s === "system" ? s : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Applies and stores a preference; every theme control on the page updates (same event). */
+export function applyThemePreference(p: ThemePreference): void {
+  try {
+    localStorage.setItem(THEME_KEY, p);
+  } catch {
+    /* private mode: this page only */
+  }
+  const resolved: Theme = p === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : p;
+  const apply = () => {
+    document.documentElement.dataset.theme = resolved;
+  };
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+  if (document.documentElement.dataset.theme !== resolved && doc.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) doc.startViewTransition(apply);
+  else apply();
+  window.dispatchEvent(new CustomEvent(PREF_EVENT, { detail: p }));
+}
+
+/** The current preference, kept in sync with every other theme control. */
+export function useThemePreference(fallback: ThemePreference = "dark"): [ThemePreference, (p: ThemePreference) => void] {
+  const [pref, setPref] = useState<ThemePreference>(fallback);
+  useEffect(() => {
+    setPref(readThemePreference(fallback));
+    const on = (e: Event) => setPref((e as CustomEvent<ThemePreference>).detail);
+    window.addEventListener(PREF_EVENT, on);
+    return () => window.removeEventListener(PREF_EVENT, on);
+  }, [fallback]);
+  return [pref, applyThemePreference];
+}
+
 function readTheme(): Theme {
   if (typeof document === "undefined") return "dark";
   return document.documentElement.dataset.theme === "light" ? "light" : "dark";
@@ -35,25 +77,12 @@ export function useTheme(): [Theme, (t: Theme) => void] {
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return () => obs.disconnect();
   }, []);
-  const setTheme = useCallback((t: Theme) => {
-    try {
-      localStorage.setItem(THEME_KEY, t);
-    } catch {
-      /* private mode: the choice lasts for this page only */
-    }
-    const apply = () => {
-      document.documentElement.dataset.theme = t;
-    };
-    // Cross-fade like the prototype where the browser supports view transitions.
-    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
-    if (doc.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) doc.startViewTransition(apply);
-    else apply();
-  }, []);
+  const setTheme = useCallback((t: Theme) => applyThemePreference(t), []);
   return [theme, setTheme];
 }
 
 /** The prototype's pill switch: violet moon knob (dark) ↔ amber sun knob (light). */
-export function ThemeSwitch({ className, labels: given }: { className?: string; labels?: { toDark: string; toLight: string } }) {
+export function ThemeSwitch({ className, labels: given, onChange }: { className?: string; labels?: { toDark: string; toLight: string }; onChange?: (t: Theme) => void }) {
   const L = useDsLabels();
   const labels = given ?? { toDark: L.toDark, toLight: L.toLight };
   const [theme, setTheme] = useTheme();
@@ -65,7 +94,11 @@ export function ThemeSwitch({ className, labels: given }: { className?: string; 
       aria-checked={light}
       aria-label={light ? labels.toDark : labels.toLight}
       title={light ? labels.toDark : labels.toLight}
-      onClick={() => setTheme(light ? "dark" : "light")}
+      onClick={() => {
+        const next: Theme = light ? "dark" : "light";
+        setTheme(next);
+        onChange?.(next);
+      }}
       className={cn("relative flex h-[34px] w-16 shrink-0 items-center rounded-full border border-line-strong bg-surface-2 p-[3px] g:size-8 g:justify-center g:rounded-md g:border-line-2 g:p-0 g:hover:bg-[var(--selected)]", className)}
     >
       <span

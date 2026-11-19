@@ -30,7 +30,14 @@ const session: SessionInfo = {
   workspaces: [{ id: "org_jarbou", name: "JARBOU", role: "admin" }],
   environment: null,
 };
-const team = { members: [{ membershipId: "m1", email: "dispo@example.test", role: "dispatcher", active: true, depotIds: [], allLocations: true, driverId: null }], invitations: [] };
+const team = {
+  members: [
+    { membershipId: "m0", email: "t@example.test", role: "admin", active: true, depotIds: null, allLocations: true, driverId: null },
+    { membershipId: "m1", email: "dispo@example.test", role: "dispatcher", active: true, depotIds: [], allLocations: true, driverId: null },
+  ],
+  invitations: [{ id: "i1", email: "new@example.test", role: "dispatcher", expiresAt: "2026-11-12T10:00:00Z" }],
+};
+const writes: Array<{ method: string; url: string; body: unknown }> = [];
 
 let membersReplies: Array<() => Response> = [];
 const membersCalls = () => (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter(([u]) => String(u).endsWith("/members")).length;
@@ -39,12 +46,17 @@ const assign = vi.fn();
 beforeEach(() => {
   search = "";
   membersReplies = [];
+  writes.length = 0;
   assign.mockReset();
   vi.stubGlobal("location", { ...window.location, assign, pathname: "/fleet", search: "" });
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (url: string) => {
+    vi.fn(async (url: string, init?: RequestInit) => {
       const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status });
+      if (init?.method && init.method !== "GET") {
+        writes.push({ method: init.method, url, body: init.body ? JSON.parse(String(init.body)) : undefined });
+        return init.method === "PATCH" ? new Response(null, { status: 204 }) : json({ id: "i1", email: "new@example.test" });
+      }
       if (url.endsWith("/members")) return (membersReplies.shift() ?? (() => json(team)))();
       if (url.endsWith("/vehicles")) return json([]);
       if (url.includes("/dispatch?")) return json(base);
@@ -99,5 +111,26 @@ describe("Fleet & team · Team loading", () => {
     const link = screen.getByRole("link", { name: "Set up two-step verification" });
     expect(link.getAttribute("href")).toBe(`/security?required=1&next=${encodeURIComponent("/fleet?tab=team")}`);
     expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("manages members: your own row has no actions; edit role, remove access, resend an invitation", async () => {
+    search = "tab=team";
+    wrap();
+    await screen.findByText("dispo@example.test");
+    expect(screen.getByText("You")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Actions for t@example.test" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Actions for dispo@example.test" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Remove access" }));
+    expect(writes.at(-1)).toMatchObject({ method: "PATCH", url: "/api/turvio/v1/orgs/org_jarbou/members/m1", body: { active: false } });
+
+    await userEvent.click(screen.getByRole("button", { name: "Actions for dispo@example.test" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
+    await userEvent.selectOptions(await screen.findByRole("combobox"), "admin");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(writes.at(-1)).toMatchObject({ method: "PATCH", url: "/api/turvio/v1/orgs/org_jarbou/members/m1", body: { role: "admin" } });
+
+    await userEvent.click(screen.getByRole("button", { name: "Resend" }));
+    expect(writes.at(-1)).toMatchObject({ method: "POST", url: "/api/turvio/v1/orgs/org_jarbou/invitations/i1/resend" });
   });
 });

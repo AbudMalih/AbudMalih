@@ -31,6 +31,23 @@ const FRIENDLY = new Set([
   "stop_protected",
   "stop_cancelled",
   "mfa_required",
+  "database_busy",
+  "database_timeout",
+  "geocoder_unavailable",
+  "routing_unavailable",
+  "plan_limit_reached",
+  "subscription_inactive",
+  "organization_inactive",
+  "location_required",
+  "driver_profile_unavailable",
+  "driver_busy",
+  "vehicle_busy",
+  "duplicate",
+  "invalid_reference",
+  "validation_failed",
+  "storage_unavailable",
+  "too_many_rows",
+  "validation_error",
 ]);
 /** Server texts that are better than a generic translation in English (kept as before). */
 const ENGLISH_FIRST = new Set(["forbidden", "not_found", "rate_limited", "tour_closed", "tour_archived", "tour_protected", "stop_protected", "stop_cancelled", "mfa_required"]);
@@ -79,9 +96,13 @@ export async function api<T = unknown>(method: "GET" | "POST" | "PATCH" | "PUT" 
   return data as T;
 }
 
+/**
+ * The text shown to the user. Problems with the request (4xx) speak for themselves; only server faults
+ * (5xx) add the support reference – it finds the matching log line. No status codes or error codes.
+ */
 export const errorMessage = (e: unknown) =>
-  e instanceof ApiCallError && e.status >= 400 && e.requestId
-    ? currentT()("common.errorRef", { message: e.message, status: e.status, code: e.code, ref: e.requestId })
+  e instanceof ApiCallError && e.status >= 500 && e.requestId
+    ? currentT()("common.errorRef", { message: e.message, ref: e.requestId })
     : e instanceof Error
       ? e.message
       : String(e);

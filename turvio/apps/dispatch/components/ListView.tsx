@@ -183,12 +183,10 @@ export function ListView() {
                             selectTour(s.tour.id);
                           }}
                           className="flex items-center gap-2 rounded font-semibold text-ink outline-none hover:text-brand-700 focus-visible:shadow-[var(--shadow-focus)] g:font-medium g:hover:text-ink g:hover:underline g:underline-offset-2"
-                          title={s.tour.id}
                         >
                           <span className="size-2.5 rounded-full g:size-2" style={{ backgroundColor: tourColor(scoped, s.tour.id) }} aria-hidden="true" />
                           {s.tour.name}
                         </button>
-                        <span className="block font-mono text-2xs text-subtle g:hidden">{s.tour.id}</span>
                       </td>
                       <td className="whitespace-nowrap px-3 py-3">
                         {s.driver ? (
