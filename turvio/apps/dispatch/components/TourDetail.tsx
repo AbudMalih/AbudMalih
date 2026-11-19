@@ -1,6 +1,6 @@
 "use client";
 
-import { formatAddress, formatClock, isNotDelivered, isOpen, minuteOfDay, type Stop, type TourSummary } from "@turvio/shared";
+import { formatAddress, formatClock, isClosedTourStatus, isNotDelivered, isOpen, minuteOfDay, type Stop, type TourSummary } from "@turvio/shared";
 import { Avatar, Badge, Button, Sheet, cn, toast } from "@turvio/web-ui/ds";
 import {
   AlertTriangle,
@@ -30,7 +30,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { api, errorMessage } from "../lib/api";
 import { basisLabel, conditionLabel, delayReasonText, finishTitle, finishValue, minutes, projectionNote, stopStateLabel } from "../lib/eta";
-import { tourColor } from "../lib/helpers";
+import { moveOpenStop, tourColor } from "../lib/helpers";
 import { durationText } from "../lib/i18n";
 import { useI18n } from "../lib/i18n/client";
 import { routeKey, useRoadRoute } from "../lib/road";
@@ -77,7 +77,10 @@ function StopMarker({ stop, color, index }: { stop: Stop; color: string; index: 
   );
 }
 
-export function StopRow({ summary, stop, index, expanded, onToggle }: { summary: TourSummary; stop: Stop; index: number; expanded: boolean; onToggle: () => void }) {
+/** Drag-and-drop on a tour's open stops: dropping on a stop puts the dragged one at its position (one save). */
+type StopDrag = { dragging: boolean; over: boolean; onStart: () => void; onOver: () => void; onEnd: () => void; onDrop: (draggedId: string) => void };
+
+export function StopRow({ summary, stop, index, expanded, onToggle, drag }: { summary: TourSummary; stop: Stop; index: number; expanded: boolean; onToggle: () => void; drag?: StopDrag }) {
   const { scoped, setPriority, locationChecks, session } = useDispatch();
   const { t } = useI18n();
   const locReport = locationChecks.get(stop.id);
@@ -91,7 +94,15 @@ export function StopRow({ summary, stop, index, expanded, onToggle }: { summary:
   const hasEta = p !== undefined && Number.isFinite(p.etaMinute);
   const st = { tone: STOP_STATUS[stop.status].tone, label: stopStatusLabel(stop.status, t) };
   return (
-    <li className={cn("rounded-md transition-colors", expanded ? "bg-surface-2/70" : "hover:bg-surface-2/50")}>
+    <li
+      className={cn("rounded-md transition-colors", expanded ? "bg-surface-2/70" : "hover:bg-surface-2/50", drag?.over && "shadow-[inset_0_2px_0_var(--violet)]", drag?.dragging && "opacity-50")}
+      draggable={!!drag}
+      onDragStart={drag ? (e) => (e.dataTransfer.setData("text/plain", stop.id), (e.dataTransfer.effectAllowed = "move"), drag.onStart()) : undefined}
+      onDragOver={drag ? (e) => (e.preventDefault(), drag.onOver()) : undefined}
+      onDragEnd={drag?.onEnd}
+      onDrop={drag ? (e) => (e.preventDefault(), drag.onDrop(e.dataTransfer.getData("text/plain"))) : undefined}
+      data-testid={drag ? "draggable-stop" : undefined}
+    >
       <button type="button" onClick={onToggle} aria-expanded={expanded} className="flex w-full items-center gap-3 px-2 py-2 text-start outline-none focus-visible:shadow-[var(--shadow-focus)]">
         <StopMarker stop={stop} color={color} index={index} />
         <span className="min-w-0 flex-1">
@@ -278,13 +289,18 @@ function Activity({ tourId, version, stopsDone }: { tourId: string; version?: nu
 }
 
 export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: () => void }) {
-  const { selectedStopId, selectStop, scoped, optimizeTour, publishTour, unpublishTour, selectTour, session, locationChecks } = useDispatch();
+  const { selectedStopId, selectStop, scoped, optimizeTour, publishTour, unpublishTour, selectTour, session, locationChecks, reorderStops } = useDispatch();
   const [busy, setBusy] = useState<null | "optimize">(null);
   const [confirm, setConfirm] = useState<null | "publish" | "withdraw">(null);
   const [adding, setAdding] = useState(false);
   const { t, fmt } = useI18n();
   const s = summary;
   const tl = s.timeline;
+  // Drag-and-drop reordering of open stops (tours that are not finished; same rule as the position field).
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const openIds = s.stops.filter((x) => isOpen(x.status)).sort((a, b) => a.sequence - b.sequence).map((x) => x.id);
+  const canDrag = !isClosedTourStatus(s.tour.status) && !s.tour.archivedAt && openIds.length > 1;
   const tz = scoped.timeZone;
   const started = minuteOfDay(s.tour.startedAt, tz);
   const startLabel = started !== null ? t("planning.startActual", { time: formatClock(started) }) : t("planning.startPlanned", { time: formatClock(s.tour.plannedStartMinute) });
@@ -579,11 +595,42 @@ export function TourDetail({ summary, onFit }: { summary: TourSummary; onFit?: (
         {s.stops.length === 0 ? (
           <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-[13px] text-muted">{t("planning.noStopsYet")}</p>
         ) : (
-          <ol className="flex flex-col">
-            {s.stops.map((stop, i) => (
-              <StopRow key={stop.id} summary={s} stop={stop} index={i + 1} expanded={selectedStopId === stop.id} onToggle={() => selectStop(selectedStopId === stop.id ? null : stop.id)} />
-            ))}
-          </ol>
+          <>
+            {canDrag && <p className="mb-1 text-2xs text-subtle">{t("tours.se.dragHint")}</p>}
+            <ol className="flex flex-col">
+              {s.stops.map((stop, i) => (
+                <StopRow
+                  key={stop.id}
+                  summary={s}
+                  stop={stop}
+                  index={i + 1}
+                  expanded={selectedStopId === stop.id}
+                  onToggle={() => selectStop(selectedStopId === stop.id ? null : stop.id)}
+                  drag={
+                    canDrag && isOpen(stop.status)
+                      ? {
+                          dragging: dragId === stop.id,
+                          over: overId === stop.id && dragId !== stop.id,
+                          onStart: () => setDragId(stop.id),
+                          onOver: () => setOverId(stop.id),
+                          onEnd: () => (setDragId(null), setOverId(null)),
+                          onDrop: (dragged) => {
+                            setDragId(null);
+                            setOverId(null);
+                            const ids = openIds;
+                            if (!dragged || dragged === stop.id || !ids.includes(dragged)) return;
+                            void reorderStops(s.tour.id, moveOpenStop(ids, dragged, ids.indexOf(stop.id))).then(
+                              () => toast.success(t("tours.se.orderSaved")),
+                              (e) => toast.error(t("tours.a.notSaved"), { description: errorMessage(e) }),
+                            );
+                          },
+                        }
+                      : undefined
+                  }
+                />
+              ))}
+            </ol>
+          </>
         )}
       </section>
 

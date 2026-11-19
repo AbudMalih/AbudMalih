@@ -151,7 +151,7 @@ export function FileImport({
   /** Increase to check the tracking numbers against TURVIO again (e.g. after a refused save). */
   recheck?: number;
 }) {
-  const { t } = useI18n();
+  const { t, fmt } = useI18n();
   const [fileName, setFileName] = useState<string | null>(null);
   const [table, setTable] = useState<string[][] | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
@@ -159,6 +159,7 @@ export function FileImport({
   const [header, setHeader] = useState(true);
   const [geo, setGeo] = useState<Record<string, Geo & { location?: { lat: number; lng: number } }>>({});
   const [geocoding, setGeocoding] = useState<"idle" | "busy" | "unavailable" | "error">("idle");
+  const [geoProgress, setGeoProgress] = useState<{ done: number; total: number } | null>(null);
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [includeUnlocated, setIncludeUnlocated] = useState(true);
   const [fixing, setFixing] = useState<string | null>(null);
@@ -286,8 +287,12 @@ export function FileImport({
   const geocode = async () => {
     setGeocoding("busy");
     setGeocodeError(null);
-    const todo = groups.filter((g) => !g.input.location && !geo[g.key]?.location);
     const next = { ...geo };
+    // The address service needs a street of at least 2 characters; shorter ones cannot be found
+    // (marked as not found instead of failing the whole batch).
+    const todo = groups.filter((g) => !g.input.location && !geo[g.key]?.location && g.input.address.street.trim().length >= 2);
+    for (const g of groups) if (!g.input.location && !geo[g.key]?.location && g.input.address.street.trim().length < 2) next[g.key] = { status: "missing" };
+    setGeoProgress({ done: 0, total: todo.length });
     try {
       for (let i = 0; i < todo.length; i += GEOCODE_CHUNK) {
         const chunk = todo.slice(i, i + GEOCODE_CHUNK);
@@ -299,7 +304,9 @@ export function FileImport({
           next[g.key] = hit ? { status: hit.precision === "house" ? "found" : "street", location: hit.location, label: hit.label } : { status: "missing" };
         });
         setGeo({ ...next });
+        setGeoProgress({ done: Math.min(i + GEOCODE_CHUNK, todo.length), total: todo.length });
       }
+      setGeo({ ...next });
       setGeocoding("idle");
     } catch (e) {
       setGeocoding(e instanceof ApiCallError && e.code === "geocoder_unavailable" ? "unavailable" : "error");
@@ -580,6 +587,21 @@ export function FileImport({
                 {t("import.findLocations", { n: pending.length })}
               </Button>
               <Checkbox showLabel label={t("import.includeUnlocated")} checked={includeUnlocated} onCheckedChange={(v) => setIncludeUnlocated(!!v)} />
+            </div>
+          )}
+          {geocoding === "busy" && geoProgress && geoProgress.total > 0 && (
+            <div className="flex items-center gap-2 text-xs text-ink-2 g:text-[12px]">
+              <div
+                role="progressbar"
+                aria-label={t("import.geocodeProgressLabel")}
+                aria-valuemin={0}
+                aria-valuemax={geoProgress.total}
+                aria-valuenow={geoProgress.done}
+                className="h-1.5 w-40 overflow-hidden rounded-full bg-surface-2"
+              >
+                <div className="h-full bg-brand-600 transition-[width]" style={{ width: `${Math.round((geoProgress.done / geoProgress.total) * 100)}%` }} />
+              </div>
+              <span className="tabular">{t("import.geocodeProgress", { done: fmt.number(geoProgress.done), total: fmt.number(geoProgress.total) })}</span>
             </div>
           )}
           {geocoding === "unavailable" && <p className="text-xs text-warning-ink g:text-[12px]">{t("import.geocoderUnavailable")}</p>}

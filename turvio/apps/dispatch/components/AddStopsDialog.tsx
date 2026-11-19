@@ -28,6 +28,9 @@ const EMPTY = { type: "delivery", recipient: "", street: "", no: "", postal: "",
  * Add stops to a tour or to a depot's unassigned list. Coordinates are entered
  * directly (or pasted) until an address-search provider is connected.
  */
+/** Same limit as the API (POST /stops) and the file import's row cap. */
+const MAX_STOPS = 2000;
+
 export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaultCity }: { open: boolean; onOpenChange: (o: boolean) => void; target: { tourId?: string; depotId?: string }; targetLabel: string; defaultCity?: string }) {
   const { addStops, scoped, session } = useDispatch();
   const { t, tr } = useI18n();
@@ -71,12 +74,13 @@ export function AddStopsDialog({ open, onOpenChange, target, targetLabel, defaul
     if (!stops.length) return;
     setBusy(true);
     try {
-      // The API takes at most 500 stops per request. File imports are checked for parcels that are
-      // already planned (company-wide); the server refuses the whole request if any are.
-      const ids: string[] = [];
+      // One request, one transaction: everything is saved or nothing is (up to MAX_STOPS rows).
+      // File imports are checked for parcels that are already planned (company-wide); the server
+      // refuses the whole request if any are.
+      if (stops.length > MAX_STOPS) throw new Error(t("planning.tooManyStops", { count: stops.length, max: MAX_STOPS }));
       // The channel is recorded with each stop's original location (P0-3.2).
       const provenance = mode === "single" ? "dispatch_manual" : mode === "file" ? "import_file" : "import_paste";
-      for (let i = 0; i < stops.length; i += 500) ids.push(...(await addStops(target, stops.slice(i, i + 500), { rejectPlannedTracking: mode === "file", provenance })));
+      const ids = await addStops(target, stops, { rejectPlannedTracking: mode === "file", provenance });
       toast.success(t("planning.addedToast", { count: ids.length, target: targetLabel }), { description: target.tourId ? t("planning.addedTourDesc") : t("planning.addedUnassignedDesc") });
       setF({ ...EMPTY, city: defaultCity ?? "" });
       setPaste("");

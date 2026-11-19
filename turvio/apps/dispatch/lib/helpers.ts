@@ -98,3 +98,17 @@ export function memberScopeLabel(m: { role: string; depotIds: string[] | null; a
 /** Native select / input styling used in Dispatch dialogs (no Select primitive in the design system). */
 export const fieldCls =
   "h-9 w-full rounded-md border border-line bg-surface px-2.5 text-sm text-ink shadow-xs focus:border-brand-500 focus:shadow-[var(--shadow-focus)] focus:outline-none disabled:opacity-60 g:h-8 g:border-line-2 g:bg-surface-2 g:text-[13px] g:shadow-none g:focus:border-brand-600";
+
+/**
+ * New order of a tour's open stops after moving `id` to position `toIndex` (0-based, clamped).
+ * Saved in one request (reorderStops), whatever the distance – 100-stop tours stay workable.
+ */
+export function moveOpenStop(openIds: readonly string[], id: string, toIndex: number): string[] {
+  const from = openIds.indexOf(id);
+  if (from < 0) return [...openIds];
+  const ids = [...openIds];
+  ids.splice(from, 1);
+  const to = Math.max(0, Math.min(ids.length, Math.round(toIndex)));
+  ids.splice(to, 0, id);
+  return ids;
+}

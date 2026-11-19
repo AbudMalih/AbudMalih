@@ -367,7 +367,7 @@ type TeamState =
   | { status: "mfa" };
 
 export function FleetView() {
-  const { scoped, session, reload } = useDispatch();
+  const { scoped, session, reload, depotId } = useDispatch();
   const { t, fmt } = useI18n();
   // The section lives in the URL (?tab=), so the sidebar's Drivers/Vehicles/Locations/Team entries link to it.
   const params = useSearchParams();
@@ -409,11 +409,15 @@ export function FleetView() {
     await Promise.all([reload(), loadVehicles(), teamState.status === "idle" ? Promise.resolve() : loadTeam()]);
   };
   const depotName = (id: string | null | undefined) => scoped.depots.find((d) => d.id === id)?.name ?? "–";
-  const drivers = scoped.drivers as DriverRow[];
+  // The location switcher narrows drivers and vehicles (items without a location stay visible);
+  // the Locations tab always lists every location the user may see.
+  const inLocation = (id: string | null | undefined) => !depotId || !id || id === depotId;
+  const drivers = (scoped.drivers as DriverRow[]).filter((d) => inLocation(d.depotId));
+  const shownVehicles = vehicles?.filter((v) => inLocation(v.depotId)) ?? null;
 
   const tabs: { key: Tab; label: string; icon: ReactNode; count?: number; show: boolean }[] = [
     { key: "drivers", label: t("fleet.tab.drivers"), icon: <Users />, count: drivers.length, show: true },
-    { key: "vehicles", label: t("fleet.tab.vehicles"), icon: <Truck />, count: vehicles?.length, show: true },
+    { key: "vehicles", label: t("fleet.tab.vehicles"), icon: <Truck />, count: shownVehicles?.length, show: true },
     { key: "depots", label: t("fleet.tab.depots"), icon: <Warehouse />, count: scoped.depots.length, show: true },
     { key: "team", label: t("fleet.tab.team"), icon: <UserPlus />, count: team?.members.length, show: isAdmin },
   ];
@@ -547,11 +551,11 @@ export function FleetView() {
             ))}
 
           {tab === "vehicles" &&
-            (!vehicles ? (
+            (!shownVehicles ? (
               <p className="flex items-center gap-2 p-6 text-[13px] text-muted">
                 <Loader2 className="size-4 animate-spin" /> {t("fleet.loadingVehicles")}
               </p>
-            ) : vehicles.length === 0 ? (
+            ) : shownVehicles.length === 0 ? (
               <EmptyState icon={<Truck />} title={t("fleet.noVehicles")} />
             ) : (
               <div className="relative overflow-x-auto">
@@ -569,7 +573,7 @@ export function FleetView() {
                     </tr>
                   </thead>
                   <tbody>
-                    {vehicles.map((v) => (
+                    {shownVehicles.map((v) => (
                       <tr key={v.id} className={tr}>
                         <td className="px-4 py-3 font-medium text-ink">{v.label}</td>
                         <td className="px-4 py-3 font-mono text-xs text-ink-2 g:text-[12.5px]">

@@ -67,11 +67,15 @@ async function assertPlaces(tx: Tx, orgId: string, depotId: string, places: { wh
 const endColumns = (e: TourEnd) =>
   e.mode === "address" ? { mode: "address", lat: e.lat, lng: e.lng, label: e.label ?? null } : { mode: e.mode, lat: null, lng: null, label: null };
 
+/** Stops per POST /stops request (Dispatch file imports are capped at the same number of rows). */
+export const MAX_STOPS_PER_REQUEST = 2000;
+
 const CreateStops = z
   .object({
     tourId: Uuid.optional(),
     depotId: Uuid.optional(),
-    stops: z.array(NewStopInput).min(1).max(500),
+    // One request = one transaction: a file import of up to 2,000 rows is saved completely or not at all.
+    stops: z.array(NewStopInput).min(1).max(MAX_STOPS_PER_REQUEST),
     /**
      * Imports: refuse (409 tracking_already_planned, nothing saved) when a tracking number is already
      * planned or delivered anywhere in the company, or appears twice in this request. Off for the
@@ -493,7 +497,7 @@ export function registerTourRoutes(app: FastifyInstance, { deps, guards }: Route
   });
 
   // ---------------------------------------------------------------- stops
-  app.post("/v1/orgs/:orgId/stops", { preHandler: guards.requireTenant("stops.add_own") }, async (req, reply) => {
+  app.post("/v1/orgs/:orgId/stops", { preHandler: guards.requireTenant("stops.add_own"), bodyLimit: 8 * 1024 * 1024 }, async (req, reply) => {
     const { orgId } = OrgParams.parse(req.params);
     const b = parse(CreateStops, req.body, reply);
     if (!b) return;

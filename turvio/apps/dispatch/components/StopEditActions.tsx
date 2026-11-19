@@ -5,7 +5,7 @@ import { Button, Dialog, Input, toast } from "@turvio/web-ui/ds";
 import { ArrowDown, ArrowUp, Ban, CornerUpLeft, MapPinned, MoveRight, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { errorMessage } from "../lib/api";
-import { fieldCls } from "../lib/helpers";
+import { fieldCls, moveOpenStop } from "../lib/helpers";
 import { lifecycleApi } from "../lib/lifecycle";
 import { useT } from "../lib/i18n/client";
 import { useDispatch } from "../lib/store";
@@ -44,12 +44,11 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
       toast.error(tr("tours.a.notSaved"), { description: errorMessage(e) });
     }
   };
-  const move = (delta: number) => {
-    const ids = open.map((s) => s.id);
-    const [m] = ids.splice(idx, 1);
-    ids.splice(idx + delta, 0, m!);
-    return attempt(tr("tours.se.orderSaved"), () => reorderStops(summary.tour.id, ids));
-  };
+  const moveTo = (toIndex: number) => attempt(tr("tours.se.orderSaved"), () => reorderStops(summary.tour.id, moveOpenStop(open.map((s) => s.id), stop.id, toIndex)));
+  const move = (delta: number) => moveTo(idx + delta);
+  const [position, setPosition] = useState("");
+  const target = Number(position);
+  const positionValid = Number.isInteger(target) && target >= 1 && target <= open.length && target !== idx + 1;
 
   if (!isOpen(stop.status)) return null;
   return (
@@ -60,6 +59,38 @@ export function StopEditActions({ summary, stop }: { summary: TourSummary; stop:
       <Button size="sm" variant="secondary" disabled={idx < 0 || idx >= open.length - 1} onClick={() => void move(1)} aria-label={tr("tours.se.moveDown")}>
         <ArrowDown />
       </Button>
+      {open.length > 2 && (
+        <form
+          className="flex items-center gap-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!positionValid) return;
+            void moveTo(target - 1).then(() => setPosition(""));
+          }}
+        >
+          <label className="sr-only" htmlFor={`pos-${stop.id}`}>
+            {tr("tours.se.position")}
+          </label>
+          <Input
+            id={`pos-${stop.id}`}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={open.length}
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+            placeholder={String(idx + 1)}
+            className="h-8 w-16 tabular"
+            aria-describedby={`pos-hint-${stop.id}`}
+          />
+          <span id={`pos-hint-${stop.id}`} className="sr-only">
+            {tr("tours.se.positionHint", { count: open.length })}
+          </span>
+          <Button size="sm" variant="secondary" type="submit" disabled={!positionValid}>
+            {tr("tours.se.moveToPosition")}
+          </Button>
+        </form>
+      )}
       <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
         <Pencil /> {tr("tours.se.editAddress")}
       </Button>
