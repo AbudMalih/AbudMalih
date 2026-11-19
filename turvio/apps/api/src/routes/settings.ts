@@ -106,6 +106,39 @@ export function registerSettingsRoutes(app: FastifyInstance, { deps, guards }: R
     };
   });
 
+  /**
+   * Account deletion request from an app (App Store / Google Play requirement). Accounts belong to the
+   * companies (data controllers), so the request goes to TURVIO support with the companies concerned;
+   * the account itself is deleted by support with the company. Nothing is deleted automatically.
+   */
+  const deletionLimiter = new Map<string, number>();
+  app.post("/v1/me/account-deletion-request", { preHandler: guards.authenticate }, async (req, reply) => {
+    const b = parse(z.object({ reason: z.string().trim().max(500).optional() }), req.body ?? {}, reply);
+    if (!b) return;
+    if (!deps.supportEmail || !deps.mailer) return problem(reply, 503, "support_unavailable", "Account deletion requests cannot be sent right now – contact your company");
+    const userId = req.user!.userId;
+    const last = deletionLimiter.get(userId) ?? 0;
+    if (Date.now() - last < 60_000) return problem(reply, 429, "rate_limited", "A request was just sent – please wait a moment");
+    deletionLimiter.set(userId, Date.now());
+    const orgs = await db.asUser(claims(req), async (tx) =>
+      (await tx.query<{ name: string; role: string }>(`select o.name, m.role from memberships m join organizations o on o.id = m.organization_id where m.user_id = auth.uid() order by o.name`)).rows,
+    );
+    const email = req.user!.email ?? "(unknown)";
+    await deps.mailer.send({
+      to: deps.supportEmail,
+      subject: `Account deletion request: ${email}`,
+      text: `A TURVIO user asked for their account to be deleted.\n\nUser id: ${userId}\nE-mail: ${email}\nCompanies: ${orgs.map((o) => `${o.name} (${o.role})`).join(", ") || "none"}\nRequested at: ${new Date().toISOString()}\nReason: ${b.reason || "-"}\n\nConfirm with the company (data controller), delete the account and reply to the user.\n`,
+    });
+    if (req.user!.email) {
+      await deps.mailer.send({
+        to: req.user!.email,
+        subject: "Your TURVIO account deletion request",
+        text: "We received your request to delete your TURVIO account. TURVIO support will confirm it with your company and let you know when the account has been deleted.\n",
+      });
+    }
+    return reply.status(202).send({ requested: true });
+  });
+
   app.put("/v1/me/preferences", { preHandler: guards.authenticate }, async (req, reply) => {
     const b = parse(Preferences, req.body, reply);
     if (!b) return;

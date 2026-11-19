@@ -37,6 +37,8 @@ const Env = z.object({
   MAILER: z.enum(["outbox", "smtp"]).default("outbox"),
   SMTP_URL: z.string().optional(),
   MAIL_FROM: z.string().default("TURVIO <no-reply@turvio.invalid>"),
+  /** TURVIO support mailbox: receives account-deletion requests from the apps (store requirement). */
+  SUPPORT_EMAIL: z.string().email().optional(),
   /** Exposes GET /v1/dev/outbox for local testing of mails. Never in production. */
   DEV_MAILBOX: z.enum(["true", "false"]).default("false"),
   /** Proof-of-delivery files: local disk (dev/self-hosted) or a private Supabase Storage bucket. */

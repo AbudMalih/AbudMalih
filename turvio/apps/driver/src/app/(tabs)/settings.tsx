@@ -1,7 +1,8 @@
 import { LOCALE_LABELS, SUPPORTED_LOCALES, isRtl, type Locale } from "@turvio/shared";
 import Constants from "expo-constants";
+import { reloadAppAsync } from "expo";
 import { useState } from "react";
-import { Alert, Platform, Text, View } from "react-native";
+import { Alert, Linking, Platform, Text, View } from "react-native";
 import { Banner, Button, Card, Field, ListRow, Pill, Screen, SectionTitle, Segmented } from "../../components/ui";
 import { TrackingSettingsSection } from "../../components/Tracking";
 import { useLocale, useT } from "../../lib/i18n";
@@ -9,7 +10,13 @@ import { availableNavApps, type NavApp } from "../../lib/navigation";
 import { apiBaseUrl } from "../../lib/optimizer";
 import { canOverrideServerUrl, setServerUrlOverride } from "../../lib/serverUrl";
 import { router } from "expo-router";
-import { isServerMode, useTourStore } from "../../store/tourStore";
+import { auth, isServerMode, useTourStore } from "../../store/tourStore";
+import { errorText } from "../../lib/errorText";
+
+/** Store builds show no technical details (server address); test builds do, for support. */
+const isStoreBuild = Constants.expoConfig?.extra?.variant === "production";
+/** Privacy policy (store requirement), set per build: EXPO_PUBLIC_PRIVACY_URL. */
+const PRIVACY_URL = process.env.EXPO_PUBLIC_PRIVACY_URL || null;
 import { space, type as ty, useTheme } from "../../theme";
 
 export default function SettingsScreen() {
@@ -23,6 +30,22 @@ export default function SettingsScreen() {
     if (isRtl(l) !== isRtl(locale)) setRtlNote(true);
     s.setLocale(l);
   };
+
+  const requestDeletion = () =>
+    Alert.alert(t("settings.deleteAccount"), t("settings.deleteAccountText"), [
+      { text: t("common.cancel"), style: "cancel" },
+      {
+        text: t("settings.deleteAccountConfirm"),
+        style: "destructive",
+        onPress: () =>
+          void auth()
+            .request("POST", "/v1/me/account-deletion-request", {})
+            .then(
+              () => Alert.alert(t("settings.deleteAccount"), t("settings.deleteAccountSent")),
+              (e) => Alert.alert(t("settings.deleteAccount"), errorText(e, t)),
+            ),
+      },
+    ]);
 
   const signOut = () => {
     const pending = s.outbox.length;
@@ -53,14 +76,17 @@ export default function SettingsScreen() {
         <Card testID="sync-card">
           <SectionTitle>{t("settings.sync")}</SectionTitle>
           <Text style={[ty.body, { color: c.text }]}>{s.outbox.length ? t("settings.outbox", { n: s.outbox.length }) : t("settings.outboxEmpty")}</Text>
-          {s.syncMessage && s.syncState !== "idle" && <Text style={[ty.small, { color: c.textMuted }]}>{s.syncMessage}</Text>}
+          {s.syncMessage && s.syncState !== "idle" && <Text style={[ty.small, { color: c.textMuted }]}>{t(s.syncState === "offline" ? "sync.offlineHint" : "sync.errorHint")}</Text>}
           <Button label={t("sync.refresh")} variant="secondary" icon="sync" onPress={() => void s.sync()} />
           {s.failed.length > 0 && (
             <>
               <SectionTitle>{t("settings.failed")}</SectionTitle>
               {s.failed.map((f) => (
                 <View key={f.item.id} style={{ gap: space.xs }}>
-                  <Banner text={f.code === "tour_closed" ? t("sync.tourClosed") : f.code === "stop_cancelled" ? t("sync.stopCancelled") : `${f.item.kind}: ${f.error}`} tone="danger" />
+                  <Banner
+                    text={f.code === "tour_closed" ? t("sync.tourClosed") : f.code === "stop_cancelled" ? t("sync.stopCancelled") : f.code === "file_missing" ? t("errors.photoMissing") : t("sync.rejected", { what: t(`sync.kind.${f.item.kind}`) })}
+                    tone="danger"
+                  />
                   <View style={{ flexDirection: "row", gap: space.sm }}>
                     <Button label={t("common.retry")} variant="secondary" onPress={() => s.retryFailed(f.item.id)} style={{ flex: 1 }} />
                     <Button label={t("common.discard")} variant="danger" onPress={() => void s.discardFailed(f.item.id)} style={{ flex: 1 }} />
@@ -77,7 +103,12 @@ export default function SettingsScreen() {
         {SUPPORTED_LOCALES.map((l) => (
           <ListRow key={l} title={LOCALE_LABELS[l]} onPress={() => chooseLocale(l)} right={l === locale ? <Pill label="✓" tone="primary" /> : <View />} testID={`locale-${l}`} />
         ))}
-        {rtlNote && <Banner text={t("settings.rtlRestart")} tone="primary" />}
+        {rtlNote && (
+          <>
+            <Banner text={t("settings.rtlRestart")} tone="primary" />
+            {Platform.OS !== "web" && <Button label={t("settings.restartNow")} variant="secondary" icon="refresh" onPress={() => void reloadAppAsync()} testID="restart-rtl" />}
+          </>
+        )}
       </Card>
 
       {isServerMode() && (
@@ -115,10 +146,12 @@ export default function SettingsScreen() {
       <Card>
         <SectionTitle>{t("settings.privacy")}</SectionTitle>
         <Text style={[ty.small, { color: c.textSecondary, lineHeight: 20 }]}>{t("settings.privacyText")}</Text>
+        {PRIVACY_URL && <ListRow icon="document-text-outline" title={t("settings.privacyPolicy")} onPress={() => void Linking.openURL(PRIVACY_URL)} testID="privacy-policy" />}
+        {isServerMode() && s.user && <ListRow icon="trash-outline" title={t("settings.deleteAccount")} onPress={requestDeletion} testID="delete-account" />}
       </Card>
 
       <Card>
-        <ListRow icon="server-outline" title={t("settings.apiStatus")} subtitle={apiBaseUrl() ?? t("settings.apiNotConfigured")} />
+        {!isStoreBuild && <ListRow icon="server-outline" title={t("settings.apiStatus")} subtitle={apiBaseUrl() ?? t("settings.apiNotConfigured")} />}
         <Text style={[ty.small, { color: c.textSubtle }]}>{t("settings.version", { v: Constants.expoConfig?.version ?? "dev" })}</Text>
         {!isServerMode() && <Button label={t("settings.resetData")} variant="secondary" onPress={() => s.resetData()} />}
       </Card>

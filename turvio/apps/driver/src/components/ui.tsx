@@ -5,6 +5,7 @@ import { ActivityIndicator, I18nManager, KeyboardAvoidingView, Modal, Platform, 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { fw, glow, lift, radii, space, touch, type as ty, useTheme, type Palette } from "../theme";
+import { useT } from "../lib/i18n";
 
 export type IconName = ComponentProps<typeof Ionicons>["name"];
 export { Ionicons };
@@ -311,10 +312,11 @@ export function Segmented<T extends string>({ value, options, onChange, testID }
 /** Bottom sheet built on Modal (no extra native dependency). */
 export function Sheet({ visible, onClose, title, children, testID }: { visible: boolean; onClose: () => void; title: string; children: ReactNode; testID?: string }) {
   const { c } = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }]} onPress={onClose} accessibilityLabel="Close" />
+      <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: c.overlay }]} onPress={onClose} accessibilityLabel={t("common.close")} />
       {/* The sheet rides on top of the keyboard (paste/edit fields) on iOS and Android. */}
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={s.sheetHost} pointerEvents="box-none">
         <View style={[s.sheet, { backgroundColor: c.card, borderColor: c.borderStrong, paddingBottom: insets.bottom + space.lg }]} testID={testID}>

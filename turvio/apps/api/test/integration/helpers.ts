@@ -59,6 +59,8 @@ export async function createTestEnv(
     fetchImpl?: typeof fetch;
     /** Server settings of the test database (as a hosted server's configuration), set before any connection. */
     databaseSettings?: Record<string, string>;
+    /** TURVIO support mailbox (account deletion requests); null = not configured. */
+    supportEmail?: string | null;
   } = {},
 ) {
   const dbName = `turvio_it_${name}_${process.pid}`;
@@ -97,6 +99,7 @@ export async function createTestEnv(
     mailer,
     events,
     urls: { dispatch: "http://dispatch.test", admin: "http://admin.test" },
+    supportEmail: opts.supportEmail === null ? undefined : (opts.supportEmail ?? "support@turvio.test"),
     devMailbox: true,
     proofStore: opts.proofStore ?? new LocalProofStore(proofDir),
     geocoder: opts.geocoder,

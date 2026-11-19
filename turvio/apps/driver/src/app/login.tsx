@@ -10,6 +10,7 @@ import { apiBaseUrl } from "../lib/optimizer";
 import { buildServerUrl, canOverrideServerUrl, setServerUrlOverride } from "../lib/serverUrl";
 import { useTourStore } from "../store/tourStore";
 import { fw, radii, space, type as ty, useTheme } from "../theme";
+import { errorText } from "../lib/errorText";
 
 export default function LoginScreen() {
   const t = useT();
@@ -50,7 +51,7 @@ export default function LoginScreen() {
       await signIn(email, password);
       router.replace("/");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e, t));
     } finally {
       setBusy(false);
     }
@@ -63,7 +64,7 @@ export default function LoginScreen() {
       await createAuthClient().forgotPassword(email.trim());
       setInfo(t("login.forgotSent", { email: email.trim() }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e, t));
     }
   };
 

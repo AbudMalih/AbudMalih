@@ -39,6 +39,8 @@ export interface AppDeps {
   auth?: AuthProvider;
   mailer?: Mailer;
   urls?: { dispatch: string; admin: string };
+  /** Where account-deletion requests from the apps go (TURVIO support). Unset = requests are refused with 503. */
+  supportEmail?: string;
   devMailbox?: boolean;
   events?: ChangeFeed;
   proofStore?: ProofStore;

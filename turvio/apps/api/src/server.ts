@@ -64,6 +64,7 @@ if (config.AUTH_PROVIDER === "dev") {
     mailer,
     events,
     urls: { dispatch: config.DISPATCH_URL, admin: config.ADMIN_URL },
+    supportEmail: config.SUPPORT_EMAIL,
     devMailbox: config.DEV_MAILBOX === "true",
     proofStore,
     geocoder,
