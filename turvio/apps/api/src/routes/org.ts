@@ -3,11 +3,40 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { OrgParams, parse, problem, type RouteCtx } from "../http";
 import { newOpaqueToken } from "../auth/tokens";
-import { ApiError } from "../db";
+import { ApiError, type Db } from "../db";
+import { invitationMail, mailLocale } from "../mail-templates";
 import { loadDispatchDataset, loadTourPositions, toDepot, toDriver, toVehicle, type DepotRow, type DriverRow, type VehicleRow } from "../data/dispatch";
 import { buildRoads } from "../data/roads";
 
 const Uuid = z.string().uuid();
+
+/** E-mail addresses for user ids (audit actors, members); read with the API's own role (id + email only). */
+export async function emailsFor(db: Db, ids: Array<string | null | undefined>): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter((x): x is string => !!x))];
+  if (!unique.length) return new Map();
+  const rows = await db.asService(async (tx) => (await tx.query<{ id: string; email: string | null }>(`select id, email from auth.users where id = any($1::uuid[])`, [unique])).rows);
+  return new Map(rows.filter((r) => r.email).map((r) => [r.id, r.email!]));
+}
+
+/** One audit-log entry as the API returns it (company and platform views). */
+export function auditEntry(r: { id: string | number; action: string; table_name: string; record_id: string | null; changed_columns: string[] | null; created_at: Date; actor_user_id: string | null; organization_id?: string | null; org_name?: string | null }, emails: Map<string, string>) {
+  return {
+    id: Number(r.id),
+    action: r.action,
+    table: r.table_name,
+    recordId: r.record_id,
+    changedColumns: r.changed_columns ?? [],
+    at: r.created_at,
+    actor: r.actor_user_id ? { userId: r.actor_user_id, email: emails.get(r.actor_user_id) ?? null } : null,
+    ...(r.organization_id !== undefined ? { organizationId: r.organization_id, organizationName: r.org_name ?? null } : {}),
+  };
+}
+
+export const AuditQuery = z.object({
+  before: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  table: z.string().regex(/^[a-z_]{2,40}$/).optional(),
+});
 const IdParams = OrgParams.extend({ id: Uuid });
 const DateQuery = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() });
 
@@ -238,23 +267,17 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
       // (also enforced by the database: app.invitations_guard).
       if (b.role === "driver" && b.driverId && !(await tx.query<{ ok: boolean }>(`select app.can_link_driver($1, $2) as ok`, [orgId, b.driverId])).rows[0]!.ok)
         throw new ApiError(409, "driver_profile_unavailable", "This driver profile is not in your locations or already has a login");
-      const org = (await tx.query<{ name: string }>(`select name from organizations where id = $1`, [orgId])).rows[0]!;
+      const org = (await tx.query<{ name: string; default_locale: string }>(`select name, default_locale from organizations where id = $1`, [orgId])).rows[0]!;
       const row = (
         await tx.query(
           `insert into invitations (organization_id, email, role, depot_ids, all_locations, driver_id, token_hash) values ($1,$2,$3,$4,$5,$6,$7) returning id, email, role, expires_at`,
           [orgId, b.email, b.role, b.role === "dispatcher" && !b.allLocations ? b.depotIds : null, b.role === "dispatcher" && b.allLocations, b.role === "driver" ? b.driverId : null, t.hash],
         )
       ).rows[0];
-      return { ...row, orgName: org.name };
+      return { ...row, orgName: org.name, locale: org.default_locale };
     });
     const link = `${deps.urls?.dispatch ?? "http://localhost:3000"}/invite?token=${encodeURIComponent(t.token)}`;
-    await deps.mailer?.send({
-      to: b.email,
-      subject: `You are invited to ${inv.orgName} on TURVIO`,
-      text: `${inv.orgName} invited you to TURVIO as ${b.role}.\n\nAccept the invitation (valid for 7 days):\n${link}\n\n${
-        b.role === "driver" ? "After accepting, sign in with the same email and password in the TURVIO Driver app.\n" : ""
-      }`,
-    });
+    await deps.mailer?.send({ to: b.email, ...invitationMail({ locale: mailLocale(inv.locale), orgName: inv.orgName, role: b.role, link }) });
     return reply.status(201).send({ id: inv.id, email: inv.email, role: inv.role, expiresAt: inv.expires_at, emailSent: !!deps.mailer });
   });
 
@@ -263,6 +286,49 @@ export function registerOrgRoutes(app: FastifyInstance, { deps, guards }: RouteC
     const n = await db.asUser(guards.claims(req), async (tx) => (await tx.query(`update invitations set revoked_at = now() where id = $2 and organization_id = $1 and accepted_at is null and revoked_at is null`, [orgId, id])).rowCount);
     if (!n) return problem(reply, 404, "not_found", "Invitation not found");
     return reply.status(204).send();
+  });
+
+  /** New link for a pending invitation (the old link stops working), valid for another 7 days. */
+  app.post("/v1/orgs/:orgId/invitations/:id/resend", { preHandler: guards.requireTenant("drivers.manage") }, async (req, reply) => {
+    const { orgId, id } = IdParams.parse(req.params);
+    const t = newOpaqueToken();
+    const inv = await db.asUser(guards.claims(req), async (tx) => {
+      // RLS (invitations_revoke): dispatchers may only renew driver invitations.
+      const row = (
+        await tx.query<{ email: string; role: string; expires_at: Date }>(
+          `update invitations set token_hash = $3, expires_at = now() + interval '7 days'
+            where id = $2 and organization_id = $1 and accepted_at is null and revoked_at is null
+            returning email, role, expires_at`,
+          [orgId, id, t.hash],
+        )
+      ).rows[0];
+      if (!row) throw new ApiError(404, "not_found", "Invitation not found");
+      const org = (await tx.query<{ name: string; default_locale: string }>(`select name, default_locale from organizations where id = $1`, [orgId])).rows[0]!;
+      return { ...row, orgName: org.name, locale: org.default_locale };
+    });
+    const link = `${deps.urls?.dispatch ?? "http://localhost:3000"}/invite?token=${encodeURIComponent(t.token)}`;
+    await deps.mailer?.send({ to: inv.email, ...invitationMail({ locale: mailLocale(inv.locale), orgName: inv.orgName, role: inv.role, link, reminder: true }) });
+    return { id, email: inv.email, role: inv.role, expiresAt: inv.expires_at, emailSent: !!deps.mailer };
+  });
+
+  /** Company audit log: who changed what (no record contents), newest first, paged by id. */
+  app.get("/v1/orgs/:orgId/audit", { preHandler: guards.requireTenant("audit.view") }, async (req, reply) => {
+    const { orgId } = OrgParams.parse(req.params);
+    const q = parse(AuditQuery, req.query, reply);
+    if (!q) return;
+    const rows = await db.asUser(guards.claims(req), async (tx) =>
+      (
+        await tx.query(
+          `select id, action, table_name, record_id, changed_columns, created_at, actor_user_id from audit_log
+            where organization_id = $1 and ($2::bigint is null or id < $2) and ($3::text is null or table_name = $3)
+            order by id desc limit $4`,
+          [orgId, q.before ?? null, q.table ?? null, q.limit + 1],
+        )
+      ).rows,
+    );
+    const page = rows.slice(0, q.limit);
+    const emails = await emailsFor(db, page.map((r) => r.actor_user_id));
+    return { entries: page.map((r) => auditEntry(r, emails)), nextBefore: rows.length > q.limit ? Number(page[page.length - 1]!.id) : null };
   });
 
   app.patch("/v1/orgs/:orgId/members/:id", { preHandler: guards.requireTenant("org.members.manage") }, async (req, reply) => {
