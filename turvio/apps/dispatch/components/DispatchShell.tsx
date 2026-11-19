@@ -204,7 +204,8 @@ function ShellInner({ children }: { children: ReactNode }) {
       workspaces={session.workspaces.map((w) => ({ id: w.id, name: w.name, detail: roleLabel(w.role, t), current: w.id === session.organizationId, onSelect: () => switchWorkspace(w.id) }))}
       environment={session.environment ?? undefined}
       onSignOut={() => void signOut()}
-      securityHref={null}
+      // Two-step verification: company administration needs it (owners and admins).
+      securityHref={isAdmin ? "/security" : null}
       commands={commands}
       navigate={(href) => router.push(href)}
       linkComponent={({ children: c, ...p }) => <Link {...p}>{c}</Link>}
