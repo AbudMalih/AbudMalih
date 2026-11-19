@@ -10,6 +10,7 @@ Needs: Docker Desktop running, GnuPG (`brew install gnupg`), the repo at commit 
 ## A. Pre-checks (read-only, ~1 min)
 
 ```
+mkdir -p ~/turvio-backups && chmod 700 ~/turvio-backups
 docker run --rm -it -v "$PWD/turvio:/turvio:ro" -w / postgres:17 \
   psql "host=aws-1-eu-central-1.pooler.supabase.com port=5432 dbname=postgres user=postgres.xwryomkbrkwjytwofgcu sslmode=require" \
   -X -v ON_ERROR_STOP=1 -f /turvio/deploy/staging/runbooks/phase-i-step1-prechecks.sql | tee ~/turvio-backups/precheck-$(date -u +%Y%m%dT%H%M%SZ).txt
