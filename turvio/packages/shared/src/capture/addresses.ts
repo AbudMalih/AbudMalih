@@ -81,7 +81,9 @@ const SHOP_LINE = /\b(paketshop|paket-shop|pakets?hop|pickup|paketstation|annahm
 const TRACKING_PATTERNS: { re: RegExp; carrier: Carrier; strength: Confidence }[] = [
   { re: /^JJD\d{14,22}$/, carrier: "dhl", strength: "high" },
   { re: /^JV[A-Z]{2}\d{9,20}$/, carrier: "dhl", strength: "high" },
+  // DHL Paket SSCC (GS1 prefix 340434): as printed (with the 00 identifier) and as normalised (without).
   { re: /^00340\d{15}$/, carrier: "dhl", strength: "high" },
+  { re: /^340434\d{12}$/, carrier: "dhl", strength: "high" },
   { re: /^[A-Z]{2}\d{9}DE$/, carrier: "dhl", strength: "high" },
   { re: /^1Z[0-9A-Z]{16}$/, carrier: "ups", strength: "high" },
   { re: /^H\d{19}$/, carrier: "hermes", strength: "high" },
