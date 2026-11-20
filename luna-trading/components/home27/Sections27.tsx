@@ -401,7 +401,7 @@ export default function Sections27() {
             <h2 id="h27-brands" className={s.brandsTitle} data-split>
               <span className={s.muted}>
                 <Words text={`${dict.brands.a1} ${dict.brands.a2}`} />
-              </span>
+              </span>{" "}
               <Words text={dict.brands.b1} />{" "}
               <span className={s.accent}>
                 <Words text={`${dict.brands.b2}.`} />

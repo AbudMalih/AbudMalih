@@ -93,6 +93,14 @@
 .char2 .index {
   color: var(--c-gray-light);
 }
+/* red on charcoal is too dark for small type: the lighter brand red */
+.char .indexNum,
+.char2 .indexNum {
+  color: #ff5a68;
+}
+.ivory2 .index {
+  color: #55565b;
+}
 .indexNum {
   color: var(--c-red);
   font-weight: 500;
