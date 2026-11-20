@@ -1,6 +1,6 @@
 import { can, type Membership } from "@turvio/shared";
 import type { FastifyInstance } from "fastify";
-import { OrgParams, type RouteCtx } from "../http";
+import { OrgParams, problem, type RouteCtx } from "../http";
 import type { ChangeEvent, ChangeFeed } from "../events";
 
 /**
@@ -21,10 +21,19 @@ export function liveEventFor(m: Pick<Membership, "organizationId" | "role" | "de
  * is filtered by tenant and by the subscriber's depot scope; it carries no
  * delivery data, clients reload through the normal endpoints.
  */
+/** Open live-update streams per user (each browser tab holds one); more are refused. */
+export const MAX_EVENT_STREAMS_PER_USER = 6;
+
 export function registerEventRoutes(app: FastifyInstance, { guards, events }: RouteCtx & { events: ChangeFeed }) {
+  const open = new Map<string, number>();
   app.get("/v1/orgs/:orgId/events", { preHandler: guards.requireTenant("tours.view_all") }, async (req, reply) => {
     const { orgId } = OrgParams.parse(req.params);
     const m = { ...req.membership!, organizationId: orgId };
+    const userId = req.user!.userId;
+    const count = open.get(userId) ?? 0;
+    // The client falls back to polling when refused (Dispatch: useLiveFleet / useLiveUpdates).
+    if (count >= MAX_EVENT_STREAMS_PER_USER) return problem(reply, 429, "too_many_streams", "Too many open live-update connections – close other TURVIO tabs");
+    open.set(userId, count + 1);
 
     reply.hijack();
     const res = reply.raw;
@@ -46,6 +55,9 @@ export function registerEventRoutes(app: FastifyInstance, { guards, events }: Ro
     req.raw.on("close", () => {
       clearInterval(heartbeat);
       unsubscribe();
+      const left = (open.get(userId) ?? 1) - 1;
+      if (left > 0) open.set(userId, left);
+      else open.delete(userId);
     });
   });
 }
