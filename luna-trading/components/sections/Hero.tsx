@@ -127,6 +127,19 @@ function HeroContent() {
         </div>
       </div>
 
+      {/* the instrument frame: gold corner ticks and the route readout */}
+      <div className={styles.frame27} aria-hidden="true" data-meta>
+        <span className={styles.tick} data-c="ts" />
+        <span className={styles.tick} data-c="te" />
+        <span className={styles.tick} data-c="bs" />
+        <span className={styles.tick} data-c="be" />
+      </div>
+      <p className={`t-label ${styles.readout}`} data-meta data-cine-only>
+        <span className={styles.readoutRule} aria-hidden="true" />
+        <span>{dict.hero.route}</span>
+        <span className={styles.readoutSpan}>{dict.hero.routeSpan}</span>
+      </p>
+
       <div className={styles.foot}>
         <span className={styles.hrule} data-hrule />
         <p className={`t-label ${styles.metaL}`} data-meta>

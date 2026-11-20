@@ -7,7 +7,7 @@ import {
   pageMetadata,
 } from "@/lib/seo";
 import Hero from "@/components/sections/Hero";
-import HomeSections from "@/components/sections/HomeSections";
+import Sections27 from "@/components/home27/Sections27";
 import Atmosphere from "@/components/chrome/Atmosphere";
 import Loader from "@/components/chrome/Loader";
 import GlobeLayer from "@/components/stage/GlobeLayer";
@@ -45,7 +45,7 @@ export default function HomePage() {
       <GlobeLayer />
       <Loader />
       <Hero />
-      <HomeSections />
+      <Sections27 />
     </>
   );
 }

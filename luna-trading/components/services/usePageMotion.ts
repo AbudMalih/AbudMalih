@@ -11,7 +11,11 @@ import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
  *  - header tone follows the section under the header ([data-tone])
  * Reduced motion / static: everything is shown complete (CSS on html.static).
  */
-export function usePageMotion(root: RefObject<HTMLElement | null>) {
+export function usePageMotion(
+  root: RefObject<HTMLElement | null>,
+  opts: { hardEdges?: boolean } = {},
+) {
+  const hardEdges = !!opts.hardEdges;
   // reveals
   useEffect(() => {
     const el = root.current;
@@ -102,7 +106,8 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
       // header flips tone at the seam's midpoint, where the colour really turns
       const vh = window.innerHeight;
       const seam = Math.min(240, Math.max(120, vh * 0.2));
-      const y = Math.min(60, vh * 0.06) - seam / 2;
+      // sections with hard edges (no fading seam) flip under the header itself
+      const y = hardEdges ? 44 : Math.min(60, vh * 0.06) - seam / 2;
       let tone = "dark";
       for (const s of sections) {
         if (s.getBoundingClientRect().top <= y || s === sections[0])
@@ -124,5 +129,5 @@ export function usePageMotion(root: RefObject<HTMLElement | null>) {
       window.removeEventListener("luna:tone", probe);
       delete html.dataset.tone;
     };
-  }, [root]);
+  }, [root, hardEdges]);
 }

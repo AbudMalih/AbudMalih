@@ -442,6 +442,8 @@ textarea {
 }
 
 /* endless animations are paused while off-screen (components/chrome/OffscreenPause.tsx) */
-[data-offscreen] {
+[data-offscreen],
+[data-offscreen]::before,
+[data-offscreen]::after {
   animation-play-state: paused !important;
 }

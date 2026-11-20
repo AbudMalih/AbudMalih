@@ -32,6 +32,15 @@
 .red {
   color: var(--luna-red);
 }
+/* 2027: the accent word is set in the editorial serif (Latin scripts) */
+:global(html:not([lang="ar"])) .red {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  font-size: 1.12em;
+  line-height: 0.86;
+}
 .block {
   position: relative;
   z-index: 1;
@@ -453,4 +462,68 @@
       no-repeat,
     linear-gradient(var(--luna-red), var(--luna-red)) center / 2px 100%
       no-repeat;
+}
+
+/* ---- 2027 instrument frame ------------------------------------------- */
+.frame27 {
+  position: absolute;
+  inset: calc(var(--header-h) + 8px) calc(var(--margin) - 14px)
+    clamp(86px, 13vh, 120px);
+  pointer-events: none;
+  z-index: 0;
+}
+.tick {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 0 solid rgba(201, 182, 142, 0.6);
+}
+.tick[data-c="ts"] {
+  top: 0;
+  inset-inline-start: 0;
+  border-top-width: 1px;
+  border-inline-start-width: 1px;
+}
+.tick[data-c="te"] {
+  top: 0;
+  inset-inline-end: 0;
+  border-top-width: 1px;
+  border-inline-end-width: 1px;
+}
+.tick[data-c="bs"] {
+  bottom: 0;
+  inset-inline-start: 0;
+  border-bottom-width: 1px;
+  border-inline-start-width: 1px;
+}
+.tick[data-c="be"] {
+  bottom: 0;
+  inset-inline-end: 0;
+  border-bottom-width: 1px;
+  border-inline-end-width: 1px;
+}
+.readout {
+  position: absolute;
+  top: calc(var(--header-h) + 30px);
+  inset-inline-end: var(--margin);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: var(--env-fg, var(--graphite-300));
+  z-index: 1;
+}
+.readoutRule {
+  width: 48px;
+  height: 1px;
+  background: rgba(201, 182, 142, 0.7);
+}
+.readoutSpan {
+  color: #c9b68e;
+}
+@media (max-width: 767px) {
+  .frame27,
+  .readout {
+    display: none;
+  }
 }
