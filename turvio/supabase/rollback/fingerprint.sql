@@ -3,11 +3,11 @@
 -- 20261117000100 is excluded so the hashes before and after that migration are comparable; so are
 -- the columns added by 20261118000100 (stop address/location versions + precision, retention), and
 -- those added by 20261119000200/0300 (tour close / archive fields, stop cancel / return fields,
--- company contact fields).
+-- company contact fields) and 20261120000100 (company tracking notice texts).
 -- Floats are hashed at extra_float_digits = 1 (exact shortest text); Supabase sessions default to 0.
 set extra_float_digits = 1;
 select t, n, h from (
-  select 'organizations' t, count(*) n, md5(coalesce(string_agg((to_jsonb(x) - 'location_audit_retention_days' - 'location_check_retention_days' - 'contact_email' - 'contact_phone' - 'address_street' - 'address_postal_code' - 'address_city' - 'address_country' - 'website')::text, '|' order by x.id), '')) h from public.organizations x
+  select 'organizations' t, count(*) n, md5(coalesce(string_agg((to_jsonb(x) - 'location_audit_retention_days' - 'location_check_retention_days' - 'contact_email' - 'contact_phone' - 'address_street' - 'address_postal_code' - 'address_city' - 'address_country' - 'website' - 'tracking_notice_controller' - 'tracking_notice_contact' - 'tracking_notice_legal_basis' - 'tracking_notice_text')::text, '|' order by x.id), '')) h from public.organizations x
   union all select 'subscriptions', count(*), md5(coalesce(string_agg(to_jsonb(x)::text, '|' order by to_jsonb(x)::text), '')) from public.subscriptions x
   union all select 'memberships', count(*), md5(coalesce(string_agg((to_jsonb(x) - 'all_locations')::text, '|' order by x.id), '')) from public.memberships x
   union all select 'membership_depots', count(*), md5(coalesce(string_agg(to_jsonb(x)::text, '|' order by to_jsonb(x)::text), '')) from public.membership_depots x
