@@ -247,7 +247,17 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
         retryDelay = 60_000;
         setLive("live");
       });
-      es.addEventListener("change", scheduleReload);
+      es.addEventListener("change", (e) => {
+        scheduleReload();
+        // A tour's status changed (started, paused, resumed, finished, cancelled): its live entry
+        // changes too (a paused tour shows no position) – refresh that one tour on the live map.
+        try {
+          const d = JSON.parse((e as MessageEvent).data ?? "{}") as { table?: unknown; tour?: unknown };
+          if (typeof d.tour === "string" && (d.table === "tours" || d.table === "tour_events")) for (const l of positionListeners.current) l(d.tour);
+        } catch {
+          /* not JSON: the full reload above covers it */
+        }
+      });
       es.addEventListener("position", (e) => {
         let tour: string | undefined;
         try {

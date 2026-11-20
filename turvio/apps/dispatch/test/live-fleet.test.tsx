@@ -198,6 +198,26 @@ describe("useLiveFleet", () => {
     expect(fleetCalls.length).toBeGreaterThan(m);
   });
 
+  it("a tour status change (e.g. paused) refreshes that tour on the live map: the marker leaves, the driver is listed as paused", async () => {
+    let paused = false;
+    respond = (u) => {
+      const tour = u.searchParams.get("tourId");
+      const v = veh("d1", "tour_han_01", "dep_hannover", serverIso());
+      const { position: _p, recordedAt: _r, receivedAt: _x, positionAt: _a, state: _s, ...rest } = v as typeof v & Record<string, unknown>;
+      const rows = paused ? { vehicles: [], unavailable: [{ ...rest, tourStatus: "paused", reason: "paused" as const }] } : { vehicles: [v], unavailable: [] };
+      return { serverTime: serverIso(), date: base.date, staleAfterSeconds: 120, offlineAfterSeconds: 300, ...(tour && tour !== "tour_han_01" ? { vehicles: [], unavailable: [] } : rows) };
+    };
+    await mount();
+    await act(async () => es().emit("ready"));
+    expect(hook.vehicles).toHaveLength(1);
+    paused = true;
+    await act(async () => es().emit("change", { table: "tours", tour: "tour_han_01", op: "update" }));
+    await flush(2_000);
+    expect(fleetCalls.some((u) => u.searchParams.get("tourId") === "tour_han_01")).toBe(true);
+    expect(hook.vehicles).toHaveLength(0);
+    expect(hook.unavailable.map((x) => x.reason)).toEqual(["paused"]);
+  });
+
   it("stream refused (429) or broken: polls every 30 s instead of spinning; one EventSource per tab", async () => {
     respond = () => ({ serverTime: serverIso(), date: base.date, staleAfterSeconds: 120, offlineAfterSeconds: 300, vehicles: [], unavailable: [] });
     await mount();
