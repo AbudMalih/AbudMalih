@@ -21,14 +21,35 @@ jest.mock("expo-task-manager", () => ({
   },
 }));
 
+jest.mock("../src/lib/optimizer", () => ({ ...jest.requireActual("../src/lib/optimizer"), apiBaseUrl: () => "https://api.example.test" }));
+
 import { ApiError } from "../src/lib/auth";
-import { bufferedCount, clearBuffer } from "../src/lib/trackingBuffer";
-import { TRACKING_TASK, defineTrackingTask, keepFix, resetFixFilter, readSession, setTrackingClient, startTracking, stopTracking, uploadNow, useTrackingStatus } from "../src/lib/tracking";
+import { setAuthClient, useTourStore } from "../src/store/tourStore";
+import { appendFixes, bufferedCount, clearBuffer, type Fix } from "../src/lib/trackingBuffer";
+import {
+  MAX_ACCURACY_METERS,
+  TRACKING_TASK,
+  acknowledgeNotice,
+  defineTrackingTask,
+  isUsableLocation,
+  isWithdrawalPending,
+  keepFix,
+  resetFixFilter,
+  readSession,
+  retryPendingWithdrawal,
+  setTrackingClient,
+  startTracking,
+  stopTracking,
+  uploadNow,
+  useTrackingStatus,
+  withdrawAcknowledgement,
+} from "../src/lib/tracking";
 
 const input = { orgId: "org1", tourId: "tour1", tourName: "Hannover List", notificationTitle: "T", notificationBody: "B" };
 let config: Record<string, unknown>;
 const request = jest.fn();
 setTrackingClient(() => ({ request }) as never);
+setAuthClient({ request } as never);
 
 const granted = { status: "granted", canAskAgain: true };
 let running = false;
@@ -85,7 +106,9 @@ describe("live tracking lifecycle", () => {
     expect(mockLoc.startLocationUpdatesAsync).toHaveBeenCalledTimes(1);
     const [task, opts] = mockLoc.startLocationUpdatesAsync.mock.calls[0]!;
     expect(task).toBe(TRACKING_TASK);
-    expect(opts).toMatchObject({ timeInterval: 10_000, distanceInterval: 0, foregroundService: { notificationTitle: "T", notificationBody: "B" } });
+    expect(opts).toMatchObject({ accuracy: 4, timeInterval: 10_000, deferredUpdatesInterval: 10_000, pausesUpdatesAutomatically: false, showsBackgroundLocationIndicator: true, foregroundService: { notificationTitle: "T", notificationBody: "B" } });
+    // Battery: no fix every second while standing.
+    expect(opts.distanceInterval).toBeGreaterThanOrEqual(10);
     expect((await readSession())?.tourId).toBe("tour1");
   });
 
@@ -138,5 +161,188 @@ describe("live tracking lifecycle", () => {
     expect(keepFix(p(20, 2))).toBe(false);
     expect(keepFix(p(61, 1))).toBe(true); // one per minute
     expect(keepFix(p(71, 40))).toBe(true); // moving again
+  });
+});
+
+const at = (dSeconds: number) => Date.now() + dSeconds * 1000;
+const loc = (lat: number, lng: number, accuracy: number | null | undefined, ts: number) => ({ coords: { latitude: lat, longitude: lng, accuracy, speed: 3, heading: 10 }, timestamp: ts });
+const uploads = () => request.mock.calls.filter(([m, p]) => m === "POST" && String(p).endsWith("/locations"));
+const withdrawCalls = () => request.mock.calls.filter(([m, p]) => m === "POST" && String(p).endsWith("/tracking/notice/withdraw"));
+let fixN = 0;
+const fix = (): Fix => ({ id: `f-${++fixN}`, orgId: "org1", tourId: "tour1", lat: 52.38, lng: 9.74, accuracy: 5, speed: 1, heading: 0, recordedAt: new Date().toISOString() });
+
+describe("accuracy filter", () => {
+  it("drops fixes worse than 500 m and fixes without coordinates; keeps the rest (also without accuracy)", () => {
+    expect(MAX_ACCURACY_METERS).toBe(500);
+    expect(isUsableLocation(loc(52.38, 9.74, 499, 0) as never)).toBe(true);
+    expect(isUsableLocation(loc(52.38, 9.74, 500, 0) as never)).toBe(true);
+    expect(isUsableLocation(loc(52.38, 9.74, 501, 0) as never)).toBe(false);
+    expect(isUsableLocation(loc(52.38, 9.74, null, 0) as never)).toBe(true);
+    expect(isUsableLocation({ coords: { latitude: NaN, longitude: 9.74 } } as never)).toBe(false);
+    expect(isUsableLocation({ coords: { longitude: 9.74 } } as never)).toBe(false);
+    expect(isUsableLocation({} as never)).toBe(false);
+  });
+
+  it("the background task never buffers a > 500 m guess", async () => {
+    defineTrackingTask();
+    await startTracking(input, { requestPermissions: true });
+    request.mockImplementation(async (method: string, path: string) => {
+      if (path.endsWith("/locations")) throw new ApiError(0, "network", "offline");
+      return config;
+    });
+    await mockTaskExecutor!({ data: { locations: [loc(52.38, 9.74, 2000, at(0)), loc(52.5, 9.9, 800, at(1)), { coords: {}, timestamp: at(2) }, loc(52.38, 9.74, 25, at(3))] } });
+    expect(await bufferedCount()).toBe(1);
+  });
+
+  it("uploads are batched and throttled: one request for many fixes, not one per fix", async () => {
+    defineTrackingTask();
+    await startTracking(input, { requestPermissions: true });
+    await uploadNow(); // resets the throttle window
+    for (let i = 0; i < 5; i++) await mockTaskExecutor!({ data: { locations: [loc(52.38 + i * 0.01, 9.74, 5, at(i))] } });
+    expect(uploads()).toHaveLength(0); // all within the 15 s window
+    expect(await bufferedCount()).toBe(5);
+    await uploadNow();
+    expect(uploads()).toHaveLength(1);
+    expect(uploads()[0]![2].points).toHaveLength(5);
+  });
+});
+
+describe("refused uploads", () => {
+  it("notice missing (new version): stops the task but keeps the positions for after re-acknowledgement", async () => {
+    defineTrackingTask();
+    await startTracking(input, { requestPermissions: true });
+    await appendFixes([fix(), fix()]);
+    request.mockImplementation(async (method: string, path: string) => {
+      if (path.endsWith("/locations")) throw new ApiError(409, "tracking_notice_required", "notice");
+      return config;
+    });
+    await uploadNow();
+    expect(useTrackingStatus.getState().state).toBe("notice_required");
+    expect(running).toBe(false);
+    expect(await readSession()).toBeNull();
+    expect(await bufferedCount()).toBe(2);
+  });
+});
+
+describe("withdrawing the acknowledgement", () => {
+  beforeEach(() => {
+    const base = request.getMockImplementation()!;
+    request.mockImplementation(async (method: string, path: string, body?: unknown) => {
+      if (method === "POST" && path.endsWith("/tracking/notice/withdraw")) {
+        config.acknowledgedVersion = null;
+        return { withdrawn: 1, acknowledgedVersion: null };
+      }
+      if (method === "POST" && path.endsWith("/tracking/notice")) {
+        config.acknowledgedVersion = config.noticeVersion;
+        return { acknowledgedVersion: config.noticeVersion };
+      }
+      if (method === "GET" && path === "/v1/me/tours") return { tours: [] };
+      return base(method, path, body);
+    });
+  });
+
+  it("online: tells the server, stops the task at once, deletes buffered positions, resets the state", async () => {
+    defineTrackingTask();
+    await startTracking(input, { requestPermissions: true });
+    await appendFixes([fix(), fix(), fix()]);
+    const r = await withdrawAcknowledgement("org1");
+    expect(r.sent).toBe(true);
+    expect(withdrawCalls()).toHaveLength(1);
+    expect(withdrawCalls()[0]![1]).toBe("/v1/orgs/org1/tracking/notice/withdraw");
+    expect(mockLoc.stopLocationUpdatesAsync).toHaveBeenCalledWith(TRACKING_TASK);
+    expect(running).toBe(false);
+    expect(await readSession()).toBeNull();
+    expect(await bufferedCount()).toBe(0);
+    expect(useTrackingStatus.getState()).toMatchObject({ state: "notice_required", acknowledgedVersion: null, withdrawalPending: false, buffered: 0 });
+    expect(await isWithdrawalPending("org1")).toBe(false);
+    // Nothing recorded before the withdrawal was sent.
+    expect(uploads()).toHaveLength(0);
+    // Tour still on the road (app foreground): tracking does not start again by itself.
+    expect(await startTracking(input, { requestPermissions: false })).toBe("notice_required");
+    expect(mockLoc.startLocationUpdatesAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it("no uploads after the withdrawal, even from a background delivery racing with it", async () => {
+    defineTrackingTask();
+    await startTracking(input, { requestPermissions: true });
+    await withdrawAcknowledgement("org1");
+    // A delivery that was already in flight (session read before it was removed) appends late:
+    await appendFixes([fix()]);
+    await uploadNow();
+    expect(uploads()).toHaveLength(0);
+    expect(await bufferedCount()).toBe(0);
+    // And the task itself never records without a session.
+    await mockTaskExecutor!({ data: { locations: [loc(52.38, 9.74, 5, at(30))] } });
+    expect(await bufferedCount()).toBe(0);
+    expect(uploads()).toHaveLength(0);
+  });
+
+  it("offline: stops and deletes locally at once, keeps a pending flag and sends the withdrawal on the next sync", async () => {
+    defineTrackingTask();
+    await startTracking(input, { requestPermissions: true });
+    await appendFixes([fix(), fix()]);
+    const online = request.getMockImplementation()!;
+    let offline = true;
+    request.mockImplementation(async (method: string, path: string, body?: unknown) => {
+      if (offline) throw new ApiError(0, "network", "No connection");
+      return online(method, path, body);
+    });
+    const r = await withdrawAcknowledgement("org1");
+    expect(r.sent).toBe(false);
+    expect((r.error as ApiError).code).toBe("network");
+    expect(running).toBe(false);
+    expect(await bufferedCount()).toBe(0);
+    expect(await isWithdrawalPending("org1")).toBe(true);
+    expect(useTrackingStatus.getState()).toMatchObject({ state: "notice_required", acknowledgedVersion: null, withdrawalPending: true });
+
+    // Still offline at the next tour start / foreground: no tracking, nothing sent.
+    expect(await startTracking(input, { requestPermissions: false })).toBe("notice_required");
+    expect(mockLoc.startLocationUpdatesAsync).toHaveBeenCalledTimes(1);
+    await appendFixes([fix()]);
+    await uploadNow();
+    expect(await bufferedCount()).toBe(0);
+
+    // Back online: the next sync sends the withdrawal (once), the flag is gone.
+    const attemptsOffline = withdrawCalls().length; // the first try + the retry at tour start
+    expect(attemptsOffline).toBe(2);
+    offline = false;
+    useTourStore.setState({ user: { id: "u1", email: "d@example.test", name: "D" } } as never);
+    await useTourStore.getState().sync();
+    expect(withdrawCalls()).toHaveLength(attemptsOffline + 1);
+    await useTourStore.getState().sync();
+    expect(withdrawCalls()).toHaveLength(attemptsOffline + 1); // sent once
+    expect(await isWithdrawalPending("org1")).toBe(false);
+    expect(useTrackingStatus.getState().withdrawalPending).toBe(false);
+    expect(uploads()).toHaveLength(0);
+    expect(config.acknowledgedVersion).toBeNull();
+    useTourStore.setState({ user: null } as never);
+  });
+
+  it("the pending flag survives an app restart (persisted) and is retried", async () => {
+    let offline = true;
+    const online = request.getMockImplementation()!;
+    request.mockImplementation(async (method: string, path: string, body?: unknown) => {
+      if (offline) throw new ApiError(0, "network", "No connection");
+      return online(method, path, body);
+    });
+    await withdrawAcknowledgement("org1");
+    expect(await AsyncStorage.getItem("turvio-tracking-withdraw-pending-v1")).toContain("org1");
+    offline = false;
+    expect(await retryPendingWithdrawal()).toBe(true);
+    expect(withdrawCalls().length).toBeGreaterThanOrEqual(1);
+    expect(await AsyncStorage.getItem("turvio-tracking-withdraw-pending-v1")).toBeNull();
+  });
+
+  it("acknowledging again allows tracking again", async () => {
+    defineTrackingTask();
+    await startTracking(input, { requestPermissions: true });
+    await withdrawAcknowledgement("org1");
+    await acknowledgeNotice("org1");
+    expect(useTrackingStatus.getState().acknowledgedVersion).toBe(1);
+    expect(await startTracking(input, { requestPermissions: false })).toBe("active");
+    expect(running).toBe(true);
+    await mockTaskExecutor!({ data: { locations: [loc(52.38, 9.74, 5, at(60))] } });
+    await uploadNow();
+    expect(uploads()).toHaveLength(1);
   });
 });

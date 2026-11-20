@@ -37,7 +37,10 @@ export function useTourTracking() {
         notificationBody: t("tracking.notificationBody", { tour: onRoad.name }),
       },
       { requestPermissions: false },
-    );
+    )
+      // App (re)started with the tour on the road: send what was buffered before the restart.
+      .then((r) => (r === "active" ? uploadNow() : undefined))
+      .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 

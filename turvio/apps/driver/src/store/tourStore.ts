@@ -24,7 +24,7 @@ import {
 } from "@turvio/shared";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { stopTracking } from "../lib/tracking";
+import { retryPendingWithdrawal, stopTracking } from "../lib/tracking";
 import { createAuthClient, isTransient, type AuthClient, type SessionUser } from "../lib/auth";
 import { deleteFile, readFileBase64 } from "../lib/files";
 import { uuid } from "../lib/ids";
@@ -618,6 +618,8 @@ export const useTourStore = create<TourState>()(
                 set({ syncState: "offline", syncMessage: drained.error ?? null });
                 return;
               }
+              // A tracking withdrawal made offline reaches the server with the next sync.
+              await retryPendingWithdrawal().catch(() => undefined);
               const payload = await auth().request<{ tours: MyTour[]; timeZone?: string | null }>("GET", "/v1/me/tours");
               const localTours = get().tours;
               const snap = applyOutbox(snapshotFrom(payload, get().driverId, get()), get().outbox, localTours);

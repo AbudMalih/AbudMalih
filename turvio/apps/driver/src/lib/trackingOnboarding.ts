@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { Linking, PermissionsAndroid, Platform } from "react-native";
 import { create } from "zustand";
-import { acknowledgeNotice, getTrackingConfig, type TrackingConfig } from "./tracking";
+import { acknowledgeNotice, getTrackingConfig, isWithdrawalPending, retryPendingWithdrawal, type NoticeDetails, type TrackingConfig } from "./tracking";
 
 /*
  * Live-location set-up for drivers (Phase E). Shown after sign-in when the company tracks this
@@ -42,6 +42,8 @@ export interface SetupStatus {
   acknowledgedVersion: number | null;
   intervalSeconds: number;
   retentionDays: number;
+  /** The company's part of the notice (controller, contact, legal basis, text). */
+  notice: NoticeDetails | null;
   missing: SetupStep[];
   permissions: Permissions;
   /** Identifies this exact situation; a postponed one is not shown again until it changes. */
@@ -80,7 +82,10 @@ export function signatureOf(orgId: string, cfg: Pick<TrackingConfig, "noticeVers
 }
 
 export async function checkSetup(orgId: string): Promise<SetupStatus> {
+  await retryPendingWithdrawal().catch(() => undefined);
   const cfg = await getTrackingConfig(orgId);
+  // Withdrawn offline and not yet sent: for this phone the notice is not acknowledged.
+  if (await isWithdrawalPending(orgId)) cfg.acknowledgedVersion = null;
   const tracked = cfg.mode === "active_tours";
   // Not tracked: never ask for location in the background (nothing to set up).
   const permissions = Platform.OS === "web" ? { foreground: true, foregroundCanAsk: false, precise: true, background: true, backgroundCanAsk: false, notifications: true } : await readPermissions();
@@ -92,6 +97,7 @@ export async function checkSetup(orgId: string): Promise<SetupStatus> {
     acknowledgedVersion: cfg.acknowledgedVersion,
     intervalSeconds: cfg.intervalSeconds,
     retentionDays: cfg.retentionDays,
+    notice: cfg.notice ?? null,
     missing,
     permissions,
     signature: signatureOf(orgId, cfg, missing),
@@ -157,3 +163,17 @@ export async function performStep(step: SetupStep, status: SetupStatus): Promise
 export const useTrackingSetup = create<{ open: boolean; status: SetupStatus | null }>(() => ({ open: false, status: null }));
 export const openTrackingSetup = (status?: SetupStatus) => useTrackingSetup.setState((s) => ({ open: true, status: status ?? s.status }));
 export const closeTrackingSetup = () => useTrackingSetup.setState({ open: false });
+
+/**
+ * Right after the driver withdrew the acknowledgement the set-up must not pop up again by itself
+ * (it would ask for exactly what was just withdrawn). It comes back on the next app start / sign-in;
+ * the driver can always open it from Settings.
+ */
+let autoPromptSuppressed = false;
+export const suppressAutoPrompt = () => {
+  autoPromptSuppressed = true;
+};
+export const resetAutoPrompt = () => {
+  autoPromptSuppressed = false;
+};
+export const isAutoPromptSuppressed = () => autoPromptSuppressed;

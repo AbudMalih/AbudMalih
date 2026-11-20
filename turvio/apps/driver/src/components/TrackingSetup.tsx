@@ -6,7 +6,9 @@ import {
   STEP_ORDER,
   checkSetup,
   closeTrackingSetup,
+  isAutoPromptSuppressed,
   openTrackingSetup,
+  resetAutoPrompt,
   performStep,
   rememberDismissed,
   useTrackingSetup,
@@ -17,6 +19,8 @@ import {
 import { auth, isServerMode, useTourStore } from "../store/tourStore";
 import { useMyTour } from "../store/useMyTour";
 import { space, type as ty, useTheme } from "../theme";
+import { errorText } from "../lib/errorText";
+import { NoticeDetailsBlock } from "./Tracking";
 import { Banner, Button, Ionicons, Sheet } from "./ui";
 
 /** The driver's company (first driver membership); cached per sign-in. */
@@ -54,6 +58,9 @@ export function TrackingSetupHost() {
         if (!orgId) return;
         const s = await checkSetup(orgId);
         useTrackingSetup.setState({ status: s });
+        if (!s.missing.includes("notice")) resetAutoPrompt();
+        // Just withdrawn: not asked again by itself in this app run (Settings still offers it).
+        if (opts.auto && isAutoPromptSuppressed()) return;
         if (!opts.auto || !s.missing.length || useTrackingSetup.getState().open) return;
         if (!(await wasDismissed(s.signature))) openTrackingSetup(s);
       } catch {
@@ -68,6 +75,7 @@ export function TrackingSetupHost() {
   useEffect(() => {
     if (!user) {
       orgCache = null;
+      resetAutoPrompt();
       useTrackingSetup.setState({ open: false, status: null });
       return;
     }
@@ -141,7 +149,7 @@ export function TrackingSetupSheet({ visible, status, onRecheck }: { visible: bo
         );
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e, t));
     } finally {
       setBusy(false);
     }
@@ -199,6 +207,7 @@ export function TrackingSetupSheet({ visible, status, onRecheck }: { visible: bo
                 t("tracking.noticeBody3", { days: status.retentionDays }),
                 t("tracking.noticeBody4"),
               ].map(p)}
+              <NoticeDetailsBlock notice={status.notice} />
               <Text style={[ty.small, { color: c.textMuted }]}>{t("setup.serviceNote")}</Text>
             </>
           )}

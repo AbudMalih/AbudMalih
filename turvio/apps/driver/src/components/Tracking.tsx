@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { create } from "zustand";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Alert, Linking, Platform, Pressable, Text, View } from "react-native";
+import { ApiError } from "../lib/auth";
+import { errorText } from "../lib/errorText";
 import { useT } from "../lib/i18n";
-import { acknowledgeNotice, startTracking, useTrackingStatus } from "../lib/tracking";
-import { openTrackingSetup, useTrackingSetup } from "../lib/trackingOnboarding";
+import { acknowledgeNotice, hasNoticeDetails, startTracking, useTrackingStatus, withdrawAcknowledgement, type NoticeDetails } from "../lib/tracking";
+import { forgetDismissed, openTrackingSetup, signatureOf, suppressAutoPrompt, useTrackingSetup } from "../lib/trackingOnboarding";
 import { useTourStore } from "../store/tourStore";
 import { useMyTour } from "../store/useMyTour";
 import { radii, space, type as ty, useTheme } from "../theme";
@@ -44,6 +46,38 @@ export function TrackingPill({ onPress = openTrackingNotice }: { onPress?: () =>
   );
 }
 
+/**
+ * The company's own part of the notice (controller, data-protection contact, legal basis, further
+ * text) below the standard text. Only filled-in fields are shown; nothing at all when none is set.
+ * Labels and values are stacked (no left/right placement), so the block reads the same in RTL.
+ */
+export function NoticeDetailsBlock({ notice }: { notice: NoticeDetails | null | undefined }) {
+  const t = useT();
+  const { c } = useTheme();
+  if (!hasNoticeDetails(notice)) return null;
+  const rows = (
+    [
+      ["tracking.noticeController", notice.controller, "notice-controller"],
+      ["tracking.noticeContact", notice.contact, "notice-contact"],
+      ["tracking.noticeLegalBasis", notice.legalBasis, "notice-legal-basis"],
+      ["tracking.noticeText", notice.text, "notice-text"],
+    ] as const
+  ).filter(([, v]) => typeof v === "string" && v.trim().length > 0);
+  return (
+    <View style={{ gap: space.sm, borderTopWidth: 1, borderTopColor: c.border, paddingTop: space.sm }} testID="tracking-notice-company">
+      <Text style={[ty.bodyStrong, { color: c.text }]}>{t("tracking.noticeCompany")}</Text>
+      {rows.map(([label, value, id]) => (
+        <View key={id} style={{ gap: space.xxs }} testID={id}>
+          <Text style={[ty.caption, { color: c.textMuted }]}>{t(label)}</Text>
+          <Text style={[ty.body, { color: c.text }]} selectable>
+            {value!.trim()}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 /** The tracking notice. Tracking never starts before the driver confirmed it. */
 export function TrackingNoticeSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const t = useT();
@@ -65,7 +99,7 @@ export function TrackingNoticeSheet({ visible, onClose }: { visible: boolean; on
       );
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e, t));
     } finally {
       setBusy(false);
     }
@@ -82,6 +116,7 @@ export function TrackingNoticeSheet({ visible, onClose }: { visible: boolean; on
           {p}
         </Text>
       ))}
+      <NoticeDetailsBlock notice={status.notice} />
       <Text style={[ty.small, { color: c.textMuted }]}>{t("tracking.backgroundHint")}</Text>
       {error && <Banner text={error} tone="danger" />}
       <Button label={t("tracking.noticeAccept")} size="lg" icon="checkmark" loading={busy} onPress={() => void accept()} testID="tracking-notice-accept" />
@@ -97,7 +132,48 @@ export function TrackingSettingsSection({ onReadNotice = openTrackingNotice }: {
   const s = useTrackingStatus();
   const setup = useTrackingSetup((x) => x.status);
   const user = useTourStore((x) => x.user);
+  const knownOrg = useTourStore((x) => x.organizationId);
+  const { tours } = useMyTour();
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [outcome, setOutcome] = useState<{ tone: "success" | "primary" | "danger"; text: string } | null>(null);
   if (!user) return null;
+  const orgId = setup?.orgId ?? tours.find((x) => x.status === "in_progress")?.organizationId ?? (knownOrg || null);
+  const acknowledged = s.state === "active" || (!!setup?.tracked && setup.acknowledgedVersion != null && setup.acknowledgedVersion === setup.noticeVersion && s.acknowledgedVersion !== null);
+  const canWithdraw = !!orgId && acknowledged && !s.withdrawalPending;
+
+  const withdraw = async () => {
+    if (!orgId) return;
+    setWithdrawing(true);
+    setOutcome(null);
+    try {
+      const r = await withdrawAcknowledgement(orgId);
+      // The notice is missing again: shown again later (next start / sign-in), not right now.
+      suppressAutoPrompt();
+      await forgetDismissed();
+      const cur = useTrackingSetup.getState().status;
+      if (cur && cur.orgId === orgId) {
+        const missing = cur.missing.includes("notice") ? cur.missing : [...cur.missing, "notice" as const];
+        useTrackingSetup.setState({ status: { ...cur, acknowledgedVersion: null, missing, signature: signatureOf(orgId, cur, missing) } });
+      }
+      if (r.sent) setOutcome({ tone: "success", text: t("tracking.withdrawDone") });
+      else if (r.error instanceof ApiError && r.error.status === 0) setOutcome({ tone: "primary", text: t("tracking.withdrawPending") });
+      else setOutcome({ tone: "danger", text: `${errorText(r.error, t)} ${t("tracking.withdrawPending")}` });
+    } catch (e) {
+      setOutcome({ tone: "danger", text: errorText(e, t) });
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+  const confirmWithdraw = () => {
+    if (Platform.OS === "web") {
+      if (globalThis.confirm?.(`${t("tracking.withdrawTitle")}\n\n${t("tracking.withdrawBody")}`)) void withdraw();
+      return;
+    }
+    Alert.alert(t("tracking.withdrawTitle"), t("tracking.withdrawBody"), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("tracking.withdrawConfirm"), style: "destructive", onPress: () => void withdraw() },
+    ]);
+  };
   const text =
     s.state === "active"
       ? t("tracking.stateActive", { n: s.buffered })
@@ -124,6 +200,9 @@ export function TrackingSettingsSection({ onReadNotice = openTrackingNotice }: {
       )}
       {s.state === "permission_denied" && !setup?.missing.length && <Button label={t("tracking.openSettings")} variant="secondary" icon="settings-outline" onPress={() => void Linking.openSettings()} />}
       {(s.state === "notice_required" || s.state === "active") && <Button label={t("tracking.noticeTitle")} variant="ghost" onPress={onReadNotice} />}
+      {s.withdrawalPending && !outcome && <Text style={[ty.small, { color: c.textMuted }]}>{t("tracking.withdrawPending")}</Text>}
+      {outcome && <Banner text={outcome.text} tone={outcome.tone} />}
+      {canWithdraw && <Button label={t("tracking.withdraw")} variant="secondary" icon="stop-circle-outline" loading={withdrawing} onPress={confirmWithdraw} testID="tracking-withdraw" />}
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BATCH_SIZE, MAX_BUFFERED, UploadRefused, appendFixes, bufferedCount, clearBuffer, flushBuffer, type Fix } from "../src/lib/trackingBuffer";
+import { BATCH_SIZE, BUFFER_KEY, CHUNK_SIZE, INDEX_KEY, MAX_BUFFERED, UploadRefused, appendFixes, bufferedCount, clearBuffer, flushBuffer, type Fix } from "../src/lib/trackingBuffer";
 
 let n = 0;
 const fix = (tourId = "t1", extra: Partial<Fix> = {}): Fix => ({
@@ -96,5 +96,98 @@ describe("GPS offline buffer", () => {
   it("serialises concurrent writers (background task + app)", async () => {
     await Promise.all(Array.from({ length: 20 }, () => appendFixes([fix()])));
     expect(await bufferedCount()).toBe(20);
+  });
+
+  it("stores fixes in small chunks (no single big value) and reads them back in order", async () => {
+    const all = Array.from({ length: CHUNK_SIZE * 2 + 17 }, () => fix());
+    // Several appends of different sizes, as the background task delivers them.
+    await appendFixes(all.slice(0, 3));
+    await appendFixes(all.slice(3, 300));
+    await appendFixes(all.slice(300));
+    const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith("turvio-gps-buffer-v2:chunk:"));
+    expect(keys).toHaveLength(3);
+    for (const k of keys) expect((JSON.parse((await AsyncStorage.getItem(k))!) as Fix[]).length).toBeLessThanOrEqual(CHUNK_SIZE);
+    expect(await AsyncStorage.getItem(BUFFER_KEY)).toBeNull();
+    expect(await bufferedCount()).toBe(all.length);
+    const ids: string[] = [];
+    await flushBuffer(async (_o, _t, points) => {
+      ids.push(...points.map((p) => p.id));
+      return { accepted: points.length, duplicates: 0, rejected: [] };
+    });
+    expect(ids).toEqual(all.map((f) => f.id));
+    expect((await AsyncStorage.getAllKeys()).filter((k) => k.includes(":chunk:"))).toHaveLength(0);
+  });
+
+  it("caps at 3000 fixes, dropping the oldest (also across chunk borders)", async () => {
+    expect(MAX_BUFFERED).toBe(3000);
+    const all = Array.from({ length: MAX_BUFFERED + 123 }, () => fix());
+    for (let i = 0; i < all.length; i += 700) await appendFixes(all.slice(i, i + 700));
+    expect(await bufferedCount()).toBe(MAX_BUFFERED);
+    const ids: string[] = [];
+    await flushBuffer(async (_o, _t, points) => {
+      ids.push(...points.map((p) => p.id));
+      return { accepted: points.length, duplicates: 0, rejected: [] };
+    });
+    expect(ids).toEqual(all.slice(123).map((f) => f.id));
+  });
+
+  it("migrates a buffer of the old single-blob format after an app update (nothing lost)", async () => {
+    await AsyncStorage.clear(); // fresh install of the old version: no v2 index yet
+    const old = Array.from({ length: 612 }, () => fix());
+    await AsyncStorage.setItem(BUFFER_KEY, JSON.stringify(old));
+    expect(await bufferedCount()).toBe(612);
+    expect(await AsyncStorage.getItem(BUFFER_KEY)).toBeNull();
+    expect(await AsyncStorage.getItem(INDEX_KEY)).not.toBeNull();
+    const extra = fix();
+    await appendFixes([extra]);
+    const ids: string[] = [];
+    await flushBuffer(async (_o, _t, points) => {
+      ids.push(...points.map((p) => p.id));
+      return { accepted: points.length, duplicates: 0, rejected: [] };
+    });
+    expect(ids).toEqual([...old, extra].map((f) => f.id));
+  });
+
+  it("migrates an oversized old buffer down to the cap (newest kept) and survives a corrupt one", async () => {
+    await AsyncStorage.clear();
+    const old = Array.from({ length: MAX_BUFFERED + 10 }, () => fix());
+    await AsyncStorage.setItem(BUFFER_KEY, JSON.stringify(old));
+    expect(await bufferedCount()).toBe(MAX_BUFFERED);
+    await AsyncStorage.clear();
+    await AsyncStorage.setItem(BUFFER_KEY, "{not json");
+    expect(await bufferedCount()).toBe(0);
+    await appendFixes([fix()]);
+    expect(await bufferedCount()).toBe(1);
+  });
+
+  it("appends during an upload are neither lost nor sent twice (serialised access)", async () => {
+    await appendFixes(Array.from({ length: 450 }, () => fix()));
+    const sent: string[] = [];
+    const late = Array.from({ length: 30 }, () => fix());
+    const flushing = flushBuffer(async (_o, _t, points) => {
+      sent.push(...points.map((p) => p.id));
+      await new Promise((r) => setTimeout(r, 1));
+      return { accepted: points.length, duplicates: 0, rejected: [] };
+    });
+    const appending = Promise.all(late.map((f) => appendFixes([f])));
+    const cleared = clearBuffer((f) => f.id === "nope");
+    await Promise.all([flushing, appending, cleared]);
+    expect(sent).toHaveLength(450);
+    expect(new Set(sent).size).toBe(450);
+    expect(await bufferedCount()).toBe(30);
+    const rest: string[] = [];
+    await flushBuffer(async (_o, _t, points) => {
+      rest.push(...points.map((p) => p.id));
+      return { accepted: points.length, duplicates: 0, rejected: [] };
+    });
+    expect(rest).toEqual(late.map((f) => f.id));
+  });
+
+  it("clears with a filter (e.g. one company's positions) and completely", async () => {
+    await appendFixes([fix("t1"), fix("t2", { orgId: "other" }), fix("t1")]);
+    await clearBuffer((f) => f.orgId === "other");
+    expect(await bufferedCount()).toBe(2);
+    await clearBuffer();
+    expect(await bufferedCount()).toBe(0);
   });
 });
