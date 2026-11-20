@@ -78,7 +78,9 @@ export default function Loader() {
     void fontsReady;
 
     const tick = () => {
-      if (done) return;
+      // React detaches refs before it runs this effect's cleanup: a frame can
+      // land in between when the visitor leaves the page during the intro
+      if (done || !root.current) return;
       const elapsed = performance.now() - t0;
       const keys = [...REQUIRED, "fonts"];
       const real = keys.filter((k) => stage.ready[k]).length / keys.length;
@@ -103,6 +105,7 @@ export default function Loader() {
     requestAnimationFrame(tick);
 
     function exit() {
+      if (!root.current || !plate.current) return;
       const brand = document.getElementById("nav-brand");
       const tl = gsap.timeline({
         defaults: { ease: "expo.inOut" },
@@ -171,6 +174,8 @@ export default function Loader() {
     return () => {
       done = true;
       ctx.revert();
+      // leaving during the intro must not leave the next page locked
+      lockScroll(false);
     };
   }, []);
 
