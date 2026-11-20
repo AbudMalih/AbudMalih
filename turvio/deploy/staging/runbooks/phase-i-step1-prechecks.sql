@@ -42,12 +42,27 @@ select organization_id, driver_id, tour_date, count(*) from public.tours
  where driver_id is not null and status <> 'completed' and origin = 'dispatch'
  group by 1, 2, 3 having count(*) > 1;
 
-\echo '== 7. RLS state (expect tables_without_rls = 0, anon_policies = 0, unpinned_definer_functions = 0)'
+\echo '== 7. RLS state (expect tables_without_rls = 0, anon_policies = 0, no unpinned definer function listed, unpinned_definer_functions = 0)'
 select count(*) filter (where not c.relrowsecurity) as tables_without_rls, count(*) as public_tables
   from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r';
 select count(*) as anon_policies from pg_policies where schemaname = 'public' and roles && array['anon','public']::name[];
-select count(*) as unpinned_definer_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace
- where n.nspname in ('app','public') and p.prosecdef and not coalesce(p.proconfig,'{}') @> array['search_path=""'];
+-- A SECURITY DEFINER function counts as pinned when it sets search_path explicitly to '' (TURVIO
+-- migrations) or to pg_catalog. Documented exception: public.rls_auto_enable() – created on the
+-- Supabase project outside the TURVIO migrations, not executable by anon/authenticated (Phase I
+-- step 1 reconciliation, R1). Exactly this signature only; anything else is listed and counted.
+select format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) as unpinned_definer_function,
+       coalesce(p.proconfig::text, 'none') as settings
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname in ('app','public') and p.prosecdef
+   and not coalesce(p.proconfig,'{}') && array['search_path=""', 'search_path=pg_catalog']
+   and p.oid is distinct from to_regprocedure('public.rls_auto_enable()')
+ order by 1;
+select count(*) filter (where not pinned and not exception) as unpinned_definer_functions,
+       count(*) filter (where exception) as documented_exceptions
+  from (select coalesce(p.proconfig, '{}') && array['search_path=""', 'search_path=pg_catalog'] as pinned,
+               coalesce(p.oid = to_regprocedure('public.rls_auto_enable()'), false) as exception
+          from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+         where n.nspname in ('app','public') and p.prosecdef) d;
 select has_schema_privilege('anon', 'app', 'USAGE') as anon_can_use_app_schema;
 
 \echo '== 8. data fingerprint (keep this output: it must be identical after the migrations)'

@@ -20,9 +20,26 @@ select c.relname, c.relrowsecurity from pg_class c join pg_namespace n on n.oid 
 select count(*) as anon_grants from information_schema.role_table_grants
  where table_schema = 'public' and table_name in ('tour_deletions', 'user_preferences') and grantee in ('anon', 'PUBLIC');
 
-\echo '== V5. SECURITY DEFINER functions without search_path='''' (expect only public.rls_auto_enable(), pre-existing)'
-select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
- where n.nspname in ('app', 'public') and p.prosecdef and not coalesce(p.proconfig, '{}') @> array['search_path=""'];
+\echo '== V5. SECURITY DEFINER search_path (expect no function listed; unpinned_definer_functions = 0, documented_exceptions = 1; exception executable by anon / authenticated = f | f)'
+-- Same rule as phase-i-step1-prechecks.sql §7: pinned = search_path '' or pg_catalog. Documented
+-- exception: exactly public.rls_auto_enable() (outside the TURVIO migrations), which must not be
+-- executable by anon or authenticated. Every other unpinned definer function is listed and counted.
+select format('%I.%I(%s)', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid)) as unpinned_definer_function,
+       coalesce(p.proconfig::text, 'none') as settings
+  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname in ('app', 'public') and p.prosecdef
+   and not coalesce(p.proconfig, '{}') && array['search_path=""', 'search_path=pg_catalog']
+   and p.oid is distinct from to_regprocedure('public.rls_auto_enable()')
+ order by 1;
+select count(*) filter (where not pinned and not exception) as unpinned_definer_functions,
+       count(*) filter (where exception) as documented_exceptions
+  from (select coalesce(p.proconfig, '{}') && array['search_path=""', 'search_path=pg_catalog'] as pinned,
+               coalesce(p.oid = to_regprocedure('public.rls_auto_enable()'), false) as exception
+          from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+         where n.nspname in ('app', 'public') and p.prosecdef) d;
+select case when e is null then null else has_function_privilege('anon', e, 'EXECUTE') end as exception_anon_execute,
+       case when e is null then null else has_function_privilege('authenticated', e, 'EXECUTE') end as exception_authenticated_execute
+  from (select to_regprocedure('public.rls_auto_enable()') as e) x;
 
 \echo '== V6. lifecycle objects (expect 5 functions, 2 triggers)'
 select count(*) as lifecycle_functions from pg_proc p join pg_namespace n on n.oid = p.pronamespace

@@ -6,7 +6,7 @@ SSH key `~/.ssh/turvio_claude_deploy`). Passwords are typed at the hidden prompt
 
 | Item | Value |
 |---|---|
-| Release SHA | the approved commit on `claude/tender-lovelace-4odw0l` (40 characters, given in the approval) |
+| Release SHA (application, §4) | `c9de80951877d2d22ce2a7c825e126cd6bd6793a` (approved) |
 | Running release (application rollback target) | `02ce796e45afe62dbb2c0aaaab3be7742944c276` |
 | Database before | PostgreSQL 17, latest migration `20261118000100` |
 | Database after | latest migration `20261119000500` (0100–0300 lifecycle/settings, 0400 failure-reason grant, 0500 platform-admin functions) |
@@ -16,12 +16,15 @@ Shorthands used below (type them once in the terminal):
 ```
 PSQL='docker run --rm -it -v '"$PWD"'/turvio:/turvio:ro -w / postgres:17 psql "host=aws-1-eu-central-1.pooler.supabase.com port=5432 dbname=postgres user=postgres.xwryomkbrkwjytwofgcu sslmode=require" -X -v ON_ERROR_STOP=1'
 VPS='ssh -i ~/.ssh/turvio_claude_deploy turviodeploy@<vps>'
-SHA=<approved 40-character release SHA>
+SHA=c9de80951877d2d22ce2a7c825e126cd6bd6793a
 RB=/turvio/deploy/staging/runbooks
 ```
 
 ## 0. Ready (read-only, 2 min)
-1. `git -C turvio fetch && git -C turvio checkout $SHA` – the runbook files come from the release itself.
+1. `git -C turvio fetch origin claude/tender-lovelace-4odw0l && git -C turvio checkout --detach origin/claude/tender-lovelace-4odw0l`
+   – the database runbooks and checks come from the branch head (it contains the corrected
+   SECURITY DEFINER checks); `git -C turvio merge-base --is-ancestor $SHA HEAD` must succeed. The
+   application release deployed in §4 stays `$SHA`.
 2. Nobody is using staging (QA paused, no driver on a tour).
 3. `$VPS /opt/turvio/bin/deploy --status` → current `02ce796e…`, all containers healthy.
 4. If staging was used since the step 1 backup: take a fresh backup and verify it (step 1, part B).
