@@ -183,6 +183,7 @@ export function registerSettingsRoutes(app: FastifyInstance, { deps, guards }: R
           address_street: string | null; address_postal_code: string | null; address_city: string | null; address_country: string; website: string | null;
           tracking_mode: string; tracking_interval_seconds: number; tracking_notice_version: number; location_retention_days: number; tracking_enabled_at: Date | null;
           proof_retention_days: number;
+          tracking_notice_controller: string | null; tracking_notice_contact: string | null; tracking_notice_legal_basis: string | null; tracking_notice_text: string | null;
         }>(`select * from organizations where id = $1`, [orgId])
       ).rows[0];
       if (!o) throw new ApiError(404, "not_found", "Organization not found");
@@ -220,6 +221,13 @@ export function registerSettingsRoutes(app: FastifyInstance, { deps, guards }: R
         pilots: data.counts.pilots,
         pilotLimit: PILOT_MAX,
         acknowledgedCurrentNotice: data.counts.acknowledged,
+        /** The company's part of the tracking notice (Settings → live tracking). */
+        notice: {
+          controller: data.o.tracking_notice_controller,
+          contact: data.o.tracking_notice_contact,
+          legalBasis: data.o.tracking_notice_legal_basis,
+          text: data.o.tracking_notice_text,
+        },
       },
       proofRetentionDays: data.o.proof_retention_days,
       driverRules: data.driverRules,
