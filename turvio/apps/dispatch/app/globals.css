@@ -20,6 +20,34 @@
 .leaflet-tooltip-left::before { border-left-color: var(--raised); }
 .leaflet-tooltip-right::before { border-right-color: var(--raised); }
 
+/* Live vehicle markers (lib/live-layer.ts): colours from theme tokens, so they follow [data-theme].
+   live = cobalt, delayed = amber, no signal = muted outline on the surface colour. */
+:root {
+  --veh-live: var(--cobalt); --veh-live-fg: #fff; --veh-ring: rgba(255, 255, 255, 0.85);
+  --veh-delayed: var(--amber); --veh-delayed-fg: #18191c; /* dark (default): light amber – dark glyph */
+  --veh-offline: var(--surface); --veh-offline-fg: var(--text-3); --veh-offline-ring: var(--text-3);
+  --veh-halo: color-mix(in srgb, var(--cobalt) 35%, transparent); --veh-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+}
+/* Light (same selectors as the design tokens): dark amber – white glyph, white ring, softer shadow. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) { --veh-delayed-fg: #fff; --veh-ring: #fff; --veh-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); }
+}
+:root[data-theme="light"] { --veh-delayed-fg: #fff; --veh-ring: #fff; --veh-shadow: 0 3px 10px rgba(0, 0, 0, 0.3); }
+.turvio-veh { position: relative; }
+.turvio-veh__body {
+  width: 100%; height: 100%; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+  background: var(--veh-live); color: var(--veh-live-fg); border: 3px solid var(--veh-ring); box-shadow: var(--veh-shadow);
+  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
+}
+.turvio-veh[data-state="delayed"] .turvio-veh__body { background: var(--veh-delayed); color: var(--veh-delayed-fg); }
+.turvio-veh[data-state="offline"] .turvio-veh__body { background: var(--veh-offline); color: var(--veh-offline-fg); border: 2px dashed var(--veh-offline-ring); opacity: 0.85; }
+.turvio-veh[data-selected] .turvio-veh__body { box-shadow: 0 0 0 5px var(--veh-halo), var(--veh-shadow); }
+.turvio-veh__arrow { position: absolute; inset: -9px; pointer-events: none; }
+.turvio-veh__arrow > div { margin: 0 auto; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 9px solid var(--veh-live); }
+.turvio-veh-accuracy--live { stroke: var(--veh-live); fill: var(--veh-live); }
+.turvio-veh-accuracy--delayed { stroke: var(--veh-delayed); fill: var(--veh-delayed); }
+@media (prefers-reduced-motion: reduce) { .turvio-veh__body { transition: none; } }
+
 /* Base map tiles (OpenStreetMap) tuned to the NEXT themes: obsidian night map in dark mode, warm
    porcelain in light mode – same tile source, styled client-side. */
 .turvio-tiles { filter: saturate(0.55) sepia(0.08) brightness(1.02) contrast(0.92); }

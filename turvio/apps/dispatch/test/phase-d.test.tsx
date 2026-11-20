@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AnalyticsView } from "../components/AnalyticsView";
 import { SettingsView } from "../components/SettingsView";
-import { TrackingStatusPanel, fleetStateOf } from "../components/TrackingStatusPanel";
+import { TrackingStatusPanel, fleetStateOf, trackingThresholds } from "../components/TrackingStatusPanel";
 import { TooltipProvider } from "@turvio/web-ui/ds";
 import { DispatchProvider, type SessionInfo } from "../lib/store";
 import type { DriverTracking } from "../lib/settings";
@@ -219,8 +219,13 @@ describe("Live Fleet states", () => {
   const onTour = { currentTour: { id: "t", name: "HAN-01", status: "in_progress" } };
   it("a position is live only while fresh – older ones are stale or no signal", () => {
     expect(fleetStateOf(drv({ ...onTour, state: "live", lastPositionAt: new Date(now - 30_000).toISOString() }), now)).toBe("live");
-    // The server may still say "live" for a 100 s old fix; the map rule (90 s) wins: stale.
-    expect(fleetStateOf(drv({ ...onTour, state: "live", lastPositionAt: new Date(now - 100_000).toISOString() }), now)).toBe("stale");
+    // Server thresholds (stale after max(120 s, 3 intervals)): 100 s is live, 130 s is stale.
+    expect(fleetStateOf(drv({ ...onTour, state: "live", lastPositionAt: new Date(now - 100_000).toISOString() }), now)).toBe("live");
+    expect(fleetStateOf(drv({ ...onTour, state: "live", lastPositionAt: new Date(now - 130_000).toISOString() }), now)).toBe("stale");
+    // A longer company interval (60 s: stale after 3, no signal after 10 intervals) moves both limits.
+    const th = trackingThresholds(180);
+    expect(th).toEqual({ staleAfterSeconds: 180, offlineAfterSeconds: 600 });
+    expect(fleetStateOf(drv({ ...onTour, state: "live", lastPositionAt: new Date(now - 400_000).toISOString() }), now, th)).toBe("stale");
     expect(fleetStateOf(drv({ ...onTour, state: "no_recent_position", lastPositionAt: new Date(now - 400_000).toISOString() }), now)).toBe("no_signal");
     expect(fleetStateOf(drv({ ...onTour, state: "no_recent_position", lastPositionAt: null }), now)).toBe("no_signal");
     expect(fleetStateOf(drv({ ...onTour, state: "awaiting_acknowledgement" }), now)).toBe("awaiting_acknowledgement");

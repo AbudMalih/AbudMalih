@@ -23,7 +23,19 @@ export interface CompanySettings {
     address: { street: string | null; postalCode: string | null; city: string | null; country: string };
     website: string | null;
   };
-  tracking: { mode: TrackingMode; intervalSeconds: number; noticeVersion: number; retentionDays: number; enabledAt: string | null; activeDrivers: number; pilots: number; pilotLimit: number; acknowledgedCurrentNotice: number };
+  tracking: {
+    mode: TrackingMode;
+    intervalSeconds: number;
+    noticeVersion: number;
+    retentionDays: number;
+    enabledAt: string | null;
+    activeDrivers: number;
+    pilots: number;
+    pilotLimit: number;
+    acknowledgedCurrentNotice: number;
+    /** The company's part of the tracking notice (optional: older API versions do not send it). */
+    notice?: TrackingNotice;
+  };
   proofRetentionDays: number;
   driverRules: Required<Pick<DriverSettings, "podLocation" | "showRecipientPhone">> & { failureReasons: NonNullable<DriverSettings["failureReasons"]>; customFailureReasons: boolean };
   subscription: { plan: string; planCode: string; status: string } | null;
@@ -33,6 +45,22 @@ export interface CompanySettings {
 }
 
 export type TrackingMode = "off" | "pilot" | "active_tours";
+
+/** The company's part of the driver tracking notice; null = not set. */
+export interface TrackingNotice {
+  controller: string | null;
+  contact: string | null;
+  legalBasis: string | null;
+  text: string | null;
+}
+/** Server limits (PATCH /tracking `notice`). */
+export const NOTICE_MAX: Record<keyof TrackingNotice, number> = { controller: 500, contact: 300, legalBasis: 500, text: 2000 };
+
+/** PATCH body for the notice form: trimmed, empty → null (the server does the same). */
+export function noticePatch(form: Record<keyof TrackingNotice, string>): { notice: TrackingNotice } {
+  const v = (s: string) => (s.trim() === "" ? null : s.trim());
+  return { notice: { controller: v(form.controller), contact: v(form.contact), legalBasis: v(form.legalBasis), text: v(form.text) } };
+}
 export type DriverTrackingState =
   | "disabled"
   | "pilot_not_enabled"
@@ -66,6 +94,8 @@ export interface TrackingDrivers {
   mode: TrackingMode;
   noticeVersion: number;
   staleAfterSeconds: number;
+  /** Server rule; absent on older API versions (then derived, see trackingThresholds). */
+  offlineAfterSeconds?: number;
   pilotLimit: number;
   summary: Partial<Record<DriverTrackingState, number>>;
   drivers: DriverTracking[];
@@ -97,7 +127,7 @@ export const settingsApi = (org: string) => ({
   saveCompany: (p: Record<string, string | null>) => api<void>("PATCH", `/v1/orgs/${org}/settings/company`, p),
   saveDriverRules: (r: DriverSettings) => api<unknown>("PUT", `/v1/orgs/${org}/settings/driver`, r),
   trackingDrivers: () => api<TrackingDrivers>("GET", `/v1/orgs/${org}/tracking/drivers`),
-  setTracking: (b: { mode?: TrackingMode; pilotDriverIds?: string[]; confirmPilotConsent?: true; confirmPrerequisites?: true; newNoticeVersion?: boolean }) =>
+  setTracking: (b: { mode?: TrackingMode; pilotDriverIds?: string[]; confirmPilotConsent?: true; confirmPrerequisites?: true; newNoticeVersion?: boolean; notice?: Partial<TrackingNotice> }) =>
     api<{ mode: TrackingMode; intervalSeconds: number; noticeVersion: number; retentionDays: number }>("PATCH", `/v1/orgs/${org}/tracking`, b),
   setPilots: (driverIds: string[], enabled: boolean) =>
     api<{ changed: number; pilots: number }>("POST", `/v1/orgs/${org}/tracking/pilots`, { driverIds, enabled, ...(enabled ? { confirmPilotConsent: true } : {}) }),

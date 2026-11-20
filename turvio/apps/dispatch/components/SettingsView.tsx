@@ -10,7 +10,7 @@ import { errorMessage } from "../lib/api";
 import { fieldCls } from "../lib/helpers";
 import { LOCALE_NAMES, LOCALES, type Locale } from "../lib/i18n";
 import { useI18n } from "../lib/i18n/client";
-import { TRACKING_STATE, modeLabel, settingsApi, trackingStateExplain, trackingStateLabel, type CompanySettings, type DriverTracking, type Preferences, type TrackingDrivers, type TrackingMode } from "../lib/settings";
+import { NOTICE_MAX, TRACKING_STATE, modeLabel, noticePatch, settingsApi, trackingStateExplain, trackingStateLabel, type CompanySettings, type DriverTracking, type Preferences, type TrackingDrivers, type TrackingMode, type TrackingNotice } from "../lib/settings";
 import { ageLabel } from "../lib/live";
 import { useDispatch } from "../lib/store";
 import { roleLabel } from "./DispatchShell";
@@ -571,6 +571,8 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
         )}
       </Card>
 
+      {admin && <NoticeForm notice={tk.notice} onSaved={refreshAll} />}
+
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3 g:min-h-11 g:gap-x-3 g:py-2">
           <h3 className="text-[15px] font-bold text-ink g:text-[13.5px] g:font-semibold">{t("settings.drivers")}</h3>
@@ -643,6 +645,64 @@ function TrackingSection({ data, onChanged }: { data: CompanySettings; onChanged
         />
       )}
     </div>
+  );
+}
+
+/**
+ * The company's part of the tracking notice (company admins; PATCH /tracking `notice`, second
+ * factor like the tracking switch). A change raises the notice version: drivers acknowledge again.
+ */
+const NOTICE_FIELDS = ["controller", "contact", "legalBasis", "text"] as const;
+function NoticeForm({ notice, onSaved }: { notice?: TrackingNotice; onSaved: () => void }) {
+  const { session } = useDispatch();
+  const { t } = useI18n();
+  const initial = useMemo(
+    () => ({ controller: notice?.controller ?? "", contact: notice?.contact ?? "", legalBasis: notice?.legalBasis ?? "", text: notice?.text ?? "" }),
+    [notice?.controller, notice?.contact, notice?.legalBasis, notice?.text],
+  );
+  const [form, setForm] = useState(initial);
+  useEffect(() => setForm(initial), [initial]);
+  const [confirm, setConfirm] = useState(false);
+  const changed = NOTICE_FIELDS.some((k) => form[k].trim() !== initial[k].trim());
+  const label = (k: (typeof NOTICE_FIELDS)[number]) => t(`settings.noticeField.${k}`);
+  return (
+    <Card className={cn("flex flex-col gap-4 p-5", G_FORM)} data-testid="notice-form">
+      <CardHeader className={cn("-mx-5 -mt-5", G_HEAD)} title={t("settings.noticeFormTitle")} description={t("settings.noticeFormDesc")} />
+      <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2 g:max-w-3xl g:gap-x-4 g:gap-y-3", G_GROUP)}>
+        {(["controller", "contact", "legalBasis"] as const).map((k) => (
+          <label key={k} className={cn(LABEL, k === "controller" && "sm:col-span-2")}>
+            {label(k)}
+            <Input value={form[k]} maxLength={NOTICE_MAX[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} aria-label={label(k)} />
+          </label>
+        ))}
+        <label className={cn(LABEL, "sm:col-span-2")}>
+          {t("settings.noticeField.text")}
+          <textarea className={cn(fieldCls, "h-28 py-2 g:h-24 g:text-ink")} value={form.text} maxLength={NOTICE_MAX.text} onChange={(e) => setForm({ ...form, text: e.target.value })} aria-label={t("settings.noticeField.text")} />
+          <span className="text-2xs font-normal text-muted tabular g:text-[12px]">{t("settings.charsLeft", { n: NOTICE_MAX.text - form.text.length })}</span>
+        </label>
+      </div>
+      <div className={cn("flex flex-wrap items-center gap-3", G_GROUP_T)}>
+        <Button variant="primary" onClick={() => setConfirm(true)} disabled={!changed}>
+          {t("settings.noticeSave")}
+        </Button>
+        <span className="text-2xs text-warning-ink g:text-[12px]" role="note">
+          {changed ? t("settings.noticeReack") : t("settings.noticeUnchanged")}
+        </span>
+      </div>
+      {confirm && (
+        <SimpleConfirm
+          title={t("settings.noticeSaveTitle")}
+          body={t("settings.noticeSaveBody")}
+          label={t("settings.noticeSaveLabel")}
+          onClose={() => setConfirm(false)}
+          run={async () => {
+            const r = await settingsApi(session.organizationId).setTracking(noticePatch(form));
+            toast.success(t("settings.noticeSaved", { version: r.noticeVersion }));
+            onSaved();
+          }}
+        />
+      )}
+    </Card>
   );
 }
 

@@ -12,7 +12,7 @@ import { tourColor } from "../lib/helpers";
 import { useLiveFleet, type LiveVehicle } from "../lib/live";
 import { routeKey, useRoadRoute } from "../lib/road";
 import { useDispatch } from "../lib/store";
-import { LiveFleetList, LiveVehiclePanel } from "./LiveFleet";
+import { LiveFleetList, LiveVehiclePanel, UnavailableDriverPanel } from "./LiveFleet";
 import { TrackingStatusPanel } from "./TrackingStatusPanel";
 import { OpsSummary } from "./OpsSummary";
 import { PickupStateBadge, deadlineLabel } from "./StatusBadge";
@@ -54,7 +54,7 @@ function Overview({ live, onSelectVehicle }: { live: ReturnType<typeof useLiveFl
         <MousePointerClick className="mt-0.5 size-4 shrink-0 text-subtle g:size-[15px]" />
         {t("map.overviewHint")}
       </div>
-      {live.allowed && <LiveFleetList vehicles={live.vehicles} serverNow={live.serverNow} onSelect={onSelectVehicle} />}
+      {live.allowed && <LiveFleetList vehicles={live.vehicles} unavailable={live.unavailable} serverNow={live.serverNow} thresholds={live.thresholds} onSelect={onSelectVehicle} onSelectTour={selectTour} />}
       <TrackingStatusPanel />
       {delayed.length > 0 && (
         <section>
@@ -125,7 +125,10 @@ export function MapWorkspace() {
   const [fitRequest, setFitRequest] = useState(0);
   const live = useLiveFleet();
   const [focus, setFocus] = useState<{ lat: number; lng: number; n: number } | null>(null);
-  const liveOfSelected = live.vehicles.find((v) => v.tourId === selectedTourId) ?? null;
+  // Only the selected depot's vehicles (the hook asks the server for that depot and filters again).
+  const vehicles = d.depotId ? live.vehicles.filter((v) => v.depotId === d.depotId) : live.vehicles;
+  const liveOfSelected = vehicles.find((v) => v.tourId === selectedTourId) ?? null;
+  const unavailableOfSelected = liveOfSelected ? null : (live.unavailable.find((u) => u.tourId === selectedTourId) ?? null);
   const focusVehicle = (v: LiveVehicle) => setFocus((f) => ({ lat: v.position.lat, lng: v.position.lng, n: (f?.n ?? 0) + 1 }));
   const selectVehicle = (v: LiveVehicle) => {
     selectTour(v.tourId);
@@ -156,8 +159,9 @@ export function MapWorkspace() {
       onSelectStop={(stopId, tourId) => selectStop(stopId, tourId)}
       fitRequest={fitRequest}
       road={road?.source === "osrm" && road.geometry && selectedTourId ? { tourId: selectedTourId, geometry: road.geometry } : null}
-      vehicles={live.allowed ? live.vehicles : undefined}
+      vehicles={live.allowed ? vehicles : undefined}
       serverNow={live.serverNow}
+      liveThresholds={live.thresholds}
       selectedDriverId={liveOfSelected?.driverId ?? null}
       onSelectVehicle={selectVehicle}
       focus={focus}
@@ -182,7 +186,8 @@ export function MapWorkspace() {
     <div className="min-h-0 flex-1 overflow-y-auto p-4">
       {selected ? (
         <div className="flex flex-col gap-4">
-          {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
+          {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} thresholds={live.thresholds} onFocus={() => focusVehicle(liveOfSelected)} />}
+              {unavailableOfSelected && <UnavailableDriverPanel u={unavailableOfSelected} />}
           <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
         </div>
       ) : (
@@ -342,7 +347,8 @@ export function MapWorkspace() {
         >
           {selected && (
             <div className="flex flex-col gap-4">
-              {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} onFocus={() => focusVehicle(liveOfSelected)} />}
+              {liveOfSelected && <LiveVehiclePanel v={liveOfSelected} serverNow={live.serverNow} thresholds={live.thresholds} onFocus={() => focusVehicle(liveOfSelected)} />}
+              {unavailableOfSelected && <UnavailableDriverPanel u={unavailableOfSelected} />}
               <TourDetail summary={selected} onFit={() => setFitRequest((n) => n + 1)} />
             </div>
           )}

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EN_T, type TFunction } from "../lib/i18n";
 import { useT } from "../lib/i18n/client";
-import { ageLabel, freshnessOf } from "../lib/live";
+import { FALLBACK_THRESHOLDS, ageLabel, freshnessOf, type FreshnessThresholds } from "../lib/live";
 import { modeLabel, settingsApi, type DriverTracking, type TrackingDrivers } from "../lib/settings";
 import { useDispatch } from "../lib/store";
 
@@ -32,8 +32,18 @@ export const FLEET_STATE: Record<FleetState, { dot: string; text: string }> = {
 export const fleetStateLabel = (s: FleetState, t: TFunction = EN_T) => t(`fleet.state.${s}`);
 export const fleetStateExplain = (s: FleetState, t: TFunction = EN_T) => t(`fleet.explain.${s}`);
 
-/** Map-consistent state of one driver (positions: 90 s live, 5 min stale). */
-export function fleetStateOf(d: DriverTracking, serverNowMs: number): FleetState {
+/**
+ * Thresholds for GET /tracking/drivers: `staleAfterSeconds` and `offlineAfterSeconds` from the
+ * server (same rule as /fleet/live). Older API versions without `offlineAfterSeconds`: derived.
+ */
+export function trackingThresholds(staleAfterSeconds: number, offlineAfterSeconds?: number): FreshnessThresholds {
+  if (offlineAfterSeconds && offlineAfterSeconds > staleAfterSeconds) return { staleAfterSeconds, offlineAfterSeconds };
+  const interval = staleAfterSeconds > 120 ? staleAfterSeconds / 3 : 0;
+  return { staleAfterSeconds, offlineAfterSeconds: Math.max(300, 10 * interval) };
+}
+
+/** Map-consistent state of one driver (server thresholds, server clock). */
+export function fleetStateOf(d: DriverTracking, serverNowMs: number, th: FreshnessThresholds = FALLBACK_THRESHOLDS): FleetState {
   switch (d.state) {
     case "disabled":
     case "pilot_not_enabled":
@@ -45,7 +55,7 @@ export function fleetStateOf(d: DriverTracking, serverNowMs: number): FleetState
       return d.state;
     default: {
       if (!d.lastPositionAt) return "no_signal";
-      const f = freshnessOf(d.lastPositionAt, serverNowMs).state;
+      const f = freshnessOf(d.lastPositionAt, serverNowMs, th).state;
       return f === "live" ? "live" : f === "delayed" ? "stale" : "no_signal";
     }
   }
@@ -87,9 +97,10 @@ export function TrackingStatusPanel() {
   const rows = useMemo(() => {
     if (!data) return [];
     const serverNow = now + offset.current;
+    const th = trackingThresholds(data.staleAfterSeconds, data.offlineAfterSeconds);
     return data.drivers
       .filter((d) => d.currentTour)
-      .map((d) => ({ d, state: fleetStateOf(d, serverNow), age: d.lastPositionAt ? freshnessOf(d.lastPositionAt, serverNow).ageSeconds : null }))
+      .map((d) => ({ d, state: fleetStateOf(d, serverNow, th), age: d.lastPositionAt ? freshnessOf(d.lastPositionAt, serverNow, th).ageSeconds : null }))
       .sort((a, b) => ORDER.indexOf(b.state) - ORDER.indexOf(a.state) || a.d.name.localeCompare(b.d.name));
   }, [data, now]);
   if (!allowed || failed) return null;

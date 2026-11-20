@@ -191,10 +191,11 @@ describe("today 10:00: one figure per tour in every view", () => {
         position: { lat: 52.38, lng: 9.74, accuracyMeters: 5, speedMps: 0, headingDeg: null },
         recordedAt: "2026-11-10T09:59:50.000Z",
         receivedAt: "2026-11-10T09:59:51.000Z",
+        positionAt: "2026-11-10T09:59:51.000Z",
         progress: { done: 1, remaining: 1 },
         nextStop: { id: next.id, sequence: next.sequence, lat: 52.38, lng: 9.74, name: null, street: "Teststraße", houseNumber: "1", city: "Hannover", twEnd: null },
       };
-      const { unmount } = wrap(<LiveVehiclePanel v={v} serverNow={Date.parse("2026-11-10T10:00:00Z")} onFocus={() => {}} />, data);
+      const { unmount } = wrap(<LiveVehiclePanel v={v} serverNow={Date.parse("2026-11-10T10:00:00Z")} thresholds={{ staleAfterSeconds: 120, offlineAfterSeconds: 300 }} onFocus={() => {}} />, data);
       const live = screen.getByTestId("live-eta").textContent!;
       expect(live).toContain(`Next stop ETA ${formatClock(s.timeline.projections.get(next.id)!.etaMinute)}`);
       expect(live).toContain(finishValue(s.timeline.projection));

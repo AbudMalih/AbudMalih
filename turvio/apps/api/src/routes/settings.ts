@@ -321,7 +321,7 @@ export function registerSettingsRoutes(app: FastifyInstance, { deps, guards }: R
     }));
     const byState: Record<string, number> = {};
     for (const d of drivers) byState[d.state] = (byState[d.state] ?? 0) + 1;
-    return { serverTime: new Date().toISOString(), mode: o.tracking_mode, noticeVersion: o.tracking_notice_version, staleAfterSeconds: staleSeconds, pilotLimit: PILOT_MAX, summary: byState, drivers };
+    return { serverTime: new Date().toISOString(), mode: o.tracking_mode, noticeVersion: o.tracking_notice_version, staleAfterSeconds: staleSeconds, offlineAfterSeconds: Math.max(300, 10 * o.tracking_interval_seconds), pilotLimit: PILOT_MAX, summary: byState, drivers };
   });
 
   /** Switch pilot tracking on or off for several drivers (company admin, second factor). */

@@ -35,6 +35,9 @@ export interface SessionInfo {
 
 export type LiveState = "connecting" | "live" | "offline";
 
+/** A live-position event from the shared stream: the tour whose position changed (undefined = refetch everything). */
+export type PositionListener = (tourId: string | undefined) => void;
+
 export interface OptimizeMeta {
   engine: string;
   matrixSource: string;
@@ -62,6 +65,11 @@ export interface OptimizeOutcome {
 interface DispatchState {
   /** Increments on every live-position event (server-sent). */
   positionTick: number;
+  /**
+   * Subscribe to live-position events of the tab's one shared event stream (no second
+   * EventSource). Returns the unsubscribe function.
+   */
+  onPosition: (listener: PositionListener) => () => void;
   session: SessionInfo;
   /** Everything the user may see for the selected date (scoped by the database). */
   scoped: DispatchDataset;
@@ -214,28 +222,63 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     [reload],
   );
 
-  // Live updates: server-sent events from the API (Postgres notifications), polling as fallback.
+  // Live updates: ONE server-sent event stream per tab (API, Postgres notifications), polling as
+  // fallback. The server refuses more than a few streams per user (429): a refused or closed stream
+  // is retried with a growing pause (1 → 5 min), never in a tight loop; meanwhile views poll.
+  const positionListeners = useRef(new Set<PositionListener>());
+  const onPosition = useCallback((listener: PositionListener) => {
+    positionListeners.current.add(listener);
+    return () => void positionListeners.current.delete(listener);
+  }, []);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    let retryDelay = 60_000;
+    let closed = false;
     const scheduleReload = () => {
       clearTimeout(timer);
       timer = setTimeout(() => void reload().catch(() => undefined), 350);
     };
     let es: EventSource | null = null;
-    if (typeof EventSource !== "undefined") {
+    const connect = () => {
+      if (closed) return;
       es = new EventSource(`/api/turvio/v1/orgs/${org}/events`);
-      es.addEventListener("ready", () => setLive("live"));
+      es.addEventListener("ready", () => {
+        retryDelay = 60_000;
+        setLive("live");
+      });
       es.addEventListener("change", scheduleReload);
-      es.addEventListener("position", () => {
+      es.addEventListener("position", (e) => {
+        let tour: string | undefined;
+        try {
+          const d = JSON.parse((e as MessageEvent).data ?? "{}") as { tour?: unknown };
+          tour = typeof d.tour === "string" ? d.tour : undefined;
+        } catch {
+          tour = undefined;
+        }
         setPositionTick((n) => n + 1);
+        for (const l of positionListeners.current) l(tour);
         // Live-position ETAs come with the dataset: refresh it, at most every 30 s.
         if (Date.now() - lastReload.current > 30_000) scheduleReload();
       });
-      es.onerror = () => setLive("offline");
-    } else setLive("offline");
+      es.onerror = () => {
+        setLive("offline");
+        // CONNECTING: the browser reconnects by itself. CLOSED (e.g. 429 too many streams): try later.
+        if (es && es.readyState === 2) {
+          es.close();
+          clearTimeout(retry);
+          retry = setTimeout(connect, retryDelay);
+          retryDelay = Math.min(retryDelay * 2, 5 * 60_000);
+        }
+      };
+    };
+    if (typeof EventSource !== "undefined") connect();
+    else setLive("offline");
     const poll = setInterval(() => void reload().catch(() => undefined), 60_000);
     return () => {
+      closed = true;
       es?.close();
+      clearTimeout(retry);
       clearInterval(poll);
       clearTimeout(timer);
       clearTimeout(pendingRetry.current);
@@ -287,6 +330,7 @@ export function DispatchProvider({ base: initial, session, children }: { base: D
     loading,
     live,
     positionTick,
+    onPosition,
     lastLoadedAt,
     reload,
     selectedTourId,
