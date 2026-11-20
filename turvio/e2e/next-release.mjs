@@ -216,6 +216,57 @@ await step("Driver API: account deletion request is accepted or clearly unavaila
   assert.ok([202, 503].includes(r.status), `status ${r.status}`);
 });
 
+// ------------------------------------------------------------------ Live GPS (stabilization sprint)
+await step("Live GPS: pilot driver's position appears on the Hannover map only, marker reused when it moves", async () => {
+  const lenaTok = await token("lena.hoffmann@jarbou.test");
+  const drivers = (await api(owner, "GET", `/v1/orgs/${org}/drivers`)).json;
+  const lenaId = drivers.find((d) => d.displayName === "Lena Hoffmann").id;
+  assert.equal((await api(owner, "PATCH", `/v1/orgs/${org}/tracking`, { mode: "pilot", pilotDriverIds: [lenaId], confirmPilotConsent: true })).status, 200);
+  assert.equal((await api(lenaTok, "POST", `/v1/orgs/${org}/tracking/notice`)).status, 200);
+  const depot = (await api(owner, "GET", `/v1/orgs/${org}/depots`)).json.find((d) => /Hannover/.test(d.name));
+  // Lena may already have an open tour today (seeded demo day): use it, else create one.
+  let tour = (await api(owner, "GET", `/v1/orgs/${org}/tours?date=${today}`)).json.tours.map((x) => x.tour).find((x) => x.driverId === lenaId && x.status !== "completed" && x.status !== "cancelled");
+  if (!tour) {
+    const t = (await api(owner, "POST", `/v1/orgs/${org}/tours`, { depotId: depot.id, date: today, driverId: lenaId, name: `GPS-${Date.now().toString(36).slice(-4)}` })).json;
+    await api(owner, "POST", `/v1/orgs/${org}/stops`, { tourId: t.id, stops: [{ address: { street: "Teststraße", houseNumber: "1", postalCode: "30159", city: "Hannover" }, location: { lat: 52.37, lng: 9.73 } }] });
+    tour = (await api(owner, "POST", `/v1/orgs/${org}/tours/${t.id}/publish`, { expectedVersion: t.version })).json.tour ?? t;
+  }
+  if (tour.status !== "in_progress") assert.equal((await api(lenaTok, "POST", `/v1/orgs/${org}/tours/${tour.id}/status`, { status: "in_progress" })).status, 200);
+  const send = (lat) => api(lenaTok, "POST", `/v1/orgs/${org}/tours/${tour.id}/locations`, { points: [{ id: crypto.randomUUID(), lat, lng: 9.74, accuracy: 8, speed: 9, heading: 0, recordedAt: new Date().toISOString() }] });
+  assert.equal((await send(52.38)).json.accepted, 1);
+
+  const dctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const d = await watched(dctx, issues, "dispatch-gps");
+  await login(d, DISPATCH, "dispatch.hannover@jarbou.test");
+  await d.goto(`${DISPATCH}/map`, { waitUntil: "networkidle" });
+  const marker = d.locator(".turvio-veh").first();
+  await marker.waitFor({ timeout: 20000 });
+  assert.equal(await marker.getAttribute("data-state"), "live");
+  await d.evaluate(() => { window.__veh = document.querySelector(".turvio-veh")?.closest(".leaflet-marker-icon"); });
+  // A new position arrives over the live stream: same marker element, new place, no reload.
+  await new Promise((r) => setTimeout(r, 2500));
+  assert.equal((await send(52.381)).json.accepted, 1);
+  await d.waitForTimeout(4000);
+  assert.ok(await d.evaluate(() => !!window.__veh && document.contains(window.__veh)), "live marker was rebuilt instead of moved");
+  // Bremen dispatcher: nothing from Hannover.
+  const bctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const b = await watched(bctx, issues, "dispatch-bremen");
+  await login(b, DISPATCH, "dispatch.bremen@jarbou.test");
+  await b.goto(`${DISPATCH}/map`, { waitUntil: "networkidle" });
+  await b.waitForTimeout(2000);
+  assert.equal(await b.locator(".turvio-veh").count(), 0, "Bremen dispatcher sees a Hannover vehicle");
+  await bctx.close();
+  // Pause: the marker disappears, the driver is listed as paused.
+  assert.equal((await api(lenaTok, "POST", `/v1/orgs/${org}/tours/${tour.id}/status`, { status: "paused" })).status, 200);
+  await d.locator(".turvio-veh").waitFor({ state: "detached", timeout: 20000 });
+  await d.getByTestId("live-unavailable").getByText("Paused").first().waitFor({ timeout: 10000 });
+  // Withdrawal (driver): uploads refused afterwards.
+  assert.equal((await api(lenaTok, "POST", `/v1/orgs/${org}/tours/${tour.id}/status`, { status: "in_progress" })).status, 200);
+  assert.equal((await api(lenaTok, "POST", `/v1/orgs/${org}/tracking/notice/withdraw`)).status, 200);
+  assert.equal((await send(52.382)).json.error.code, "tracking_notice_required");
+  await dctx.close();
+});
+
 // ------------------------------------------------------------------ Driver (web build of the same app)
 const DRIVER = process.env.DRIVER_URL ?? "http://localhost:8081";
 await step("Driver: DE/EN/RO/AR with Arabic right-to-left; privacy text, account deletion, appearance", async () => {
