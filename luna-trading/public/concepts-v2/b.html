@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Konzept B · Das Handelsjournal</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+body { background: var(--ivory); color: var(--ink); }
+:root { --rail: 248px; --rule: rgba(18,19,22,.14); }
+
+/* ---------- fixed index rail ---------- */
+.rail { position: fixed; inset: 0 auto 0 0; width: var(--rail); z-index: 40; border-right: 1px solid var(--rule); background: var(--ivory); display: flex; flex-direction: column; padding: 30px 26px; }
+.rail .logo img { width: 150px; height: auto; }
+.rail nav { margin-top: 56px; }
+.rail nav a { display: grid; grid-template-columns: 30px 1fr; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--rule); font-weight: 550; font-size: .98rem; transition: color .3s, padding .5s var(--ease); }
+.rail nav a span { font: 500 .7rem var(--mono); color: var(--gray); }
+.rail nav a:hover { padding-left: 6px; }
+.rail nav a.on { color: var(--red); }
+.rail nav a.on span { color: var(--red); }
+.railFoot { margin-top: auto; display: grid; gap: 14px; }
+.lang { display: flex; gap: 6px; }
+.lang span { flex: 1; text-align: center; padding: 7px 0; border: 1px solid var(--rule); border-radius: 8px; font: 500 .72rem var(--mono); }
+.lang span.on { background: var(--ink); color: var(--ivory); border-color: var(--ink); }
+.btn { display: inline-flex; justify-content: space-between; align-items: center; gap: 12px; height: 48px; padding: 0 18px; border-radius: 10px; background: var(--red); color: #fff; font-weight: 600; font-size: .94rem; }
+.btn.dark { background: var(--ink); }
+.topbar { display: none; }
+
+main { margin-left: var(--rail); }
+.wrap { padding: 0 clamp(24px, 3.4vw, 56px); }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; }
+.rule { border-top: 1px solid var(--ink); }
+.thin { border-top: 1px solid var(--rule); }
+
+/* ---------- masthead hero ---------- */
+.mast { padding-top: 30px; }
+.mastLine { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-bottom: 1px solid var(--ink); color: var(--ink-soft); flex-wrap: wrap; }
+.title { margin: 0; padding: clamp(28px, 4vw, 54px) 0 clamp(24px, 3vw, 40px); font-family: var(--serif); font-weight: 400; font-size: clamp(4rem, 12.6vw, 13.5rem); line-height: .84; letter-spacing: -.035em; }
+.title em { color: var(--red); }
+.cols { border-top: 1px solid var(--ink); padding-top: 26px; }
+.c1 { grid-column: 1 / span 4; }
+.c2 { grid-column: 5 / span 4; border-left: 1px solid var(--rule); padding-left: 24px; }
+.c3 { grid-column: 9 / span 4; }
+.deck { margin: 0; font-size: clamp(1.15rem, 1.5vw, 1.45rem); line-height: 1.45; letter-spacing: -.01em; }
+.deck::first-letter { font-family: var(--serif); font-size: 3.4em; float: left; line-height: .8; margin: .06em .08em 0 0; color: var(--red); }
+.c1 .acts { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
+.lanes { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.lanes caption { text-align: left; padding-bottom: 10px; }
+.lanes td { padding: 10px 0; border-top: 1px solid var(--rule); }
+.lanes td:last-child { text-align: right; font: 500 .72rem var(--mono); letter-spacing: .08em; color: var(--gray); text-transform: uppercase; }
+.arch { margin: 0; }
+.arch img { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 999px 999px 0 0; filter: saturate(.85) contrast(1.04); }
+.arch figcaption, .fig figcaption { margin-top: 10px; font-size: .8rem; color: var(--gray); display: flex; gap: 8px; }
+.arch figcaption b, .fig figcaption b { font: 500 .72rem var(--mono); color: var(--ink); }
+
+/* map figure */
+.fig { margin: 0; padding: 40px 0; }
+.fig img { width: 100%; height: auto; }
+.legend { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 8px; font-size: .85rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: 28px; height: 0; border-top: 3px solid var(--red); vertical-align: middle; margin-right: 8px; }
+.legend i.r { border-top: 2px dashed var(--ink); }
+.legend i.a { border-top: 2px dotted var(--ink); }
+
+/* ---------- section heads ---------- */
+.sec { padding-top: clamp(80px, 12vh, 140px); }
+.shead { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: end; padding-bottom: 26px; border-bottom: 1px solid var(--ink); }
+.shead .no { grid-column: span 2; font: 500 .74rem var(--mono); letter-spacing: .12em; color: var(--red); }
+.shead h2 { grid-column: 3 / span 7; margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(2.6rem, 5.4vw, 5.6rem); line-height: .95; letter-spacing: -.02em; }
+.shead h2 em { color: var(--red); }
+.shead p { grid-column: 10 / span 3; margin: 0; color: var(--ink-soft); }
+
+/* ---------- services index with hover preview ---------- */
+.index { display: grid; grid-template-columns: 1fr minmax(260px, 30%); gap: 40px; }
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows li a { display: grid; grid-template-columns: 70px 1.2fr 1.6fr 40px; gap: 20px; align-items: baseline; padding: 26px 0; border-bottom: 1px solid var(--rule); transition: background .4s, padding .6s var(--ease); }
+.rows li a .n { font: 500 .74rem var(--mono); color: var(--gray); }
+.rows li a h3 { margin: 0; font-size: clamp(1.4rem, 2.4vw, 2.3rem); font-weight: 600; letter-spacing: -.035em; line-height: 1.05; }
+.rows li a p { margin: 0; color: var(--ink-soft); }
+.rows li a .ar { justify-self: end; color: var(--red); transition: transform .5s var(--ease); }
+.rows li a:hover, .rows li a.on { padding-left: 14px; background: linear-gradient(90deg, rgba(201,2,22,.06), transparent 60%); }
+.rows li a:hover .ar, .rows li a.on .ar { transform: translateX(6px); }
+.rows li a:hover h3, .rows li a.on h3 { color: var(--red); }
+.preview { position: sticky; top: 30px; align-self: start; padding-top: 26px; }
+.preview .frame { position: relative; aspect-ratio: 4/5; border-radius: 6px; overflow: hidden; background: var(--ivory-2); }
+.preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.06); transition: opacity .6s, transform 1.2s var(--ease); }
+.preview img.on { opacity: 1; transform: none; }
+.preview .cap { display: flex; justify-content: space-between; margin-top: 10px; font-size: .8rem; color: var(--gray); }
+
+/* ---------- import data table ---------- */
+.modes { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.modes th { text-align: left; font: 500 .7rem var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--gray); padding: 16px 0; border-bottom: 1px solid var(--rule); font-weight: 500; }
+.modes td { padding: 26px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.modes td:first-child { font-family: var(--serif); font-size: clamp(1.8rem, 3vw, 2.8rem); line-height: 1; width: 30%; }
+.modes td:nth-child(2) { font: 500 1rem var(--mono); width: 22%; }
+.modes td:nth-child(3) { color: var(--ink-soft); }
+.note { font-size: .82rem; color: var(--gray); margin-top: 12px; }
+.chain { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 50px; border-top: 1px solid var(--ink); }
+.chain div { padding: 18px 18px 0 0; border-right: 1px solid var(--rule); }
+.chain div:last-child { border-right: 0; }
+.chain b { display: block; font: 500 .72rem var(--mono); color: var(--red); }
+.chain span { display: block; margin-top: 6px; font-size: 1.3rem; font-weight: 600; letter-spacing: -.02em; }
+
+/* ---------- pull quote + story ---------- */
+.story { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; row-gap: 40px; padding-top: 40px; }
+.pq { grid-column: 1 / span 7; margin: 0; font-family: var(--serif); font-size: clamp(2.2rem, 4.4vw, 4.6rem); line-height: 1.02; letter-spacing: -.02em; }
+.pq::before { content: "“"; color: var(--red); }
+.pqBy { grid-column: 1 / span 7; margin: -20px 0 0; }
+.storyLead { grid-column: 9 / span 4; color: var(--ink-soft); margin: 0; align-self: end; }
+.ph { grid-column: span 4; }
+.ph img { width: 100%; aspect-ratio: 3/4; object-fit: cover; filter: grayscale(.25); }
+.ph h3 { margin: 14px 0 4px; font-size: 1.15rem; letter-spacing: -.02em; }
+.ph p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
+
+/* ---------- closing letter ---------- */
+.letter { margin-top: clamp(90px, 14vh, 150px); background: var(--char); color: #eceae4; padding: clamp(70px, 10vh, 120px) clamp(24px, 3.4vw, 56px) 40px; }
+.letter h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(3rem, 8vw, 8.6rem); line-height: .9; letter-spacing: -.03em; max-width: 12ch; }
+.letter h2 em { color: var(--red-on-dark); }
+.mail { display: inline-block; margin-top: 34px; font-size: clamp(1.4rem, 3vw, 2.6rem); font-weight: 600; letter-spacing: -.03em; border-bottom: 2px solid var(--red); }
+.lfoot { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 24px; margin-top: 80px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.18); font-size: .9rem; color: #a6a7ac; }
+.lfoot b { display: block; color: #fff; font: 500 .7rem var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+.lfoot a { display: block; padding: 2px 0; }
+
+@media (max-width: 1000px) {
+  .rail { display: none; }
+  main { margin-left: 0; }
+  .topbar { display: flex; position: sticky; top: 0; z-index: 40; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--ivory); border-bottom: 1px solid var(--rule); }
+  .topbar img { width: 120px; height: auto; }
+  .topbar button { display: inline-flex; gap: 8px; align-items: center; font: 500 .74rem var(--mono); letter-spacing: .12em; border: 1px solid var(--ink); border-radius: 999px; padding: 8px 14px; }
+  .grid, .shead, .story { grid-template-columns: 1fr; }
+  .c1, .c2, .c3, .shead h2, .shead p, .shead .no, .pq, .pqBy, .storyLead, .ph { grid-column: 1 / -1; }
+  .c2 { border-left: 0; padding-left: 0; margin-top: 28px; }
+  .c3 { margin-top: 28px; }
+  .shead { row-gap: 14px; }
+  .index { grid-template-columns: 1fr; }
+  .preview { display: none; }
+  .rows li a { grid-template-columns: 40px 1fr 24px; }
+  .rows li a p { grid-column: 2 / 3; }
+  .modes td:first-child { width: auto; }
+  .modes th:nth-child(3), .modes td:nth-child(3) { display: none; }
+  .chain { grid-template-columns: 1fr 1fr; }
+  .chain div { padding-bottom: 18px; }
+  .lfoot { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="badge">KONZEPT B · DAS HANDELSJOURNAL</div>
+
+<aside class="rail" aria-label="Hauptnavigation">
+  <a class="logo" href="#"><img src="/brand/luna-trading-logo-trim-640.webp" alt="Luna Trading" width="640" height="170"></a>
+  <nav>
+    <a class="on" href="#"><span>01</span>Start</a>
+    <a href="#"><span>02</span>Leistungen</a>
+    <a href="#"><span>03</span>Import</a>
+    <a href="#"><span>04</span>Marken</a>
+    <a href="#"><span>05</span>Unternehmen</a>
+    <a href="#"><span>06</span>Wissen</a>
+    <a href="#"><span>07</span>Kontakt</a>
+  </nav>
+  <div class="railFoot">
+    <div class="lang"><span class="on">DE</span><span>EN</span><span>AR</span></div>
+    <a class="btn" href="#">Angebot anfragen <span>→</span></a>
+    <a class="btn dark" href="#">Import anfragen <span>→</span></a>
+  </div>
+</aside>
+<div class="topbar"><img src="/brand/luna-trading-logo-trim-640.webp" alt="Luna Trading" width="640" height="170"><button aria-expanded="false">INDEX ☰</button></div>
+
+<main>
+  <header class="mast wrap" aria-labelledby="h1">
+    <div class="mastLine mono"><span>Köln · 50.94° N 006.96° E</span><span>Import · Marken · E-Commerce</span><span>Asien → Europa</span></div>
+    <h1 class="title" id="h1">Handel <em>ohne</em> Grenzen.</h1>
+    <div class="grid cols">
+      <div class="c1">
+        <p class="deck">Beschaffung, Import, Marken und E-Commerce aus einer Hand. Von Köln aus verbinden wir Hersteller in Asien mit dem europäischen Markt.</p>
+        <div class="acts"><a class="btn" href="#">Angebot anfragen <span>→</span></a><a class="btn dark" href="#">Leistungen <span>→</span></a></div>
+      </div>
+      <div class="c2">
+        <table class="lanes"><caption class="mono">Typische Handelsrouten</caption>
+          <tr><td>Shanghai → Hamburg</td><td>See</td></tr>
+          <tr><td>Ningbo → Rotterdam</td><td>See</td></tr>
+          <tr><td>Shenzhen → Antwerpen</td><td>See</td></tr>
+          <tr><td>Xi’an → Duisburg</td><td>Schiene</td></tr>
+          <tr><td>Guangzhou → Frankfurt</td><td>Luft</td></tr>
+        </table>
+      </div>
+      <figure class="c3 arch"><img src="/sky/port-1600.webp" alt="Containerhafen in der Dämmerung"><figcaption><b>ABB. 1</b> Containerhafen, Symbolbild</figcaption></figure>
+    </div>
+    <figure class="fig"><img src="lanes-map.svg" alt="Weltkarte mit den Routen Seefracht China–Hamburg, Schiene Xi’an–Duisburg und Luftfracht Guangzhou–Frankfurt"><figcaption><b>ABB. 2</b> Von der Quelle bis zum Markt: typische Wege nach Europa</figcaption>
+      <div class="legend"><span><i></i>Seefracht</span><span><i class="r"></i>Schienenfracht</span><span><i class="a"></i>Luftfracht</span></div></figure>
+  </header>
+
+  <section class="sec wrap" aria-labelledby="h2s">
+    <div class="shead"><span class="no">01 · Das Betriebsmodell</span><h2 id="h2s">Sechs Disziplinen. <em>Eine Kette.</em></h2><p>Jede Stufe bereitet die nächste vor. Unser Wert liegt nicht in einer einzelnen Leistung, sondern in der Verbindung.</p></div>
+    <div class="index">
+      <ul class="rows" id="rows">
+        <li><a href="#" class="on" data-i="0"><span class="n">01</span><h3>Globale Beschaffung</h3><p>Passende Hersteller und Materialien finden, bewerten und koordinieren.</p><span class="ar">→</span></a></li>
+        <li><a href="#" data-i="1"><span class="n">02</span><h3>Import &amp; Export</h3><p>Internationale Warenströme kaufmännisch steuern und nach Europa führen.</p><span class="ar">→</span></a></li>
+        <li><a href="#" data-i="2"><span class="n">03</span><h3>Produktentwicklung</h3><p>Aus einer Idee ein marktfähiges Produkt machen.</p><span class="ar">→</span></a></li>
+        <li><a href="#" data-i="3"><span class="n">04</span><h3>Markenentwicklung</h3><p>Positionierung und Auftritt, die einem Produkt Identität geben.</p><span class="ar">→</span></a></li>
+        <li><a href="#" data-i="4"><span class="n">05</span><h3>E-Commerce</h3><p>Produkte über eigene Shops und Marktplätze zum Kunden bringen.</p><span class="ar">→</span></a></li>
+        <li><a href="#" data-i="5"><span class="n">06</span><h3>Distribution</h3><p>Bestellungen zuverlässig an ihr Ziel bringen.</p><span class="ar">→</span></a></li>
+      </ul>
+      <div class="preview" aria-hidden="true">
+        <div class="frame" id="pv">
+          <img class="on" src="/story/desk-960.webp" alt="">
+          <img src="/insights/container-terminal-960.webp" alt="">
+          <img src="/story/check-960.webp" alt="">
+          <img src="/story/desk-960.webp" alt="">
+          <img src="/sky/port-1600.webp" alt="">
+          <img src="/story/warehouse-960.webp" alt="">
+        </div>
+        <div class="cap"><span class="mono" id="pvn">01 / 06</span><span>Symbolbild</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec wrap" aria-labelledby="h2i">
+    <div class="shead"><span class="no">02 · Import · Asien → Europa</span><h2 id="h2i">Von China <em>nach Deutschland.</em></h2><p>Wir finden Hersteller, prüfen Ware vor dem Versand und bringen Ihre Produkte über See, Schiene oder Luft sicher nach Deutschland. Bis ins Lager und auf den Marktplatz.</p></div>
+    <table class="modes">
+      <thead><tr><th>Transport</th><th>Richtwert</th><th>Geeignet für</th></tr></thead>
+      <tr><td>Seefracht</td><td>30 bis 45 Tage</td><td>Große Mengen, planbare Ware, günstigste Kosten pro Einheit.</td></tr>
+      <tr><td>Schienenfracht</td><td>18 bis 25 Tage</td><td>Schneller als See, günstiger als Luft. Für Ware mit Termin.</td></tr>
+      <tr><td>Luftfracht</td><td>3 bis 7 Tage</td><td>Muster, Eilaufträge und hochwertige, leichte Produkte.</td></tr>
+    </table>
+    <p class="note">Transitzeiten sind Richtwerte und hängen von Route, Saison und Abfertigung ab.</p>
+    <div class="chain" aria-label="Vom Hafen bis ins Lager"><div><b>01</b><span>Einkauf</span></div><div><b>02</b><span>Import</span></div><div><b>03</b><span>Zollabwicklung</span></div><div><b>04</b><span>Lieferung</span></div></div>
+  </section>
+
+  <section class="sec wrap" aria-labelledby="h2w">
+    <div class="shead"><span class="no">03 · So arbeiten wir</span><h2 id="h2w">Menschen, die Ware <em>in die Hand nehmen.</em></h2><p>Hinter jedem Container stehen Entscheidungen. Wir prüfen Muster, stimmen Details ab und begleiten die Ware, bis sie im Markt ankommt. Persönlich und aus Köln.</p></div>
+    <div class="story">
+      <blockquote class="pq">Wir verkaufen nicht nur Ware. Wir stehen für jeden Schritt, den sie geht.</blockquote>
+      <p class="pqBy mono" style="color:var(--gray)">Luna Trading · Köln</p>
+      <div class="ph"><img src="/story/desk-960.webp" alt="Zwei Hände prüfen Produktmuster an einem Schreibtisch."><h3>Muster prüfen, bevor bestellt wird</h3><p>Material, Verpackung, Route und Preis werden gemeinsam besprochen. Erst wenn alles passt, geht eine Bestellung raus.</p></div>
+      <div class="ph"><img src="/story/check-960.webp" alt="Hände mit Klemmbrett prüfen einen verschlossenen Karton in einem Lager."><h3>Ware prüfen, bevor sie reist</h3><p>Menge, Kennzeichnung und Zustand werden dokumentiert, damit am Ziel keine Überraschungen warten.</p></div>
+      <div class="ph"><img src="/story/warehouse-960.webp" alt="Eine Person bewegt eine Palette mit Kartons zwischen hohen Lagerregalen."><h3>Ankommen und weitergeben</h3><p>Nach dem Import wird die Ware eingelagert, vorbereitet und in die passenden Kanäle gebracht.</p></div>
+    </div>
+  </section>
+
+  <section class="letter" aria-labelledby="h2c">
+    <p class="mono" style="color:var(--gray-light)">04 · Kontakt</p>
+    <h2 id="h2c">Sprechen wir über <em>Ihr nächstes Projekt.</em></h2>
+    <p style="max-width:34em;color:#b9b9be;margin-top:24px">Beschaffung, Produkt, Marke oder Vertrieb: Erzählen Sie uns, woran Sie arbeiten.</p>
+    <a class="mail" href="#">info@luna-trading.de</a>
+    <div style="margin-top:28px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn" href="#">Angebot anfragen <span>→</span></a></div>
+    <footer class="lfoot">
+      <div><img src="/brand/luna-trading-logo-reverse-640.webp" alt="Luna Trading" width="640" height="170" style="width:170px;height:auto;margin-bottom:16px"><p style="margin:0;max-width:30em">Globale Beschaffung, Import und Export, Produkt- und Markenentwicklung, E-Commerce und Distribution. Aus Köln für Europa.</p></div>
+      <div><b>Navigation</b><a href="#">Leistungen</a><a href="#">Import</a><a href="#">Marken</a><a href="#">Unternehmen</a><a href="#">Wissen</a></div>
+      <div><b>Kontakt</b><a href="#">Kontakt</a><a href="#">Angebot anfragen</a></div>
+      <div><b>Rechtliches</b><a href="#">Impressum</a><a href="#">Datenschutz</a></div>
+    </footer>
+  </section>
+</main>
+<script src="assets/gsap.min.js"></script>
+<script src="assets/ScrollTrigger.min.js"></script>
+<script>
+// index rows drive the preview frame (hover or keyboard focus)
+const rows = [...document.querySelectorAll("#rows a")], imgs = [...document.querySelectorAll("#pv img")], pvn = document.getElementById("pvn");
+const pick = i => { rows.forEach((r, k) => r.classList.toggle("on", k === i)); imgs.forEach((m, k) => m.classList.toggle("on", k === i)); pvn.textContent = String(i + 1).padStart(2, "0") + " / 06"; };
+rows.forEach((r, i) => { r.addEventListener("mouseenter", () => pick(i)); r.addEventListener("focus", () => pick(i)); });
+if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  gsap.registerPlugin(ScrollTrigger);
+  // the masthead sets itself like type on a press: rule draws, title rises
+  gsap.from(".mastLine", { scaleX: 0, transformOrigin: "left", duration: 1.2, ease: "expo.inOut" });
+  gsap.from(".title", { yPercent: 30, opacity: 0, duration: 1.3, ease: "expo.out", delay: .2 });
+  gsap.from(".cols > *", { y: 30, opacity: 0, duration: 1, ease: "expo.out", stagger: .1, delay: .45 });
+  // the route map draws its lines as it enters
+  document.querySelectorAll(".shead").forEach(h => gsap.from(h, { "--x": 0, y: 30, opacity: 0, duration: 1, ease: "expo.out", scrollTrigger: { trigger: h, start: "top 85%" } }));
+  gsap.from(".rows li", { y: 24, opacity: 0, stagger: .06, duration: .8, ease: "expo.out", scrollTrigger: { trigger: ".rows", start: "top 80%" } });
+  gsap.from(".modes tr", { opacity: 0, x: -20, stagger: .08, duration: .8, ease: "expo.out", scrollTrigger: { trigger: ".modes", start: "top 80%" } });
+}
+</script>
+</body>
+</html>

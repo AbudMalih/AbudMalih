@@ -1,0 +1,114 @@
+/* Luna Trading V2 · concept prototypes (isolated, not part of the site) */
+@font-face {
+  font-family: "Inter Tight";
+  src: url("assets/inter-tight-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("assets/instrument-serif-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("assets/instrument-serif-latin-400-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("assets/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("assets/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+:root {
+  --red: #c90216;
+  --red-on-dark: #ff5a68;
+  --char: #0f1012;
+  --char-2: #17181b;
+  --char-3: #222327;
+  --ivory: #f5f2eb;
+  --ivory-2: #ece7dc;
+  --ink: #121316;
+  --ink-soft: #3d3e43;
+  --gray: #6b6c71;
+  --gray-light: #a6a7ac;
+  --gold: #c9b68e;
+  --sans: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Instrument Serif", "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --m: clamp(20px, 4vw, 64px);
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+.mono {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.badge {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 999;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(18, 19, 22, 0.86);
+  color: #f5f2eb;
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
