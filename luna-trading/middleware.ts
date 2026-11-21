@@ -73,6 +73,6 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/|api/|brand/|textures|sequences|icon|favicon|apple-touch-icon|site.webmanifest|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)",
+    "/((?!_next/|api/|lab(?:/|$)|brand/|textures|sequences|icon|favicon|apple-touch-icon|site.webmanifest|robots.txt|sitemap.xml|.*\\.[a-z0-9]+$).*)",
   ],
 };
